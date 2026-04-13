@@ -18,6 +18,10 @@ import {
   Pay,
   Success,
   NotFound,
+  Dashboard,
+  CreatorProfile,
+  BrandProfile,
+  Creators,
 } from "./pages";
 import "./App.scss";
 
@@ -75,6 +79,17 @@ const paths = [
       </PrivateRoute>
     ),
   },
+  {
+    path: "/dashboard",
+    element: (
+      <PrivateRoute>
+        <Dashboard />
+      </PrivateRoute>
+    ),
+  },
+  { path: "/creator/:creatorId", element: <CreatorProfile /> },
+  { path: "/brand/:brandId", element: <BrandProfile /> },
+  { path: "/creators", element: <Creators /> },
   {
     path: "/success",
     element: (

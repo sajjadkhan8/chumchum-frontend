@@ -28,4 +28,17 @@ export {
 } from "./conversationApi";
 export { getMessages, sendMessage } from "./messageApi";
 export { uploadImage } from "./uploadApi";
-
+export {
+  createCreatorProfile,
+  getCreatorProfile,
+  updateCreatorProfile,
+  getCreators,
+  getCreatorById,
+} from "./creatorApi";
+export {
+  createBrandProfile,
+  getBrandProfile,
+  updateBrandProfile,
+  getBrands,
+  getBrandById,
+} from "./brandApi";

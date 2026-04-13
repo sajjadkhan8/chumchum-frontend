@@ -12,3 +12,10 @@ export { default as Register } from './Auth/Register/Register';
 export { default as Pay } from './Pay/Pay';
 export { default as Success } from './Success/Success';
 export { default as NotFound } from './NotFound/NotFound';
+export { default as Dashboard } from './Dashboard/Dashboard';
+export { default as CreatorProfile } from './Profile/CreatorProfile/CreatorProfile';
+export { default as BrandProfile } from './Profile/BrandProfile/BrandProfile';
+export { default as Creators } from './Creators/Creators';
+
+
+

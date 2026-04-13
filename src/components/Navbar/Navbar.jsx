@@ -133,33 +133,45 @@ const Navbar = () => {
                 </button>
               )}
               {user && (
-                <div className="user" onClick={() => setShowPanel(!showPanel)}>
-                  <img src={user.image || "/media/noavatar.png"} />
+                <button
+                  className="user"
+                  onClick={() => setShowPanel(!showPanel)}
+                  aria-label="Toggle user menu"
+                >
+                  <img src={user.image || "/media/noavatar.png"} alt={user?.username} />
                   <span>{user?.username}</span>
-                  {showPanel && (
-                    <div className="options">
-                      {user?.isSeller && (
-                        <>
-                          <Link className="link" to="/my-gigs">
-                            Gigs
-                          </Link>
-                          <Link className="link" to="/organize">
-                            Add New Gig
-                          </Link>
-                        </>
-                      )}
-                      <Link className="link" to="/orders">
-                        Orders
-                      </Link>
-                      <Link className="link" to="/messages">
-                        Messages
-                      </Link>
-                      <Link className="link" to="/" onClick={handleLogout}>
-                        Logout
-                      </Link>
-                    </div>
-                  )}
-                </div>
+                   {showPanel && (
+                     <div className="options">
+                       <Link className="link" to="/dashboard">
+                         Dashboard
+                       </Link>
+                       {user?.role === 'CREATOR' && (
+                         <>
+                           <Link className="link" to="/my-gigs">
+                             My Services
+                           </Link>
+                           <Link className="link" to="/organize">
+                             Add New Service
+                           </Link>
+                         </>
+                       )}
+                       {user?.role === 'BRAND' && (
+                         <Link className="link" to="/creators">
+                           Find Creators
+                         </Link>
+                       )}
+                       <Link className="link" to="/orders">
+                         Orders
+                       </Link>
+                       <Link className="link" to="/messages">
+                         Messages
+                       </Link>
+                       <Link className="link" to="/" onClick={handleLogout}>
+                         Logout
+                       </Link>
+                     </div>
+                   )}
+                </button>
               )}
             </>
           )}
