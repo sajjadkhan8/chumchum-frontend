@@ -1,7 +1,12 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { axiosFetch } from "../../utils";
+import {
+  createConversation,
+  getConversationByParticipants,
+  getOrders,
+  isNotFoundError,
+} from "../../api";
 import { useRecoilValue } from "recoil";
 import { userState } from "../../atoms";
 import { Loader } from '../../components';
@@ -15,17 +20,9 @@ const Orders = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  const { isLoading, error, data } = useQuery({
+  const { isLoading, error, data = [] } = useQuery({
     queryKey: ["orders"],
-    queryFn: () =>
-      axiosFetch
-        .get(`/orders`)
-        .then(({ data }) => {
-          return data;
-        })
-        .catch(({ response }) => {
-          console.log(response.data);
-        }),
+    queryFn: () => getOrders(),
   });
 
   const handleContact = async (order) => {
@@ -36,14 +33,13 @@ const Orders = () => {
       ? order.buyerID._id
       : order.buyerID;
 
-    axiosFetch
-      .get(`/conversations/single/${sellerID}/${buyerID}`)
-      .then(({ data }) => {
+    getConversationByParticipants({ sellerId: sellerID, buyerId: buyerID })
+      .then((data) => {
         navigate(`/message/${data.conversationID}`);
       })
-      .catch(async ({ response }) => {
-        if (response.status === 404) {
-          const { data } = await axiosFetch.post("/conversations", {
+      .catch(async (error) => {
+        if (isNotFoundError(error)) {
+          const data = await createConversation({
             to: user.isSeller ? buyerID : sellerID,
             from: user.isSeller ? sellerID : buyerID,
           });

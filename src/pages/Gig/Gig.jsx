@@ -1,7 +1,8 @@
 import toast from 'react-hot-toast';
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { axiosFetch, getCountryFlag } from '../../utils';
+import { getGigById, getApiErrorMessage } from '../../api';
+import { getCountryFlag } from '../../utils';
 import { Link, useParams } from 'react-router-dom';
 import { Loader, NextArrow, PrevArrow, Reviews } from '../../components';
 import './Gig.scss';
@@ -15,16 +16,17 @@ const Gig = () => {
   const { _id } = useParams();
 
   const { isLoading, error, data } = useQuery({
-    queryKey: ['gig'],
-    queryFn: () =>
-      axiosFetch.get(`/gigs/single/${_id}`)
-        .then(({ data }) => {
-          data.images.unshift(data.cover);
-          return data;
-        })
-        .catch(({ response }) => {
-          toast.error(response.data.message);
-        })
+    queryKey: ['gig', _id],
+    queryFn: async () => {
+      const gig = await getGigById(_id);
+      return {
+        ...gig,
+        images: [gig.cover, ...(gig.images || [])],
+      };
+    },
+    onError: (apiError) => {
+      toast.error(getApiErrorMessage(apiError));
+    }
   });
 
   const country = getCountryFlag(data?.userID.country);

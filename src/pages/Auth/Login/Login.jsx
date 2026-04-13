@@ -1,7 +1,7 @@
 import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { axiosFetch } from '../../../utils';
+import { getApiErrorMessage, loginUser } from '../../../api';
 import { useRecoilState } from 'recoil';
 import { userState } from '../../../atoms';
 import './Login.scss';
@@ -15,7 +15,7 @@ const Login = () => {
   const [formInput, setFormInput] = useState(initialState);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useRecoilState(userState);
+  const [, setUser] = useRecoilState(userState);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,7 +42,7 @@ const Login = () => {
 
     setLoading(true);
     try {
-      const { data } = await axiosFetch.post('/auth/login', formInput);
+      const data = await loginUser(formInput);
       localStorage.setItem('user', JSON.stringify(data.user));
       setUser(data.user);
       toast.success("Welcome back!", {
@@ -51,9 +51,10 @@ const Login = () => {
       });
       navigate('/');
     }
-    catch ({ response: { data } }) {
-      setError(data.message);
-      toast.error(data.message, {
+    catch (error) {
+      const message = getApiErrorMessage(error);
+      setError(message);
+      toast.error(message, {
         duration: 3000,
       });
     }
@@ -67,13 +68,13 @@ const Login = () => {
     <div className='login'>
       <form action="" onSubmit={handleFormSubmit}>
         <h1>Sign in</h1>
-        <label htmlFor="">Username</label>
-        <input name='username' placeholder='johndoe' onChange={handleFormInput} />
+        <label htmlFor="login-username">Username</label>
+        <input id='login-username' name='username' placeholder='johndoe' onChange={handleFormInput} />
 
-        <label htmlFor="">Password</label>
-        <input name='password' type='password' placeholder='password' onChange={handleFormInput} />
+        <label htmlFor="login-password">Password</label>
+        <input id='login-password' name='password' type='password' placeholder='password' onChange={handleFormInput} />
         <button disabled={loading} type='submit'>{ loading ? 'Loading' : 'Login' }</button>
-        <span>{error && error}</span>
+        <span>{error || ''}</span>
       </form>
     </div>
   )

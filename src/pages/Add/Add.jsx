@@ -4,7 +4,7 @@ import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { gigReducer, initialState } from '../../reducers/gigReducer';
 import { cards } from '../../data';
-import { axiosFetch, generateImageURL } from '../../utils';
+import { createGig, getApiErrorMessage, uploadImage } from '../../api';
 import { useRecoilValue } from 'recoil';
 import { userState } from '../../atoms';
 import './Add.scss';
@@ -24,16 +24,11 @@ const Add = () => {
   }, [])
 
   const mutation = useMutation({
-    mutationFn: (gig) =>
-      axiosFetch.post('/gigs', gig)
-      .then(({data}) => {
-        return data;
-      })
-      .catch(({response}) => {
-        toast.error(response.data.message);
-      })
-    ,
-    onSuccess: () => 
+    mutationFn: (gig) => createGig(gig),
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error));
+    },
+    onSuccess: () =>
       queryClient.invalidateQueries(['my-gigs'])
   })
 
@@ -57,9 +52,9 @@ const Add = () => {
   const handleImageUploads = async () => {
     try {
       setUploading(true);
-      const cover = await generateImageURL(coverImage);
+      const cover = await uploadImage(coverImage);
       const images = await Promise.all(
-        [...gigImages].map(async (img) => await generateImageURL(img))
+        [...gigImages].map(async (img) => await uploadImage(img))
       )
       dispatch({
         type: 'ADD_IMAGES',
@@ -69,7 +64,7 @@ const Add = () => {
       setDisabled(true);
     }
     catch (error) {
-      console.log(error);
+      toast.error(getApiErrorMessage(error));
       setUploading(false);
     }
   }

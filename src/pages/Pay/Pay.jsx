@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { useParams } from 'react-router-dom';
 import { Elements } from '@stripe/react-stripe-js';
-import { axiosFetch } from '../../utils';
+import { createPaymentIntent, getApiErrorMessage } from '../../api';
 import { CheckoutForm } from '../../components';
 import './Pay.scss';
 
@@ -15,11 +15,11 @@ const Pay = () => {
   useEffect(() => {
     ( async () => {
       try {
-        const { data } = await axiosFetch.post(`/orders/create-payment-intent/${_id}`);
+        const data = await createPaymentIntent(_id);
         setClientSecret(data.clientSecret);
       }
-      catch({response}) {
-        console.log(response);
+      catch(error) {
+        console.log(getApiErrorMessage(error));
       }
     })();
     window.scrollTo(0, 0)

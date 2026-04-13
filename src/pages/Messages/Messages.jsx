@@ -2,7 +2,7 @@ import moment from 'moment';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
-import { axiosFetch } from '../../utils';
+import { getConversations, markConversationAsRead } from '../../api';
 import { useRecoilValue } from 'recoil';
 import { userState } from '../../atoms';
 import { Loader } from '../../components';
@@ -16,22 +16,13 @@ const Messages = () => {
     window.scrollTo(0, 0)
   }, [])
 
-  const { isLoading, error, data } = useQuery({
+  const { isLoading, error, data = [] } = useQuery({
     queryKey: ['conversations'],
-    queryFn: () =>
-      axiosFetch.get('/conversations')
-        .then(({ data }) => {
-          return data;
-        })
-        .catch(({ response }) => {
-          console.log(response);
-        })
+    queryFn: () => getConversations()
   })
 
   const mutation = useMutation({
-    mutationFn: (id) =>
-      axiosFetch.patch(`/conversations/${id}`)
-    ,
+    mutationFn: (id) => markConversationAsRead(id),
     onSuccess: () =>
       queryClient.invalidateQueries(['conversations'])
   })

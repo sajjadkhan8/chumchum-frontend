@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRecoilValue } from "recoil";
 import { userState } from "../../atoms";
-import { axiosFetch } from '../../utils';
+import { getApiErrorMessage, getMessages, sendMessage } from '../../api';
 import { Loader } from '../../components';
 import "./Message.scss";
 
@@ -16,23 +16,17 @@ const Message = () => {
     window.scrollTo(0, 0)
   }, [])
   
-  const { isLoading, error, data } = useQuery({
-    queryKey: ['messages'],
-    queryFn: () =>
-      axiosFetch.get(`/messages/${conversationID}`)
-        .then(({ data }) => {
-          return data;
-        })
-        .catch(({ response }) => {
-          toast.error(response.data.message)
-        })
+  const { isLoading, error, data = [] } = useQuery({
+    queryKey: ['messages', conversationID],
+    queryFn: () => getMessages(conversationID),
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error))
+    }
   });
   
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: (message) => 
-      axiosFetch.post('/messages', message)
-    ,
+    mutationFn: (message) => sendMessage(message),
     onSuccess: () =>
       queryClient.invalidateQueries(['messages'])
   })

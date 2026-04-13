@@ -2,7 +2,7 @@ import React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Review, Loader } from '..';
-import { axiosFetch } from '../../utils';
+import { createReview, getApiErrorMessage, getReviewsByGigId } from '../../api';
 import toast from 'react-hot-toast';
 import './Reviews.scss';
 
@@ -10,31 +10,20 @@ const Reviews = (props) => {
     const { gigID } = props;
     const navigation = useNavigate();
     const queryClient = useQueryClient();
-    const { isLoading, error, data, refetch } = useQuery({
-        queryKey: ['reviews'],
-        queryFn: () =>
-            axiosFetch.get(`/reviews/${gigID}`)
-                .then(({ data }) => {
-                    return data;
-                })
-                .catch(({ response }) => {
-                    console.log(response.data);
-                })
+    const { isLoading, error, data = [] } = useQuery({
+        queryKey: ['reviews', gigID],
+        queryFn: () => getReviewsByGigId(gigID)
     });
 
     const mutation = useMutation({
-        mutationFn: (review) =>
-            axiosFetch.post('/reviews', review)
-            .then(({data}) => {
-                return data;
-            })
-            .catch(({ response: { data } }) => {
-                if(data.message == 'jwt expired') {
-                    navigation('/login');
-                }
-                toast.error(data.message);
-            })
-        ,
+        mutationFn: (review) => createReview(review),
+        onError: (error) => {
+            const message = getApiErrorMessage(error);
+            if(message === 'jwt expired') {
+                navigation('/login');
+            }
+            toast.error(message);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries(['reviews'])
         }
@@ -58,7 +47,7 @@ const Reviews = (props) => {
             {
                 isLoading
                     ? <div className='loader'><Loader size={35} /></div>
-                    : error
+                        : error
                         ? 'Something went wrong!'
                         : data.map((review) => <Review key={review._id} review={review} />)
             }

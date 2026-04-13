@@ -2,7 +2,7 @@ import toast from 'react-hot-toast';
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { axiosFetch } from '../../utils';
+import { deleteGig, getApiErrorMessage, getGigs } from '../../api';
 import { useRecoilValue } from 'recoil';
 import { userState } from '../../atoms';
 import { Loader } from '../../components';
@@ -13,23 +13,17 @@ const MyGigs = () => {
   const navigate = useNavigate();
 
   const queryClient = useQueryClient();
-  const { isLoading, error, data } = useQuery({
-    queryKey: ['my-gigs'],
-    queryFn: () =>
-      axiosFetch(`/gigs?userID=${user._id}`)
-        .then(({ data }) => {
-          console.table(data)
-          return data;
-        })
-        .catch(({ response }) => {
-          console.log(response.data);
-        })
+  const { isLoading, error, data = [] } = useQuery({
+    queryKey: ['my-gigs', user?._id],
+    enabled: !!user?._id,
+    queryFn: () => getGigs({ userId: user._id })
   });
 
   const mutation = useMutation({
-    mutationFn: (_id) =>
-      axiosFetch.delete(`/gigs/${_id}`)
-    ,
+    mutationFn: (_id) => deleteGig(_id),
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error));
+    },
     onSuccess: () =>
       queryClient.invalidateQueries(['my-gigs'])
   });

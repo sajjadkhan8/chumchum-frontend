@@ -2,7 +2,7 @@ import Slider from "react-slick";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { GrFormNext, GrFormPrevious } from "react-icons/gr";
-import { axiosFetch } from "../../utils";
+import { getApiErrorMessage, getCurrentUser, logoutUser } from "../../api";
 import { useRecoilState } from "recoil";
 import { userState } from "../../atoms";
 import { Loader } from "..";
@@ -23,14 +23,12 @@ const Navbar = () => {
     (async () => {
       setIsLoading(true);
       try {
-        const { data } = await axiosFetch.get('/auth/me');
+        const data = await getCurrentUser();
         setUser(data.user);
-      }
-      catch({ response }) {
+      } catch (error) {
         localStorage.removeItem('user');
-        console.log(response.data.message);
-      }
-      finally {
+        console.log(getApiErrorMessage(error));
+      } finally {
         setIsLoading(false);
       }
     })();
@@ -88,12 +86,12 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await axiosFetch.post("/auth/logout");
+      await logoutUser();
       localStorage.removeItem('user');
       setUser(null);
       navigate("/");
-    } catch ({ response }) {
-      console.log(response.data);
+    } catch (error) {
+      console.log(getApiErrorMessage(error));
     }
   };
 

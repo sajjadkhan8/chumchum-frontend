@@ -1,7 +1,7 @@
 import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { axiosFetch, generateImageURL } from '../../../utils';
+import { getApiErrorMessage, registerUser, uploadImage } from '../../../api';
 import './Register.scss'
 
 const Register = () => {
@@ -37,14 +37,14 @@ const Register = () => {
 
     setLoading(true);
     try {
-      const { url } = await generateImageURL(image);
-      const { data } = await axiosFetch.post('/auth/register', { ...formInput, image: url });
+      const uploadedImage = await uploadImage(image);
+      await registerUser({ ...formInput, image: uploadedImage?.url || '' });
       toast.success('Registration successful!');
       setLoading(false);
       navigate('/login');
     }
-    catch ({ response }) {
-      toast.error(response.data.message);
+    catch (error) {
+      toast.error(getApiErrorMessage(error));
       setLoading(false);
     }
   }

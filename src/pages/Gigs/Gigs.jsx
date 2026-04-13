@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { GigCard, Loader } from '../../components';
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from 'react-router-dom';
-import { axiosFetch } from '../../utils';
+import { getGigs } from '../../api';
 import './Gigs.scss';
 
 const Gigs = () => {
@@ -12,26 +12,29 @@ const Gigs = () => {
   const minRef = useRef();
   const maxRef = useRef();
   const { search } = useLocation();
+  const searchParams = new URLSearchParams(search);
+  const selectedCategory = searchParams.get('category') || '.';
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+  const { isLoading, error, data = [], refetch } = useQuery({
+    queryKey: ['gigs', search, sortBy],
+    queryFn: async () => {
+      const gigs = await getGigs({
+        category: selectedCategory === '.' ? undefined : selectedCategory,
+        min: minRef.current?.value,
+        max: maxRef.current?.value,
+        sort: sortBy,
+      });
 
-
-  const { isLoading, error, data, refetch } = useQuery({
-    queryKey: ['gigs'],
-    queryFn: () =>
-      axiosFetch.get(`/gigs${search}&min=${minRef.current.value}&max=${maxRef.current.value}&sort=${sortBy}`)
-        .then(({ data }) => {
-          setCategory(data[0].category);
-          return data;
-        })
-        .catch((error) => {
-          console.log(error);
-        })
+      setCategory(gigs[0]?.category || selectedCategory);
+      return gigs;
+    }
   });
   
   useEffect(() => {
+    setCategory(selectedCategory);
     refetch();
   }, [sortBy, search]);
 
