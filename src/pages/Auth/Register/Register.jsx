@@ -1,12 +1,25 @@
 import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getApiErrorMessage, registerUser, uploadImage, createCreatorProfile, createBrandProfile } from '../../../api';
 import { pakistanCities } from '../../../utils';
 import './Register.scss'
 
+const normalizeRoleParam = (value) => {
+  if (!value) return '';
+
+  const normalizedValue = value.toString().trim().toUpperCase();
+
+  if (normalizedValue === 'CREATOR' || normalizedValue === 'BRAND') {
+    return normalizedValue;
+  }
+
+  return '';
+};
+
 const Register = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState(''); // 'CREATOR' or 'BRAND'
@@ -38,6 +51,14 @@ const Register = () => {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
+
+  useEffect(() => {
+    const selectedRole = normalizeRoleParam(searchParams.get('role'));
+
+    if (selectedRole) {
+      setRole(selectedRole);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -139,8 +160,9 @@ const Register = () => {
         <div className="left">
           <h1>Create a new account</h1>
 
-          <label htmlFor="">Role</label>
-          <div className="role-selector">
+          <fieldset className="role-fieldset">
+            <legend>Role</legend>
+            <div className="role-selector">
             <button
               type="button"
               className={`role-btn ${role === 'CREATOR' ? 'active' : ''}`}
@@ -155,28 +177,32 @@ const Register = () => {
             >
               Brand
             </button>
-          </div>
+            </div>
+          </fieldset>
 
-          <label htmlFor="">Username</label>
+          <label htmlFor="username">Username</label>
           <input
+            id="username"
             name="username"
             type="text"
             placeholder="johndoe"
             onChange={handleChange}
           />
-          <label htmlFor="">Email</label>
+          <label htmlFor="email">Email</label>
           <input
+            id="email"
             name="email"
             type="email"
             placeholder="email@example.com"
             onChange={handleChange}
           />
-          <label htmlFor="">Password</label>
-          <input name="password" type="password" placeholder="Enter password" onChange={handleChange} />
-          <label htmlFor="">Profile Picture</label>
-          <input type="file" onChange={(event) => setImage(event.target.files[0])} />
-          <label htmlFor="">Phone Number</label>
+          <label htmlFor="password">Password</label>
+          <input id="password" name="password" type="password" placeholder="Enter password" onChange={handleChange} />
+          <label htmlFor="image">Profile Picture</label>
+          <input id="image" type="file" onChange={(event) => setImage(event.target.files[0])} />
+          <label htmlFor="phone">Phone Number</label>
           <input
+            id="phone"
             name="phone"
             type="text"
             placeholder="+92 300 1234567"
@@ -199,8 +225,9 @@ const Register = () => {
           {role === 'CREATOR' && (
             <div className="role-specific">
               <h2>Creator Information</h2>
-              <label htmlFor="">Bio</label>
+              <label htmlFor="bio">Bio</label>
               <textarea
+                id="bio"
                 placeholder="Tell us about yourself"
                 name="bio"
                 rows="4"
@@ -208,8 +235,9 @@ const Register = () => {
                 onChange={handleCreatorChange}
               ></textarea>
 
-              <label htmlFor="">Category</label>
+              <label htmlFor="category">Category</label>
               <input
+                id="category"
                 name="category"
                 type="text"
                 placeholder="e.g., Fashion, Gaming, Fitness"
@@ -217,8 +245,9 @@ const Register = () => {
                 onChange={handleCreatorChange}
               />
 
-              <label htmlFor="">TikTok URL</label>
+              <label htmlFor="tiktok_url">TikTok URL</label>
               <input
+                id="tiktok_url"
                 name="tiktok_url"
                 type="url"
                 placeholder="https://tiktok.com/@yourprofile"
@@ -226,8 +255,9 @@ const Register = () => {
                 onChange={handleCreatorChange}
               />
 
-              <label htmlFor="">Instagram URL</label>
+              <label htmlFor="instagram_url">Instagram URL</label>
               <input
+                id="instagram_url"
                 name="instagram_url"
                 type="url"
                 placeholder="https://instagram.com/yourprofile"
@@ -235,8 +265,9 @@ const Register = () => {
                 onChange={handleCreatorChange}
               />
 
-              <label htmlFor="">YouTube URL</label>
+              <label htmlFor="youtube_url">YouTube URL</label>
               <input
+                id="youtube_url"
                 name="youtube_url"
                 type="url"
                 placeholder="https://youtube.com/@yourprofile"
@@ -249,8 +280,9 @@ const Register = () => {
           {role === 'BRAND' && (
             <div className="role-specific">
               <h2>Brand Information</h2>
-              <label htmlFor="">Company Name</label>
+              <label htmlFor="company_name">Company Name</label>
               <input
+                id="company_name"
                 name="company_name"
                 type="text"
                 placeholder="Your company name"
@@ -258,8 +290,9 @@ const Register = () => {
                 onChange={handleBrandChange}
               />
 
-              <label htmlFor="">Website</label>
+              <label htmlFor="website">Website</label>
               <input
+                id="website"
                 name="website"
                 type="url"
                 placeholder="https://yourcompany.com"
@@ -267,8 +300,9 @@ const Register = () => {
                 onChange={handleBrandChange}
               />
 
-              <label htmlFor="">Industry</label>
+              <label htmlFor="industry">Industry</label>
               <input
+                id="industry"
                 name="industry"
                 type="text"
                 placeholder="e.g., Fashion, Tech, E-commerce"
@@ -276,8 +310,9 @@ const Register = () => {
                 onChange={handleBrandChange}
               />
 
-              <label htmlFor="">Description</label>
+              <label htmlFor="description">Description</label>
               <textarea
+                id="description"
                 placeholder="Tell us about your brand"
                 name="description"
                 rows="4"

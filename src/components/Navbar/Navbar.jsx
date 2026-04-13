@@ -107,10 +107,16 @@ const Navbar = () => {
 
         <div className="links">
           <div className="menu-links">
-            <span>For Brands</span>
             <span>Explore</span>
             <span>English</span>
-            {user?.role !== 'CREATOR' && <span>Become a Creator</span>}
+            <Link to="/register?role=brand" className="link">
+              <span>Join as Brand</span>
+            </Link>
+            {user?.role !== 'CREATOR' && (
+              <Link to="/register?role=creator" className="link">
+                <span>Join as Creator</span>
+              </Link>
+            )}
           </div>
           {isLoading ? (
             <Loader size={35} />
