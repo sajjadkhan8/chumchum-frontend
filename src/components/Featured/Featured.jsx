@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { cards } from '../../data';
 import './Featured.scss';
+
+const featuredCategories = cards.slice(0, 4);
 
 const Featured = () => {
   const [search, setSearch] = useState('');
@@ -27,10 +30,11 @@ const Featured = () => {
           </div>
           <div className="popular">
             <span>Popular:</span>
-            <button>Website Design</button>
-            <button>WordPress</button>
-            <button>Logo Design</button>
-            <button>AI Services</button>
+            {featuredCategories.map((category) => (
+              <button key={category.slug} onClick={() => navigate(`/packages?category=${category.slug}`)}>
+                {category.title}
+              </button>
+            ))}
           </div>
         </div>
 

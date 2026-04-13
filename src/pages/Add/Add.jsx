@@ -310,7 +310,7 @@ const Add = () => {
               <option value=''>Category</option>
               {cards.map((item) => (
                 <option key={item.id} value={item.slug}>
-                  {item.slug[0].toUpperCase() + item.slug.slice(1)}
+                  {item.title}
                 </option>
               ))}
             </select>

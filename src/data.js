@@ -1,139 +1,84 @@
+const defaultCategoryImage = "/media/hero.png";
+
 export const cards = [
-    {
-      id: 1,
-      title: "AI Artists",
-      desc: "Add talent to AI",
-      img: "https://fiverr-res.cloudinary.com/q_auto,f_auto,w_255,dpr_1.0/v1/attachments/generic_asset/asset/f27bec553efc12cc60baed89b8f2223e-1674661140708/ai-artists-2x.png",
-      slug: 'ai',
-    },
-    {
-      id: 2,
-      title: "Logo Design",
-      desc: "Build yor brand",
-      img: "https://fiverr-res.cloudinary.com/q_auto,f_auto,w_255,dpr_1.0/v1/attachments/generic_asset/asset/055f758c1f5b3a1ab38c047dce553860-1598561741678/logo-design-2x.png",
-      slug: 'design',
-    },
-    {
-      id: 3,
-      title: "WordPress",
-      desc: "Customize your site",
-      img: "https://fiverr-res.cloudinary.com/q_auto,f_auto,w_255,dpr_1.0/v1/attachments/generic_asset/asset/ae11e2d45410b0eded7fba0e46b09dbd-1598561917003/wordpress-2x.png",
-      slug: 'wordpress'
-    },
-    {
-      id: 4,
-      title: "Voice Over",
-      desc: "Share your message",
-      img: "https://fiverr-res.cloudinary.com/q_auto,f_auto,w_255,dpr_1.0/v1/attachments/generic_asset/asset/055f758c1f5b3a1ab38c047dce553860-1598561741669/voiceover-2x.png",
-      slug: 'voice'
-    },
-    {
-      id: 5,
-      title: "Video Explainer",
-      desc: "Engage your audience",
-      img: "https://fiverr-res.cloudinary.com/q_auto,f_auto,w_255,dpr_1.0/v1/attachments/generic_asset/asset/055f758c1f5b3a1ab38c047dce553860-1598561741663/animated-explainer-2x.png",
-      slug: 'video'
-    },
-    {
-      id: 6,
-      title: "Social Media",
-      desc: "Reach more customers",
-      img: "https://fiverr-res.cloudinary.com/q_auto,f_auto,w_255,dpr_1.0/v1/attachments/generic_asset/asset/055f758c1f5b3a1ab38c047dce553860-1598561741667/social-2x.png",
-      slug: 'social'
-    },
-    {
-      id: 7,
-      title: "SEO",
-      desc: "Unlock growth online",
-      img: "https://fiverr-res.cloudinary.com/q_auto,f_auto,w_255,dpr_1.0/v1/attachments/generic_asset/asset/055f758c1f5b3a1ab38c047dce553860-1598561741668/seo-2x.png",
-      slug: 'seo'
-    },
-    {
-      id: 8,
-      title: "Illustration",
-      desc: "Color you dreams",
-      img: "https://fiverr-res.cloudinary.com/q_auto,f_auto,w_255,dpr_1.0/v1/attachments/generic_asset/asset/055f758c1f5b3a1ab38c047dce553860-1598561741664/illustration-2x.png",
-      slug: 'illustration'
-    },
-    {
-      id: 9,
-      title: "Translation",
-      desc: "Go global",
-      img: "https://fiverr-res.cloudinary.com/q_auto,f_auto,w_255,dpr_1.0/v1/attachments/generic_asset/asset/055f758c1f5b3a1ab38c047dce553860-1598561741674/translation-2x.png",
-      slug: 'translation'
-    },
-    {
-      id: 10,
-      title: "Book Covers",
-      desc: "Showcase your story",
-      img: "https://fiverr-res.cloudinary.com/q_auto,f_auto,w_255,dpr_1.0/v1/attachments/generic_asset/asset/055f758c1f5b3a1ab38c047dce553860-1598561741678/book-covers-2x.png",
-      slug: 'books'
-    },
-    {
-      id: 11,
-      title: "Data Entry",
-      desc: "Learn your business",
-      img: "https://fiverr-res.cloudinary.com/q_auto,f_auto,w_550,dpr_1.0/v1/attachments/generic_asset/asset/055f758c1f5b3a1ab38c047dce553860-1598561741664/data-entry-2x.png",
-      slug: 'writing'
-    },
-  ];
-  
+  { id: 1, title: "Comedy & Entertainment", desc: "Make audiences laugh and stay engaged", img: defaultCategoryImage, slug: "comedy" },
+  { id: 2, title: "Food & Restaurant Reviews", desc: "Showcase dining spots and culinary experiences", img: defaultCategoryImage, slug: "food" },
+  { id: 3, title: "Fashion", desc: "Promote outfits, styling, and personal brand looks", img: defaultCategoryImage, slug: "fashion" },
+  { id: 4, title: "Beauty & Makeup", desc: "Highlight beauty routines, skincare, and glam content", img: defaultCategoryImage, slug: "beauty" },
+  { id: 5, title: "Fitness & Health", desc: "Create wellness-driven collaborations that inspire action", img: defaultCategoryImage, slug: "fitness" },
+  { id: 6, title: "Lifestyle & Daily Vlogs", desc: "Tell relatable everyday stories that connect with viewers", img: defaultCategoryImage, slug: "lifestyle" },
+  { id: 7, title: "Tech & Gadgets", desc: "Feature the latest devices, tools, and digital experiences", img: defaultCategoryImage, slug: "tech" },
+  { id: 8, title: "Education / Edutainment", desc: "Turn learning moments into engaging creator content", img: defaultCategoryImage, slug: "education" },
+  { id: 9, title: "Travel & Tourism", desc: "Promote destinations, stays, and memorable trips", img: defaultCategoryImage, slug: "travel" },
+  { id: 10, title: "Couples & Relationships", desc: "Create content around shared moments and connection", img: defaultCategoryImage, slug: "couples" },
+  { id: 11, title: "Family & Parenting", desc: "Reach family-first audiences with trust-led stories", img: defaultCategoryImage, slug: "family" },
+  { id: 12, title: "Music & Singing", desc: "Collaborate with performers, vocalists, and music creators", img: defaultCategoryImage, slug: "music" },
+  { id: 13, title: "Islamic & Cultural", desc: "Share faith-aware and culturally rooted campaigns", img: defaultCategoryImage, slug: "islamic" },
+  { id: 14, title: "Gaming", desc: "Activate gaming communities with high-engagement content", img: defaultCategoryImage, slug: "gaming" },
+  { id: 15, title: "Product Reviews & Unboxing", desc: "Drive purchase intent with trusted first impressions", img: defaultCategoryImage, slug: "reviews" },
+  { id: 16, title: "Business & Entrepreneurship", desc: "Reach ambitious founders, operators, and professionals", img: defaultCategoryImage, slug: "business" },
+  { id: 17, title: "Finance & Investing", desc: "Connect with audiences focused on money and growth", img: defaultCategoryImage, slug: "finance" },
+  { id: 18, title: "Motivation & Self Development", desc: "Inspire action through mindset and personal growth content", img: defaultCategoryImage, slug: "motivation" },
+  { id: 19, title: "News & Current Affairs", desc: "Amplify timely, relevant commentary and updates", img: defaultCategoryImage, slug: "news" },
+  { id: 20, title: "Automobile & Cars", desc: "Showcase vehicles, accessories, and automotive lifestyle", img: defaultCategoryImage, slug: "automobile" },
+];
+
   export const projects = [
     {
       id: 1,
-      img: "https://images.pexels.com/photos/1462935/pexels-photo-1462935.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      pp: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      cat: "Web and Mobile Design",
-      username: "Anna Bell",
+          img: "https://images.pexels.com/photos/6896221/pexels-photo-6896221.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          pp: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          cat: "Comedy & Entertainment",
+          username: "Areeba Khan",
     },
     {
       id: 2,
-      img: "https://images.pexels.com/photos/270408/pexels-photo-270408.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      pp: "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      cat: "Logo Design",
-      username: "Morton Green",
+          img: "https://images.pexels.com/photos/262978/pexels-photo-262978.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          pp: "https://images.pexels.com/photos/3775534/pexels-photo-3775534.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          cat: "Food & Restaurant Reviews",
+          username: "Chef Hamza",
     },
     {
       id: 3,
-      img: "https://images.pexels.com/photos/4144923/pexels-photo-4144923.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      pp: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      cat: "Animated GIFs",
-      username: "Emmett Potter",
+          img: "https://images.pexels.com/photos/7679720/pexels-photo-7679720.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          pp: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          cat: "Fashion",
+          username: "Zoya Ali",
     },
     {
       id: 4,
-      img: "https://images.pexels.com/photos/4348404/pexels-photo-4348404.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      pp: "https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      cat: "Packaging Design",
-      username: "Freddie Johnston",
+          img: "https://images.pexels.com/photos/2533266/pexels-photo-2533266.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          pp: "https://images.pexels.com/photos/1858175/pexels-photo-1858175.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          cat: "Beauty & Makeup",
+          username: "Minal Studio",
     },
     {
       id: 5,
-      img: "https://images.pexels.com/photos/4458554/pexels-photo-4458554.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      pp: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      cat: "Social Media Design",
-      username: "Audrey Richards",
+          img: "https://images.pexels.com/photos/6550851/pexels-photo-6550851.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          pp: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          cat: "Fitness & Health",
+          username: "Coach Salman",
     },
     {
       id: 6,
-      img: "https://images.pexels.com/photos/4465831/pexels-photo-4465831.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      pp: "https://images.pexels.com/photos/1036627/pexels-photo-1036627.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      cat: "Illustration",
-      username: "Dalton Hudson",
+          img: "https://images.pexels.com/photos/1092730/pexels-photo-1092730.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          pp: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          cat: "Travel & Tourism",
+          username: "Taimoor Travels",
     },
     {
       id: 7,
-      img: "https://images.pexels.com/photos/6077368/pexels-photo-6077368.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      pp: "https://images.pexels.com/photos/1858175/pexels-photo-1858175.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      cat: "Book Design",
-      username: "Hannah Dougherty",
+          img: "https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          pp: "https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          cat: "Tech & Gadgets",
+          username: "Bilal Tech Reviews",
     },
     {
       id: 8,
-      img: "https://images.pexels.com/photos/4065876/pexels-photo-4065876.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      pp: "https://images.pexels.com/photos/1680175/pexels-photo-1680175.jpeg?auto=compress&cs=tinysrgb&w=1600",
-      cat: "Digital Marketing",
-      username: "Ward Brewer",
+          img: "https://images.pexels.com/photos/9072216/pexels-photo-9072216.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          pp: "https://images.pexels.com/photos/3771839/pexels-photo-3771839.jpeg?auto=compress&cs=tinysrgb&w=1600",
+          cat: "Product Reviews & Unboxing",
+          username: "Hira Unboxes",
     },
   ];
   

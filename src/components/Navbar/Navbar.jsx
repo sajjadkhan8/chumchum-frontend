@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { GrFormNext, GrFormPrevious } from "react-icons/gr";
 import { getApiErrorMessage, getCurrentUser, logoutUser } from "../../api";
+import { cards } from "../../data";
 import { useRecoilState } from "recoil";
 import { userState } from "../../atoms";
 import { Loader } from "..";
@@ -122,20 +123,15 @@ const Navbar = () => {
     document.documentElement.lang = language === "ur" ? "ur" : "en";
   }, [language]);
 
-  const menuLinks = [
-    { path: "/packages?category=design", name: t.categories.design },
-    { path: "/packages?category=video", name: t.categories.video },
-    { path: "/packages?category=books", name: t.categories.books },
-    { path: "/packages?category=ai", name: t.categories.ai },
-    { path: "/packages?category=social", name: t.categories.social },
-    { path: "/packages?category=voice", name: t.categories.voice },
-    { path: "/packages?category=wordpress", name: t.categories.wordpress },
-  ];
+  const menuLinks = cards.map((category) => ({
+    path: `/packages?category=${category.slug}`,
+    name: category.title,
+  }));
 
   const settings = {
     infinite: true,
     slidesToShow: 6,
-    slidesToScroll: 2,
+    slidesToScroll: 3,
     prevArrow: <GrFormPrevious />,
     nextArrow: <GrFormNext />,
     swipeToSlide: true,

@@ -3,6 +3,7 @@ import { PackageCard, Loader } from '../../components';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
 import { getApiErrorMessage, getPackages } from '../../api';
+import { cards } from '../../data';
 import toast from 'react-hot-toast';
 import './Packages.scss';
 
@@ -16,6 +17,7 @@ const Packages = () => {
   const searchParams = new URLSearchParams(search);
   const selectedCategory = searchParams.get('category') || 'all';
   const searchKeyword = searchParams.get('search') || '';
+  const matchedCategory = cards.find((category) => category.slug === currentCategory);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -60,7 +62,7 @@ const Packages = () => {
     refetch();
   };
 
-  let heading = currentCategory[0]?.toUpperCase() + currentCategory.slice(1);
+  let heading = matchedCategory?.title || (currentCategory[0]?.toUpperCase() + currentCategory.slice(1));
   if (currentCategory === 'all') {
     heading = 'Explore Packages';
   }
