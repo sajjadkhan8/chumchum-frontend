@@ -23,8 +23,8 @@ const Home = () => {
       </Slide>
       <div className="features">
         <div className="container">
-          <div className="item">
-            <h1>A whole world of freelance talent at your fingertips</h1>
+           <div className="item">
+            <h1>A whole world of influencer talent at your fingertips</h1>
             <div className="title">
               <img src="./media/check.png" alt="check" />
               <h6>The best for every budget</h6>
@@ -34,8 +34,8 @@ const Home = () => {
               <img src="./media/check.png" alt="check" />
               <h6>Quality work done quickly</h6>
             </div>
-            <p>Find the right freelancer to begin working on your project within minutes.</p>
-            <div className="title">
+             <p>Find the right influencer to begin working on your project within minutes.</p>
+             <div className="title">
               <img src="./media/check.png" alt="check" />
               <h6>Protected payments, every time</h6>
             </div>
@@ -61,7 +61,7 @@ const Home = () => {
             <p>Upgrade to a curated experience packed with tools and benefits, dedicated to businesses</p>
             <div className="title">
               <img src="./media/check.png" alt="check" />
-              <h6>Connect to freelancers with proven business experience</h6>
+              <h6>Connect to influencers with proven business experience</h6>
             </div>
             <div className="title">
               <img src="./media/check.png" alt="check" />
