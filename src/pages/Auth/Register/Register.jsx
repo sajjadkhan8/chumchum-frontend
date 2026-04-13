@@ -2,6 +2,7 @@ import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getApiErrorMessage, registerUser, uploadImage } from '../../../api';
+import { pakistanCities } from '../../../utils';
 import './Register.scss'
 
 const Register = () => {
@@ -12,6 +13,7 @@ const Register = () => {
     username: "",
     email: "",
     password: "",
+    city: '',
     phone: '',
     description: '',
     isSeller: false,
@@ -38,7 +40,11 @@ const Register = () => {
     setLoading(true);
     try {
       const uploadedImage = await uploadImage(image);
-      await registerUser({ ...formInput, image: uploadedImage?.url || '' });
+      await registerUser({
+        ...formInput,
+        country: 'Pakistan',
+        image: uploadedImage?.url || '',
+      });
       toast.success('Registration successful!');
       setLoading(false);
       navigate('/login');
@@ -100,6 +106,15 @@ const Register = () => {
             placeholder="+1 1234 567 890"
             onChange={handleChange}
           />
+          <label htmlFor="city">City</label>
+          <select name="city" id="city" value={formInput.city} onChange={handleChange}>
+            <option value="">Select your city</option>
+            {pakistanCities.map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            ))}
+          </select>
           <label htmlFor="">Description</label>
           <textarea
             placeholder="A short description of yourself"
