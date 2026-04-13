@@ -39,8 +39,8 @@ const Footer = () => {
             <h1>Support</h1>
             <span>Help & Support</span>
             <span>Trust & Safety</span>
-            <span>Selling on Fiverr</span>
-            <span>Buying on Fiverr</span>
+            <span>Selling on ChumChum</span>
+            <span>Buying on ChumChum</span>
           </div>
           <div className="item">
             <h1>Community</h1>
@@ -53,16 +53,16 @@ const Footer = () => {
             <span>Invite a Friend</span>
           </div>
           <div className="item">
-            <h1>More From Fiverr</h1>
-            <span>Fiverr Business</span>
-            <span>Fiverr Pro</span>
-            <span>Fiverr Studios</span>
-            <span>Fiverr Logo Maker</span>
-            <span>Fiverr Guild</span>
+            <h1>More From ChumChum</h1>
+            <span>ChumChum Business</span>
+            <span>ChumChum Pro</span>
+            <span>ChumChum Studios</span>
+            <span>ChumChum Logo Maker</span>
+            <span>ChumChum Guild</span>
             <span>Get Inspired</span>
-            <span>Fiverr Select</span>
+            <span>ChumChum Select</span>
             <span>Clear Voice</span>
-            <span>Fiverr Workspace</span>
+            <span>ChumChum Workspace</span>
             <span>Learn</span>
             <span>Working Not Working</span>
           </div>
@@ -70,8 +70,8 @@ const Footer = () => {
         <hr />
         <div className="bottom">
           <div className="left">
-            <h2>fiverr</h2>
-            <span>© Fiverr International Ltd. {new Date().getFullYear()}</span>
+            <h2>chumchum</h2>
+            <span>© ChumChum International Ltd. {new Date().getFullYear()}</span>
           </div>
           <div className="right">
             <div className="social">

@@ -100,14 +100,14 @@ const Navbar = () => {
       <div className="container">
         <div className="logo">
           <Link to="/" className="link">
-            <span className="text">fiverr</span>
+            <span className="text">chumchum</span>
           </Link>
           <span className="dot">.</span>
         </div>
 
         <div className="links">
           <div className="menu-links">
-            <span>Fiverr Business</span>
+            <span>ChumChum Business</span>
             <span>Explore</span>
             <span>English</span>
             {!user?.isSeller && <span>Become a Seller</span>}
