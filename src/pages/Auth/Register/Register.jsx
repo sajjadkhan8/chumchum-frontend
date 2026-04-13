@@ -1,7 +1,9 @@
 import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { getApiErrorMessage, registerUser, uploadImage, createCreatorProfile, createBrandProfile } from '../../../api';
+import { getApiErrorMessage, registerUser, uploadImage, createCreatorProfile, createBrandProfile, loginUser } from '../../../api';
+import { useSetRecoilState } from 'recoil';
+import { userState } from '../../../atoms';
 import { pakistanCities } from '../../../utils';
 import './Register.scss'
 
@@ -17,9 +19,26 @@ const normalizeRoleParam = (value) => {
   return '';
 };
 
+const extractRegisteredUserId = (registerResponse) => {
+  return (
+    registerResponse?.user?.id ||
+    registerResponse?.id ||
+    registerResponse?.userId ||
+    registerResponse?.data?.user?.id ||
+    registerResponse?.data?.id ||
+    registerResponse?.data?.userId ||
+    null
+  );
+};
+
+const extractAuthenticatedUser = (loginResponse) => {
+  return loginResponse?.user || loginResponse?.data?.user || loginResponse?.data || null;
+};
+
 const Register = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const setUser = useSetRecoilState(userState);
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState(''); // 'CREATOR' or 'BRAND'
@@ -105,22 +124,44 @@ const Register = () => {
         image: uploadedImage?.url || '',
       };
 
-      const registeredUser = await registerUser(userData);
+      const registerResponse = await registerUser(userData);
+      const registeredUserId = extractRegisteredUserId(registerResponse);
+
+      if (!registeredUserId) {
+        throw new Error('Registration succeeded but user id was not returned by backend');
+      }
 
       // Create role-specific profile
       if (role === 'CREATOR') {
         await createCreatorProfile({
-          user_id: registeredUser.user.id,
+          user_id: registeredUserId,
           ...creatorData,
         });
       } else if (role === 'BRAND') {
         await createBrandProfile({
-          user_id: registeredUser.user.id,
+          user_id: registeredUserId,
           ...brandData,
         });
       }
 
-      toast.success('Registration successful!');
+      // Auto-login after successful registration
+      const loginResponse = await loginUser({
+        username: formInput.username,
+        password: formInput.password,
+      });
+
+      const authenticatedUser = extractAuthenticatedUser(loginResponse);
+
+      if (authenticatedUser?.id) {
+        localStorage.setItem('user', JSON.stringify(authenticatedUser));
+        setUser(authenticatedUser);
+        toast.success('Registration successful! Welcome to ChumChum!');
+        setLoading(false);
+        navigate('/');
+        return;
+      }
+
+      toast.success('Registration successful! Please sign in to continue.');
       setLoading(false);
       navigate('/login');
     }
