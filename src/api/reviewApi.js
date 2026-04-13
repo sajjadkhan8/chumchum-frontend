@@ -1,15 +1,19 @@
 import { apiRequest } from "./client";
 
-export const getReviewsByGigId = (gigId) =>
+export const getReviewsByPackageId = (packageId) =>
   apiRequest({
-    url: `/api/gigs/${gigId}/reviews`,
+    url: `/api/packages/${packageId}/reviews`,
     method: "get",
   });
 
-export const createReview = ({ gigID, ...payload }) =>
-  apiRequest({
-    url: `/api/gigs/${gigID}/reviews`,
+export const createReview = ({ packageId, gigID, ...payload }) => {
+  const resolvedPackageId = packageId || gigID;
+
+  return apiRequest({
+    url: `/api/packages/${resolvedPackageId}/reviews`,
     method: "post",
     data: payload,
   });
+};
 
+export const getReviewsByGigId = getReviewsByPackageId;

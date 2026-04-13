@@ -123,13 +123,13 @@ const Navbar = () => {
   }, [language]);
 
   const menuLinks = [
-    { path: "/gigs?category=design", name: t.categories.design },
-    { path: "/gigs?category=video", name: t.categories.video },
-    { path: "/gigs?category=books", name: t.categories.books },
-    { path: "/gigs?category=ai", name: t.categories.ai },
-    { path: "/gigs?category=social", name: t.categories.social },
-    { path: "/gigs?category=voice", name: t.categories.voice },
-    { path: "/gigs?category=wordpress", name: t.categories.wordpress },
+    { path: "/packages?category=design", name: t.categories.design },
+    { path: "/packages?category=video", name: t.categories.video },
+    { path: "/packages?category=books", name: t.categories.books },
+    { path: "/packages?category=ai", name: t.categories.ai },
+    { path: "/packages?category=social", name: t.categories.social },
+    { path: "/packages?category=voice", name: t.categories.voice },
+    { path: "/packages?category=wordpress", name: t.categories.wordpress },
   ];
 
   const settings = {
@@ -257,10 +257,10 @@ const Navbar = () => {
                        </Link>
                        {user?.role === 'CREATOR' && (
                          <>
-                           <Link className="link" to="/my-gigs">
+                            <Link className="link" to="/my-packages">
                               {t.myServices}
                            </Link>
-                           <Link className="link" to="/organize">
+                            <Link className="link" to="/packages/new">
                               {t.addNewService}
                            </Link>
                          </>

@@ -13,8 +13,14 @@ export {
   updateUser,
 } from "./userApi";
 export { getCurrentUser, loginUser, logoutUser, registerUser } from "./authApi";
-export { createGig, deleteGig, getGigById, getGigs } from "./gigApi";
-export { createReview, getReviewsByGigId } from "./reviewApi";
+export {
+  createPackage,
+  deletePackage,
+  getPackageById,
+  getPackages,
+  normalizePackage,
+} from "./packageApi";
+export { createReview, getReviewsByGigId, getReviewsByPackageId } from "./reviewApi";
 export {
   confirmOrderPayment,
   createPaymentIntent,

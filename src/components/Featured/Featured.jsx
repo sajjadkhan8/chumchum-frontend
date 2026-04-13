@@ -8,7 +8,7 @@ const Featured = () => {
   
   const handleSearch = () => {
     if(search) {
-      navigate(`/gigs?search=${search}`);
+      navigate(`/packages?search=${search}`);
     }
   }
 

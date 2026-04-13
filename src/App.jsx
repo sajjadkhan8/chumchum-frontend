@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
@@ -6,9 +7,9 @@ import { Navbar, PrivateRoute } from "./components";
 import {
   Home,
   Footer,
-  Gig,
-  Gigs,
-  MyGigs,
+  PackageDetails,
+  Packages,
+  MyPackages,
   Add,
   Orders,
   Message,
@@ -27,8 +28,10 @@ import "./App.scss";
 
 const paths = [
   { path: "/", element: <Home /> },
-  { path: "/gig/:_id", element: <Gig /> },
-  { path: "/gigs", element: <Gigs /> },
+  { path: "/package/:packageId", element: <PackageDetails /> },
+  { path: "/gig/:_id", element: <PackageDetails /> },
+  { path: "/packages", element: <Packages /> },
+  { path: "/gigs", element: <Packages /> },
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
   {
@@ -36,6 +39,14 @@ const paths = [
     element: (
       <PrivateRoute>
         <Orders />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/packages/new",
+    element: (
+      <PrivateRoute>
+        <Add />
       </PrivateRoute>
     ),
   },
@@ -48,10 +59,18 @@ const paths = [
     ),
   },
   {
+    path: "/my-packages",
+    element: (
+      <PrivateRoute>
+        <MyPackages />
+      </PrivateRoute>
+    ),
+  },
+  {
     path: "/my-gigs",
     element: (
       <PrivateRoute>
-        <MyGigs />
+        <MyPackages />
       </PrivateRoute>
     ),
   },
@@ -68,6 +87,14 @@ const paths = [
     element: (
       <PrivateRoute>
         <Messages />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/pay/:packageId",
+    element: (
+      <PrivateRoute>
+        <Pay />
       </PrivateRoute>
     ),
   },
@@ -101,21 +128,26 @@ const paths = [
   { path: "*", element: <NotFound /> },
 ];
 
+const Layout = ({ queryClient }) => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Navbar />
+      <Outlet />
+      <Footer />
+    </QueryClientProvider>
+  );
+};
+
+Layout.propTypes = {
+  queryClient: PropTypes.instanceOf(QueryClient).isRequired,
+};
+
 function App() {
   const queryClient = new QueryClient();
-  const Layout = () => {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <Navbar />
-        <Outlet />
-        <Footer />
-      </QueryClientProvider>
-    );
-  };
   const router = createBrowserRouter([
     {
       path: "/",
-      element: <Layout />,
+      element: <Layout queryClient={queryClient} />,
       children: paths.map(({ path, element }) => ({ path, element })),
     },
   ]);

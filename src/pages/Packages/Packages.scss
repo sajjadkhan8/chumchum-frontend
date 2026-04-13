@@ -1,4 +1,4 @@
-.gigs {
+.packages {
     display: flex;
     justify-content: center;
 
@@ -79,6 +79,16 @@
                     cursor: pointer;
                 }
 
+                .sort-toggle {
+                    border: none;
+                    background: transparent;
+                    padding: 0;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                }
+
                 .rightMenu {
                     padding: 20px;
                     background-color: #fff;
@@ -92,8 +102,14 @@
                     gap: 20px;
                     color: #555;
 
-                    span {
+                    button {
                         cursor: pointer;
+                        border: none;
+                        background: transparent;
+                        padding: 0;
+                        color: inherit;
+                        text-align: left;
+                        font: inherit;
                     }
                 }
             }
@@ -115,7 +131,7 @@
                 justify-content: center;
                 align-items: center;
             }
-            
+
             @media screen and (max-width: 600px) {
                 justify-content: center;
             }

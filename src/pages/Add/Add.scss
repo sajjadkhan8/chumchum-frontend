@@ -13,6 +13,11 @@
             margin-bottom: 30px;
         }
 
+        p {
+            color: #666;
+            line-height: 1.6;
+        }
+
         .sections {
             display: flex;
             justify-content: space-between;
@@ -32,6 +37,15 @@
 
                 input, select, textarea {
                     padding: 12px;
+                    border: 1px solid #d9d9d9;
+                    border-radius: 6px;
+                    font-size: 15px;
+
+                    &:focus {
+                        outline: none;
+                        border-color: var(--green-color);
+                        box-shadow: 0 0 0 3px rgba(29, 191, 115, 0.12);
+                    }
                 }
 
                 .images {
@@ -52,6 +66,11 @@
                             cursor: not-allowed;
                         }
                     }
+
+                    @media screen and (max-width: 700px) {
+                        flex-direction: column;
+                        align-items: stretch;
+                    }
                 }
                 
                 button {
@@ -63,6 +82,11 @@
                     font-size: 18px;
                     color: #fff;
                     cursor: pointer;
+                    transition: background-color .2s ease, transform .2s ease;
+
+                    &:hover {
+                        background-color: #18a867;
+                    }
                 }
             }
 
@@ -74,6 +98,14 @@
 
                     input {
                         width: 80%;
+                    }
+
+                    @media screen and (max-width: 600px) {
+                        flex-direction: column;
+
+                        input {
+                            width: 100%;
+                        }
                     }
                 }
 
@@ -93,6 +125,70 @@
                         align-items: center;
                         gap: 20px;
                         border: 1px solid #ccc;
+                    }
+                }
+
+                .tier-section {
+                    margin-top: 10px;
+                    padding: 18px;
+                    border: 1px solid #e5e5e5;
+                    border-radius: 12px;
+                    background: linear-gradient(180deg, rgba(29, 191, 115, 0.05) 0%, #fff 100%);
+
+                    .tier-header {
+                        margin-bottom: 15px;
+
+                        h3 {
+                            margin-bottom: 6px;
+                            color: #333;
+                            font-size: 20px;
+                            font-weight: 600;
+                        }
+
+                        p {
+                            margin: 0;
+                            font-size: 14px;
+                        }
+                    }
+
+                    .tier-grid {
+                        display: grid;
+                        grid-template-columns: repeat(3, minmax(0, 1fr));
+                        gap: 16px;
+
+                        @media screen and (max-width: 1100px) {
+                            grid-template-columns: 1fr;
+                        }
+                    }
+
+                    .tier-card {
+                        padding: 16px;
+                        border-radius: 10px;
+                        border: 1px solid #dfe9e3;
+                        background-color: #fff;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+
+                        h4 {
+                            margin: 0 0 4px;
+                            color: #1f4f38;
+                            font-size: 18px;
+                        }
+
+                        .tier-form {
+                            margin-top: 5px;
+                        }
+
+                        .compact {
+                            gap: 10px;
+
+                            button {
+                                min-height: 36px;
+                                white-space: normal;
+                                line-height: 1.3;
+                            }
+                        }
                     }
                 }
             }

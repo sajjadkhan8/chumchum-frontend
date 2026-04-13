@@ -6,11 +6,15 @@ export const getOrders = () =>
     method: "get",
   });
 
-export const createPaymentIntent = (gigId) =>
+export const createPaymentIntent = (packageId) =>
   apiRequest({
     url: "/api/orders/payment-intents",
     method: "post",
-    data: { gigId },
+    data: {
+      packageId,
+      package_id: packageId,
+      gigId: packageId,
+    },
   });
 
 export const confirmOrderPayment = (paymentIntent) =>
@@ -22,4 +26,3 @@ export const confirmOrderPayment = (paymentIntent) =>
       payment_intent: paymentIntent,
     },
   });
-

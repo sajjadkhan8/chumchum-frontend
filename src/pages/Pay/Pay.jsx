@@ -9,21 +9,22 @@ import './Pay.scss';
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const Pay = () => {
-  const { _id } = useParams();
+  const { packageId, _id } = useParams();
+  const resolvedPackageId = packageId || _id;
   const [clientSecret, setClientSecret] = useState('');
-  
+
   useEffect(() => {
-    ( async () => {
+    (async () => {
       try {
-        const data = await createPaymentIntent(_id);
+        const data = await createPaymentIntent(resolvedPackageId);
         setClientSecret(data.clientSecret);
       }
       catch(error) {
         console.log(getApiErrorMessage(error));
       }
     })();
-    window.scrollTo(0, 0)
-  }, []);
+    window.scrollTo(0, 0);
+  }, [resolvedPackageId]);
 
   const appearance = {
     theme: 'stripe',
@@ -43,7 +44,7 @@ const Pay = () => {
         </Elements>
       )}
     </div>
-  )
+  );
 }
 
 export default Pay

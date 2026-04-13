@@ -1,4 +1,4 @@
-.gig {
+.packageDetails {
   width: 90%;
   margin: auto;
   display: flex;
@@ -81,6 +81,23 @@
         font-weight: 300;
         line-height: 25px;
         color: #555;
+      }
+
+      .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+
+        .tag-chip {
+          display: inline-flex;
+          align-items: center;
+          padding: 8px 14px;
+          border-radius: 999px;
+          background-color: rgba(29, 191, 115, 0.1);
+          color: #136f45;
+          font-size: 14px;
+          font-weight: 500;
+        }
       }
 
       .seller {
@@ -235,6 +252,53 @@
 
           img {
             width: 14px;
+          }
+        }
+      }
+
+      .barter-box,
+      .tiers {
+        padding: 14px;
+        border-radius: 10px;
+        background-color: #f8fffb;
+        border: 1px solid rgba(29, 191, 115, 0.16);
+
+        h4 {
+          margin: 0 0 10px;
+          color: #215a3f;
+        }
+
+        p {
+          margin: 0;
+        }
+      }
+
+      .tiers {
+        .tier-item {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 10px 0;
+          border-top: 1px solid rgba(29, 191, 115, 0.12);
+
+          &:first-of-type {
+            border-top: none;
+            padding-top: 0;
+          }
+
+          div {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          }
+
+          strong {
+            color: #333;
+          }
+
+          span {
+            color: #666;
+            font-size: 14px;
           }
         }
       }
