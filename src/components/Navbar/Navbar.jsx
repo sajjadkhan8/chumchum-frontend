@@ -1,5 +1,5 @@
 import Slider from "react-slick";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { GrFormNext, GrFormPrevious } from "react-icons/gr";
 import { getApiErrorMessage, getCurrentUser, logoutUser } from "../../api";
@@ -11,13 +11,71 @@ import "./Navbar.scss";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
+const translations = {
+  en: {
+    explore: "Explore",
+    english: "English",
+    urdu: "Urdu",
+    joinAsBrand: "Join as Brand",
+    joinAsCreator: "Join as Creator",
+    signIn: "Sign in",
+    dashboard: "Dashboard",
+    myServices: "My Services",
+    addNewService: "Add New Service",
+    findCreators: "Find Creators",
+    orders: "Orders",
+    messages: "Messages",
+    logout: "Logout",
+    categories: {
+      design: "Graphics & Design",
+      video: "Video & Animation",
+      books: "Writing & Translation",
+      ai: "AI Services",
+      social: "Digital Marketing",
+      voice: "Music & Audio",
+      wordpress: "Programming & Tech",
+    },
+  },
+  ur: {
+    explore: "ایکسپلور",
+    english: "انگلش",
+    urdu: "اردو",
+    joinAsBrand: "برانڈ کے طور پر شامل ہوں",
+    joinAsCreator: "کریئیٹر کے طور پر شامل ہوں",
+    signIn: "سائن اِن",
+    dashboard: "ڈیش بورڈ",
+    myServices: "میری سروسز",
+    addNewService: "نئی سروس شامل کریں",
+    findCreators: "کریئیٹرز تلاش کریں",
+    orders: "آرڈرز",
+    messages: "میسجز",
+    logout: "لاگ آؤٹ",
+    categories: {
+      design: "گرافکس اور ڈیزائن",
+      video: "ویڈیو اور اینیمیشن",
+      books: "رائٹنگ اور ٹرانسلیشن",
+      ai: "اے آئی سروسز",
+      social: "ڈیجیٹل مارکیٹنگ",
+      voice: "میوزک اور آڈیو",
+      wordpress: "پروگرامنگ اور ٹیک",
+    },
+  },
+};
+
 const Navbar = () => {
   const [showMenu, setShowMenu] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [language, setLanguage] = useState(() => {
+    const storedLanguage = localStorage.getItem("appLanguage");
+    return storedLanguage === "ur" ? "ur" : "en";
+  });
+  const languageMenuRef = useRef(null);
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useRecoilState(userState);
   const [isLoading, setIsLoading] = useState(false);
+  const t = translations[language];
 
   useEffect(() => {
     (async () => {
@@ -45,14 +103,33 @@ const Navbar = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (languageMenuRef.current && !languageMenuRef.current.contains(event.target)) {
+        setShowLanguageMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("appLanguage", language);
+    document.documentElement.lang = language === "ur" ? "ur" : "en";
+  }, [language]);
+
   const menuLinks = [
-    { path: "/gigs?category=design", name: "Graphics & Design" },
-    { path: "/gigs?category=video", name: "Video & Animation" },
-    { path: "/gigs?category=books", name: "Writing & Translation" },
-    { path: "/gigs?category=ai", name: "AI Services" },
-    { path: "/gigs?category=social", name: "Digital Marketing" },
-    { path: "/gigs?category=voice", name: "Music & Audio" },
-    { path: "/gigs?category=wordpress", name: "Programming & Tech" },
+    { path: "/gigs?category=design", name: t.categories.design },
+    { path: "/gigs?category=video", name: t.categories.video },
+    { path: "/gigs?category=books", name: t.categories.books },
+    { path: "/gigs?category=ai", name: t.categories.ai },
+    { path: "/gigs?category=social", name: t.categories.social },
+    { path: "/gigs?category=voice", name: t.categories.voice },
+    { path: "/gigs?category=wordpress", name: t.categories.wordpress },
   ];
 
   const settings = {
@@ -95,6 +172,12 @@ const Navbar = () => {
     }
   };
 
+  const handleLanguageSelect = (nextLanguage) => {
+    if (nextLanguage !== "en" && nextLanguage !== "ur") return;
+    setLanguage(nextLanguage);
+    setShowLanguageMenu(false);
+  };
+
   return (
     <nav className={showMenu || pathname !== "/" ? "navbar active" : "navbar"}>
       <div className="container">
@@ -107,14 +190,42 @@ const Navbar = () => {
 
         <div className="links">
           <div className="menu-links">
-            <span>Explore</span>
-            <span>English</span>
+            <span>{t.explore}</span>
+            <div className="language-switcher" ref={languageMenuRef}>
+              <button
+                type="button"
+                className="language-toggle"
+                onClick={() => setShowLanguageMenu((prev) => !prev)}
+                aria-haspopup="menu"
+                aria-expanded={showLanguageMenu}
+              >
+                {language === "ur" ? "اردو" : "English"}
+              </button>
+              {showLanguageMenu && (
+                <div className="language-menu" role="menu">
+                  <button
+                    type="button"
+                    className={`language-option ${language === "en" ? "active" : ""}`}
+                    onClick={() => handleLanguageSelect("en")}
+                  >
+                    English
+                  </button>
+                  <button
+                    type="button"
+                    className={`language-option ${language === "ur" ? "active" : ""}`}
+                    onClick={() => handleLanguageSelect("ur")}
+                  >
+                    اردو
+                  </button>
+                </div>
+              )}
+            </div>
             <Link to="/register?role=brand" className="link">
-              <span>Join as Brand</span>
+              <span>{t.joinAsBrand}</span>
             </Link>
             {user?.role !== 'CREATOR' && (
               <Link to="/register?role=creator" className="link">
-                <span>Join as Creator</span>
+                <span>{t.joinAsCreator}</span>
               </Link>
             )}
           </div>
@@ -123,19 +234,12 @@ const Navbar = () => {
           ) : (
             <>
               {!user && (
-                <span>
-                  <Link to="/login" className="link">
-                    Sign in
-                  </Link>
-                </span>
-              )}
-              {!user && (
                 <button
+                  type="button"
                   className={showMenu || pathname !== "/" ? "join-active" : ""}
+                  onClick={() => navigate("/login")}
                 >
-                  <Link to="/register" className="link">
-                    Join
-                  </Link>
+                  {t.signIn}
                 </button>
               )}
               {user && (
@@ -149,31 +253,31 @@ const Navbar = () => {
                    {showPanel && (
                      <div className="options">
                        <Link className="link" to="/dashboard">
-                         Dashboard
+                          {t.dashboard}
                        </Link>
                        {user?.role === 'CREATOR' && (
                          <>
                            <Link className="link" to="/my-gigs">
-                             My Services
+                              {t.myServices}
                            </Link>
                            <Link className="link" to="/organize">
-                             Add New Service
+                              {t.addNewService}
                            </Link>
                          </>
                        )}
                        {user?.role === 'BRAND' && (
                          <Link className="link" to="/creators">
-                           Find Creators
+                            {t.findCreators}
                          </Link>
                        )}
                        <Link className="link" to="/orders">
-                         Orders
+                          {t.orders}
                        </Link>
                        <Link className="link" to="/messages">
-                         Messages
+                          {t.messages}
                        </Link>
                        <Link className="link" to="/" onClick={handleLogout}>
-                         Logout
+                          {t.logout}
                        </Link>
                      </div>
                    )}
