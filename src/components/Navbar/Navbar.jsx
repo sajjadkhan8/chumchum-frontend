@@ -100,17 +100,17 @@ const Navbar = () => {
       <div className="container">
         <div className="logo">
           <Link to="/" className="link">
-            <span className="text">chumchum</span>
+            <span className="text">ChumChum</span>
           </Link>
           <span className="dot">.</span>
         </div>
 
         <div className="links">
           <div className="menu-links">
-            <span>ChumChum Business</span>
+            <span>For Brands</span>
             <span>Explore</span>
             <span>English</span>
-            {!user?.isSeller && <span>Become a Seller</span>}
+            {user?.role !== 'CREATOR' && <span>Become a Creator</span>}
           </div>
           {isLoading ? (
             <Loader size={35} />
