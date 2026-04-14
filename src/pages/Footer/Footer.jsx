@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
+import PropTypes from "prop-types";
 import './Footer.scss';
 
-const Footer = () => {
+const Footer = ({ hideWidgets = false }) => {
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -10,64 +11,68 @@ const Footer = () => {
   return (
     <div className='footer'>
       <div className="container">
-        <div className="top">
-          <div className="item">
-            <h1>Categories</h1>
-            <span>Graphic & Design</span>
-            <span>Digital Marketing</span>
-            <span>Writing & Translation</span>
-            <span>Video & Animation</span>
-            <span>Music & Audio</span>
-            <span>Programming & Tech</span>
-            <span>Data</span>
-            <span>Business</span>
-            <span>Lifestyle</span>
-            <span>Photography</span>
-            <span>Sitemap</span>
-          </div>
-          <div className="item">
-            <h1>About</h1>
-            <span>Careers</span>
-            <span>Press & News</span>
-            <span>Partnership</span>
-            <span>Privacy Policy</span>
-            <span>Terms of Service</span>
-            <span>Intellectual Property Claims</span>
-            <span>Investor Relations</span>
-          </div>
-          <div className="item">
-            <h1>Support</h1>
-            <span>Help & Support</span>
-            <span>Trust & Safety</span>
-            <span>Selling on ChumChum</span>
-            <span>Buying on ChumChum</span>
-          </div>
-          <div className="item">
-            <h1>Community</h1>
-            <span>Events</span>
-            <span>Blog</span>
-            <span>Forum</span>
-            <span>Community Standards</span>
-            <span>Podcast</span>
-            <span>Affiliats</span>
-            <span>Invite a Friend</span>
-          </div>
-          <div className="item">
-            <h1>More From ChumChum</h1>
-            <span>ChumChum Business</span>
-            <span>ChumChum Pro</span>
-            <span>ChumChum Studios</span>
-            <span>ChumChum Logo Maker</span>
-            <span>ChumChum Guild</span>
-            <span>Get Inspired</span>
-            <span>ChumChum Select</span>
-            <span>Clear Voice</span>
-            <span>ChumChum Workspace</span>
-            <span>Learn</span>
-            <span>Working Not Working</span>
-          </div>
-        </div>
-        <hr />
+        {!hideWidgets && (
+          <>
+            <div className="top">
+              <div className="item">
+                <h1>Categories</h1>
+                <span>Graphic & Design</span>
+                <span>Digital Marketing</span>
+                <span>Writing & Translation</span>
+                <span>Video & Animation</span>
+                <span>Music & Audio</span>
+                <span>Programming & Tech</span>
+                <span>Data</span>
+                <span>Business</span>
+                <span>Lifestyle</span>
+                <span>Photography</span>
+                <span>Sitemap</span>
+              </div>
+              <div className="item">
+                <h1>About</h1>
+                <span>Careers</span>
+                <span>Press & News</span>
+                <span>Partnership</span>
+                <span>Privacy Policy</span>
+                <span>Terms of Service</span>
+                <span>Intellectual Property Claims</span>
+                <span>Investor Relations</span>
+              </div>
+              <div className="item">
+                <h1>Support</h1>
+                <span>Help & Support</span>
+                <span>Trust & Safety</span>
+                <span>Selling on ChumChum</span>
+                <span>Buying on ChumChum</span>
+              </div>
+              <div className="item">
+                <h1>Community</h1>
+                <span>Events</span>
+                <span>Blog</span>
+                <span>Forum</span>
+                <span>Community Standards</span>
+                <span>Podcast</span>
+                <span>Affiliats</span>
+                <span>Invite a Friend</span>
+              </div>
+              <div className="item">
+                <h1>More From ChumChum</h1>
+                <span>ChumChum Business</span>
+                <span>ChumChum Pro</span>
+                <span>ChumChum Studios</span>
+                <span>ChumChum Logo Maker</span>
+                <span>ChumChum Guild</span>
+                <span>Get Inspired</span>
+                <span>ChumChum Select</span>
+                <span>Clear Voice</span>
+                <span>ChumChum Workspace</span>
+                <span>Learn</span>
+                <span>Working Not Working</span>
+              </div>
+            </div>
+            <hr />
+          </>
+        )}
         <div className="bottom">
           <div className="left">
             <h2>chumchum</h2>
@@ -99,5 +104,9 @@ const Footer = () => {
     </div>
   )
 }
+
+Footer.propTypes = {
+  hideWidgets: PropTypes.bool,
+};
 
 export default Footer

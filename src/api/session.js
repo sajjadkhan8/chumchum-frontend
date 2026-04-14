@@ -74,3 +74,7 @@ export const getDashboardPathByRole = (role) => {
   return "/brand/dashboard";
 };
 
+export const isDashboardRoute = (pathname = "") => {
+  if (!pathname) return false;
+  return pathname === "/dashboard" || pathname.endsWith("/dashboard") || pathname.includes("/dashboard/");
+};

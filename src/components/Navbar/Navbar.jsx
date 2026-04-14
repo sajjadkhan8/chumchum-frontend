@@ -6,7 +6,7 @@ import { clearAuthSession, getApiErrorMessage, getCurrentUser, logoutUser, persi
 import { cards } from "../../data";
 import { useRecoilState } from "recoil";
 import { userState } from "../../atoms";
-import { getDashboardPathByRole } from "../../api/session";
+import { getDashboardPathByRole, isDashboardRoute } from "../../api/session";
 import { Loader } from "..";
 import "./Navbar.scss";
 
@@ -73,11 +73,15 @@ const Navbar = () => {
     return storedLanguage === "ur" ? "ur" : "en";
   });
   const languageMenuRef = useRef(null);
+  const userMenuRef = useRef(null);
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useRecoilState(userState);
   const [isLoading, setIsLoading] = useState(false);
   const t = translations[language];
+  const isAuthenticated = Boolean(user);
+  const logoDestination = isAuthenticated ? getDashboardPathByRole(user?.role) : "/";
+  const shouldHideDashboardCategoryMenu = isAuthenticated && isDashboardRoute(pathname);
 
   useEffect(() => {
     (async () => {
@@ -112,6 +116,10 @@ const Navbar = () => {
       if (languageMenuRef.current && !languageMenuRef.current.contains(event.target)) {
         setShowLanguageMenu(false);
       }
+
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setShowPanel(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -120,6 +128,10 @@ const Navbar = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    setShowPanel(false);
+  }, [pathname]);
 
   useEffect(() => {
     localStorage.setItem("appLanguage", language);
@@ -165,6 +177,7 @@ const Navbar = () => {
       await logoutUser();
       clearAuthSession();
       setUser(null);
+      setShowPanel(false);
       navigate("/");
     } catch (error) {
       console.log(getApiErrorMessage(error));
@@ -181,7 +194,7 @@ const Navbar = () => {
     <nav className={showMenu || pathname !== "/" ? "navbar active" : "navbar"}>
       <div className="container">
         <div className="logo">
-          <Link to="/" className="link">
+          <Link to={logoDestination} className="link">
             <span className="text">ChumChum</span>
           </Link>
           <span className="dot">.</span>
@@ -219,7 +232,7 @@ const Navbar = () => {
                 </div>
               )}
             </div>
-            {!user && (
+            {!user && !isLoading && (
               <>
                 <Link to="/register?role=brand" className="link">
                   <span>{t.joinAsBrand}</span>
@@ -243,56 +256,32 @@ const Navbar = () => {
                   {t.signIn}
                 </button>
               )}
-              {user && (
-                <button
-                  className="user"
-                  onClick={() => setShowPanel(!showPanel)}
-                  aria-label="Toggle user menu"
-                >
-                  <img src={user.image || "/media/noavatar.png"} alt={user?.username} />
-                  <span>{user?.username}</span>
-                   {showPanel && (
-                     <div className="options">
-                        <Link className="link" to={getDashboardPathByRole(user?.role)}>
-                          {t.dashboard}
-                        </Link>
-                         {user?.role === "CREATOR" && (
-                         <>
-                            <Link className="link" to="/my-packages">
-                              {t.myServices}
-                           </Link>
-                            <Link className="link" to="/packages/new">
-                              {t.addNewService}
-                           </Link>
-                         </>
-                       )}
-                         {user?.role === "BRAND" && (
-                         <Link className="link" to="/creators">
-                            {t.findCreators}
-                         </Link>
-                       )}
-                         {(user?.role === "CREATOR" || user?.role === "BRAND") && (
-                           <>
-                             <Link className="link" to="/orders">
-                                {t.orders}
-                             </Link>
-                             <Link className="link" to="/messages">
-                                {t.messages}
-                             </Link>
-                           </>
-                         )}
-                       <Link className="link" to="/" onClick={handleLogout}>
-                          {t.logout}
-                       </Link>
-                     </div>
-                   )}
-                </button>
+              {isAuthenticated && (
+                <div className="user" ref={userMenuRef}>
+                  <button
+                    type="button"
+                    className="user-trigger"
+                    onClick={() => setShowPanel((prev) => !prev)}
+                    aria-label="Toggle user menu"
+                    aria-expanded={showPanel}
+                  >
+                    <img src={user.image || "/media/noavatar.png"} alt={user?.username} />
+                    <span>{user?.username}</span>
+                  </button>
+                  {showPanel && (
+                    <div className="options" role="menu">
+                      <button type="button" className="menu-option" onClick={handleLogout}>
+                        {t.logout}
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </>
           )}
         </div>
       </div>
-      {(showMenu || pathname !== "/") && (
+      {!shouldHideDashboardCategoryMenu && (showMenu || pathname !== "/") && (
         <>
           <hr />
           <Slider className="menu" {...settings}>
