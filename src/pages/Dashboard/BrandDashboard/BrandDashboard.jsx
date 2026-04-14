@@ -3,20 +3,17 @@ import { Link } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { userState } from "../../../atoms";
 import { DashboardLayout, MessageList, SkeletonRows, StatCard, Table } from "../../../components";
-import { useConversations, useCreators, useOrders, usePackages } from "../../../hooks/useDashboardApi";
+import { useConversations, useCreators, useOrders } from "../../../hooks/useDashboardApi";
 import useDashboardTab from "../../../hooks/useDashboardTab";
 import "../dashboardPages.scss";
 
 const BrandDashboard = () => {
   const user = useRecoilValue(userState);
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [platformFilter, setPlatformFilter] = useState("");
-  const [priceFilter, setPriceFilter] = useState("");
 
   const { data: creators = [], isLoading: creatorsLoading } = useCreators();
   const { data: orders = [], isLoading: ordersLoading } = useOrders();
   const { data: conversations = [], isLoading: conversationsLoading } = useConversations();
-  const { data: packages = [] } = usePackages(["packages", "brand-explore"]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -35,17 +32,7 @@ const BrandDashboard = () => {
   const creatorOptions = [...new Set(creators.map((item) => item.category).filter(Boolean))];
   const filteredCreators = creators.filter((creator) => {
     const matchedCategory = !categoryFilter || creator.category === categoryFilter;
-    if (!matchedCategory) return false;
-
-    const creatorPackages = packages.filter((pkg) => pkg.creator_id === creator.id);
-    const matchedPlatform = !platformFilter || creatorPackages.some((pkg) => pkg.platform === platformFilter);
-    if (!matchedPlatform) return false;
-
-    const matchedPrice =
-      !priceFilter ||
-      creatorPackages.some((pkg) => Number(pkg.price || 0) <= Number(priceFilter));
-
-    return matchedPrice;
+    return matchedCategory;
   });
 
   const creatorRows = filteredCreators.map((creator) => ({
@@ -131,20 +118,6 @@ const BrandDashboard = () => {
               <option value="">All categories</option>
               {creatorOptions.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
-            <select value={platformFilter} onChange={(event) => setPlatformFilter(event.target.value)}>
-              <option value="">All platforms</option>
-              <option value="INSTAGRAM">Instagram</option>
-              <option value="TIKTOK">TikTok</option>
-              <option value="YOUTUBE">YouTube</option>
-              <option value="MULTI_PLATFORM">Multi Platform</option>
-            </select>
-            <input
-              type="number"
-              min="0"
-              placeholder="Max price (PKR)"
-              value={priceFilter}
-              onChange={(event) => setPriceFilter(event.target.value)}
-            />
           </div>
 
           {creatorsLoading ? (

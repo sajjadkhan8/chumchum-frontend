@@ -7,6 +7,7 @@ import { cards } from '../../data';
 import { createPackage, getApiErrorMessage, getCreatorProfile, uploadImage } from '../../api';
 import { useRecoilValue } from 'recoil';
 import { userState } from '../../atoms';
+import TiersModal from './TiersModal';
 import './Add.scss';
 
 const PLATFORM_OPTIONS = [
@@ -41,6 +42,7 @@ const Add = () => {
   const [assetsUploaded, setAssetsUploaded] = useState(false);
   const [deliverableInput, setDeliverableInput] = useState('');
   const [tagInput, setTagInput] = useState('');
+  const [showTiersModal, setShowTiersModal] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -123,31 +125,6 @@ const Add = () => {
     setTagInput('');
   };
 
-  const handleTierChange = (index, event) => {
-    const { name, value } = event.target;
-    dispatch({
-      type: 'UPDATE_TIER',
-      payload: { index, name, value },
-    });
-  };
-
-  const handleTierDeliverableSubmit = (index, event) => {
-    event.preventDefault();
-    const deliverable = event.target.elements[`tier-deliverable-${index}`]?.value.trim();
-
-    if (!deliverable) return;
-
-    if (state.tiers[index].deliverables.includes(deliverable)) {
-      toast.error('This tier deliverable has already been added.');
-      return;
-    }
-
-    dispatch({
-      type: 'ADD_TIER_DELIVERABLE',
-      payload: { index, value: deliverable },
-    });
-    event.target.reset();
-  };
 
   const uploadSelectedMedia = async () => {
     if (!coverImage && !packageImages.length) {
@@ -279,8 +256,12 @@ const Add = () => {
   if (uploading) {
     uploadButtonLabel = 'Uploading...';
   } else if (assetsUploaded) {
-    uploadButtonLabel = 'Uploaded';
+    uploadButtonLabel = 'Uploaded ✓';
   }
+
+  const configuredTiersCount = state.tiers.filter(
+    (tier) => Number(tier.price) > 0 || tier.deliverables.length > 0
+  ).length;
 
   return (
     <div className='add'>
@@ -473,76 +454,38 @@ const Add = () => {
             <label htmlFor="package-revisions">Revisions</label>
             <input id="package-revisions" type="number" name='revisions' min='1' value={state.revisions} onChange={handleFormChange} />
 
-            <div className="tier-section">
-              <div className="tier-header">
-                <h3>Optional Package Tiers</h3>
-                <p>Add Basic, Standard, and Premium variants for more flexible pricing.</p>
-              </div>
+            <button
+              type="button"
+              className="add-tiers-trigger"
+              onClick={() => setShowTiersModal(true)}
+            >
+              {configuredTiersCount > 0
+                ? `✏️ Edit Package Tiers (${configuredTiersCount}/3 configured)`
+                : '＋ Add Package Tiers'}
+            </button>
 
-              <div className="tier-grid">
-                {state.tiers.map((tier, index) => (
-                  <div key={tier.name} className="tier-card">
-                    <h4>{formatLabel(tier.name)}</h4>
-
-                    <label htmlFor={`tier-price-${index}`}>Price</label>
-                    <input
-                      id={`tier-price-${index}`}
-                      type="number"
-                      min='0'
-                      name='price'
-                      value={tier.price}
-                      onChange={(event) => handleTierChange(index, event)}
-                    />
-
-                    <label htmlFor={`tier-delivery-days-${index}`}>Delivery Days</label>
-                    <input
-                      id={`tier-delivery-days-${index}`}
-                      type="number"
-                      min='1'
-                      name='delivery_days'
-                      value={tier.delivery_days}
-                      onChange={(event) => handleTierChange(index, event)}
-                    />
-
-                    <label htmlFor={`tier-revisions-${index}`}>Revisions</label>
-                    <input
-                      id={`tier-revisions-${index}`}
-                      type="number"
-                      min='1'
-                      name='revisions'
-                      value={tier.revisions}
-                      onChange={(event) => handleTierChange(index, event)}
-                    />
-
-                    <label htmlFor={`tier-deliverable-${index}`}>Tier Deliverables</label>
-                    <form className='add tier-form' onSubmit={(event) => handleTierDeliverableSubmit(index, event)}>
-                      <input id={`tier-deliverable-${index}`} type="text" name={`tier-deliverable-${index}`} placeholder='e.g. 1 reel + usage rights' />
-                      <button type='submit'>Add</button>
-                    </form>
-
-                    <div className="addedFeatures compact">
-                      {tier.deliverables.map((item) => (
-                        <div key={`${tier.name}-${item}`} className="item">
-                          <button
-                            type="button"
-                            onClick={() => dispatch({
-                              type: 'REMOVE_TIER_DELIVERABLE',
-                              payload: { index, value: item },
-                            })}
-                          >
-                            {item}
-                            <span>X</span>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+            {configuredTiersCount > 0 && (
+              <div className="tiers-summary">
+                {state.tiers.map((tier) => (
+                  (Number(tier.price) > 0 || tier.deliverables.length > 0) && (
+                    <span key={tier.name} className="tier-badge">
+                      {tier.name.charAt(0).toUpperCase() + tier.name.slice(1).toLowerCase()}
+                    </span>
+                  )
                 ))}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
+
+      {showTiersModal && (
+        <TiersModal
+          tiers={state.tiers}
+          dispatch={dispatch}
+          onClose={() => setShowTiersModal(false)}
+        />
+      )}
     </div>
   );
 };

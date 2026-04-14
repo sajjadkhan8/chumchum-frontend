@@ -1,15 +1,23 @@
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Featured, Slide, TrustedBy } from '../../components';
 import { CategoryCard, ProjectCard } from '../../components';
 import { cards, projects } from '../../data';
+import { getStoredUser, getDashboardPathByRole } from '../../api/session';
 
 import './Home.scss';
 
 const Home = () => {
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const user = getStoredUser();
+    if (user) {
+      const dashboardPath = getDashboardPathByRole(user.role);
+      navigate(dashboardPath, { replace: true });
+    }
     window.scrollTo(0, 0)
-  }, []);
+  }, [navigate]);
   return (
     <div className='home'>
       <Featured />
