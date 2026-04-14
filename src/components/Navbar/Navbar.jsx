@@ -81,7 +81,7 @@ const Navbar = () => {
   const t = translations[language];
   const isAuthenticated = Boolean(user);
   const logoDestination = isAuthenticated ? getDashboardPathByRole(user?.role) : "/";
-  const shouldHideDashboardCategoryMenu = isAuthenticated && isDashboardRoute(pathname);
+  const shouldHideDashboardCategoryMenu = isDashboardRoute(pathname);
 
   useEffect(() => {
     (async () => {

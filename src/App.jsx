@@ -2,8 +2,7 @@ import PropTypes from "prop-types";
 import { createBrowserRouter, Outlet, RouterProvider, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
-import { RecoilRoot, useRecoilValue } from "recoil";
-import { userState } from "./atoms";
+import { RecoilRoot } from "recoil";
 import { isDashboardRoute } from "./api/session";
 import { Navbar, PrivateRoute } from "./components";
 import {
@@ -159,8 +158,7 @@ const paths = [
 
 const Layout = ({ queryClient }) => {
   const { pathname } = useLocation();
-  const user = useRecoilValue(userState);
-  const hideFooterWidgets = Boolean(user) && isDashboardRoute(pathname);
+  const hideFooterWidgets = isDashboardRoute(pathname);
 
   return (
     <QueryClientProvider client={queryClient}>

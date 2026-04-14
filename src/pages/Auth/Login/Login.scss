@@ -25,7 +25,45 @@
         padding: 20px;
         border: 1px solid rgb(216, 214, 214);
       }
-  
+
+      .password-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        input {
+          flex: 1;
+          padding-right: 52px;
+        }
+
+        .password-toggle {
+          position: absolute;
+          right: 0;
+          top: 0;
+          bottom: 0;
+          width: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: transparent;
+          border: none;
+          padding: 0;
+          color: #555;
+          cursor: pointer;
+          font-size: 0;
+
+          &:hover {
+            color: #1dbf73;
+          }
+
+          &:focus-visible {
+            outline: 2px solid #1dbf73;
+            outline-offset: -2px;
+            border-radius: 2px;
+          }
+        }
+      }
+
       button {
         border: none;
         padding: 20px;
