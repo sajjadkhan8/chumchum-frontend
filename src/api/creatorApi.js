@@ -4,6 +4,10 @@ const normalizeCreator = (creator = {}) => ({
   ...creator,
   id: creator.id || creator._id || "",
   user: creator.user || creator.user_id || creator.userID || {},
+  tiktok_url: creator.tiktok_url || creator.tiktokUrl || "",
+  instagram_url: creator.instagram_url || creator.instagramUrl || "",
+  youtube_url: creator.youtube_url || creator.youtubeUrl || "",
+  facebook_url: creator.facebook_url || creator.facebookUrl || "",
 });
 
 const normalizeCreatorCollection = (response) => {

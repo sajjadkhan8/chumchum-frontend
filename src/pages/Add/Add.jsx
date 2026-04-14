@@ -7,18 +7,11 @@ import { cards } from '../../data';
 import { createPackage, getApiErrorMessage, getCreatorProfile, uploadImage } from '../../api';
 import { useRecoilValue } from 'recoil';
 import { userState } from '../../atoms';
+import { SUPPORTED_PLATFORMS } from '../../utils/platforms';
 import TiersModal from './TiersModal';
 import './Add.scss';
 
-const PLATFORM_OPTIONS = [
-  'INSTAGRAM',
-  'TIKTOK',
-  'YOUTUBE',
-  'FACEBOOK',
-  'SNAPCHAT',
-  'LINKEDIN',
-  'MULTI_PLATFORM',
-];
+const PLATFORM_OPTIONS = SUPPORTED_PLATFORMS;
 
 const PACKAGE_TYPES = ['ONE_TIME', 'SUBSCRIPTION'];
 const PRICING_TYPES = ['PAID', 'BARTER'];

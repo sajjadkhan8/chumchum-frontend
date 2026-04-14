@@ -4,6 +4,13 @@ import { getCreatorProfile, getApiErrorMessage } from '../../../api';
 import toast from 'react-hot-toast';
 import './CreatorProfile.scss';
 
+const SOCIAL_PLATFORMS = [
+  { key: 'youtube_url', label: 'YouTube' },
+  { key: 'instagram_url', label: 'Instagram' },
+  { key: 'tiktok_url', label: 'TikTok' },
+  { key: 'facebook_url', label: 'Facebook' },
+];
+
 const CreatorProfile = () => {
   const { userId } = useParams();
   const [creator, setCreator] = useState(null);
@@ -83,21 +90,13 @@ const CreatorProfile = () => {
           <div className="social-section">
             <h3>Social Presence</h3>
             <div className="social-links">
-              {creator?.tiktok_url && (
-                <a href={creator.tiktok_url} target="_blank" rel="noopener noreferrer" className="social-link">
-                  TikTok
-                </a>
-              )}
-              {creator?.instagram_url && (
-                <a href={creator.instagram_url} target="_blank" rel="noopener noreferrer" className="social-link">
-                  Instagram
-                </a>
-              )}
-              {creator?.youtube_url && (
-                <a href={creator.youtube_url} target="_blank" rel="noopener noreferrer" className="social-link">
-                  YouTube
-                </a>
-              )}
+                {SOCIAL_PLATFORMS.map(({ key, label }) =>
+                  creator?.[key] ? (
+                    <a key={key} href={creator[key]} target="_blank" rel="noopener noreferrer" className="social-link">
+                      {label}
+                    </a>
+                  ) : null
+                )}
             </div>
           </div>
         </div>

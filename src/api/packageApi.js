@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { normalizeSupportedPlatform } from "../utils/platforms";
 
 const toArray = (value) => {
   if (Array.isArray(value)) {
@@ -111,7 +112,7 @@ export const normalizePackage = (packageSource = {}) => {
     id: packageSource.id || packageSource._id || "",
     title: packageSource.title || "",
     description: packageSource.description || "",
-    platform: packageSource.platform || "INSTAGRAM",
+    platform: normalizeSupportedPlatform(packageSource.platform),
     category: packageSource.category || "",
     type: packageSource.type || "ONE_TIME",
     pricing_type: packageSource.pricing_type || packageSource.pricingType || "PAID",
@@ -165,7 +166,7 @@ const buildPackageFilters = (filters = {}) => {
   const mappedFilters = {
     category: filters.category,
     search: filters.search,
-    platform: filters.platform,
+    platform: filters.platform ? normalizeSupportedPlatform(filters.platform, "") : undefined,
     type: filters.type,
     pricingType: filters.pricingType,
     pricing_type: filters.pricingType,
@@ -215,7 +216,7 @@ const serializePackagePayload = (payload = {}) => {
     creator_id: payload.creator_id,
     title: payload.title,
     description: payload.description,
-    platform: payload.platform,
+    platform: normalizeSupportedPlatform(payload.platform),
     category: payload.category,
     type: payload.type,
     pricing_type: payload.pricing_type,

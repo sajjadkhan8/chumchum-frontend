@@ -48,6 +48,7 @@ const Register = () => {
     tiktok_url: '',
     instagram_url: '',
     youtube_url: '',
+    facebook_url: '',
   });
 
   // Brand specific fields
@@ -122,6 +123,7 @@ const Register = () => {
         registrationPayload.tiktokUrl = creatorData.tiktok_url;
         registrationPayload.instagramUrl = creatorData.instagram_url;
         registrationPayload.youtubeUrl = creatorData.youtube_url;
+        registrationPayload.facebookUrl = creatorData.facebook_url;
       }
       // Add brand-specific fields (camelCase) if registering as brand
       else if (role === 'BRAND') {
@@ -298,6 +300,16 @@ const Register = () => {
                 type="url"
                 placeholder="https://youtube.com/@yourprofile"
                 value={creatorData.youtube_url}
+                onChange={handleCreatorChange}
+              />
+
+              <label htmlFor="facebook_url">Facebook URL</label>
+              <input
+                id="facebook_url"
+                name="facebook_url"
+                type="url"
+                placeholder="https://facebook.com/yourprofile"
+                value={creatorData.facebook_url}
                 onChange={handleCreatorChange}
               />
             </div>
