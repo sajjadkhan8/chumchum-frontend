@@ -5,8 +5,6 @@ import {
   getApiErrorMessage,
   registerUser,
   uploadImage,
-  createCreatorProfile,
-  createBrandProfile,
   loginUser,
   persistAuthSession,
 } from '../../../api';
@@ -26,18 +24,6 @@ const normalizeRoleParam = (value) => {
   }
 
   return '';
-};
-
-const extractRegisteredUserId = (registerResponse) => {
-  return (
-    registerResponse?.user?.id ||
-    registerResponse?.id ||
-    registerResponse?.userId ||
-    registerResponse?.data?.user?.id ||
-    registerResponse?.data?.id ||
-    registerResponse?.data?.userId ||
-    null
-  );
 };
 
 const Register = () => {
@@ -122,52 +108,47 @@ const Register = () => {
     try {
       const uploadedImage = await uploadImage(image);
 
-      // Register user
-      const userData = {
+      // Build unified registration payload with all fields
+      const registrationPayload = {
         ...formInput,
         role: role,
         image: uploadedImage?.url || '',
       };
 
-      const registerResponse = await registerUser(userData);
-      const registeredUserId = extractRegisteredUserId(registerResponse);
-
-      if (!registeredUserId) {
-        throw new Error('Registration succeeded but user id was not returned by backend');
-      }
-
-      // Create role-specific profile
+      // Add creator-specific fields (camelCase) if registering as creator
       if (role === 'CREATOR') {
-        await createCreatorProfile({
-          user_id: registeredUserId,
-          ...creatorData,
-        });
-      } else if (role === 'BRAND') {
-        await createBrandProfile({
-          user_id: registeredUserId,
-          ...brandData,
-        });
+        registrationPayload.bio = creatorData.bio;
+        registrationPayload.category = creatorData.category;
+        registrationPayload.tiktokUrl = creatorData.tiktok_url;
+        registrationPayload.instagramUrl = creatorData.instagram_url;
+        registrationPayload.youtubeUrl = creatorData.youtube_url;
+      }
+      // Add brand-specific fields (camelCase) if registering as brand
+      else if (role === 'BRAND') {
+        registrationPayload.companyName = brandData.company_name;
+        registrationPayload.website = brandData.website;
+        registrationPayload.industry = brandData.industry;
+        registrationPayload.description = brandData.description;
       }
 
-      // Auto-login after successful registration
-      const loginResponse = await loginUser({
-        username: formInput.username,
-        password: formInput.password,
+      // Register user with all profile data in single request
+      const registerResponse = await registerUser(registrationPayload);
+      const authenticatedUser = registerResponse?.user || registerResponse?.data?.user || registerResponse;
+
+      if (!authenticatedUser?.id) {
+        throw new Error('Registration succeeded but user details are missing.');
+      }
+
+      // Persist auth session
+      persistAuthSession(registerResponse);
+      setUser(authenticatedUser);
+
+      toast.success('Registration successful! Welcome to ChumChum!', {
+        duration: 3000,
+        icon: '🎉',
       });
 
-      const { user: authenticatedUser } = persistAuthSession(loginResponse);
-
-      if (authenticatedUser?.id) {
-        setUser(authenticatedUser);
-        toast.success('Registration successful! Welcome to ChumChum!');
-        setLoading(false);
-        navigate(getDashboardPathByRole(authenticatedUser.role));
-        return;
-      }
-
-      toast.success('Registration successful! Please sign in to continue.');
-      setLoading(false);
-      navigate('/login');
+      navigate(getDashboardPathByRole(authenticatedUser.role));
     }
     catch (error) {
       toast.error(getApiErrorMessage(error));
