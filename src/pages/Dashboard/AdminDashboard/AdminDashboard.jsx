@@ -1,4 +1,3 @@
-import { useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -9,12 +8,12 @@ import {
 } from "../../../components";
 import { getApiErrorMessage, updateUser } from "../../../api";
 import { useAdminCollections } from "../../../hooks/useDashboardApi";
+import useDashboardTab from "../../../hooks/useDashboardTab";
 import "../dashboardPages.scss";
 
 const extractUsers = (payload) => (Array.isArray(payload) ? payload : payload?.content || payload?.data || []);
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState("users");
   const queryClient = useQueryClient();
   const { data, isLoading } = useAdminCollections();
 
@@ -57,6 +56,10 @@ const AdminDashboard = () => {
     { key: "packages", label: "Packages" },
     { key: "orders", label: "Orders" },
   ];
+  const { activeTab, setActiveTab } = useDashboardTab({
+    validTabs: sidebarItems.map((item) => item.key),
+    defaultTab: "users",
+  });
 
   return (
     <DashboardLayout

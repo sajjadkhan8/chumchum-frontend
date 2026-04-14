@@ -4,11 +4,11 @@ import { useRecoilValue } from "recoil";
 import { userState } from "../../../atoms";
 import { DashboardLayout, MessageList, SkeletonRows, StatCard, Table } from "../../../components";
 import { useConversations, useCreators, useOrders, usePackages } from "../../../hooks/useDashboardApi";
+import useDashboardTab from "../../../hooks/useDashboardTab";
 import "../dashboardPages.scss";
 
 const BrandDashboard = () => {
   const user = useRecoilValue(userState);
-  const [activeTab, setActiveTab] = useState("overview");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [platformFilter, setPlatformFilter] = useState("");
   const [priceFilter, setPriceFilter] = useState("");
@@ -108,6 +108,10 @@ const BrandDashboard = () => {
     { key: "favorites", label: "Favorites" },
     { key: "settings", label: "Settings" },
   ];
+  const { activeTab, setActiveTab } = useDashboardTab({
+    validTabs: sidebarItems.map((item) => item.key),
+    defaultTab: "overview",
+  });
 
   return (
     <DashboardLayout

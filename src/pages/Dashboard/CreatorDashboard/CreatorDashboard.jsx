@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -13,12 +13,24 @@ import {
   Table,
 } from "../../../components";
 import { useConversations, useMyPackages, useOrders } from "../../../hooks/useDashboardApi";
+import useDashboardTab from "../../../hooks/useDashboardTab";
 import "../dashboardPages.scss";
 
 const CreatorDashboard = () => {
   const user = useRecoilValue(userState);
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("overview");
+  const sidebarItems = [
+    { key: "overview", label: "Dashboard" },
+    { key: "packages", label: "My Packages" },
+    { key: "orders", label: "Orders" },
+    { key: "messages", label: "Messages" },
+    { key: "earnings", label: "Earnings" },
+    { key: "settings", label: "Profile Settings" },
+  ];
+  const { activeTab, setActiveTab } = useDashboardTab({
+    validTabs: sidebarItems.map((item) => item.key),
+    defaultTab: "overview",
+  });
 
   const { data: packages = [], isLoading: packagesLoading } = useMyPackages();
   const { data: orders = [], isLoading: ordersLoading } = useOrders();
@@ -117,15 +129,6 @@ const CreatorDashboard = () => {
     lastMessage: conversation.lastMessage,
     updatedAt: conversation.updatedAt || conversation.updated_at,
   }));
-
-  const sidebarItems = [
-    { key: "overview", label: "Dashboard" },
-    { key: "packages", label: "My Packages" },
-    { key: "orders", label: "Orders" },
-    { key: "messages", label: "Messages" },
-    { key: "earnings", label: "Earnings" },
-    { key: "settings", label: "Profile Settings" },
-  ];
 
   return (
     <DashboardLayout
