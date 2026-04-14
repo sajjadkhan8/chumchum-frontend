@@ -1,10 +1,19 @@
 import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { getApiErrorMessage, registerUser, uploadImage, createCreatorProfile, createBrandProfile, loginUser } from '../../../api';
+import {
+  getApiErrorMessage,
+  registerUser,
+  uploadImage,
+  createCreatorProfile,
+  createBrandProfile,
+  loginUser,
+  persistAuthSession,
+} from '../../../api';
 import { useSetRecoilState } from 'recoil';
 import { userState } from '../../../atoms';
 import { pakistanCities } from '../../../utils';
+import { getDashboardPathByRole } from '../../../api/session';
 import './Register.scss'
 
 const normalizeRoleParam = (value) => {
@@ -29,10 +38,6 @@ const extractRegisteredUserId = (registerResponse) => {
     registerResponse?.data?.userId ||
     null
   );
-};
-
-const extractAuthenticatedUser = (loginResponse) => {
-  return loginResponse?.user || loginResponse?.data?.user || loginResponse?.data || null;
 };
 
 const Register = () => {
@@ -150,14 +155,13 @@ const Register = () => {
         password: formInput.password,
       });
 
-      const authenticatedUser = extractAuthenticatedUser(loginResponse);
+      const { user: authenticatedUser } = persistAuthSession(loginResponse);
 
       if (authenticatedUser?.id) {
-        localStorage.setItem('user', JSON.stringify(authenticatedUser));
         setUser(authenticatedUser);
         toast.success('Registration successful! Welcome to ChumChum!');
         setLoading(false);
-        navigate('/');
+        navigate(getDashboardPathByRole(authenticatedUser.role));
         return;
       }
 

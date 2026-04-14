@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { clearSession, resolveAuthPayload, setStoredToken, setStoredUser } from "./session";
 
 export const loginUser = (credentials) =>
   apiRequest({
@@ -25,4 +26,17 @@ export const logoutUser = () =>
     url: "/api/auth/logout",
     method: "post",
   });
+
+export const persistAuthSession = (response) => {
+  const { user, token } = resolveAuthPayload(response);
+
+  setStoredUser(user);
+  setStoredToken(token);
+
+  return { user, token };
+};
+
+export const clearAuthSession = () => {
+  clearSession();
+};
 

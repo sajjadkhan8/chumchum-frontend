@@ -1,8 +1,9 @@
 import { atom } from 'recoil';
+import { getStoredUser } from '../api/session';
 
 const userAtom = atom({
     key: 'user',
-    default: null
+    default: getStoredUser()
 });
 
 export default userAtom;

@@ -20,6 +20,9 @@ import {
   Success,
   NotFound,
   Dashboard,
+  CreatorDashboard,
+  BrandDashboard,
+  AdminDashboard,
   CreatorProfile,
   BrandProfile,
   Creators,
@@ -45,7 +48,7 @@ const paths = [
   {
     path: "/packages/new",
     element: (
-      <PrivateRoute>
+      <PrivateRoute allowedRoles={["CREATOR"]}>
         <Add />
       </PrivateRoute>
     ),
@@ -53,7 +56,7 @@ const paths = [
   {
     path: "/organize",
     element: (
-      <PrivateRoute>
+      <PrivateRoute allowedRoles={["CREATOR"]}>
         <Add />
       </PrivateRoute>
     ),
@@ -61,7 +64,7 @@ const paths = [
   {
     path: "/my-packages",
     element: (
-      <PrivateRoute>
+      <PrivateRoute allowedRoles={["CREATOR"]}>
         <MyPackages />
       </PrivateRoute>
     ),
@@ -69,7 +72,7 @@ const paths = [
   {
     path: "/my-gigs",
     element: (
-      <PrivateRoute>
+      <PrivateRoute allowedRoles={["CREATOR"]}>
         <MyPackages />
       </PrivateRoute>
     ),
@@ -111,6 +114,30 @@ const paths = [
     element: (
       <PrivateRoute>
         <Dashboard />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/creator/dashboard",
+    element: (
+      <PrivateRoute allowedRoles={["CREATOR"]}>
+        <CreatorDashboard />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/brand/dashboard",
+    element: (
+      <PrivateRoute allowedRoles={["BRAND"]}>
+        <BrandDashboard />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/admin/dashboard",
+    element: (
+      <PrivateRoute allowedRoles={["ADMIN"]}>
+        <AdminDashboard />
       </PrivateRoute>
     ),
   },

@@ -1,122 +1,239 @@
-import { useEffect, useState } from 'react';
-import { useRecoilValue } from 'recoil';
-import { userState } from '../../../atoms';
-import { getCreatorProfile, getApiErrorMessage } from '../../../api';
-import toast from 'react-hot-toast';
-import './CreatorDashboard.scss';
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { useRecoilValue } from "recoil";
+import { userState } from "../../../atoms";
+import { deletePackage, getApiErrorMessage } from "../../../api";
+import {
+  DashboardLayout,
+  MessageList,
+  SkeletonRows,
+  StatCard,
+  Table,
+} from "../../../components";
+import { useConversations, useMyPackages, useOrders } from "../../../hooks/useDashboardApi";
+import "../dashboardPages.scss";
 
 const CreatorDashboard = () => {
   const user = useRecoilValue(userState);
-  const [creator, setCreator] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("overview");
+
+  const { data: packages = [], isLoading: packagesLoading } = useMyPackages();
+  const { data: orders = [], isLoading: ordersLoading } = useOrders();
+  const { data: conversations = [], isLoading: conversationsLoading } = useConversations();
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (user?.id) {
-      fetchCreatorProfile();
-    }
-  }, [user]);
+  }, []);
 
-  const fetchCreatorProfile = async () => {
-    try {
-      const data = await getCreatorProfile(user.id);
-      setCreator(data);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const mutation = useMutation({
+    mutationFn: (packageId) => deletePackage(packageId),
+    onSuccess: () => {
+      toast.success("Package deleted.");
+      queryClient.invalidateQueries({ queryKey: ["packages", "my"] });
+      queryClient.invalidateQueries({ queryKey: ["packages"] });
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error)),
+  });
 
-  if (loading) {
-    return <div className="creator-dashboard"><p>Loading...</p></div>;
-  }
+  const creatorOrders = useMemo(
+    () =>
+      orders.filter(
+        (order) =>
+          order.creatorId === user?.id ||
+          (order.creatorName || "").toLowerCase() === (user?.username || "").toLowerCase()
+      ),
+    [orders, user]
+  );
+
+  const paidCompletedOrders = creatorOrders.filter(
+    (order) => order.status === "COMPLETED" && order.pricing_type !== "BARTER"
+  );
+  const barterOrders = creatorOrders.filter((order) => order.pricing_type === "BARTER");
+  const totalEarnings = paidCompletedOrders.reduce((sum, order) => sum + Number(order.price || 0), 0);
+
+  const stats = [
+    {
+      label: "Total Earnings",
+      value: `PKR ${totalEarnings.toLocaleString("en-PK")}`,
+      helper: "Completed paid orders",
+    },
+    {
+      label: "Active Orders",
+      value: creatorOrders.filter((order) => order.status === "ACTIVE").length,
+      helper: "In progress",
+    },
+    {
+      label: "Completed Orders",
+      value: creatorOrders.filter((order) => order.status === "COMPLETED").length,
+      helper: "Delivered successfully",
+    },
+    {
+      label: "Profile Views",
+      value: Math.max(125, packages.length * 31),
+      helper: "Mock metric",
+    },
+  ];
+
+  const packageRows = packages.map((item) => ({
+    key: item.id,
+    title: <strong>{item.title}</strong>,
+    pricing:
+      item.pricing_type === "BARTER" ? (
+        <span className="badge barter">🎁 Barter Deal</span>
+      ) : (
+        `💰 PKR ${Number(item.price || 0).toLocaleString("en-PK")}`
+      ),
+    platform: item.platform,
+    status: <span className={`badge ${item.is_active ? "active" : "inactive"}`}>{item.is_active ? "Active" : "Inactive"}</span>,
+    action: (
+      <div>
+        <Link to={`/package/${item.id}`} className="dashboardAction link">View</Link>{" "}
+        <button className="dashboardAction" type="button" onClick={() => mutation.mutate(item.id)}>
+          Delete
+        </button>
+      </div>
+    ),
+  }));
+
+  const orderRows = creatorOrders.map((order) => ({
+    key: order.id,
+    package: order.packageTitle,
+    brand: order.brandName,
+    status: order.status,
+    pricing:
+      order.pricing_type === "BARTER" ? (
+        <span className="badge barter">🎁 Barter Deal</span>
+      ) : (
+        `💰 PKR ${Number(order.price || 0).toLocaleString("en-PK")}`
+      ),
+  }));
+
+  const conversationItems = conversations.map((conversation) => ({
+    conversationID: conversation.conversationID || conversation.id || conversation._id,
+    counterparty: conversation.buyerID?.username || conversation.brand?.company_name || "Brand",
+    lastMessage: conversation.lastMessage,
+    updatedAt: conversation.updatedAt || conversation.updated_at,
+  }));
+
+  const sidebarItems = [
+    { key: "overview", label: "Dashboard" },
+    { key: "packages", label: "My Packages" },
+    { key: "orders", label: "Orders" },
+    { key: "messages", label: "Messages" },
+    { key: "earnings", label: "Earnings" },
+    { key: "settings", label: "Profile Settings" },
+  ];
 
   return (
-    <div className="creator-dashboard">
-      <div className="container">
-        <div className="header">
-          <h1>Creator Dashboard</h1>
-          <p>Welcome, {user?.username}!</p>
+    <DashboardLayout
+      title="Creator Dashboard"
+      subtitle={`Welcome back, ${user?.username || "Creator"}`}
+      sidebarItems={sidebarItems}
+      activeKey={activeTab}
+      onSelect={setActiveTab}
+    >
+      {activeTab === "overview" ? (
+        <>
+          <div className="dashboardGrid">{stats.map((item) => <StatCard key={item.label} {...item} />)}</div>
+          <div className="dashboardPanel">
+            <h2>Recent Orders</h2>
+            {ordersLoading ? (
+              <SkeletonRows count={4} />
+            ) : (
+              <Table
+                columns={[
+                  { key: "package", label: "Package" },
+                  { key: "brand", label: "Brand" },
+                  { key: "status", label: "Status" },
+                  { key: "pricing", label: "Pricing" },
+                ]}
+                rows={orderRows.slice(0, 6)}
+                emptyText="No orders yet."
+              />
+            )}
+          </div>
+        </>
+      ) : null}
+
+      {activeTab === "packages" ? (
+        <div className="dashboardPanel">
+          <h2>My Packages</h2>
+          <p style={{ marginBottom: 12 }}>
+            <Link className="link" to="/packages/new">Create New Package</Link>
+          </p>
+          {packagesLoading ? (
+            <SkeletonRows count={5} />
+          ) : (
+            <Table
+              columns={[
+                { key: "title", label: "Title" },
+                { key: "pricing", label: "Price" },
+                { key: "platform", label: "Platform" },
+                { key: "status", label: "Status" },
+                { key: "action", label: "Actions" },
+              ]}
+              rows={packageRows}
+              emptyText="No packages found."
+            />
+          )}
         </div>
+      ) : null}
 
-        {creator ? (
-          <div className="dashboard-content">
-            <div className="profile-section">
-              <div className="profile-header">
-                <img
-                  src={user?.image || './media/noavatar.png'}
-                  alt={user?.username}
-                  className="profile-image"
-                />
-                <div className="profile-info">
-                  <h2>{user?.username}</h2>
-                  <p className="category">{creator?.category || 'Category not set'}</p>
-                  <p className="city">{user?.city}</p>
-                </div>
-              </div>
+      {activeTab === "orders" ? (
+        <div className="dashboardPanel">
+          <h2>Orders</h2>
+          {ordersLoading ? (
+            <SkeletonRows count={5} />
+          ) : (
+            <Table
+              columns={[
+                { key: "package", label: "Package" },
+                { key: "brand", label: "Brand" },
+                { key: "status", label: "Status" },
+                { key: "pricing", label: "Pricing Type" },
+              ]}
+              rows={orderRows}
+              emptyText="No creator orders available."
+            />
+          )}
+        </div>
+      ) : null}
 
-              <div className="profile-stats">
-                <div className="stat-item">
-                  <span className="stat-value">{creator?.followers || 0}</span>
-                  <span className="stat-label">Followers</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-value">{creator?.avg_views || 0}</span>
-                  <span className="stat-label">Avg Views</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-value">{creator?.engagement_rate || 0}%</span>
-                  <span className="stat-label">Engagement</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-value">{creator?.rating || 0}</span>
-                  <span className="stat-label">Rating</span>
-                </div>
-              </div>
-            </div>
+      {activeTab === "messages" ? (
+        <div className="dashboardPanel">
+          <h2>Messages</h2>
+          {conversationsLoading ? <SkeletonRows count={4} /> : <MessageList items={conversationItems} />}
+        </div>
+      ) : null}
 
-            <div className="bio-section">
-              <h3>Bio</h3>
-              <p>{creator?.bio || 'No bio added yet'}</p>
-            </div>
+      {activeTab === "earnings" ? (
+        <div className="dashboardGrid">
+          <StatCard
+            label="Paid Earnings"
+            value={`💰 PKR ${totalEarnings.toLocaleString("en-PK")}`}
+            helper="Only paid completed orders"
+          />
+          <StatCard
+            label="Barter Deals"
+            value={`🎁 ${barterOrders.length}`}
+            helper="Non-cash collaborations"
+          />
+        </div>
+      ) : null}
 
-            <div className="social-section">
-              <h3>Social Links</h3>
-              <div className="social-links">
-                {creator?.tiktok_url && (
-                  <a href={creator.tiktok_url} target="_blank" rel="noopener noreferrer">
-                    <img src="./media/tiktok.png" alt="TikTok" />
-                    TikTok
-                  </a>
-                )}
-                {creator?.instagram_url && (
-                  <a href={creator.instagram_url} target="_blank" rel="noopener noreferrer">
-                    <img src="./media/instagram.png" alt="Instagram" />
-                    Instagram
-                  </a>
-                )}
-                {creator?.youtube_url && (
-                  <a href={creator.youtube_url} target="_blank" rel="noopener noreferrer">
-                    <img src="./media/youtube.png" alt="YouTube" />
-                    YouTube
-                  </a>
-                )}
-              </div>
-            </div>
-
-            <div className="actions">
-              <button className="edit-btn">Edit Profile</button>
-              <button className="view-gigs-btn">View My Services</button>
-            </div>
-          </div>
-        ) : (
-          <div className="no-profile">
-            <p>No creator profile found. Please complete your profile setup.</p>
-          </div>
-        )}
-      </div>
-    </div>
+      {activeTab === "settings" ? (
+        <div className="dashboardPanel">
+          <h2>Profile Settings</h2>
+          <p>Manage your creator profile details from your profile page.</p>
+          <p style={{ marginTop: 10 }}>
+            <Link className="link" to={`/creator/${user?.id || ""}`}>Open Creator Profile</Link>
+          </p>
+        </div>
+      ) : null}
+    </DashboardLayout>
   );
 };
 

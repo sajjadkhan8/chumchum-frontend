@@ -1,0 +1,65 @@
+.dashboardSidebar {
+  width: 260px;
+  min-width: 260px;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 14px;
+  padding: 18px 14px;
+  height: fit-content;
+  position: sticky;
+  top: 94px;
+
+  .dashboardSidebar__title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #222325;
+    margin-bottom: 14px;
+    padding: 0 8px;
+  }
+
+  .dashboardSidebar__menu {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .dashboardSidebar__item {
+    text-align: left;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: #74767e;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f7f9f8;
+      color: #222325;
+    }
+
+    &.active {
+      background: #ecfff5;
+      color: var(--green-color);
+      font-weight: 600;
+    }
+  }
+
+  @media screen and (max-width: 920px) {
+    width: 100%;
+    min-width: 100%;
+    position: static;
+
+    .dashboardSidebar__menu {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    .dashboardSidebar__item {
+      flex: 1 1 calc(50% - 6px);
+    }
+  }
+}
+

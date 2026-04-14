@@ -246,6 +246,15 @@ export const getPackages = async (filters = {}) => {
   return normalizePackageCollection(response);
 };
 
+export const getMyPackages = async () => {
+  const response = await apiRequest({
+    url: "/api/packages/my",
+    method: "get",
+  });
+
+  return normalizePackageCollection(response);
+};
+
 export const getPackageById = async (packageId) => {
   const response = await apiRequest({
     url: `/api/packages/${packageId}`,
@@ -259,6 +268,16 @@ export const createPackage = async (payload) => {
   const response = await apiRequest({
     url: "/api/packages",
     method: "post",
+    data: serializePackagePayload(payload),
+  });
+
+  return normalizePackage(response);
+};
+
+export const updatePackage = async (packageId, payload) => {
+  const response = await apiRequest({
+    url: `/api/packages/${packageId}`,
+    method: "put",
     data: serializePackagePayload(payload),
   });
 

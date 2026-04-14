@@ -1,5 +1,6 @@
 import axios from "axios";
 import { logApiError, normalizeApiError } from "./errorUtils";
+import { clearSession, getStoredToken } from "./session";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -13,13 +14,25 @@ const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    const token = getStoredToken();
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
   (error) => Promise.reject(normalizeApiError(error))
 );
 
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error?.response?.status === 401) {
+      clearSession();
+    }
+
     const normalizedError = logApiError(error);
     return Promise.reject(normalizedError);
   }

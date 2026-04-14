@@ -25,6 +25,7 @@ const packageCardShape = PropTypes.shape({
   cover: PropTypes.string,
   price: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   currency: PropTypes.string,
+  pricing_type: PropTypes.string,
   rating: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   totalReviews: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   creator: creatorShape,
@@ -57,14 +58,23 @@ const PackageCard = ({ data }) => {
         <div className="detail">
           <img src="./media/heart.png" alt="Save package" />
           <div className="price">
-            <span>STARTING AT</span>
-            <h2>
-              {Number(data.price || 0).toLocaleString('en-PK', {
-                maximumFractionDigits: 0,
-                style: 'currency',
-                currency: data.currency || 'PKR',
-              })}
-            </h2>
+            {data.pricing_type === 'BARTER' ? (
+              <>
+                <span>COLLAB TYPE</span>
+                <h2>🎁 Barter Deal</h2>
+              </>
+            ) : (
+              <>
+                <span>STARTING AT</span>
+                <h2>
+                  {Number(data.price || 0).toLocaleString('en-PK', {
+                    maximumFractionDigits: 0,
+                    style: 'currency',
+                    currency: data.currency || 'PKR',
+                  })}
+                </h2>
+              </>
+            )}
           </div>
         </div>
       </div>

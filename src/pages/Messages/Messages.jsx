@@ -11,6 +11,7 @@ import './Messages.scss';
 const Messages = () => {
   const user = useRecoilValue(userState);
   const queryClient = useQueryClient();
+  const isCreator = user?.role === 'CREATOR';
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -24,11 +25,54 @@ const Messages = () => {
   const mutation = useMutation({
     mutationFn: (id) => markConversationAsRead(id),
     onSuccess: () =>
-      queryClient.invalidateQueries(['conversations'])
+      queryClient.invalidateQueries({ queryKey: ['conversations'] })
   })
 
   const handleMessageRead = (id) => {
     mutation.mutate(id);
+  }
+
+  let content = <div className='loader'> <Loader /> </div>;
+
+  if (error) {
+    content = 'Something went wrong!';
+  }
+
+  if (!isLoading && !error) {
+    content = (
+      <table>
+        <thead>
+          <tr>
+            <th>{isCreator ? 'Brand' : 'Creator'}</th>
+            <th>Last Message</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            data.map((conv) => (
+              <tr key={conv._id || conv.id || conv.conversationID} className={((isCreator && !conv.readBySeller) || (!isCreator && !conv.readByBuyer)) &&
+                "active" || ''}>
+                <td>{isCreator ? conv.buyerID?.username : conv.sellerID?.username}</td>
+                <td>
+                  <Link className='link' to={`/message/${conv.conversationID || conv.id || conv._id}`}>
+                    {conv?.lastMessage?.slice(0, 100)}...
+                  </Link>
+                </td>
+                <td>{moment(conv.updatedAt).fromNow()}</td>
+                <td>
+                  {
+                    ((isCreator && !conv.readBySeller) || (!isCreator && !conv.readByBuyer)) &&
+                    (<button onClick={() => handleMessageRead(conv.conversationID || conv.id || conv._id)}>Mark as read</button>)
+                  }
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    );
   }
 
   return (
@@ -37,44 +81,7 @@ const Messages = () => {
         <div className="title">
           <h1>Messages</h1>
         </div>
-        {
-          isLoading
-            ? <div className='loader'> <Loader /> </div>
-            : error
-              ? 'Something went wrong!'
-              : <table>
-                <thead>
-                  <tr>
-                    <th>{user.isSeller ? 'Buyer' : 'Seller'}</th>
-                    <th>Last Message</th>
-                    <th>Date</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {
-                    data.map((conv) => (
-                      <tr key={conv._id} className={((user.isSeller && !conv.readBySeller) || (!user.isSeller && !conv.readByBuyer)) &&
-                        "active" || ''}>
-                        <td>{user.isSeller ? conv.buyerID.username : conv.sellerID.username}</td>
-                        <td>
-                          <Link className='link' to={`/message/${conv.conversationID}`}>
-                            {conv?.lastMessage?.slice(0, 100)}...
-                          </Link>
-                        </td>
-                        <td>{moment(conv.updatedAt).fromNow()}</td>
-                        <td>
-                          {
-                            ((user.isSeller && !conv.readBySeller) || (!user.isSeller && !conv.readByBuyer)) &&
-                            (<button onClick={() => handleMessageRead(conv.conversationID)}>Mark as read</button>)
-                          }
-                        </td>
-                      </tr>
-                    ))
-                  }
-                </tbody>
-              </table>
-        }
+        {content}
       </div>
     </div>
   )

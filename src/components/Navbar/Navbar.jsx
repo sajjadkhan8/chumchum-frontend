@@ -2,10 +2,11 @@ import Slider from "react-slick";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { GrFormNext, GrFormPrevious } from "react-icons/gr";
-import { getApiErrorMessage, getCurrentUser, logoutUser } from "../../api";
+import { clearAuthSession, getApiErrorMessage, getCurrentUser, logoutUser, persistAuthSession } from "../../api";
 import { cards } from "../../data";
 import { useRecoilState } from "recoil";
 import { userState } from "../../atoms";
+import { getDashboardPathByRole } from "../../api/session";
 import { Loader } from "..";
 import "./Navbar.scss";
 
@@ -83,9 +84,11 @@ const Navbar = () => {
       setIsLoading(true);
       try {
         const data = await getCurrentUser();
-        setUser(data.user);
+        const { user: currentUser } = persistAuthSession(data);
+        setUser(currentUser);
       } catch (error) {
-        localStorage.removeItem('user');
+        clearAuthSession();
+        setUser(null);
         console.log(getApiErrorMessage(error));
       } finally {
         setIsLoading(false);
@@ -160,7 +163,7 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await logoutUser();
-      localStorage.removeItem('user');
+      clearAuthSession();
       setUser(null);
       navigate("/");
     } catch (error) {
@@ -248,9 +251,9 @@ const Navbar = () => {
                   <span>{user?.username}</span>
                    {showPanel && (
                      <div className="options">
-                       <Link className="link" to="/dashboard">
+                        <Link className="link" to={getDashboardPathByRole(user?.role)}>
                           {t.dashboard}
-                       </Link>
+                        </Link>
                        {user?.role === 'CREATOR' && (
                          <>
                             <Link className="link" to="/my-packages">

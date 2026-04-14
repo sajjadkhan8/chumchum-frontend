@@ -1,9 +1,10 @@
 import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getApiErrorMessage, loginUser } from '../../../api';
+import { getApiErrorMessage, loginUser, persistAuthSession } from '../../../api';
 import { useRecoilState } from 'recoil';
 import { userState } from '../../../atoms';
+import { getDashboardPathByRole } from '../../../api/session';
 import './Login.scss';
 
 const initialState = {
@@ -43,13 +44,18 @@ const Login = () => {
     setLoading(true);
     try {
       const data = await loginUser(formInput);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      setUser(data.user);
+      const { user } = persistAuthSession(data);
+
+      if (!user?.id) {
+        throw new Error('Login succeeded but user details are missing.');
+      }
+
+      setUser(user);
       toast.success("Welcome back!", {
         duration: 3000,
         icon: "😃"
       });
-      navigate('/');
+      navigate(getDashboardPathByRole(user.role));
     }
     catch (error) {
       const message = getApiErrorMessage(error);

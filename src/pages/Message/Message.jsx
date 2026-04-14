@@ -28,7 +28,7 @@ const Message = () => {
   const mutation = useMutation({
     mutationFn: (message) => sendMessage(message),
     onSuccess: () =>
-      queryClient.invalidateQueries(['messages'])
+      queryClient.invalidateQueries({ queryKey: ['messages', conversationID] })
   })
 
   const handleMessageSubmit = (event) => {
@@ -42,33 +42,46 @@ const Message = () => {
     event.target.reset();
   }
 
+  let content = <div className="loader"> <Loader /> </div>;
+
+  if (error) {
+    content = 'Something went wrong';
+  }
+
+  if (!isLoading && !error) {
+    content = (
+      <div className="messages">
+        {
+          data.map((message) => (
+            <div
+              className={
+                (message.userID?.id || message.userID?._id) === (user?.id || user?._id)
+                  ? 'owner item'
+                  : 'item'
+              }
+              key={message._id || message.id}
+            >
+              <img
+                src={message.userID?.image || '/media/noavatar.png'}
+                alt=""
+              />
+              <p>
+                {message.description}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    );
+  }
+
   return (
     <div className="message">
       <div className="container">
         <span className="breadcrumbs">
           <Link to="/messages" className="link">Messages</Link>
         </span>
-        {
-          isLoading
-            ? <div className="loader"> <Loader /> </div>
-            : error
-              ? 'Something went wrong'
-              : <div className="messages">
-                {
-                  data.map((message) => (
-                    <div className={message.userID._id === user._id ? 'owner item' : 'item'} key={message._id}>
-                      <img
-                        src={message.userID.image || '/media/noavatar.png'}
-                        alt=""
-                      />
-                      <p>
-                        {message.description}
-                      </p>
-                    </div>
-                  ))
-                }
-              </div>
-        }
+        {content}
         <hr />
         <form className="write" onSubmit={handleMessageSubmit}>
           <textarea cols="30" rows="10" placeholder="Write a message"></textarea>

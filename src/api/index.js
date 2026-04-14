@@ -12,17 +12,27 @@ export {
   getUsers,
   updateUser,
 } from "./userApi";
-export { getCurrentUser, loginUser, logoutUser, registerUser } from "./authApi";
+export {
+  clearAuthSession,
+  getCurrentUser,
+  loginUser,
+  logoutUser,
+  persistAuthSession,
+  registerUser,
+} from "./authApi";
 export {
   createPackage,
   deletePackage,
   getPackageById,
+  getMyPackages,
   getPackages,
   normalizePackage,
+  updatePackage,
 } from "./packageApi";
 export { createReview, getReviewsByGigId, getReviewsByPackageId } from "./reviewApi";
 export {
   confirmOrderPayment,
+  createOrder,
   createPaymentIntent,
   getOrders,
 } from "./orderApi";
