@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
+  getBrandProfile,
   getBrands,
   getConversations,
   getCreators,
@@ -38,6 +39,13 @@ export const useCreators = () =>
   useQuery({
     queryKey: ["creators"],
     queryFn: () => getCreators(),
+  });
+
+export const useBrandProfile = (userId) =>
+  useQuery({
+    queryKey: ["brand", "profile", userId],
+    queryFn: () => getBrandProfile(userId),
+    enabled: !!userId,
   });
 
 export const useConversations = () =>

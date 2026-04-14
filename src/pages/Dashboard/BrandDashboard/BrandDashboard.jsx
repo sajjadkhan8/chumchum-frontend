@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { userState } from "../../../atoms";
 import { DashboardLayout, MessageList, SkeletonRows, StatCard, Table } from "../../../components";
-import { useConversations, useCreators, useOrders } from "../../../hooks/useDashboardApi";
+import { useBrandProfile, useConversations, useCreators, useOrders } from "../../../hooks/useDashboardApi";
 import useDashboardTab from "../../../hooks/useDashboardTab";
 import "../dashboardPages.scss";
 
@@ -14,6 +14,7 @@ const BrandDashboard = () => {
   const { data: creators = [], isLoading: creatorsLoading } = useCreators();
   const { data: orders = [], isLoading: ordersLoading } = useOrders();
   const { data: conversations = [], isLoading: conversationsLoading } = useConversations();
+  const { data: brandProfile } = useBrandProfile(user?.id);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -177,7 +178,7 @@ const BrandDashboard = () => {
           <h2>Settings</h2>
           <p>Update company details and profile information.</p>
           <p style={{ marginTop: 10 }}>
-            <Link className="link" to={`/brand/${user?.id || ""}`}>Open Brand Profile</Link>
+            <Link className="link" to={`/brand/${brandProfile?.id || ""}`}>Open Brand Profile</Link>
           </p>
         </div>
       ) : null}
