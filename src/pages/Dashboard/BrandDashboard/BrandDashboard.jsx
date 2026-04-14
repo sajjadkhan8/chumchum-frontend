@@ -54,7 +54,7 @@ const BrandDashboard = () => {
     category: creator.category || "-",
     followers: Number(creator.followers || 0).toLocaleString("en-PK"),
     rating: Number(creator.rating || 0).toFixed(1),
-    cta: <Link className="dashboardAction link" to={`/creator/${creator.id}`}>View Profile</Link>,
+    cta: <Link className="dashboardAction link" to={`/creator/${typeof creator.user === 'object' ? creator.user?.id : creator.user}`}>View Profile</Link>,
   }));
 
   const orderRows = brandOrders.map((order) => ({

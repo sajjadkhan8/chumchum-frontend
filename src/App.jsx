@@ -143,7 +143,7 @@ const paths = [
       </PrivateRoute>
     ),
   },
-  { path: "/creator/:creatorId", element: <CreatorProfile /> },
+  { path: "/creator/:userId", element: <CreatorProfile /> },
   { path: "/brand/:brandId", element: <BrandProfile /> },
   { path: "/creators", element: <Creators /> },
   {

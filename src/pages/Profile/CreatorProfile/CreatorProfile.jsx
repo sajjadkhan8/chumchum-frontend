@@ -1,24 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getCreatorById, getApiErrorMessage } from '../../../api';
+import { getCreatorProfile, getApiErrorMessage } from '../../../api';
 import toast from 'react-hot-toast';
 import './CreatorProfile.scss';
 
 const CreatorProfile = () => {
-  const { creatorId } = useParams();
+  const { userId } = useParams();
   const [creator, setCreator] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (creatorId) {
+    if (userId) {
       fetchCreatorProfile();
     }
-  }, [creatorId]);
+  }, [userId]);
 
   const fetchCreatorProfile = async () => {
     try {
-      const data = await getCreatorById(creatorId);
+      const data = await getCreatorProfile(userId);
       setCreator(data);
     } catch (error) {
       toast.error(getApiErrorMessage(error));
