@@ -31,6 +31,28 @@
   }
 }
 
+.dashboardPanelTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+
+  h2 {
+    margin-bottom: 0;
+  }
+
+  button {
+    background-color: var(--green-color);
+    color: #fff;
+    font-weight: 500;
+    border: none;
+    padding: 10px 16px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+}
+
 .dashboardFilters {
   display: flex;
   gap: 10px;

@@ -160,10 +160,12 @@ const CreatorDashboard = () => {
 
       {activeTab === "packages" ? (
         <div className="dashboardPanel">
-          <h2>My Packages</h2>
-          <p style={{ marginBottom: 12 }}>
-            <Link className="link" to="/packages/new">Create New Package</Link>
-          </p>
+          <div className="dashboardPanelTitle">
+            <h2>My Packages</h2>
+            <Link className="link" to="/packages/new">
+              <button type="button">Create New Package</button>
+            </Link>
+          </div>
           {packagesLoading ? (
             <SkeletonRows count={5} />
           ) : (

@@ -219,13 +219,15 @@ const Navbar = () => {
                 </div>
               )}
             </div>
-            <Link to="/register?role=brand" className="link">
-              <span>{t.joinAsBrand}</span>
-            </Link>
-            {user?.role !== 'CREATOR' && (
-              <Link to="/register?role=creator" className="link">
-                <span>{t.joinAsCreator}</span>
-              </Link>
+            {!user && (
+              <>
+                <Link to="/register?role=brand" className="link">
+                  <span>{t.joinAsBrand}</span>
+                </Link>
+                <Link to="/register?role=creator" className="link">
+                  <span>{t.joinAsCreator}</span>
+                </Link>
+              </>
             )}
           </div>
           {isLoading ? (
@@ -254,7 +256,7 @@ const Navbar = () => {
                         <Link className="link" to={getDashboardPathByRole(user?.role)}>
                           {t.dashboard}
                         </Link>
-                       {user?.role === 'CREATOR' && (
+                         {user?.role === "CREATOR" && (
                          <>
                             <Link className="link" to="/my-packages">
                               {t.myServices}
@@ -264,17 +266,21 @@ const Navbar = () => {
                            </Link>
                          </>
                        )}
-                       {user?.role === 'BRAND' && (
+                         {user?.role === "BRAND" && (
                          <Link className="link" to="/creators">
                             {t.findCreators}
                          </Link>
                        )}
-                       <Link className="link" to="/orders">
-                          {t.orders}
-                       </Link>
-                       <Link className="link" to="/messages">
-                          {t.messages}
-                       </Link>
+                         {(user?.role === "CREATOR" || user?.role === "BRAND") && (
+                           <>
+                             <Link className="link" to="/orders">
+                                {t.orders}
+                             </Link>
+                             <Link className="link" to="/messages">
+                                {t.messages}
+                             </Link>
+                           </>
+                         )}
                        <Link className="link" to="/" onClick={handleLogout}>
                           {t.logout}
                        </Link>
