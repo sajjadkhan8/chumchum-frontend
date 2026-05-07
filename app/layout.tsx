@@ -1,13 +1,20 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Manrope, Sora } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Providers } from '@/components/providers'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
-const inter = Inter({ 
+const manrope = Manrope({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-body',
+  display: 'swap',
+})
+
+const sora = Sora({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -30,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-background">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${manrope.variable} ${sora.variable} font-sans antialiased`}>
         <Providers>
           {children}
           <Toaster position="top-center" richColors />
