@@ -15,7 +15,7 @@
 .dashboardPanel {
   background: #fff;
   border: 1px solid #e9ecef;
-  border-radius: 14px;
+  border-radius: 15px;
   padding: 16px;
 
   h2 {
@@ -251,7 +251,9 @@
 
 // ── Explore Filters ──────────────────────────────────
 .explorePanel {
-  > h2 { margin-bottom: 16px; }
+  >h2 {
+    margin-bottom: 16px;
+  }
 }
 
 .exploreFilters {
@@ -414,4 +416,3 @@
     padding: 0 4px;
   }
 }
-
