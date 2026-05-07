@@ -7,6 +7,7 @@ import {
   Table,
 } from "../../../components";
 import { getApiErrorMessage, updateUser } from "../../../api";
+import { formatSupportedPlatformLabel } from "../../../utils/platforms";
 import { useAdminCollections } from "../../../hooks/useDashboardApi";
 import useDashboardTab from "../../../hooks/useDashboardTab";
 import "../dashboardPages.scss";
@@ -144,7 +145,7 @@ const AdminDashboard = () => {
             rows={packages.map((pkg) => ({
               key: pkg.id,
               title: pkg.title,
-              platform: pkg.platform,
+              platform: formatSupportedPlatformLabel(pkg.platform),
               pricing:
                 pkg.pricing_type === "BARTER"
                   ? "BARTER"

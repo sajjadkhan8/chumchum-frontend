@@ -6,9 +6,10 @@ import { deletePackage, getApiErrorMessage, getCreatorProfile, getPackages } fro
 import { useRecoilValue } from 'recoil';
 import { userState } from '../../atoms';
 import { Loader } from '../../components';
+import { formatSupportedPlatformLabel } from '../../utils/platforms';
 import './MyPackages.scss';
 
-const formatPlatform = (platform) => platform?.replace('_', ' ') || '—';
+const formatPlatform = (platform) => (platform ? formatSupportedPlatformLabel(platform) : '—');
 
 const formatPrice = (price, currency) =>
   Number(price || 0).toLocaleString('en-PK', {

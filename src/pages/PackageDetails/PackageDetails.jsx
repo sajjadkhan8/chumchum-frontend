@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getApiErrorMessage, getPackageById } from '../../api';
 import { Link, useParams } from 'react-router-dom';
 import { Loader, NextArrow, PrevArrow, Reviews } from '../../components';
+import { formatSupportedPlatformLabel } from '../../utils/platforms';
 import './PackageDetails.scss';
 
 import { CarouselProvider, Slider, Slide, ButtonBack, ButtonNext, Image } from 'pure-react-carousel';
@@ -32,7 +33,7 @@ const renderMetaCard = (data, packageId, isMobile = false) => {
   return (
     <div className={wrapperClass}>
       <div className="price">
-        <h3>{data?.platform ? `${formatLabel(data.platform)} Package` : 'Creator Package'}</h3>
+        <h3>{data?.platform ? `${formatSupportedPlatformLabel(data.platform)} Package` : 'Creator Package'}</h3>
         <h2>{formatCurrency(data?.price, data?.currency)}</h2>
       </div>
       <p>
@@ -211,7 +212,7 @@ const PackageDetails = () => {
                 </div>
                 <div className="item">
                   <span className="title">Platform</span>
-                  <span className="desc">{formatLabel(data.platform)}</span>
+                  <span className="desc">{formatSupportedPlatformLabel(data.platform)}</span>
                 </div>
                 <div className="item">
                   <span className="title">Package type</span>

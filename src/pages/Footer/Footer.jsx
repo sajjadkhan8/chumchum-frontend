@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import PropTypes from "prop-types";
+import { FOOTER_SOCIAL_PLATFORMS, formatSupportedPlatformLabel } from '../../utils/platforms';
 import './Footer.scss';
 
 const Footer = ({ hideWidgets = false }) => {
@@ -80,11 +81,11 @@ const Footer = ({ hideWidgets = false }) => {
           </div>
           <div className="right">
             <div className="social">
-              <img src="./media/twitter.png" alt="" />
-              <img src="./media/facebook.png" alt="" />
-              <img src="./media/linkedin.png" alt="" />
-              <img src="./media/pinterest.png" alt="" />
-              <img src="./media/instagram.png" alt="" />
+              {FOOTER_SOCIAL_PLATFORMS.map((platform) => (
+                <span key={platform} className="social-badge">
+                  {formatSupportedPlatformLabel(platform)}
+                </span>
+              ))}
             </div>
             <div className="link">
               <img src="./media/language.png" alt="" />

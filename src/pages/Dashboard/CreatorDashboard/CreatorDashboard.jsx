@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { userState } from "../../../atoms";
 import { deletePackage, getApiErrorMessage } from "../../../api";
+import { formatSupportedPlatformLabel } from "../../../utils/platforms";
 import {
   DashboardLayout,
   MessageList,
@@ -98,7 +99,7 @@ const CreatorDashboard = () => {
       ) : (
         `💰 PKR ${Number(item.price || 0).toLocaleString("en-PK")}`
       ),
-    platform: item.platform,
+    platform: formatSupportedPlatformLabel(item.platform),
     status: <span className={`badge ${item.is_active ? "active" : "inactive"}`}>{item.is_active ? "Active" : "Inactive"}</span>,
     action: (
       <div>
