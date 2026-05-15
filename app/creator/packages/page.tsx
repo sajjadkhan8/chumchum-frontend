@@ -7,7 +7,6 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Archive,
-  BarChart3,
   Copy,
   Eye,
   FilePenLine,
@@ -16,7 +15,6 @@ import {
   Play,
   Plus,
   Search,
-  Sparkles,
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,10 +36,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/empty-state";
 import { PackageCardSkeleton } from "@/components/skeletons";
-import { creatorPackages } from "@/data/creator-packages";
-import { cn, formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import type { CreatorPackage, PackageStatus } from "@/types";
 import { toast } from "sonner";
+import { useCreatorPackagesStore } from "@/store/creator-packages-store";
 
 const statusOptions: { value: PackageStatus | "all"; label: string }[] = [
   { value: "all", label: "All Statuses" },
@@ -68,7 +66,10 @@ const platformOptions = [
 
 export default function CreatorPackagesPage() {
   const searchParams = useSearchParams();
-  const [packages, setPackages] = useState<CreatorPackage[]>(creatorPackages);
+  const packages = useCreatorPackagesStore((state) => state.packages);
+  const duplicatePackage = useCreatorPackagesStore((state) => state.duplicatePackage);
+  const archivePackage = useCreatorPackagesStore((state) => state.archivePackage);
+  const togglePausePackage = useCreatorPackagesStore((state) => state.togglePausePackage);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<PackageStatus | "all">("all");
@@ -96,11 +97,13 @@ export default function CreatorPackagesPage() {
     const active = packages.filter((pkg) => pkg.status === "active").length;
     const drafts = packages.filter((pkg) => pkg.status === "draft").length;
     const archived = packages.filter((pkg) => pkg.status === "archived").length;
+    const paused = packages.filter((pkg) => pkg.status === "paused").length;
+    const underReview = packages.filter((pkg) => pkg.status === "under_review").length;
     const monthlyProjection = packages
       .filter((pkg) => pkg.status === "active")
       .reduce((total, pkg) => total + pkg.price, 0);
 
-    return { active, drafts, archived, monthlyProjection };
+    return { active, drafts, archived, paused, underReview, monthlyProjection };
   }, [packages]);
 
   const filteredPackages = useMemo(() => {
@@ -190,30 +193,17 @@ export default function CreatorPackagesPage() {
             : "bg-blue-100 text-blue-700";
 
   const handleDuplicate = (pkg: CreatorPackage) => {
-    const duplicate: CreatorPackage = {
-      ...pkg,
-      id: `copy-${Date.now()}`,
-      title: `${pkg.title} (Copy)`,
-      status: "draft",
-      visibility: "private",
-    };
-    setPackages((prev) => [duplicate, ...prev]);
+    duplicatePackage(pkg.id);
     toast.success("Package duplicated as draft");
   };
 
   const handleArchive = (id: string) => {
-    setPackages((prev) => prev.map((pkg) => (pkg.id === id ? { ...pkg, status: "archived" } : pkg)));
+    archivePackage(id);
     toast.success("Package moved to archive");
   };
 
   const handlePauseResume = (pkg: CreatorPackage) => {
-    setPackages((prev) =>
-      prev.map((item) =>
-        item.id === pkg.id
-          ? { ...item, status: item.status === "paused" ? "active" : "paused" }
-          : item
-      )
-    );
+    togglePausePackage(pkg.id);
     toast.success(pkg.status === "paused" ? "Package resumed" : "Package paused");
   };
 
@@ -238,6 +228,30 @@ export default function CreatorPackagesPage() {
         <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Archived</p><p className="text-2xl font-bold">{summary.archived}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Monthly Package Value</p><p className="text-2xl font-bold text-primary">{formatPrice(summary.monthlyProjection)}</p></CardContent></Card>
       </div>
+
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: "all", label: `All (${packages.length})` },
+              { key: "active", label: `Active (${summary.active})` },
+              { key: "draft", label: `Draft (${summary.drafts})` },
+              { key: "paused", label: `Paused (${summary.paused})` },
+              { key: "under_review", label: `Under Review (${summary.underReview})` },
+              { key: "archived", label: `Archived (${summary.archived})` },
+            ].map((lane) => (
+              <Button
+                key={lane.key}
+                size="sm"
+                variant={status === lane.key ? "default" : "outline"}
+                onClick={() => setStatus(lane.key as PackageStatus | "all")}
+              >
+                {lane.label}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -363,8 +377,10 @@ export default function CreatorPackagesPage() {
                         <Button variant="ghost" size="icon"><Filter className="h-4 w-4" /></Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => toast.info(`Editing ${pkg.title} in next iteration.`)}>
-                          <FilePenLine className="mr-2 h-4 w-4" /> Edit
+                        <DropdownMenuItem asChild>
+                          <Link href={`/creator/packages/${pkg.id}/edit`}>
+                            <FilePenLine className="mr-2 h-4 w-4" /> Edit
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => handleDuplicate(pkg)}>
                           <Copy className="mr-2 h-4 w-4" /> Duplicate
@@ -376,8 +392,10 @@ export default function CreatorPackagesPage() {
                         <DropdownMenuItem onSelect={() => handleArchive(pkg.id)}>
                           <Archive className="mr-2 h-4 w-4" /> Archive
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => toast.info(`Preview for ${pkg.title} is opening soon.`)}>
-                          <Eye className="mr-2 h-4 w-4" /> Preview
+                        <DropdownMenuItem asChild>
+                          <Link href={`/creator/packages/${pkg.id}`}>
+                            <Eye className="mr-2 h-4 w-4" /> Preview
+                          </Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -406,11 +424,15 @@ export default function CreatorPackagesPage() {
                           : formatPrice(pkg.price)}
                     </p>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => toast.info(`Preview for ${pkg.title} is opening soon.`)}>
-                        <Eye className="mr-1 h-3 w-3" /> Preview
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/creator/packages/${pkg.id}`}>
+                          <Eye className="mr-1 h-3 w-3" /> Preview
+                        </Link>
                       </Button>
-                      <Button size="sm" onClick={() => toast.info(`Edit flow for ${pkg.title} is opening soon.`)}>
-                        <FilePenLine className="mr-1 h-3 w-3" /> Edit
+                      <Button size="sm" asChild>
+                        <Link href={`/creator/packages/${pkg.id}/edit`}>
+                          <FilePenLine className="mr-1 h-3 w-3" /> Edit
+                        </Link>
                       </Button>
                     </div>
                   </div>
