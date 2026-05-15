@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Search, Menu, Bell, MessageCircle, User, LogOut, Package, Wallet, Bookmark, Building2, BriefcaseBusiness } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,9 +27,15 @@ interface NavbarProps {
 
 export function Navbar({ showSearch = false, onSearchChange, searchValue }: NavbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
   const isSignedIn = hasHydrated && isAuthenticated && !!user;
   const isCreator = isSignedIn && user.role === 'creator';
+
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
 
   const publicNavLinks = [
     { href: '/brand/explore', label: 'Explore Creators' },
@@ -180,7 +186,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                     );
                   })}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-destructive">
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
                   </DropdownMenuItem>
@@ -241,7 +247,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                       </SheetClose>
                     ))}
                     <SheetClose asChild>
-                      <Button variant="ghost" className="min-h-11 justify-start px-3 text-destructive hover:text-destructive" onClick={logout}>
+                      <Button variant="ghost" className="min-h-11 justify-start px-3 text-destructive hover:text-destructive" onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         Logout
                       </Button>
