@@ -9,6 +9,7 @@ interface AuthState {
   savedCreators: string[];
   isAuthenticated: boolean;
   isLoading: boolean;
+  hasHydrated: boolean;
   login: (email: string, password: string) => Promise<void>;
   loginWithPhone: (phone: string, otp: string) => Promise<void>;
   signup: (email: string, password: string, role: UserRole, name: string) => Promise<void>;
@@ -17,6 +18,7 @@ interface AuthState {
   setCreatorProfile: (profile: Creator) => void;
   setBrandProfile: (profile: Brand) => void;
   toggleSavedCreator: (creatorId: string) => void;
+  markHydrated: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -28,6 +30,7 @@ export const useAuthStore = create<AuthState>()(
       savedCreators: [],
       isAuthenticated: false,
       isLoading: false,
+      hasHydrated: false,
 
       login: async (email: string, _password: string) => {
         set({ isLoading: true });
@@ -45,7 +48,7 @@ export const useAuthStore = create<AuthState>()(
           createdAt: new Date(),
         };
         
-        set({ user: mockUser, isAuthenticated: true, isLoading: false });
+        set({ user: mockUser, isAuthenticated: true, isLoading: false, hasHydrated: true });
       },
 
       loginWithPhone: async (phone: string, _otp: string) => {
@@ -62,7 +65,7 @@ export const useAuthStore = create<AuthState>()(
           createdAt: new Date(),
         };
         
-        set({ user: mockUser, isAuthenticated: true, isLoading: false });
+        set({ user: mockUser, isAuthenticated: true, isLoading: false, hasHydrated: true });
       },
 
       signup: async (email: string, _password: string, role: UserRole, name: string) => {
@@ -78,15 +81,25 @@ export const useAuthStore = create<AuthState>()(
           createdAt: new Date(),
         };
         
-        set({ user: mockUser, isAuthenticated: true, isLoading: false });
+        set({ user: mockUser, isAuthenticated: true, isLoading: false, hasHydrated: true });
       },
 
       logout: () => {
-        set({ user: null, creatorProfile: null, brandProfile: null, isAuthenticated: false });
+        set({ user: null, creatorProfile: null, brandProfile: null, isAuthenticated: false, hasHydrated: true });
+      },
+
+      markHydrated: () => {
+        set((state) => {
+          const hasUser = Boolean(state.user);
+          return {
+            hasHydrated: true,
+            isAuthenticated: hasUser,
+          };
+        });
       },
 
       setUser: (user: User) => {
-        set({ user, isAuthenticated: true });
+        set({ user, isAuthenticated: true, hasHydrated: true });
       },
 
       setCreatorProfile: (profile: Creator) => {
@@ -107,7 +120,30 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'chamcham-auth',
-      partialize: (state) => ({ 
+      version: 2,
+      migrate: (persistedState, version) => {
+        if (!persistedState || typeof persistedState !== 'object') {
+          return persistedState as AuthState;
+        }
+
+        // Reset legacy persisted auth snapshots to prevent false "logged in" UI.
+        if (version < 2) {
+          return {
+            ...(persistedState as AuthState),
+            user: null,
+            creatorProfile: null,
+            brandProfile: null,
+            savedCreators: [],
+            isAuthenticated: false,
+          } satisfies Partial<AuthState> as AuthState;
+        }
+
+        return persistedState as AuthState;
+      },
+      onRehydrateStorage: () => (state) => {
+        state?.markHydrated();
+      },
+      partialize: (state) => ({
         user: state.user, 
         isAuthenticated: state.isAuthenticated,
         creatorProfile: state.creatorProfile,

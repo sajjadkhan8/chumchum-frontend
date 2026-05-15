@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Search, Menu, Bell, MessageCircle, User, LogOut } from 'lucide-react';
+import { Search, Menu, Bell, MessageCircle, User, LogOut, Package, Wallet, Bookmark, Building2, BriefcaseBusiness } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -27,28 +27,54 @@ interface NavbarProps {
 
 export function Navbar({ showSearch = false, onSearchChange, searchValue }: NavbarProps) {
   const pathname = usePathname();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
+  const isSignedIn = hasHydrated && isAuthenticated && !!user;
+  const isCreator = isSignedIn && user.role === 'creator';
 
-  const navLinks = user?.role === 'creator'
+  const publicNavLinks = [
+    { href: '/brand/explore', label: 'Explore Creators' },
+    { href: '/#how-it-works', label: 'How It Works' },
+    { href: '/#categories', label: 'Categories' },
+    { href: '/pricing', label: 'Pricing' },
+  ];
+
+  const creatorNavLinks = [
+    { href: '/creator/dashboard', label: 'Dashboard' },
+    { href: '/creator/packages', label: 'My Packages' },
+    { href: '/creator/orders', label: 'Orders' },
+    { href: '/creator/earnings', label: 'Earnings' },
+  ];
+
+  const brandNavLinks = [
+    { href: '/brand/dashboard', label: 'Dashboard' },
+    { href: '/brand/explore', label: 'Explore Creators' },
+    { href: '/brand/orders', label: 'Campaigns' },
+    { href: '/brand/saved', label: 'Saved Creators' },
+  ];
+
+  const navLinks = isSignedIn ? (isCreator ? creatorNavLinks : brandNavLinks) : publicNavLinks;
+
+  const profileMenu = isCreator
     ? [
-        { href: '/creator/dashboard', label: 'Dashboard' },
-        { href: '/creator/packages', label: 'Packages' },
-        { href: '/creator/orders', label: 'Orders' },
+        { href: '/creator/profile/public', label: 'My Profile', icon: User },
+        { href: '/creator/packages', label: 'My Packages', icon: Package },
+        { href: '/creator/earnings', label: 'Earnings', icon: Wallet },
+        { href: '/creator/settings?tab=profile', label: 'Settings', icon: User },
       ]
     : [
-        { href: '/brand/explore', label: 'Explore Creators' },
-        { href: '/brand/orders', label: 'Campaigns' },
-        { href: '/pricing', label: 'Pricing' },
+        { href: '/brand/settings?tab=profile', label: 'Company Profile', icon: Building2 },
+        { href: '/brand/saved', label: 'Saved Creators', icon: Bookmark },
+        { href: '/brand/orders', label: 'Campaigns', icon: BriefcaseBusiness },
+        { href: '/brand/settings?tab=notifications', label: 'Settings', icon: User },
       ];
 
-  const getDashboardLink = () => {
-    if (!user) return '/login';
-    return user.role === 'creator' ? '/creator/dashboard' : '/brand/dashboard';
-  };
+  const messagesLink = isSignedIn ? `/${user.role}/messages` : '/messages';
 
-  const getMessagesLink = () => {
-    if (!user) return '/messages';
-    return `/${user.role}/messages`;
+  const isLinkActive = (href: string) => {
+    const pathOnly = href.split('?')[0];
+    if (pathOnly === '/') return pathname === '/';
+    if (pathOnly.startsWith('/#')) return pathname === '/';
+    return pathname === pathOnly || pathname.startsWith(`${pathOnly}/`);
   };
 
   return (
@@ -74,7 +100,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               href={link.href}
               className={cn(
                 'text-sm font-medium transition-colors hover:text-primary',
-                pathname === link.href ? 'text-primary' : 'text-muted-foreground'
+                isLinkActive(link.href) ? 'text-primary' : 'text-muted-foreground'
               )}
             >
               {link.label}
@@ -100,7 +126,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
 
         {/* Right Side Actions */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {isAuthenticated && user ? (
+          {isSignedIn && user ? (
             <>
               {/* Notifications */}
               <Button variant="ghost" size="icon" className="relative hidden sm:flex">
@@ -111,7 +137,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               </Button>
 
               {/* Messages */}
-              <Link href={getMessagesLink()}>
+              <Link href={messagesLink}>
                 <Button variant="ghost" size="icon" className="relative hidden sm:flex">
                   <MessageCircle className="h-5 w-5" />
                   <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs">
@@ -142,18 +168,17 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href={getDashboardLink()}>
-                      <User className="mr-2 h-4 w-4" />
-                      Dashboard
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/${user.role}/settings`}>
-                      <User className="mr-2 h-4 w-4" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
+                  {profileMenu.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <DropdownMenuItem asChild key={item.label}>
+                        <Link href={item.href}>
+                          <Icon className="mr-2 h-4 w-4" />
+                          {item.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    );
+                  })}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={logout} className="text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
@@ -167,8 +192,11 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               <Link href="/login" className="hidden sm:block">
                 <Button variant="ghost">Log in</Button>
               </Link>
+              <Link href="/brand/explore" className="hidden lg:block">
+                <Button variant="outline" className="rounded-full">Find Creators</Button>
+              </Link>
               <Link href="/signup">
-                <Button className="rounded-full">Get Started</Button>
+                <Button className="rounded-full">Sign Up</Button>
               </Link>
             </>
           )}
@@ -191,33 +219,35 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                       href={link.href}
                       className={cn(
                         'min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary',
-                        pathname === link.href ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
+                        isLinkActive(link.href) ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
                       )}
                     >
                       {link.label}
                     </Link>
                   </SheetClose>
                 ))}
-                {isAuthenticated && user && (
+                {isSignedIn && user ? (
                   <>
                     <SheetClose asChild>
-                      <Link href={getMessagesLink()} className="min-h-11 rounded-lg px-3 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-primary">
+                      <Link href={messagesLink} className={cn('min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary', isLinkActive(messagesLink) ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>
                         Messages
                       </Link>
                     </SheetClose>
+                    {profileMenu.map((item) => (
+                      <SheetClose asChild key={item.label}>
+                        <Link href={item.href} className={cn('min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary', isLinkActive(item.href) ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>
+                          {item.label}
+                        </Link>
+                      </SheetClose>
+                    ))}
                     <SheetClose asChild>
-                      <Link href={getDashboardLink()} className="min-h-11 rounded-lg px-3 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-primary">
-                        Dashboard
-                      </Link>
-                    </SheetClose>
-                    <SheetClose asChild>
-                      <Link href={`/${user.role}/settings`} className="min-h-11 rounded-lg px-3 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-primary">
-                        Profile & Settings
-                      </Link>
+                      <Button variant="ghost" className="min-h-11 justify-start px-3 text-destructive hover:text-destructive" onClick={logout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Logout
+                      </Button>
                     </SheetClose>
                   </>
-                )}
-                {!isAuthenticated && (
+                ) : (
                   <>
                     <SheetClose asChild>
                       <Link href="/login" className="min-h-11 rounded-lg px-3 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-primary">
@@ -226,7 +256,12 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                     </SheetClose>
                     <SheetClose asChild>
                       <Link href="/signup">
-                        <Button className="mt-3 min-h-11 w-full rounded-full">Get Started</Button>
+                        <Button className="mt-3 min-h-11 w-full rounded-full">Create Account</Button>
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link href="/brand/explore">
+                        <Button className="mt-2 min-h-11 w-full rounded-full" variant="outline">Find Creators</Button>
                       </Link>
                     </SheetClose>
                   </>

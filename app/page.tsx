@@ -173,7 +173,7 @@ export default function Home() {
       </section>
 
       {/* Categories Section */}
-      <section className="py-12 md:py-16">
+      <section id="categories" className="py-12 md:py-16">
         <div className="container mx-auto px-4">
           <div className="mb-8 flex items-center justify-between">
             <div>
@@ -220,7 +220,7 @@ export default function Home() {
       </section>
 
       {/* Trending Creators Carousel */}
-      <section className="bg-muted/30 py-12 md:py-16">
+      <section id="how-it-works" className="bg-muted/30 py-12 md:py-16">
         <div className="container mx-auto px-4">
           <div className="mb-8 flex items-center justify-between">
             <div className="flex items-center gap-3">

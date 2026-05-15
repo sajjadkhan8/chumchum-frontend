@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import {
@@ -70,6 +71,7 @@ const cities = [
 ];
 
 export default function BrandSettingsPage() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("profile");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -124,6 +126,24 @@ export default function BrandSettingsPage() {
     setIsSaving(false);
     toast.success("Brand settings saved");
   };
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (!tab) return;
+
+    const allowedTabs = new Set([
+      'profile',
+      'billing',
+      'campaigns',
+      'verification',
+      'notifications',
+      'security',
+    ]);
+
+    if (allowedTabs.has(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   return (
       <div className="container mx-auto max-w-4xl p-4 pb-24 md:p-6 md:pb-6">
