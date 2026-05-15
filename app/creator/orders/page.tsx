@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { formatPrice, formatDate, getInitials } from "@/lib/utils";
+import { toast } from "sonner";
 
 const orders = [
   {
@@ -295,16 +296,16 @@ export default function CreatorOrdersPage() {
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuContent align="end">
+                          <DropdownMenuItem onSelect={() => toast.info(`Order ${order.id} details are visible in the expanded card.`)}>
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => toast.success(`Message draft created for ${order.brandName}.`)}>
                             <MessageCircle className="mr-2 h-4 w-4" />
                             Message Brand
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => toast.success(`Submit flow prepared for ${order.id}.`)}>
                             <Upload className="mr-2 h-4 w-4" />
                             Submit Deliverable
                           </DropdownMenuItem>
@@ -377,11 +378,11 @@ export default function CreatorOrdersPage() {
                       </div>
 
                       <div className="mt-4 flex gap-2">
-                        <Button variant="outline" className="flex-1">
+                        <Button variant="outline" className="flex-1" onClick={() => toast.success(`Message draft created for ${order.brandName}.`)}>
                           <MessageCircle className="mr-2 h-4 w-4" />
                           Message
                         </Button>
-                        <Button className="flex-1">
+                        <Button className="flex-1" onClick={() => toast.success(`Submit flow prepared for ${order.id}.`)}>
                           <Upload className="mr-2 h-4 w-4" />
                           Submit Work
                         </Button>

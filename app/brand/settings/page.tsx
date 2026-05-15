@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getInitials } from "@/lib/utils";
+import { toast } from "sonner";
 
 const industries = [
   "Fashion & Apparel",
@@ -121,6 +122,7 @@ export default function BrandSettingsPage() {
     setIsSaving(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsSaving(false);
+    toast.success("Brand settings saved");
   };
 
   return (
@@ -182,7 +184,12 @@ export default function BrandSettingsPage() {
                 <div className="text-center sm:text-left">
                   <h3 className="text-lg font-semibold">{profile.companyName}</h3>
                   <p className="text-muted-foreground">{profile.industry}</p>
-                  <Button variant="outline" size="sm" className="mt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => toast.info("Logo upload will be enabled once media storage is connected.")}
+                  >
                     Change Logo
                   </Button>
                 </div>
@@ -509,7 +516,7 @@ export default function BrandSettingsPage() {
                       Unlimited creators, priority support
                     </p>
                   </div>
-                  <Button variant="outline">Upgrade</Button>
+                  <Button variant="outline" onClick={() => toast.info("Plan upgrade flow is coming soon.")}>Upgrade</Button>
                 </div>
               </CardContent>
             </Card>
@@ -556,11 +563,11 @@ export default function BrandSettingsPage() {
                       </p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => toast.info("Card edit flow is not enabled in demo mode.")}>
                     Edit
                   </Button>
                 </div>
-                <Button variant="outline" className="mt-4 w-full">
+                <Button variant="outline" className="mt-4 w-full" onClick={() => toast.info("Add payment method flow is coming soon.")}>
                   Add Payment Method
                 </Button>
               </CardContent>
@@ -646,7 +653,7 @@ export default function BrandSettingsPage() {
                   <Label htmlFor="confirmPassword">Confirm New Password</Label>
                   <Input id="confirmPassword" type="password" />
                 </div>
-                <Button>Update Password</Button>
+                <Button onClick={() => toast.success("Password update request captured.")}>Update Password</Button>
               </CardContent>
             </Card>
 
@@ -665,7 +672,7 @@ export default function BrandSettingsPage() {
                       Protect your account with 2FA
                     </p>
                   </div>
-                  <Button variant="outline">Enable 2FA</Button>
+                  <Button variant="outline" onClick={() => toast.info("2FA setup wizard is planned for next release.")}>Enable 2FA</Button>
                 </div>
               </CardContent>
             </Card>
@@ -704,12 +711,12 @@ export default function BrandSettingsPage() {
                         </p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => toast.info("Team member removal is disabled in demo mode.")}>
                       Remove
                     </Button>
                   </div>
                 </div>
-                <Button variant="outline" className="mt-4 w-full">
+                <Button variant="outline" className="mt-4 w-full" onClick={() => toast.info("Invite team flow is coming soon.")}>
                   <Users className="mr-2 h-4 w-4" />
                   Invite Team Member
                 </Button>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Search, SlidersHorizontal, TrendingUp, Star, Wallet, MapPin } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -18,9 +19,10 @@ import { FilterPanel } from '@/components/filter-panel';
 import { QuickDealModal } from '@/components/quick-deal-modal';
 import { CreatorCardSkeleton } from '@/components/skeletons';
 import { EmptyState } from '@/components/empty-state';
+import { ErrorState } from '@/components/error-state';
 import { useFilterStore } from '@/store/filter-store';
 import { creatorsService } from '@/services/creators.service';
-import type { Creator } from '@/types';
+import type { Creator, DealType } from '@/types';
 import { cn } from '@/lib/utils';
 
 const sortOptions = [
@@ -31,21 +33,44 @@ const sortOptions = [
 ];
 
 export default function ExplorePage() {
-  const { filters, setFilters, isFilterPanelOpen, setFilterPanelOpen } = useFilterStore();
+  const searchParams = useSearchParams();
+  const { filters, setFilters } = useFilterStore();
   const [creators, setCreators] = useState<Creator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
   const [isQuickDealOpen, setIsQuickDealOpen] = useState(false);
+
+  useEffect(() => {
+    const category = searchParams.get('category');
+    const filter = searchParams.get('filter');
+
+    const dealTypeFromFilter = filter === 'barter' || filter === 'hybrid' || filter === 'paid'
+      ? [filter as DealType]
+      : undefined;
+
+    if (category || dealTypeFromFilter || filter === 'rising') {
+      setFilters({
+        categories: category ? [category.charAt(0).toUpperCase() + category.slice(1)] : filters.categories,
+        dealTypes: dealTypeFromFilter || filters.dealTypes,
+        sortBy: filter === 'rising' ? 'trending' : filters.sortBy,
+      });
+    }
+    // Run once when params become available.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Fetch creators
   useEffect(() => {
     const fetchCreators = async () => {
       setIsLoading(true);
+      setHasError(false);
       try {
         const data = await creatorsService.getAll(filters);
         setCreators(data);
       } catch (error) {
         console.error('Failed to fetch creators:', error);
+        setHasError(true);
       } finally {
         setIsLoading(false);
       }
@@ -220,6 +245,12 @@ export default function ExplorePage() {
                 <CreatorCardSkeleton key={i} />
               ))}
             </div>
+          ) : hasError ? (
+            <ErrorState
+              title="Unable to load creators"
+              description="Please check your connection and try again."
+              onRetry={() => setFilters({ ...filters })}
+            />
           ) : creators.length === 0 ? (
             <EmptyState
               title="No creators found"

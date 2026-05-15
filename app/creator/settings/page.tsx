@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/select";
 import { getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
+import { toast } from "sonner";
 
 const categories = [
   "Fashion",
@@ -137,6 +138,7 @@ export default function CreatorSettingsPage() {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsSaving(false);
+    toast.success("Settings saved");
   };
 
   const handleCategoryToggle = (category: string) => {
@@ -228,7 +230,12 @@ export default function CreatorSettingsPage() {
               <div className="text-center sm:text-left">
                 <h3 className="text-lg font-semibold">{profile.name}</h3>
                 <p className="text-muted-foreground">@{profile.handle}</p>
-                <Button variant="outline" size="sm" className="mt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => toast.info("Profile image upload will be enabled with backend storage.")}
+                >
                   Change Photo
                 </Button>
               </div>
@@ -496,7 +503,13 @@ export default function CreatorSettingsPage() {
                         </div>
                       </div>
                     </div>
-                      <Button variant="outline" size="sm">Disconnect</Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toast.info(`${account.platform} disconnection is disabled in demo mode.`)}
+                      >
+                        Disconnect
+                      </Button>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -510,7 +523,11 @@ export default function CreatorSettingsPage() {
                 );
               })}
 
-              <Button variant="outline" className="w-full">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => toast.info("Add account flow is coming soon.")}
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Connect Account
               </Button>
@@ -724,7 +741,7 @@ export default function CreatorSettingsPage() {
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
                 <Input id="confirmPassword" type="password" />
               </div>
-              <Button>Update Password</Button>
+              <Button onClick={() => toast.success("Password update request captured.")}>Update Password</Button>
             </CardContent>
           </Card>
 
@@ -743,7 +760,7 @@ export default function CreatorSettingsPage() {
                     Protect your account with 2FA
                   </p>
                 </div>
-                <Button variant="outline">Enable 2FA</Button>
+                <Button variant="outline" onClick={() => toast.info("2FA setup wizard is planned for next iteration.")}>Enable 2FA</Button>
               </div>
             </CardContent>
           </Card>
@@ -760,7 +777,7 @@ export default function CreatorSettingsPage() {
                     Permanently delete your account and all data
                   </p>
                 </div>
-                <Button variant="destructive">Delete Account</Button>
+                <Button variant="destructive" onClick={() => toast.error("Account deletion is disabled in demo mode.")}>Delete Account</Button>
               </div>
             </CardContent>
           </Card>

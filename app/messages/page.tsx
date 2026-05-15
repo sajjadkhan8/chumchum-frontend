@@ -45,6 +45,7 @@ import { creators } from "@/data/creators";
 import { formatRelativeTime, formatPrice, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import type { Message, Conversation } from "@/types";
+import { toast } from "sonner";
 
 function MessagesPageContent() {
   const searchParams = useSearchParams();
@@ -57,6 +58,7 @@ function MessagesPageContent() {
     useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showMobileChat, setShowMobileChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -157,8 +159,9 @@ function MessagesPageContent() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
+    setIsSending(true);
 
     const newMsg: Message = {
       id: `msg-${Date.now()}`,
@@ -173,6 +176,8 @@ function MessagesPageContent() {
 
     setMessages((prev) => [...prev, newMsg]);
     setNewMessage("");
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    setIsSending(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -461,10 +466,18 @@ function MessagesPageContent() {
               {/* Message Input */}
               <div className="border-t border-border p-4">
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => toast.info("Media picker will be available in the next messaging release.")}
+                  >
                     <Plus className="h-5 w-5" />
                   </Button>
-                  <Button variant="ghost" size="icon">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => toast.info("File attachments are not enabled in demo mode.")}
+                  >
                     <Paperclip className="h-5 w-5" />
                   </Button>
                   <Input
@@ -478,7 +491,7 @@ function MessagesPageContent() {
                   <Button
                     size="icon"
                     onClick={handleSendMessage}
-                    disabled={!newMessage.trim()}
+                    disabled={!newMessage.trim() || isSending}
                   >
                     <Send className="h-5 w-5" />
                   </Button>
@@ -493,8 +506,9 @@ function MessagesPageContent() {
               </div>
               <h2 className="mb-2 text-xl font-semibold">Your Messages</h2>
               <p className="mb-4 max-w-md text-muted-foreground">
-                Select a conversation from the list or start a new one by
-                visiting a creator&apos;s profile.
+                {isCreatorView
+                  ? "Select a conversation to continue your active brand collaboration chats."
+                  : "Select a conversation from the list or start a new one by visiting a creator profile."}
               </p>
               <Button asChild>
                 <Link href={isCreatorView ? "/creator/dashboard" : "/brand/explore"}>
@@ -506,7 +520,6 @@ function MessagesPageContent() {
         </div>
       </div>
 
-      <BottomNav />
     </div>
   );
 }

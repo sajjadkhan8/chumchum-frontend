@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { formatPrice, formatDate, getInitials } from "@/lib/utils";
+import { toast } from "sonner";
 
 const orders = [
   {
@@ -291,22 +292,26 @@ export default function BrandOrdersPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => toast.info(`Order ${order.id} details are shown in this card view.`)}
+                            >
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => toast.success(`Opening chat with ${order.creatorName} soon.`)}
+                            >
                               <MessageCircle className="mr-2 h-4 w-4" />
                               Message Creator
                             </DropdownMenuItem>
                             {order.status === "review" && (
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => toast.success(`Delivery approved for ${order.id}`)}>
                                 <CheckCircle className="mr-2 h-4 w-4" />
                                 Approve Delivery
                               </DropdownMenuItem>
                             )}
                             {order.status !== "completed" && (
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => toast.info(`Revision request drafted for ${order.id}`)}>
                                 <RefreshCw className="mr-2 h-4 w-4" />
                                 Request Revision
                               </DropdownMenuItem>
@@ -404,7 +409,7 @@ export default function BrandOrdersPage() {
                             </Link>
                           </Button>
                           {order.status === "review" && (
-                            <Button className="flex-1">
+                            <Button className="flex-1" onClick={() => toast.success(`Delivery approved for ${order.id}`)}>
                               <CheckCircle className="mr-2 h-4 w-4" />
                               Approve
                             </Button>
