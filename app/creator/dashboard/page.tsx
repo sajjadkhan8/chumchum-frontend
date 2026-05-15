@@ -239,9 +239,9 @@ export default function CreatorDashboardPage() {
                 </Link>
               </Button>
               <Button variant="outline" className="h-auto flex-col py-4" asChild>
-                <Link href="/creator/analytics">
+                <Link href="/creator/settings">
                   <BarChart3 className="mb-2 h-5 w-5" />
-                  <span className="text-xs">Analytics</span>
+                  <span className="text-xs">Insights</span>
                 </Link>
               </Button>
             </CardContent>
@@ -252,7 +252,7 @@ export default function CreatorDashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Messages</CardTitle>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/messages">View All</Link>
+                <Link href="/creator/messages">View All</Link>
               </Button>
             </CardHeader>
             <CardContent>
@@ -260,7 +260,7 @@ export default function CreatorDashboardPage() {
                 {recentMessages.map((msg) => (
                   <Link
                     key={msg.id}
-                    href="/messages"
+                    href="/creator/messages"
                     className="flex items-start gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
                   >
                     <Avatar className="h-10 w-10">

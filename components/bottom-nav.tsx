@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Home, Search, ShoppingBag, MessageCircle, User } from 'lucide-react';
+import { Home, Search, ShoppingBag, MessageCircle, User, Wallet } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
 
@@ -15,13 +15,17 @@ interface NavItem {
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
+
+  if (!isAuthenticated || !user) {
+    return null;
+  }
 
   const creatorNavItems: NavItem[] = [
     { href: '/creator/dashboard', icon: Home, label: 'Home' },
     { href: '/creator/orders', icon: ShoppingBag, label: 'Orders' },
     { href: '/creator/messages', icon: MessageCircle, label: 'Messages' },
-    { href: '/creator/earnings', icon: User, label: 'Earnings' },
+    { href: '/creator/earnings', icon: Wallet, label: 'Earnings' },
     { href: '/creator/settings', icon: User, label: 'Profile' },
   ];
 
@@ -33,7 +37,7 @@ export function BottomNav() {
     { href: '/brand/settings', icon: User, label: 'Profile' },
   ];
 
-  const navItems = user?.role === 'creator' ? creatorNavItems : brandNavItems;
+  const navItems = user.role === 'creator' ? creatorNavItems : brandNavItems;
 
   return (
     <motion.nav
@@ -51,7 +55,7 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors',
+                'relative flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors',
                 isActive ? 'text-primary' : 'text-muted-foreground'
               )}
             >

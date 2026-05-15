@@ -29,15 +29,26 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuthStore();
 
-  const navLinks = [
-    { href: '/brand/explore', label: 'Explore Creators' },
-    { href: '/about', label: 'How it Works' },
-    { href: '/pricing', label: 'Pricing' },
-  ];
+  const navLinks = user?.role === 'creator'
+    ? [
+        { href: '/creator/dashboard', label: 'Dashboard' },
+        { href: '/creator/packages', label: 'Packages' },
+        { href: '/creator/orders', label: 'Orders' },
+      ]
+    : [
+        { href: '/brand/explore', label: 'Explore Creators' },
+        { href: '/brand/orders', label: 'Campaigns' },
+        { href: '/pricing', label: 'Pricing' },
+      ];
 
   const getDashboardLink = () => {
     if (!user) return '/login';
     return user.role === 'creator' ? '/creator/dashboard' : '/brand/dashboard';
+  };
+
+  const getMessagesLink = () => {
+    if (!user) return '/messages';
+    return `/${user.role}/messages`;
   };
 
   return (
@@ -100,7 +111,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               </Button>
 
               {/* Messages */}
-              <Link href={`/${user.role}/messages`}>
+              <Link href={getMessagesLink()}>
                 <Button variant="ghost" size="icon" className="relative hidden sm:flex">
                   <MessageCircle className="h-5 w-5" />
                   <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs">

@@ -19,6 +19,8 @@ import {
   Save,
   Check,
   X,
+  Wallet,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -81,14 +83,43 @@ export default function CreatorSettingsPage() {
     categories: ["Fashion", "Lifestyle"],
     languages: ["English", "Urdu"],
     website: "https://ayeshakhan.com",
+    niche: "Fashion & Lifestyle",
+    coverImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200",
+    availabilityStatus: "Available this week",
+    responseTime: "Within 2 hours",
+    collaborationPreferences: "Fashion hauls, skincare tutorials, unboxing, and hybrid product campaigns",
     avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
   });
 
   const [socialAccounts, setSocialAccounts] = useState([
-    { platform: "instagram", handle: "ayeshak", followers: 125000, verified: true },
-    { platform: "youtube", handle: "AyeshaKhan", followers: 45000, verified: true },
-    { platform: "tiktok", handle: "ayeshak", followers: 89000, verified: false },
+    { platform: "instagram", username: "ayeshak", profileUrl: "https://instagram.com/ayeshak", followers: 125000, avgViews: 48000, engagementRate: 5.6, verified: true },
+    { platform: "youtube", username: "AyeshaKhan", profileUrl: "https://youtube.com/@AyeshaKhan", followers: 45000, avgViews: 18000, engagementRate: 4.8, verified: true },
+    { platform: "tiktok", username: "ayeshak", profileUrl: "https://tiktok.com/@ayeshak", followers: 89000, avgViews: 62000, engagementRate: 7.1, verified: false },
+    { platform: "facebook", username: "AyeshaKhanOfficial", profileUrl: "https://facebook.com/ayeshakhanofficial", followers: 38000, avgViews: 12000, engagementRate: 3.9, verified: false },
+    { platform: "snapchat", username: "ayeshak.snap", profileUrl: "https://snapchat.com/add/ayeshak.snap", followers: 21000, avgViews: 9000, engagementRate: 4.2, verified: false },
   ]);
+
+  const [paymentSettings, setPaymentSettings] = useState({
+    jazzCashNumber: "03001234567",
+    easyPaisaNumber: "03111234567",
+    accountTitle: "Ayesha Khan",
+    ibanOrAccount: "PK36SCBL0000001123456702",
+  });
+
+  const [creatorPreferences, setCreatorPreferences] = useState({
+    acceptsBarter: true,
+    acceptsHybridDeals: true,
+    preferredIndustries: "Fashion, Beauty, Wellness, E-commerce",
+    minimumBudget: "25000",
+  });
+
+  const analyticsData = {
+    engagementTrend: "+8.4% MoM",
+    topPlatform: "Instagram",
+    monthlyEarnings: "PKR 145,000",
+    profileViews: "3,240",
+    packagePerformance: "Top package conversion: 18%",
+  };
 
   const [notifications, setNotifications] = useState({
     newOrders: true,
@@ -130,6 +161,8 @@ export default function CreatorSettingsPage() {
     instagram: Instagram,
     youtube: Youtube,
     tiktok: Music2,
+    facebook: LinkIcon,
+    snapchat: LinkIcon,
   };
 
   return (
@@ -153,6 +186,18 @@ export default function CreatorSettingsPage() {
           <TabsTrigger value="social" className="gap-2">
             <LinkIcon className="h-4 w-4" />
             Social
+          </TabsTrigger>
+          <TabsTrigger value="payments" className="gap-2">
+            <Wallet className="h-4 w-4" />
+            Payments
+          </TabsTrigger>
+          <TabsTrigger value="preferences" className="gap-2">
+            <Check className="h-4 w-4" />
+            Preferences
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Analytics
           </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="h-4 w-4" />
@@ -301,6 +346,54 @@ export default function CreatorSettingsPage() {
                   </div>
                 </div>
               </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="niche">Niche / Category</Label>
+                  <Input
+                    id="niche"
+                    value={profile.niche}
+                    onChange={(e) => setProfile((p) => ({ ...p, niche: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="responseTime">Response Time</Label>
+                  <Input
+                    id="responseTime"
+                    value={profile.responseTime}
+                    onChange={(e) => setProfile((p) => ({ ...p, responseTime: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="availabilityStatus">Availability Status</Label>
+                  <Input
+                    id="availabilityStatus"
+                    value={profile.availabilityStatus}
+                    onChange={(e) => setProfile((p) => ({ ...p, availabilityStatus: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="coverImage">Cover/Banner Image URL</Label>
+                  <Input
+                    id="coverImage"
+                    value={profile.coverImage}
+                    onChange={(e) => setProfile((p) => ({ ...p, coverImage: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="collaborationPreferences">Collaboration Preferences</Label>
+                <Textarea
+                  id="collaborationPreferences"
+                  rows={3}
+                  value={profile.collaborationPreferences}
+                  onChange={(e) => setProfile((p) => ({ ...p, collaborationPreferences: e.target.value }))}
+                />
+              </div>
             </CardContent>
           </Card>
 
@@ -385,9 +478,10 @@ export default function CreatorSettingsPage() {
                 return (
                   <div
                     key={account.platform}
-                    className="flex items-center justify-between rounded-lg border border-border p-4"
+                    className="rounded-lg border border-border p-4"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="mb-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                         <Icon className="h-5 w-5" />
                       </div>
@@ -400,15 +494,18 @@ export default function CreatorSettingsPage() {
                             <Check className="h-4 w-4 text-primary" />
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          @{account.handle} •{" "}
-                          {account.followers.toLocaleString()} followers
-                        </p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm">
-                      Disconnect
-                    </Button>
+                      <Button variant="outline" size="sm">Disconnect</Button>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Input value={account.username} readOnly />
+                      <Input value={account.profileUrl} readOnly />
+                      <Input value={`${account.followers.toLocaleString()} followers`} readOnly />
+                      <Input value={`${account.avgViews.toLocaleString()} avg views`} readOnly />
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">Engagement rate: {account.engagementRate}%</p>
                   </div>
                 );
               })}
@@ -417,6 +514,126 @@ export default function CreatorSettingsPage() {
                 <Plus className="mr-2 h-4 w-4" />
                 Connect Account
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="payments" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Payment Settings</CardTitle>
+              <CardDescription>Configure your payout channels for withdrawals.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>JazzCash</Label>
+                  <Input
+                    value={paymentSettings.jazzCashNumber}
+                    onChange={(e) => setPaymentSettings((p) => ({ ...p, jazzCashNumber: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>EasyPaisa</Label>
+                  <Input
+                    value={paymentSettings.easyPaisaNumber}
+                    onChange={(e) => setPaymentSettings((p) => ({ ...p, easyPaisaNumber: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Account Title</Label>
+                  <Input
+                    value={paymentSettings.accountTitle}
+                    onChange={(e) => setPaymentSettings((p) => ({ ...p, accountTitle: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>IBAN / Account Number</Label>
+                  <Input
+                    value={paymentSettings.ibanOrAccount}
+                    onChange={(e) => setPaymentSettings((p) => ({ ...p, ibanOrAccount: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="preferences" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Creator Preferences</CardTitle>
+              <CardDescription>Control what collaborations you receive.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div>
+                  <p className="font-medium">Accept barter deals</p>
+                  <p className="text-xs text-muted-foreground">Receive non-cash exchange offers</p>
+                </div>
+                <Switch
+                  checked={creatorPreferences.acceptsBarter}
+                  onCheckedChange={(checked) => setCreatorPreferences((p) => ({ ...p, acceptsBarter: checked }))}
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div>
+                  <p className="font-medium">Accept hybrid deals</p>
+                  <p className="text-xs text-muted-foreground">Combine cash + barter in offers</p>
+                </div>
+                <Switch
+                  checked={creatorPreferences.acceptsHybridDeals}
+                  onCheckedChange={(checked) => setCreatorPreferences((p) => ({ ...p, acceptsHybridDeals: checked }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Preferred Industries</Label>
+                <Input
+                  value={creatorPreferences.preferredIndustries}
+                  onChange={(e) => setCreatorPreferences((p) => ({ ...p, preferredIndustries: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Minimum Collaboration Budget (PKR)</Label>
+                <Input
+                  type="number"
+                  value={creatorPreferences.minimumBudget}
+                  onChange={(e) => setCreatorPreferences((p) => ({ ...p, minimumBudget: e.target.value }))}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Creator Insights</CardTitle>
+              <CardDescription>Performance snapshot for your profile and packages.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-xs text-muted-foreground">Engagement Trend</p>
+                <p className="font-semibold">{analyticsData.engagementTrend}</p>
+              </div>
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-xs text-muted-foreground">Top Performing Platform</p>
+                <p className="font-semibold">{analyticsData.topPlatform}</p>
+              </div>
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-xs text-muted-foreground">Monthly Earnings</p>
+                <p className="font-semibold">{analyticsData.monthlyEarnings}</p>
+              </div>
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-xs text-muted-foreground">Profile Views</p>
+                <p className="font-semibold">{analyticsData.profileViews}</p>
+              </div>
+              <div className="rounded-lg border border-border p-3 sm:col-span-2">
+                <p className="text-xs text-muted-foreground">Package Performance</p>
+                <p className="font-semibold">{analyticsData.packagePerformance}</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

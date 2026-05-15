@@ -15,9 +15,17 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import type { Creator, DealType } from '@/types';
 import { cn, formatPrice } from '@/lib/utils';
+import { barterTypes } from '@/data/creators';
 
 interface QuickDealModalProps {
   creator: Creator;
@@ -49,7 +57,10 @@ const dealTypeOptions: { value: DealType; label: string; icon: React.ElementType
 export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps) {
   const [dealType, setDealType] = useState<DealType>('paid');
   const [budget, setBudget] = useState('');
-  const [barterOffer, setBarterOffer] = useState('');
+  const [barterDescription, setBarterDescription] = useState('');
+  const [barterCategory, setBarterCategory] = useState('products');
+  const [barterValue, setBarterValue] = useState('');
+  const [creatorExpectation, setCreatorExpectation] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -69,7 +80,10 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
     // Reset form
     setDealType('paid');
     setBudget('');
-    setBarterOffer('');
+    setBarterDescription('');
+    setBarterCategory('products');
+    setBarterValue('');
+    setCreatorExpectation('');
     setMessage('');
   };
 
@@ -178,24 +192,70 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
             )}
           </AnimatePresence>
 
-          {/* Barter Offer (for barter and hybrid) */}
+          {/* Barter Details (for barter and hybrid) */}
           <AnimatePresence mode="wait">
             {(dealType === 'barter' || dealType === 'hybrid') && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
+                className="space-y-3"
               >
-                <Label htmlFor="barter" className="text-sm font-medium">
-                  What are you offering?
+                <Label htmlFor="barter-description" className="text-sm font-medium">
+                  Barter Description
                 </Label>
-                <Input
-                  id="barter"
-                  placeholder="e.g., Free meals for 3 months, Products worth PKR 50,000"
-                  value={barterOffer}
-                  onChange={(e) => setBarterOffer(e.target.value)}
-                  className="mt-2"
+                <Textarea
+                  id="barter-description"
+                  placeholder="Describe the item/service you are offering in exchange"
+                  value={barterDescription}
+                  onChange={(e) => setBarterDescription(e.target.value)}
+                  className="min-h-[84px] resize-none"
                 />
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <Label className="text-sm font-medium">Barter Category</Label>
+                    <Select value={barterCategory} onValueChange={setBarterCategory}>
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {barterTypes.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="barter-value" className="text-sm font-medium">
+                      Estimated Value (PKR)
+                    </Label>
+                    <Input
+                      id="barter-value"
+                      type="number"
+                      placeholder="50000"
+                      value={barterValue}
+                      onChange={(e) => setBarterValue(e.target.value)}
+                      className="mt-2"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="expectation" className="text-sm font-medium">
+                    What do you need from creator?
+                  </Label>
+                  <Input
+                    id="expectation"
+                    placeholder="e.g., 1 reel, 3 stories, and usage rights for 30 days"
+                    value={creatorExpectation}
+                    onChange={(e) => setCreatorExpectation(e.target.value)}
+                    className="mt-2"
+                  />
+                </div>
+
                 {creator.barterTypes && creator.barterTypes.length > 0 && (
                   <p className="mt-1 text-xs text-muted-foreground">
                     Interested in: {creator.barterTypes.join(', ')}

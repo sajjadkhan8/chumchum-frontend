@@ -15,8 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Navbar } from "@/components/navbar";
-import { BottomNav } from "@/components/bottom-nav";
 import { CreatorCard } from "@/components/creator-card";
 import { EmptyState } from "@/components/empty-state";
 import { creators } from "@/data/creators";
@@ -59,9 +57,7 @@ export default function BrandSavedPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto p-4 pt-20 md:p-6 md:pt-20 pb-24 md:pb-6">
+      <div className="container mx-auto p-4 pb-24 md:p-6 md:pb-6">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-foreground md:text-3xl">
@@ -166,7 +162,5 @@ export default function BrandSavedPage() {
           />
         )}
       </div>
-      <BottomNav />
-    </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Clock, CheckCircle, Gift, TrendingUp, Instagram, Youtube } from 'lucide-react';
+import { Clock, CheckCircle, Gift, Sparkles, TrendingUp, Instagram, Youtube } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,7 @@ const platformIcons: Record<string, React.ElementType> = {
 
 export function PackageCard({ pkg, onOrder, className }: PackageCardProps) {
   const PlatformIcon = platformIcons[pkg.platform] || Instagram;
+  const showCashAmount = pkg.dealType === 'paid' ? pkg.price : pkg.hybridCashAmount || pkg.price;
 
   return (
     <motion.div
@@ -98,6 +99,15 @@ export function PackageCard({ pkg, onOrder, className }: PackageCardProps) {
               <Clock className="h-4 w-4" />
               <span>{pkg.deliveryDays} days delivery</span>
             </div>
+
+            {(pkg.barterDescription || pkg.creatorExpectations) && (
+              <div className="rounded-xl border border-border/50 bg-muted/40 p-3 text-xs text-muted-foreground">
+                {pkg.barterDescription && <p>{pkg.barterDescription}</p>}
+                {pkg.creatorExpectations && (
+                  <p className="mt-1">Creator expects: {pkg.creatorExpectations}</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Footer */}
@@ -108,14 +118,27 @@ export function PackageCard({ pkg, onOrder, className }: PackageCardProps) {
                   <Gift className="h-4 w-4" />
                   <span className="font-semibold">Barter Deal</span>
                 </div>
+              ) : pkg.dealType === 'hybrid' ? (
+                <div>
+                  <div className="flex items-center gap-1 text-primary">
+                    <Sparkles className="h-4 w-4" />
+                    <span className="font-semibold">Hybrid Deal</span>
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">
+                    {formatPrice(showCashAmount)} + barter
+                  </p>
+                </div>
               ) : (
                 <p className="text-lg font-bold text-foreground">{formatPrice(pkg.price)}</p>
               )}
               {pkg.barterValue && (
                 <p className="text-xs text-muted-foreground">{pkg.barterValue}</p>
               )}
+              {pkg.estimatedBarterValue ? (
+                <p className="text-xs text-muted-foreground">Estimated value: {formatPrice(pkg.estimatedBarterValue)}</p>
+              ) : null}
             </div>
-            <Button onClick={onOrder} className="rounded-full">
+            <Button onClick={onOrder} className="rounded-full" disabled={!onOrder}>
               Order Now
             </Button>
           </div>

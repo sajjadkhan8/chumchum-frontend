@@ -37,8 +37,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
-import { Navbar } from "@/components/navbar";
-import { BottomNav } from "@/components/bottom-nav";
 import { formatPrice, formatDate, getInitials } from "@/lib/utils";
 
 const orders = [
@@ -172,9 +170,7 @@ export default function BrandOrdersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto p-4 pt-20 md:p-6 md:pt-20 pb-24 md:pb-6">
+      <div className="container mx-auto p-4 pb-24 md:p-6 md:pb-6">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-foreground md:text-3xl">
@@ -438,7 +434,5 @@ export default function BrandOrdersPage() {
           )}
         </div>
       </div>
-      <BottomNav />
-    </div>
   );
 }

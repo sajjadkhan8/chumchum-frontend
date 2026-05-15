@@ -30,8 +30,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Navbar } from "@/components/navbar";
-import { BottomNav } from "@/components/bottom-nav";
 import { PackageCard } from "@/components/package-card";
 import { ReviewCard } from "@/components/review-card";
 import { QuickDealModal } from "@/components/quick-deal-modal";
@@ -53,7 +51,7 @@ export default function CreatorProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { savedCreators, toggleSavedCreator } = useAuthStore();
+  const { user, savedCreators, toggleSavedCreator } = useAuthStore();
   const [activeTab, setActiveTab] = useState("packages");
   const [quickDealOpen, setQuickDealOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
@@ -83,6 +81,7 @@ export default function CreatorProfilePage({
   }
 
   const isSaved = savedCreators.includes(creator.id);
+  const canHireCreator = !user || user.role === 'brand';
   const totalFollowers = creator.platforms.reduce(
     (sum, p) => sum + p.followers,
     0
@@ -100,7 +99,6 @@ export default function CreatorProfilePage({
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <Navbar />
 
       {/* Hero Section */}
       <section className="relative">
@@ -161,27 +159,33 @@ export default function CreatorProfilePage({
 
               {/* Action Buttons */}
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => toggleSavedCreator(creator.id)}
-                >
-                  <Heart
-                    className={`h-5 w-5 ${isSaved ? "fill-destructive text-destructive" : ""}`}
-                  />
-                </Button>
+                {canHireCreator && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => toggleSavedCreator(creator.id)}
+                  >
+                    <Heart
+                      className={`h-5 w-5 ${isSaved ? "fill-destructive text-destructive" : ""}`}
+                    />
+                  </Button>
+                )}
                 <Button variant="outline" size="icon">
                   <Share2 className="h-5 w-5" />
                 </Button>
-                <Button variant="outline" asChild>
-                  <Link href={`/messages?creator=${creator.id}`}>
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    Message
-                  </Link>
-                </Button>
-                <Button onClick={() => setQuickDealOpen(true)}>
-                  Quick Deal
-                </Button>
+                {canHireCreator && (
+                  <>
+                    <Button variant="outline" asChild>
+                      <Link href={`/messages?creator=${creator.id}`}>
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        Message
+                      </Link>
+                    </Button>
+                    <Button onClick={() => setQuickDealOpen(true)}>
+                      Quick Deal
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -346,7 +350,7 @@ export default function CreatorProfilePage({
                     <PackageCard
                       key={pkg.id}
                       pkg={pkg}
-                      onOrder={() => handleBookPackage(pkg.id)}
+                      onOrder={canHireCreator ? () => handleBookPackage(pkg.id) : undefined}
                     />
                   ))
                 ) : (
@@ -479,7 +483,6 @@ export default function CreatorProfilePage({
         </div>
       </div>
 
-      <BottomNav />
 
       {/* Quick Deal Modal */}
       <QuickDealModal

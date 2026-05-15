@@ -257,7 +257,7 @@ export default function BrandDashboardPage() {
                 className="h-auto flex-col py-4"
                 asChild
               >
-                <Link href="/messages">
+                <Link href="/brand/messages">
                   <MessageCircle className="mb-2 h-5 w-5" />
                   <span className="text-xs">Messages</span>
                 </Link>
@@ -280,6 +280,16 @@ export default function BrandDashboardPage() {
                 <Link href="/brand/saved">
                   <Star className="mb-2 h-5 w-5" />
                   <span className="text-xs">Saved</span>
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-auto flex-col py-4"
+                asChild
+              >
+                <Link href="/brand/analytics">
+                  <TrendingUp className="mb-2 h-5 w-5" />
+                  <span className="text-xs">Analytics</span>
                 </Link>
               </Button>
             </CardContent>

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Creator } from '@/types';
 import { cn, formatFollowers, formatPrice } from '@/lib/utils';
+import { useAuthStore } from '@/store/auth-store';
 
 interface CreatorCardProps {
   creator: Creator;
@@ -44,6 +45,8 @@ const platformIcons: Record<string, React.ElementType> = {
 };
 
 export function CreatorCard({ creator, onQuickDeal, className, variant = 'default' }: CreatorCardProps) {
+  const { user } = useAuthStore();
+  const canSendDeal = !user || user.role === 'brand';
 
   return (
     <motion.div
@@ -190,17 +193,19 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
               </div>
               
               <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="rounded-full"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onQuickDeal?.();
-                  }}
-                >
-                  Quick Deal
-                </Button>
+                {canSendDeal && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-full"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onQuickDeal?.();
+                    }}
+                  >
+                    Quick Deal
+                  </Button>
+                )}
                 <Link href={`/creator/${creator.username}`}>
                   <Button size="sm" className="rounded-full">
                     View

@@ -12,7 +12,7 @@ export interface User {
 }
 
 // Creator Types
-export type Platform = 'instagram' | 'tiktok' | 'youtube' | 'facebook';
+export type Platform = 'instagram' | 'tiktok' | 'youtube' | 'facebook' | 'snapchat';
 export type DealType = 'paid' | 'barter' | 'hybrid';
 export type BarterType = 'food' | 'hotel' | 'salon' | 'events' | 'products';
 export type City = 'Lahore' | 'Karachi' | 'Islamabad' | 'Rawalpindi' | 'Faisalabad';
@@ -22,7 +22,11 @@ export interface SocialStats {
   followers: number;
   engagementRate: number;
   username: string;
+  profileUrl?: string;
+  avgViews?: number;
 }
+
+export type BarterCategory = BarterType | 'services' | 'travel' | 'education';
 
 export interface Creator {
   id: string;
@@ -73,6 +77,12 @@ export interface Package {
   price: number;
   dealType: DealType;
   barterValue?: string;
+  barterDescription?: string;
+  barterCategory?: BarterCategory;
+  estimatedBarterValue?: number;
+  creatorExpectations?: string;
+  hybridCashAmount?: number;
+  hybridBarterValue?: number;
   platform: Platform;
   tags: string[];
   isPopular: boolean;

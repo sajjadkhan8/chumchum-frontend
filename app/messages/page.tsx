@@ -93,13 +93,25 @@ function MessagesPageContent() {
       : fallbackBrand.id;
 
   // Filter conversations based on search
+  const roleScopedConversations = useMemo(() => {
+    if (isCreatorView) {
+      return mockConversations.filter(
+        (conversation) => conversation.creatorId === (user?.id || "1")
+      );
+    }
+
+    return mockConversations.filter(
+      (conversation) => conversation.brandId === fallbackBrand.id
+    );
+  }, [isCreatorView, user?.id]);
+
   const filteredConversations = useMemo(() => {
-    return mockConversations.filter((conv) =>
+    return roleScopedConversations.filter((conv) =>
       getConversationParticipant(conv).name
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery, isCreatorView]);
+  }, [searchQuery, roleScopedConversations]);
 
   // Auto-select conversation if creator param is present
   useEffect(() => {
@@ -485,7 +497,9 @@ function MessagesPageContent() {
                 visiting a creator&apos;s profile.
               </p>
               <Button asChild>
-                <Link href="/brand/explore">Find Creators</Link>
+                <Link href={isCreatorView ? "/creator/dashboard" : "/brand/explore"}>
+                  {isCreatorView ? "Go to Dashboard" : "Find Creators"}
+                </Link>
               </Button>
             </div>
           )}

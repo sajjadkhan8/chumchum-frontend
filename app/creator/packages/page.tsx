@@ -64,6 +64,7 @@ const myPackages = [
     description: "3 engaging Instagram stories with polls, questions, and product features",
     platform: "instagram",
     contentType: "story",
+    dealType: "paid",
     price: 15000,
     deliveryTime: 3,
     revisions: 2,
@@ -81,6 +82,7 @@ const myPackages = [
     description: "Professional short-form video content with trending audio and effects",
     platform: "instagram",
     contentType: "reel",
+    dealType: "paid",
     price: 25000,
     deliveryTime: 5,
     revisions: 3,
@@ -99,6 +101,7 @@ const myPackages = [
     description: "In-depth product review with detailed analysis and honest feedback",
     platform: "youtube",
     contentType: "video",
+    dealType: "hybrid",
     price: 45000,
     deliveryTime: 7,
     revisions: 2,
@@ -117,6 +120,7 @@ const myPackages = [
     description: "Creative TikTok content designed for maximum engagement",
     platform: "tiktok",
     contentType: "video",
+    dealType: "barter",
     price: 20000,
     deliveryTime: 4,
     revisions: 2,
@@ -246,6 +250,9 @@ export default function CreatorPackagesPage() {
                               <p className="text-sm text-muted-foreground capitalize">
                                 {pkg.platform} • {pkg.contentType}
                               </p>
+                              <Badge variant="outline" className="mt-1 capitalize">
+                                {pkg.dealType}
+                              </Badge>
                             </div>
                           </div>
                           <DropdownMenu>
@@ -356,6 +363,9 @@ export default function CreatorPackagesPage() {
                               <p className="text-sm text-muted-foreground capitalize">
                                 {pkg.platform} • {pkg.contentType}
                               </p>
+                              <Badge variant="outline" className="mt-1 capitalize">
+                                {pkg.dealType}
+                              </Badge>
                             </div>
                           </div>
                           <DropdownMenu>

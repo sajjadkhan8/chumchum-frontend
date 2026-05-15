@@ -15,6 +15,8 @@ import {
   DollarSign,
   Package,
   Check,
+  Gift,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,7 +66,12 @@ export default function CreatePackagePage() {
     description: "",
     platform: "",
     contentType: "",
+    dealType: "paid",
     price: "",
+    barterDescription: "",
+    barterCategory: "products",
+    barterValue: "",
+    creatorExpectations: "",
     deliveryTime: "3",
     revisions: "2",
     deliverables: [""],
@@ -221,7 +228,33 @@ export default function CreatePackagePage() {
             <CardTitle>Pricing & Delivery</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Deal Type</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: "paid", label: "Paid", icon: DollarSign },
+                  { id: "barter", label: "Barter", icon: Gift },
+                  { id: "hybrid", label: "Hybrid", icon: Sparkles },
+                ].map((deal) => (
+                  <button
+                    key={deal.id}
+                    type="button"
+                    onClick={() => handleChange("dealType", deal.id)}
+                    className={`flex items-center justify-center gap-2 rounded-lg border p-3 text-sm transition-all ${
+                      formData.dealType === deal.id
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:border-primary/40"
+                    }`}
+                  >
+                    <deal.icon className="h-4 w-4" />
+                    {deal.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-3">
+              {(formData.dealType === "paid" || formData.dealType === "hybrid") && (
               <div className="space-y-2">
                 <Label htmlFor="price">Price (PKR)</Label>
                 <div className="relative">
@@ -237,6 +270,7 @@ export default function CreatePackagePage() {
                   />
                 </div>
               </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="deliveryTime">Delivery (Days)</Label>
@@ -284,6 +318,60 @@ export default function CreatePackagePage() {
                 </div>
               </div>
             </div>
+
+            {(formData.dealType === "barter" || formData.dealType === "hybrid") && (
+              <div className="grid gap-4 rounded-lg border border-border/60 p-4 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="barterDescription">Barter Description</Label>
+                  <Textarea
+                    id="barterDescription"
+                    placeholder="Describe the product/service being offered"
+                    value={formData.barterDescription}
+                    onChange={(e) => handleChange("barterDescription", e.target.value)}
+                    rows={3}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="barterCategory">Barter Category</Label>
+                  <Select
+                    value={formData.barterCategory}
+                    onValueChange={(v) => handleChange("barterCategory", v)}
+                  >
+                    <SelectTrigger id="barterCategory">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="products">Products</SelectItem>
+                      <SelectItem value="food">Food & Dining</SelectItem>
+                      <SelectItem value="hotel">Hotel & Stay</SelectItem>
+                      <SelectItem value="salon">Salon & Spa</SelectItem>
+                      <SelectItem value="events">Events</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="barterValue">Estimated Value (PKR)</Label>
+                  <Input
+                    id="barterValue"
+                    type="number"
+                    placeholder="50000"
+                    value={formData.barterValue}
+                    onChange={(e) => handleChange("barterValue", e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="creatorExpectations">What do you expect from creator?</Label>
+                  <Input
+                    id="creatorExpectations"
+                    placeholder="e.g. 1 reel, 3 stories, and post for 30 days"
+                    value={formData.creatorExpectations}
+                    onChange={(e) => handleChange("creatorExpectations", e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -391,11 +479,31 @@ export default function CreatePackagePage() {
                 </div>
               )}
               <Separator className="my-3" />
-              <p className="text-xl font-bold text-primary">
-                {formData.price
-                  ? `PKR ${parseInt(formData.price).toLocaleString()}`
-                  : "PKR 0"}
-              </p>
+              {formData.dealType === "paid" && (
+                <p className="text-xl font-bold text-primary">
+                  {formData.price
+                    ? `PKR ${parseInt(formData.price).toLocaleString()}`
+                    : "PKR 0"}
+                </p>
+              )}
+              {formData.dealType === "barter" && (
+                <div>
+                  <p className="text-base font-semibold text-primary">Barter Package</p>
+                  <p className="text-sm text-muted-foreground">
+                    Estimated value: {formData.barterValue ? `PKR ${parseInt(formData.barterValue).toLocaleString()}` : 'PKR 0'}
+                  </p>
+                </div>
+              )}
+              {formData.dealType === "hybrid" && (
+                <div>
+                  <p className="text-base font-semibold text-primary">
+                    {formData.price ? `PKR ${parseInt(formData.price).toLocaleString()}` : 'PKR 0'} + barter
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Barter value: {formData.barterValue ? `PKR ${parseInt(formData.barterValue).toLocaleString()}` : 'PKR 0'}
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -16,6 +16,7 @@ import {
   Users,
   Mail,
   Phone,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -32,8 +33,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Navbar } from "@/components/navbar";
-import { BottomNav } from "@/components/bottom-nav";
 import { getInitials } from "@/lib/utils";
 
 const industries = [
@@ -105,6 +104,19 @@ export default function BrandSettingsPage() {
     monthlyBudget: "500000",
   });
 
+  const [campaignPreferences, setCampaignPreferences] = useState({
+    preferredCreatorCategories: "Food, Lifestyle, Beauty",
+    targetCities: "Karachi, Lahore, Islamabad",
+    targetPlatforms: "Instagram, TikTok, YouTube",
+    campaignBudgetRange: "PKR 150,000 - PKR 800,000",
+  });
+
+  const [verification, setVerification] = useState({
+    businessStatus: "Verified",
+    contactEmail: "verification@freshmart.pk",
+    phoneNumber: "+92 300 9876543",
+  });
+
   const handleSave = async () => {
     setIsSaving(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -112,9 +124,7 @@ export default function BrandSettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto max-w-4xl p-4 pt-20 md:p-6 md:pt-20 pb-24 md:pb-6">
+      <div className="container mx-auto max-w-4xl p-4 pb-24 md:p-6 md:pb-6">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-foreground md:text-3xl">
@@ -134,6 +144,14 @@ export default function BrandSettingsPage() {
             <TabsTrigger value="billing" className="gap-2">
               <CreditCard className="h-4 w-4" />
               Billing
+            </TabsTrigger>
+            <TabsTrigger value="campaigns" className="gap-2">
+              <Users className="h-4 w-4" />
+              Campaigns
+            </TabsTrigger>
+            <TabsTrigger value="verification" className="gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Verification
             </TabsTrigger>
             <TabsTrigger value="notifications" className="gap-2">
               <Bell className="h-4 w-4" />
@@ -357,6 +375,122 @@ export default function BrandSettingsPage() {
                 </>
               )}
             </Button>
+          </TabsContent>
+
+          {/* Campaign Preferences Tab */}
+          <TabsContent value="campaigns" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Campaign Preferences</CardTitle>
+                <CardDescription>
+                  Define your default targeting for faster campaign setup
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Preferred Creator Categories</Label>
+                  <Input
+                    value={campaignPreferences.preferredCreatorCategories}
+                    onChange={(e) =>
+                      setCampaignPreferences((prev) => ({
+                        ...prev,
+                        preferredCreatorCategories: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Target Cities</Label>
+                    <Input
+                      value={campaignPreferences.targetCities}
+                      onChange={(e) =>
+                        setCampaignPreferences((prev) => ({
+                          ...prev,
+                          targetCities: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Target Platforms</Label>
+                    <Input
+                      value={campaignPreferences.targetPlatforms}
+                      onChange={(e) =>
+                        setCampaignPreferences((prev) => ({
+                          ...prev,
+                          targetPlatforms: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Campaign Budgets</Label>
+                  <Input
+                    value={campaignPreferences.campaignBudgetRange}
+                    onChange={(e) =>
+                      setCampaignPreferences((prev) => ({
+                        ...prev,
+                        campaignBudgetRange: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Verification Tab */}
+          <TabsContent value="verification" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Brand Verification</CardTitle>
+                <CardDescription>
+                  Keep legal and contact details up to date for trust badges
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Business Verification Status</Label>
+                  <Select
+                    value={verification.businessStatus}
+                    onValueChange={(value) =>
+                      setVerification((prev) => ({ ...prev, businessStatus: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Verified">Verified</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Needs Review">Needs Review</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Contact Email</Label>
+                    <Input
+                      value={verification.contactEmail}
+                      onChange={(e) =>
+                        setVerification((prev) => ({ ...prev, contactEmail: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Phone Number</Label>
+                    <Input
+                      value={verification.phoneNumber}
+                      onChange={(e) =>
+                        setVerification((prev) => ({ ...prev, phoneNumber: e.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Billing Tab */}
@@ -584,7 +718,5 @@ export default function BrandSettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
-      <BottomNav />
-    </div>
   );
 }
