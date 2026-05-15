@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -70,7 +70,7 @@ const cities = [
   "Quetta",
 ];
 
-export default function CreatorSettingsPage() {
+function CreatorSettingsPageContent() {
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState("profile");
@@ -807,3 +807,12 @@ export default function CreatorSettingsPage() {
     </div>
   );
 }
+
+export default function CreatorSettingsPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-6" />}>
+      <CreatorSettingsPageContent />
+    </Suspense>
+  );
+}
+

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -64,7 +64,7 @@ const platformOptions = [
   { value: "tiktok", label: "TikTok" },
 ];
 
-export default function CreatorPackagesPage() {
+function CreatorPackagesPageContent() {
   const searchParams = useSearchParams();
   const packages = useCreatorPackagesStore((state) => state.packages);
   const duplicatePackage = useCreatorPackagesStore((state) => state.duplicatePackage);
@@ -470,3 +470,12 @@ export default function CreatorPackagesPage() {
     </div>
   );
 }
+
+export default function CreatorPackagesPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-6" />}>
+      <CreatorPackagesPageContent />
+    </Suspense>
+  );
+}
+

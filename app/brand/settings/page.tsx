@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -70,7 +70,7 @@ const cities = [
   "Quetta",
 ];
 
-export default function BrandSettingsPage() {
+function BrandSettingsPageContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("profile");
   const [isSaving, setIsSaving] = useState(false);
@@ -747,3 +747,12 @@ export default function BrandSettingsPage() {
       </div>
   );
 }
+
+export default function BrandSettingsPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-6" />}>
+      <BrandSettingsPageContent />
+    </Suspense>
+  );
+}
+

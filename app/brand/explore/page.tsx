@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Search, SlidersHorizontal, TrendingUp, Star, Wallet, MapPin } from 'lucide-react';
@@ -32,7 +32,7 @@ const sortOptions = [
   { value: 'near_you', label: 'Near You', icon: MapPin },
 ];
 
-export default function ExplorePage() {
+function ExplorePageContent() {
   const searchParams = useSearchParams();
   const { filters, setFilters } = useFilterStore();
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -309,3 +309,12 @@ export default function ExplorePage() {
     </div>
   );
 }
+
+export default function ExplorePage() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8" />}>
+      <ExplorePageContent />
+    </Suspense>
+  );
+}
+

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -155,7 +155,7 @@ const getDaysRemaining = (deadline: Date) => {
   return days;
 };
 
-export default function CreatorOrdersPage() {
+function CreatorOrdersPageContent() {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -423,3 +423,12 @@ export default function CreatorOrdersPage() {
     </div>
   );
 }
+
+export default function CreatorOrdersPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto p-4 md:p-6" />}>
+      <CreatorOrdersPageContent />
+    </Suspense>
+  );
+}
+
