@@ -201,7 +201,7 @@ function MessagesPageContent() {
         <div
           className={`w-full border-r border-border md:w-80 lg:w-96 ${showMobileChat ? "hidden md:block" : "block"}`}
         >
-          <div className="flex h-full flex-col">
+          <div className="flex min-h-0 h-full flex-col">
             {/* Search Header */}
             <div className="border-b border-border p-4">
               <h1 className="mb-4 text-xl font-bold">Messages</h1>
@@ -281,7 +281,7 @@ function MessagesPageContent() {
 
         {/* Chat Area */}
         <div
-          className={`flex flex-1 flex-col ${showMobileChat ? "block" : "hidden md:flex"}`}
+          className={`min-h-0 flex-1 flex-col overflow-hidden ${showMobileChat ? "flex" : "hidden md:flex"}`}
         >
           {selectedConversation ? (
             <>
@@ -347,7 +347,7 @@ function MessagesPageContent() {
               </div>
 
               {/* Messages Area */}
-              <ScrollArea className="flex-1 p-3 sm:p-4">
+              <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
                 <div className="space-y-4">
                   {messages.map((message) => {
                     const isOwn = message.senderId === currentSenderId;
@@ -461,7 +461,7 @@ function MessagesPageContent() {
                   })}
                   <div ref={messagesEndRef} />
                 </div>
-              </ScrollArea>
+              </div>
 
               {/* Message Input */}
               <div className="border-t border-border bg-background p-3 pb-safe sm:p-4">
