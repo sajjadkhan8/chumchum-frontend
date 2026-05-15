@@ -66,7 +66,7 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
           {/* Image Section */}
           <div
             className={cn(
-              'relative aspect-[4/3] overflow-hidden',
+              'relative aspect-[16/11] overflow-hidden sm:aspect-[4/3]',
               variant === 'horizontal' && 'md:h-full md:w-56 md:shrink-0'
             )}
           >
@@ -81,21 +81,21 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             
             {/* Badges */}
-            <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+            <div className="absolute left-2.5 top-2.5 flex max-w-[90%] flex-wrap gap-1.5 sm:left-3 sm:top-3">
               {creator.isTrending && (
-                <Badge className="bg-primary/90 text-primary-foreground backdrop-blur-sm">
+                <Badge className="bg-primary/90 text-[11px] text-primary-foreground backdrop-blur-sm">
                   <TrendingUp className="mr-1 h-3 w-3" />
                   Trending
                 </Badge>
               )}
               {creator.dealTypes.includes('barter') && (
-                <Badge className="bg-accent/90 text-accent-foreground backdrop-blur-sm">
+                <Badge className="bg-accent/90 text-[11px] text-accent-foreground backdrop-blur-sm">
                   <Gift className="mr-1 h-3 w-3" />
                   Barter
                 </Badge>
               )}
               {creator.isFastResponder && (
-                <Badge variant="secondary" className="backdrop-blur-sm">
+                <Badge variant="secondary" className="text-[11px] backdrop-blur-sm">
                   <Zap className="mr-1 h-3 w-3" />
                   Fast
                 </Badge>
@@ -103,15 +103,15 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
             </div>
 
             {/* Creator Info Overlay */}
-            <div className="absolute bottom-3 left-3 right-3">
+            <div className="absolute bottom-2.5 left-2.5 right-2.5 sm:bottom-3 sm:left-3 sm:right-3">
               <div className="flex items-end justify-between">
                 <div className="flex items-center gap-2">
-                  <Avatar className="h-10 w-10 border-2 border-white">
+                  <Avatar className="h-9 w-9 border-2 border-white sm:h-10 sm:w-10">
                     <AvatarImage src={creator.avatar} alt={creator.name} />
                     <AvatarFallback>{creator.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="font-semibold text-white text-balance">{creator.name}</h3>
+                      <h3 className="line-clamp-1 text-sm font-semibold text-white sm:text-base">{creator.name}</h3>
                     <div className="flex items-center gap-1 text-xs text-white/80">
                       <MapPin className="h-3 w-3" />
                       {creator.city}
@@ -123,10 +123,10 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
           </div>
 
           {/* Details Section */}
-          <div className={cn('space-y-3 p-4', variant === 'compact' && 'space-y-2')}>
+          <div className={cn('space-y-3 p-3.5 sm:p-4', variant === 'compact' && 'space-y-2')}>
             {/* Stats Row */}
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <div className="flex items-center gap-2.5">
                 {/* Platforms */}
                 <div className="flex items-center gap-1">
                   {creator.platforms.slice(0, 3).map((platform) => {
@@ -142,13 +142,13 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
                     );
                   })}
                 </div>
-                <span className="font-medium">{formatFollowers(creator.totalFollowers)}</span>
+                <span className="text-xs font-medium sm:text-sm">{formatFollowers(creator.totalFollowers)}</span>
               </div>
               
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 fill-accent text-accent" />
                 <span className="font-medium">{creator.rating}</span>
-                <span className="text-muted-foreground">({creator.totalReviews})</span>
+                <span className="text-xs text-muted-foreground sm:text-sm">({creator.totalReviews})</span>
               </div>
             </div>
 
@@ -171,7 +171,7 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
             </div>
 
             {/* Pricing */}
-            <div className="flex items-center justify-between border-t border-border pt-3">
+            <div className="flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 {creator.dealTypes.includes('paid') && creator.minPrice && (
                   <p className="font-semibold text-foreground">
@@ -192,12 +192,12 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
                 )}
               </div>
               
-              <div className="flex gap-2">
+              <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
                 {canSendDeal && (
                   <Button
                     size="sm"
                     variant="outline"
-                    className="rounded-full"
+                    className="min-h-10 rounded-full"
                     onClick={(e) => {
                       e.preventDefault();
                       onQuickDeal?.();
@@ -207,7 +207,7 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
                   </Button>
                 )}
                 <Link href={`/creator/${creator.username}`}>
-                  <Button size="sm" className="rounded-full">
+                  <Button size="sm" className="min-h-10 w-full rounded-full">
                     View
                   </Button>
                 </Link>

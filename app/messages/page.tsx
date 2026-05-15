@@ -193,10 +193,10 @@ function MessagesPageContent() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="flex h-[100dvh] flex-col bg-background">
       <Navbar />
 
-      <div className="flex flex-1 overflow-hidden pt-16">
+      <div className="flex flex-1 overflow-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
         {/* Conversations List */}
         <div
           className={`w-full border-r border-border md:w-80 lg:w-96 ${showMobileChat ? "hidden md:block" : "block"}`}
@@ -232,7 +232,7 @@ function MessagesPageContent() {
                     <button
                       key={conv.id}
                       onClick={() => selectConversation(conv)}
-                      className={`flex w-full items-start gap-3 p-4 text-left transition-colors hover:bg-muted/50 ${
+                      className={`flex w-full items-start gap-3 p-3.5 text-left transition-colors hover:bg-muted/50 sm:p-4 ${
                         selectedConversation?.id === conv.id ? "bg-muted" : ""
                       }`}
                     >
@@ -247,7 +247,7 @@ function MessagesPageContent() {
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium">{participant.name}</span>
+                          <span className="line-clamp-1 font-medium">{participant.name}</span>
                           <span className="text-xs text-muted-foreground">
                             {formatRelativeTime(previewTime)}
                           </span>
@@ -287,7 +287,7 @@ function MessagesPageContent() {
             <>
               {/* Chat Header */}
               <div className="flex items-center justify-between border-b border-border p-4">
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-2 sm:gap-3">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -305,16 +305,16 @@ function MessagesPageContent() {
                       {getInitials(selectedParticipant?.name || "")}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
+                  <div className="min-w-0">
                     {selectedParticipant?.href ? (
-                      <Link
+                        <Link
                         href={selectedParticipant.href}
-                        className="font-medium hover:underline"
+                          className="line-clamp-1 font-medium hover:underline"
                       >
                         {selectedParticipant.name}
                       </Link>
                     ) : (
-                      <span className="font-medium">{selectedParticipant?.name}</span>
+                        <span className="line-clamp-1 font-medium">{selectedParticipant?.name}</span>
                     )}
                     <p className="text-xs text-muted-foreground">
                       {selectedParticipant?.subtitle}
@@ -347,7 +347,7 @@ function MessagesPageContent() {
               </div>
 
               {/* Messages Area */}
-              <ScrollArea className="flex-1 p-4">
+              <ScrollArea className="flex-1 p-3 sm:p-4">
                 <div className="space-y-4">
                   {messages.map((message) => {
                     const isOwn = message.senderId === currentSenderId;
@@ -359,7 +359,7 @@ function MessagesPageContent() {
                         className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                       >
                         <div
-                          className={`max-w-[75%] ${isOwn ? "order-2" : ""}`}
+                          className={`max-w-[86%] sm:max-w-[75%] ${isOwn ? "order-2" : ""}`}
                         >
                           {message.type === "text" && (
                             <div
@@ -464,11 +464,12 @@ function MessagesPageContent() {
               </ScrollArea>
 
               {/* Message Input */}
-              <div className="border-t border-border p-4">
-                <div className="flex items-center gap-2">
+              <div className="border-t border-border bg-background p-3 pb-safe sm:p-4">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="min-tap"
                     onClick={() => toast.info("Media picker will be available in the next messaging release.")}
                   >
                     <Plus className="h-5 w-5" />
@@ -476,6 +477,7 @@ function MessagesPageContent() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="min-tap"
                     onClick={() => toast.info("File attachments are not enabled in demo mode.")}
                   >
                     <Paperclip className="h-5 w-5" />
@@ -483,13 +485,14 @@ function MessagesPageContent() {
                   <Input
                     type="text"
                     placeholder="Type a message..."
-                    className="flex-1"
+                    className="h-11 flex-1"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
                   />
                   <Button
                     size="icon"
+                    className="min-tap"
                     onClick={handleSendMessage}
                     disabled={!newMessage.trim() || isSending}
                   >
@@ -519,6 +522,7 @@ function MessagesPageContent() {
           )}
         </div>
       </div>
+      <BottomNav />
 
     </div>
   );

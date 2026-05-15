@@ -95,7 +95,7 @@ export default function ExplorePage() {
   ].reduce((a, b) => a + b, 0);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
       {/* Search & Sort Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -116,7 +116,7 @@ export default function ExplorePage() {
           </div>
 
           {/* Sort & Filter Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex w-full items-center gap-2 sm:gap-3 lg:w-auto">
             {/* Mobile Filter Button */}
             <div className="lg:hidden">
               <FilterPanel isMobile />
@@ -127,7 +127,7 @@ export default function ExplorePage() {
               value={filters.sortBy || 'trending'}
               onValueChange={(value) => setFilters({ sortBy: value as typeof filters.sortBy })}
             >
-              <SelectTrigger className="w-[180px] rounded-full">
+              <SelectTrigger className="h-11 w-full rounded-full sm:w-[180px]">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
@@ -221,7 +221,7 @@ export default function ExplorePage() {
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex gap-8">
+      <div className="flex gap-6 lg:gap-8">
         {/* Desktop Filter Panel */}
         <aside className="hidden w-[280px] shrink-0 lg:block">
           <div className="sticky top-24">
@@ -240,7 +240,7 @@ export default function ExplorePage() {
 
           {/* Grid */}
           {isLoading ? (
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <CreatorCardSkeleton key={i} />
               ))}
@@ -275,7 +275,7 @@ export default function ExplorePage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
+              className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
             >
               {creators.map((creator, index) => (
                 <motion.div

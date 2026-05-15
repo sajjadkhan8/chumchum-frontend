@@ -4,7 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { BottomNav } from "@/components/bottom-nav";
-import { CreatorSidebar } from "@/components/creator-sidebar";
+import { CreatorSidebar, CreatorSidebarDrawer } from "@/components/creator-sidebar";
 import { useAuthStore } from "@/store/auth-store";
 
 export default function CreatorLayout({ children }: { children: ReactNode }) {
@@ -41,11 +41,16 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pb-20 pt-16 md:pb-0">
+      <main className="pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
         {isProtectedCreatorRoute ? (
-          <div className="mx-auto flex max-w-7xl gap-6 px-4 py-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+            <div className="mb-4 lg:hidden">
+              <CreatorSidebarDrawer />
+            </div>
+            <div className="flex gap-6">
             <CreatorSidebar />
             <div className="min-w-0 flex-1">{children}</div>
+            </div>
           </div>
         ) : (
           children

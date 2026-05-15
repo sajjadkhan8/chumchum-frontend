@@ -16,8 +16,11 @@ import {
   ShieldCheck,
   User,
   Wallet,
+  Menu,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -88,48 +91,87 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-export function CreatorSidebar() {
+function CreatorSidebarNav({ compact = false, closeOnNavigate = false, onNavigate }: { compact?: boolean; closeOnNavigate?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
 
+  return (
+    <div className="space-y-5">
+      {navGroups.map((group) => (
+        <div key={group.title} className="space-y-1.5">
+          <p className="px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {group.title}
+          </p>
+          <div className="space-y-1">
+            {group.items.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const Icon = item.icon || BookOpen;
+
+              const linkNode = (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={cn(
+                    'flex items-center gap-2 rounded-lg px-2.5 text-sm transition-colors',
+                    compact ? 'min-h-11 py-2.5' : 'py-2',
+                    isActive
+                      ? 'bg-primary/10 font-medium text-primary'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+
+              if (closeOnNavigate) {
+                return (
+                  <SheetClose asChild key={item.href}>
+                    {linkNode}
+                  </SheetClose>
+                );
+              }
+
+              return linkNode;
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function CreatorSidebar() {
   return (
     <Card className="sticky top-20 hidden h-[calc(100vh-6rem)] w-72 overflow-hidden lg:block">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">Creator Studio</CardTitle>
       </CardHeader>
       <CardContent className="h-full overflow-y-auto pb-6">
-        <div className="space-y-5">
-          {navGroups.map((group) => (
-            <div key={group.title} className="space-y-1.5">
-              <p className="px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {group.title}
-              </p>
-              <div className="space-y-1">
-                {group.items.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                  const Icon = item.icon || BookOpen;
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors',
-                        isActive
-                          ? 'bg-primary/10 font-medium text-primary'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
+        <CreatorSidebarNav />
       </CardContent>
     </Card>
+  );
+}
+
+export function CreatorSidebarDrawer() {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline" className="min-h-11 gap-2 lg:hidden">
+          <Menu className="h-4 w-4" />
+          Menu
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-[88vw] max-w-sm overflow-y-auto p-0">
+        <SheetHeader className="border-b">
+          <SheetTitle>Creator Studio</SheetTitle>
+        </SheetHeader>
+        <div className="p-4 pb-safe">
+          <CreatorSidebarNav compact closeOnNavigate />
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 

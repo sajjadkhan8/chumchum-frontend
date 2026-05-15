@@ -93,9 +93,9 @@ export default function BrandDashboardPage() {
   ).slice(0, 3);
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
+    <div className="container mx-auto p-4 pb-6 md:p-6">
       {/* Header */}
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="mb-6 flex flex-col gap-4 md:mb-8 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground md:text-3xl">
             Brand Dashboard
@@ -104,7 +104,7 @@ export default function BrandDashboardPage() {
             Manage your campaigns and discover creators
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="min-h-11 w-full sm:w-auto">
           <Link href="/brand/explore">
             <Search className="mr-2 h-4 w-4" />
             Find Creators
@@ -162,8 +162,8 @@ export default function BrandDashboardPage() {
                     transition={{ delay: index * 0.1 }}
                     className="rounded-lg border border-border/50 p-4"
                   >
-                    <div className="mb-3 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                    <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-center gap-3">
                         <Avatar className="h-10 w-10">
                           <AvatarImage
                             src={order.creatorAvatar}
@@ -173,8 +173,8 @@ export default function BrandDashboardPage() {
                             {getInitials(order.creatorName)}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <p className="font-medium">{order.creatorName}</p>
+                        <div className="min-w-0">
+                          <p className="line-clamp-1 font-medium">{order.creatorName}</p>
                           <p className="text-sm text-muted-foreground">
                             {order.packageName}
                           </p>
@@ -182,7 +182,7 @@ export default function BrandDashboardPage() {
                       </div>
                       <Badge
                         variant="secondary"
-                        className={getStatusColor(order.status)}
+                        className={`w-fit ${getStatusColor(order.status)}`}
                       >
                         {order.status.replace("_", " ")}
                       </Badge>
@@ -192,7 +192,7 @@ export default function BrandDashboardPage() {
                       <span className="font-medium">{order.progress}%</span>
                     </div>
                     <Progress value={order.progress} className="h-2" />
-                    <div className="mt-3 flex items-center justify-between">
+                    <div className="mt-3 flex items-center justify-between gap-3">
                       <p className="text-sm text-muted-foreground">
                         Due: {formatRelativeTime(order.deadline)}
                       </p>
@@ -244,7 +244,7 @@ export default function BrandDashboardPage() {
             <CardContent className="grid grid-cols-2 gap-2">
               <Button
                 variant="outline"
-                className="h-auto flex-col py-4"
+                className="h-auto min-h-20 flex-col py-4"
                 asChild
               >
                 <Link href="/brand/explore">
@@ -254,7 +254,7 @@ export default function BrandDashboardPage() {
               </Button>
               <Button
                 variant="outline"
-                className="h-auto flex-col py-4"
+                className="h-auto min-h-20 flex-col py-4"
                 asChild
               >
                 <Link href="/brand/messages">
@@ -264,7 +264,7 @@ export default function BrandDashboardPage() {
               </Button>
               <Button
                 variant="outline"
-                className="h-auto flex-col py-4"
+                className="h-auto min-h-20 flex-col py-4"
                 asChild
               >
                 <Link href="/brand/orders">
@@ -274,7 +274,7 @@ export default function BrandDashboardPage() {
               </Button>
               <Button
                 variant="outline"
-                className="h-auto flex-col py-4"
+                className="h-auto min-h-20 flex-col py-4"
                 asChild
               >
                 <Link href="/brand/saved">
@@ -284,7 +284,7 @@ export default function BrandDashboardPage() {
               </Button>
               <Button
                 variant="outline"
-                className="h-auto flex-col py-4"
+                className="h-auto min-h-20 flex-col py-4"
                 asChild
               >
                 <Link href="/brand/analytics">

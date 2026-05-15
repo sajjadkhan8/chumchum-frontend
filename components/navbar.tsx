@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
 
@@ -59,7 +59,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex min-h-11 items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
             <span className="text-lg font-bold text-primary-foreground">C</span>
           </div>
@@ -99,7 +99,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
         )}
 
         {/* Right Side Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {isAuthenticated && user ? (
             <>
               {/* Notifications */}
@@ -123,7 +123,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar className="h-9 w-9">
                       <AvatarImage src={user.avatar} alt={user.name} />
                       <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
@@ -176,32 +176,59 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
           {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="min-tap md:hidden">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <nav className="flex flex-col gap-4 pt-8">
+            <SheetContent side="right" className="w-[88vw] max-w-sm p-0">
+              <div className="border-b p-4">
+                <p className="text-base font-semibold">Menu</p>
+              </div>
+              <nav className="flex flex-col gap-1 p-4 pb-safe">
                 {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                      'text-lg font-medium transition-colors hover:text-primary',
-                      pathname === link.href ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  >
-                    {link.label}
-                  </Link>
+                  <SheetClose asChild key={link.href}>
+                    <Link
+                      href={link.href}
+                      className={cn(
+                        'min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary',
+                        pathname === link.href ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
+                      )}
+                    >
+                      {link.label}
+                    </Link>
+                  </SheetClose>
                 ))}
+                {isAuthenticated && user && (
+                  <>
+                    <SheetClose asChild>
+                      <Link href={getMessagesLink()} className="min-h-11 rounded-lg px-3 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-primary">
+                        Messages
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link href={getDashboardLink()} className="min-h-11 rounded-lg px-3 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-primary">
+                        Dashboard
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link href={`/${user.role}/settings`} className="min-h-11 rounded-lg px-3 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-primary">
+                        Profile & Settings
+                      </Link>
+                    </SheetClose>
+                  </>
+                )}
                 {!isAuthenticated && (
                   <>
-                    <Link href="/login" className="text-lg font-medium text-muted-foreground">
-                      Log in
-                    </Link>
-                    <Link href="/signup">
-                      <Button className="mt-4 w-full rounded-full">Get Started</Button>
-                    </Link>
+                    <SheetClose asChild>
+                      <Link href="/login" className="min-h-11 rounded-lg px-3 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-primary">
+                        Log in
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link href="/signup">
+                        <Button className="mt-3 min-h-11 w-full rounded-full">Get Started</Button>
+                      </Link>
+                    </SheetClose>
                   </>
                 )}
               </nav>

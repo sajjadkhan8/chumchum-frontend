@@ -189,7 +189,7 @@ export default function CreatorSettingsPage() {
   }, [searchParams]);
 
   return (
-    <div className="container mx-auto max-w-4xl p-4 md:p-6">
+    <div className="container mx-auto max-w-4xl p-4 pb-24 md:p-6 md:pb-6">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-foreground md:text-3xl">
@@ -201,7 +201,7 @@ export default function CreatorSettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6 w-full justify-start overflow-x-auto">
+        <TabsList className="mb-6 w-full justify-start gap-1 overflow-x-auto">
           <TabsTrigger value="profile" className="gap-2">
             <User className="h-4 w-4" />
             Profile

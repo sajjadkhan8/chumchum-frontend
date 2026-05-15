@@ -330,7 +330,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 p-1">
+    <div className="mx-auto w-full max-w-4xl space-y-4 px-1 pb-6 sm:space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" asChild>
@@ -357,15 +357,15 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         </Card>
       )}
 
-      <Card>
+      <Card className="sticky top-16 z-20 border-border/80 bg-background/95 backdrop-blur">
         <CardContent className="p-4">
-          <div className="flex gap-2 overflow-x-auto">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             {steps.map((step) => (
               <button
                 key={step.id}
                 type="button"
                 onClick={() => setCurrentStep(step.id)}
-                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm transition-all ${
+                className={`min-h-10 whitespace-nowrap rounded-full px-4 py-2 text-sm transition-all ${
                   currentStep === step.id
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:text-foreground"
@@ -384,7 +384,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
             <CardHeader>
               <CardTitle>Step 1 - Basic Info</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-4 sm:p-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Title</Label>
@@ -398,7 +398,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
               <div className="space-y-2">
                 <Label>Platform</Label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   {platforms.map((platform) => (
                     <button
                       key={platform.id}
@@ -449,7 +449,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
             <CardHeader>
               <CardTitle>Step 2 - Deliverables</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-4 sm:p-6">
               <p className="text-sm text-muted-foreground">
                 Add each deliverable clearly (reels, stories, posts, YouTube integrations, appearances).
               </p>
@@ -478,8 +478,8 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
             <CardHeader>
               <CardTitle>Step 3 - Pricing</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-2">
+            <CardContent className="space-y-4 p-4 sm:p-6">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {[
                   { key: "paid", label: "Paid", icon: DollarSign },
                   { key: "barter", label: "Barter", icon: Gift },
@@ -571,7 +571,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
             <CardHeader>
               <CardTitle>Step 4 - Media</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-4 sm:p-6">
               <div className="space-y-2">
                 <Label>Package Thumbnail URL</Label>
                 <Input value={formData.thumbnailUrl} onChange={(e) => updateField("thumbnailUrl", e.target.value)} placeholder="https://..." />
@@ -604,7 +604,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
             <CardHeader>
               <CardTitle>Step 5 - Publish</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-4 sm:p-6">
               <div className="rounded-lg border border-border/60 p-4">
                 <p className="font-semibold">{formData.title || "Untitled Package"}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{formData.shortDescription || "No short description yet"}</p>
@@ -654,7 +654,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         )}
       </motion.div>
 
-      <div className="sticky bottom-16 z-20 flex gap-2 rounded-xl border border-border bg-background/95 p-3 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0">
+      <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-20 flex gap-2 rounded-xl border border-border bg-background/95 p-3 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0">
         <Button
           type="button"
           variant="outline"

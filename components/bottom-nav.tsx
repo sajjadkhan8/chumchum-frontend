@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Home, Search, ShoppingBag, MessageCircle, User, Wallet } from 'lucide-react';
+import { Home, Search, ShoppingBag, MessageCircle, User } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
 
@@ -23,9 +23,9 @@ export function BottomNav() {
 
   const creatorNavItems: NavItem[] = [
     { href: '/creator/dashboard', icon: Home, label: 'Home' },
-    { href: '/creator/orders', icon: ShoppingBag, label: 'Orders' },
+    { href: '/creator/packages', icon: Search, label: 'Explore' },
     { href: '/creator/messages', icon: MessageCircle, label: 'Messages' },
-    { href: '/creator/earnings', icon: Wallet, label: 'Earnings' },
+    { href: '/creator/orders', icon: ShoppingBag, label: 'Orders' },
     { href: '/creator/settings', icon: User, label: 'Profile' },
   ];
 
@@ -43,9 +43,10 @@ export function BottomNav() {
     <motion.nav
       initial={{ y: 100 }}
       animate={{ y: 0 }}
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden"
+      style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.35rem)' }}
     >
-      <div className="flex h-16 items-center justify-around px-2">
+      <div className="flex h-[4.25rem] items-center justify-around px-1.5">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           const Icon = item.icon;
@@ -54,8 +55,9 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              aria-label={item.label}
               className={cn(
-                'relative flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors',
+                'relative min-h-11 flex flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2 transition-colors',
                 isActive ? 'text-primary' : 'text-muted-foreground'
               )}
             >
@@ -67,11 +69,11 @@ export function BottomNav() {
                   </span>
                 )}
               </div>
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <span className="text-[11px] font-medium leading-none">{item.label}</span>
               {isActive && (
                 <motion.div
                   layoutId="activeTab"
-                  className="absolute bottom-0 h-0.5 w-12 rounded-full bg-primary"
+                  className="absolute bottom-0 h-0.5 w-10 rounded-full bg-primary"
                 />
               )}
             </Link>

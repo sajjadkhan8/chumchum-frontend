@@ -138,7 +138,7 @@ export default function BrandSettingsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6 w-full justify-start overflow-x-auto">
+          <TabsList className="mb-6 w-full justify-start gap-1 overflow-x-auto">
             <TabsTrigger value="profile" className="gap-2">
               <Building2 className="h-4 w-4" />
               Company

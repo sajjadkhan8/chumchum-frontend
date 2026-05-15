@@ -118,9 +118,9 @@ export default function CreatorDashboardPage() {
   const { user } = useAuthStore();
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
+    <div className="container mx-auto p-4 pb-6 md:p-6">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6 md:mb-8">
         <h1 className="text-2xl font-bold text-foreground md:text-3xl">
           Dashboard
         </h1>
@@ -179,7 +179,7 @@ export default function CreatorDashboardPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="flex items-center gap-4 rounded-lg border border-border/50 p-4"
+                    className="flex flex-col items-start gap-3 rounded-lg border border-border/50 p-4 sm:flex-row sm:items-center sm:gap-4"
                   >
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={order.brandLogo} alt={order.brandName} />
@@ -193,7 +193,7 @@ export default function CreatorDashboardPage() {
                         {order.packageName}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="w-full text-left sm:w-auto sm:text-right">
                       <p className="font-semibold text-primary">
                         {formatPrice(order.amount)}
                       </p>
@@ -220,25 +220,25 @@ export default function CreatorDashboardPage() {
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2">
-              <Button variant="outline" className="h-auto flex-col py-4" asChild>
+              <Button variant="outline" className="h-auto min-h-20 flex-col py-4" asChild>
                 <Link href="/creator/packages/new">
                   <Package className="mb-2 h-5 w-5" />
                   <span className="text-xs">New Package</span>
                 </Link>
               </Button>
-              <Button variant="outline" className="h-auto flex-col py-4" asChild>
+              <Button variant="outline" className="h-auto min-h-20 flex-col py-4" asChild>
                 <Link href="/creator/earnings">
                   <DollarSign className="mb-2 h-5 w-5" />
                   <span className="text-xs">Withdraw</span>
                 </Link>
               </Button>
-              <Button variant="outline" className="h-auto flex-col py-4" asChild>
+              <Button variant="outline" className="h-auto min-h-20 flex-col py-4" asChild>
                 <Link href="/creator/settings">
                   <Users className="mb-2 h-5 w-5" />
                   <span className="text-xs">Edit Profile</span>
                 </Link>
               </Button>
-              <Button variant="outline" className="h-auto flex-col py-4" asChild>
+              <Button variant="outline" className="h-auto min-h-20 flex-col py-4" asChild>
                 <Link href="/creator/insights">
                   <BarChart3 className="mb-2 h-5 w-5" />
                   <span className="text-xs">Insights</span>

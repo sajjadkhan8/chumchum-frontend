@@ -93,9 +93,9 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md overflow-hidden rounded-2xl p-0 sm:max-w-lg">
+      <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-hidden rounded-2xl p-0 sm:max-h-[90dvh] sm:max-w-lg">
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-6">
+        <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-xl">Quick Deal</DialogTitle>
             <DialogDescription>
@@ -103,7 +103,7 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
             </DialogDescription>
           </DialogHeader>
           
-          <div className="mt-4 flex items-center gap-3">
+          <div className="mt-3 flex items-center gap-3 sm:mt-4">
             <Avatar className="h-12 w-12 border-2 border-background">
               <AvatarImage src={creator.avatar} alt={creator.name} />
               <AvatarFallback>{creator.name.charAt(0)}</AvatarFallback>
@@ -118,11 +118,11 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
         </div>
 
         {/* Content */}
-        <div className="space-y-6 p-6">
+        <div className="max-h-[calc(100dvh-15rem)] space-y-5 overflow-y-auto p-4 sm:max-h-[calc(90dvh-14rem)] sm:space-y-6 sm:p-6">
           {/* Deal Type Selection */}
           <div>
             <Label className="text-sm font-medium">Deal Type</Label>
-            <div className="mt-2 grid grid-cols-3 gap-2">
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
               {availableDealTypes.map((option) => {
                 const Icon = option.icon;
                 const isSelected = dealType === option.value;
@@ -134,7 +134,7 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setDealType(option.value)}
                     className={cn(
-                      'relative flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all',
+                      'relative flex min-h-11 flex-row items-center justify-start gap-2 rounded-xl border-2 p-3 text-left transition-all sm:min-h-0 sm:flex-col sm:justify-center sm:p-4',
                       isSelected
                         ? option.value === 'barter'
                           ? 'border-accent bg-accent/10'
@@ -152,7 +152,7 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
                           : 'text-muted-foreground'
                       )}
                     />
-                    <span className="text-xs font-medium">{option.label}</span>
+                    <span className="text-xs font-medium sm:text-[11px]">{option.label}</span>
                   </motion.button>
                 );
               })}
@@ -283,7 +283,7 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || !message}
-            className="w-full gap-2 rounded-full"
+            className="sticky bottom-0 w-full gap-2 rounded-full"
             size="lg"
           >
             {isSubmitting ? (
