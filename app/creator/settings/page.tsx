@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import {
@@ -70,6 +71,7 @@ const cities = [
 ];
 
 export default function CreatorSettingsPage() {
+  const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState("profile");
   const [isSaving, setIsSaving] = useState(false);
@@ -166,6 +168,25 @@ export default function CreatorSettingsPage() {
     facebook: LinkIcon,
     snapchat: LinkIcon,
   };
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (!tab) return;
+
+    const allowedTabs = new Set([
+      'profile',
+      'social',
+      'payments',
+      'preferences',
+      'analytics',
+      'notifications',
+      'security',
+    ]);
+
+    if (allowedTabs.has(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   return (
     <div className="container mx-auto max-w-4xl p-4 md:p-6">

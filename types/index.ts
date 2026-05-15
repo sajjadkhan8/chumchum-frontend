@@ -74,6 +74,7 @@ export interface Package {
   description: string;
   deliverables: string[];
   deliveryDays: number;
+  revisions?: number;
   price: number;
   dealType: DealType;
   barterValue?: string;
@@ -87,6 +88,30 @@ export interface Package {
   tags: string[];
   isPopular: boolean;
   ordersCompleted: number;
+}
+
+export type PackageStatus = 'active' | 'draft' | 'paused' | 'archived' | 'under_review';
+
+export interface PackageAnalytics {
+  views: number;
+  clicks: number;
+  inquiries: number;
+  conversionRate: number;
+  completionRate: number;
+  repeatBrands: number;
+  engagementPerformance: number;
+}
+
+export interface CreatorPackage extends Package {
+  shortDescription: string;
+  fullDescription: string;
+  category: string;
+  status: PackageStatus;
+  responseTime: string;
+  thumbnail: string;
+  visibility: 'public' | 'private';
+  tags: string[];
+  analytics: PackageAnalytics;
 }
 
 // Order Types

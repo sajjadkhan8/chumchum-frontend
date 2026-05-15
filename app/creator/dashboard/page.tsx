@@ -239,7 +239,7 @@ export default function CreatorDashboardPage() {
                 </Link>
               </Button>
               <Button variant="outline" className="h-auto flex-col py-4" asChild>
-                <Link href="/creator/settings">
+                <Link href="/creator/insights">
                   <BarChart3 className="mb-2 h-5 w-5" />
                   <span className="text-xs">Insights</span>
                 </Link>

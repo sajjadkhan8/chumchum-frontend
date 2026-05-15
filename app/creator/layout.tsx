@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { BottomNav } from "@/components/bottom-nav";
+import { CreatorSidebar } from "@/components/creator-sidebar";
 import { useAuthStore } from "@/store/auth-store";
 
 export default function CreatorLayout({ children }: { children: ReactNode }) {
@@ -17,7 +18,11 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
     pathname.startsWith('/creator/earnings') ||
     pathname.startsWith('/creator/packages') ||
     pathname.startsWith('/creator/settings') ||
-    pathname.startsWith('/creator/messages');
+    pathname.startsWith('/creator/messages') ||
+    pathname.startsWith('/creator/insights') ||
+    pathname.startsWith('/creator/performance') ||
+    pathname.startsWith('/creator/profile') ||
+    pathname.startsWith('/creator/help');
 
   useEffect(() => {
     if (isProtectedCreatorRoute && !isAuthenticated) {
@@ -36,7 +41,16 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pb-20 pt-16 md:pb-0">{children}</main>
+      <main className="pb-20 pt-16 md:pb-0">
+        {isProtectedCreatorRoute ? (
+          <div className="mx-auto flex max-w-7xl gap-6 px-4 py-4 sm:px-6 lg:px-8">
+            <CreatorSidebar />
+            <div className="min-w-0 flex-1">{children}</div>
+          </div>
+        ) : (
+          children
+        )}
+      </main>
       <BottomNav />
     </div>
   );

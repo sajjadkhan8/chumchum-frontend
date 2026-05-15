@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -154,9 +156,20 @@ const getDaysRemaining = (deadline: Date) => {
 };
 
 export default function CreatorOrdersPage() {
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+
+  useEffect(() => {
+    const status = searchParams.get('status');
+    if (!status) return;
+
+    const allowed = new Set(['all', 'pending', 'in_progress', 'revision', 'completed', 'cancelled']);
+    if (allowed.has(status)) {
+      setStatusFilter(status);
+    }
+  }, [searchParams]);
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =

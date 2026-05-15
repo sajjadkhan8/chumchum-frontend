@@ -91,6 +91,16 @@ export default function CreatorProfilePage({
     creator.platforms.length;
   const creatorLanguages = ["Urdu", "English"];
   const creatorPortfolio = creator.contentPreviews;
+  const featuredPackages = creatorPackages.filter((pkg) => pkg.isPopular).slice(0, 2);
+  const trendingPackages = [...creatorPackages]
+    .sort((a, b) => b.ordersCompleted - a.ordersCompleted)
+    .slice(0, 2);
+  const barterFriendlyPackages = creatorPackages.filter((pkg) => pkg.dealType === "barter" || pkg.dealType === "hybrid");
+  const bestPerformingPackages = [...creatorPackages]
+    .sort((a, b) => (b.ordersCompleted + (b.isPopular ? 10 : 0)) - (a.ordersCompleted + (a.isPopular ? 10 : 0)))
+    .slice(0, 2);
+  const completionRate = Math.min(99, Math.round((creator.completedDeals / (creator.completedDeals + 5)) * 100));
+  const repeatClients = Math.max(3, Math.round(creator.completedDeals * 0.24));
 
   const handleBookPackage = (packageId: string) => {
     setSelectedPackage(packageId);
@@ -189,6 +199,35 @@ export default function CreatorProfilePage({
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="container mx-auto mt-4 px-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Response Time</p>
+              <p className="font-semibold">{creator.responseTime}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Completion Rate</p>
+              <p className="font-semibold">{completionRate}%</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Repeat Clients</p>
+              <p className="font-semibold">{repeatClients}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Verification</p>
+              <p className="font-semibold">{creator.isVerified ? "Verified Creator" : "Verification Pending"}</p>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
@@ -346,13 +385,59 @@ export default function CreatorProfilePage({
               {/* Packages Tab */}
               <TabsContent value="packages" className="space-y-4">
                 {creatorPackages.length > 0 ? (
-                  creatorPackages.map((pkg) => (
-                    <PackageCard
-                      key={pkg.id}
-                      pkg={pkg}
-                      onOrder={canHireCreator ? () => handleBookPackage(pkg.id) : undefined}
-                    />
-                  ))
+                  <>
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold">Featured Packages</h3>
+                      {(featuredPackages.length > 0 ? featuredPackages : creatorPackages.slice(0, 2)).map((pkg) => (
+                        <PackageCard
+                          key={`featured-${pkg.id}`}
+                          pkg={pkg}
+                          onOrder={canHireCreator ? () => handleBookPackage(pkg.id) : undefined}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold">Trending Packages</h3>
+                      {(trendingPackages.length > 0 ? trendingPackages : creatorPackages.slice(0, 2)).map((pkg) => (
+                        <PackageCard
+                          key={`trending-${pkg.id}`}
+                          pkg={pkg}
+                          onOrder={canHireCreator ? () => handleBookPackage(pkg.id) : undefined}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold">Barter Friendly Packages</h3>
+                      {barterFriendlyPackages.length > 0 ? (
+                        barterFriendlyPackages.map((pkg) => (
+                          <PackageCard
+                            key={`barter-${pkg.id}`}
+                            pkg={pkg}
+                            onOrder={canHireCreator ? () => handleBookPackage(pkg.id) : undefined}
+                          />
+                        ))
+                      ) : (
+                        <Card>
+                          <CardContent className="py-6 text-sm text-muted-foreground">
+                            No barter-focused offers yet.
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold">Best Performing Packages</h3>
+                      {bestPerformingPackages.map((pkg) => (
+                        <PackageCard
+                          key={`best-${pkg.id}`}
+                          pkg={pkg}
+                          onOrder={canHireCreator ? () => handleBookPackage(pkg.id) : undefined}
+                        />
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   <Card>
                     <CardContent className="flex flex-col items-center justify-center py-12">

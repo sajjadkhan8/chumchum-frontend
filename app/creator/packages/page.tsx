@@ -1,53 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  Plus,
-  Package,
-  Edit,
-  Trash2,
-  MoreVertical,
-  Eye,
-  EyeOff,
+  Archive,
+  BarChart3,
   Copy,
-  Instagram,
-  Youtube,
-  Clock,
-  Check,
+  Eye,
+  FilePenLine,
+  Filter,
+  Pause,
+  Play,
+  Plus,
+  Search,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -55,127 +30,199 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatPrice } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { EmptyState } from "@/components/empty-state";
+import { PackageCardSkeleton } from "@/components/skeletons";
+import { creatorPackages } from "@/data/creator-packages";
+import { cn, formatPrice } from "@/lib/utils";
+import type { CreatorPackage, PackageStatus } from "@/types";
+import { toast } from "sonner";
 
-const myPackages = [
-  {
-    id: "1",
-    name: "Instagram Story Pack",
-    description: "3 engaging Instagram stories with polls, questions, and product features",
-    platform: "instagram",
-    contentType: "story",
-    dealType: "paid",
-    price: 15000,
-    deliveryTime: 3,
-    revisions: 2,
-    isActive: true,
-    bookings: 12,
-    deliverables: [
-      "3 Instagram Stories",
-      "Story Highlights",
-      "Swipe Up Links (if available)",
-    ],
-  },
-  {
-    id: "2",
-    name: "Instagram Reel Creation",
-    description: "Professional short-form video content with trending audio and effects",
-    platform: "instagram",
-    contentType: "reel",
-    dealType: "paid",
-    price: 25000,
-    deliveryTime: 5,
-    revisions: 3,
-    isActive: true,
-    bookings: 8,
-    deliverables: [
-      "1 Instagram Reel (30-60 sec)",
-      "Optimized Caption",
-      "Hashtag Research",
-      "Posting at optimal time",
-    ],
-  },
-  {
-    id: "3",
-    name: "YouTube Video Review",
-    description: "In-depth product review with detailed analysis and honest feedback",
-    platform: "youtube",
-    contentType: "video",
-    dealType: "hybrid",
-    price: 45000,
-    deliveryTime: 7,
-    revisions: 2,
-    isActive: true,
-    bookings: 5,
-    deliverables: [
-      "10-15 min YouTube Video",
-      "SEO-optimized Title & Description",
-      "Custom Thumbnail",
-      "End Screen & Cards",
-    ],
-  },
-  {
-    id: "4",
-    name: "TikTok Viral Package",
-    description: "Creative TikTok content designed for maximum engagement",
-    platform: "tiktok",
-    contentType: "video",
-    dealType: "barter",
-    price: 20000,
-    deliveryTime: 4,
-    revisions: 2,
-    isActive: false,
-    bookings: 3,
-    deliverables: [
-      "2 TikTok Videos",
-      "Trending Sound Integration",
-      "Hashtag Strategy",
-    ],
-  },
+const statusOptions: { value: PackageStatus | "all"; label: string }[] = [
+  { value: "all", label: "All Statuses" },
+  { value: "active", label: "Active" },
+  { value: "draft", label: "Draft" },
+  { value: "paused", label: "Paused" },
+  { value: "archived", label: "Archived" },
+  { value: "under_review", label: "Under Review" },
 ];
 
-const platformIcons: Record<string, React.ElementType> = {
-  instagram: Instagram,
-  youtube: Youtube,
-  tiktok: Clock,
-};
+const dealTypeOptions = [
+  { value: "all", label: "All Types" },
+  { value: "paid", label: "Paid" },
+  { value: "barter", label: "Barter" },
+  { value: "hybrid", label: "Hybrid" },
+];
+
+const platformOptions = [
+  { value: "all", label: "All Platforms" },
+  { value: "instagram", label: "Instagram" },
+  { value: "youtube", label: "YouTube" },
+  { value: "tiktok", label: "TikTok" },
+];
 
 export default function CreatorPackagesPage() {
-  const [packages, setPackages] = useState(myPackages);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const [packages, setPackages] = useState<CreatorPackage[]>(creatorPackages);
+  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<PackageStatus | "all">("all");
+  const [dealType, setDealType] = useState<"all" | "paid" | "barter" | "hybrid">("all");
+  const [platform, setPlatform] = useState<"all" | "instagram" | "youtube" | "tiktok">("all");
+  const [performance, setPerformance] = useState<"all" | "top" | "mid" | "low">("all");
+  const [earningsBand, setEarningsBand] = useState<"all" | "under25" | "25to50" | "50plus">("all");
+  const [sortBy, setSortBy] = useState<"recent" | "views" | "conversion" | "orders">("recent");
 
-  const handleToggleActive = (packageId: string) => {
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const statusParam = searchParams.get("status");
+    if (!statusParam) return;
+
+    if (["active", "draft", "paused", "archived", "under_review"].includes(statusParam)) {
+      setStatus(statusParam as PackageStatus);
+    }
+  }, [searchParams]);
+
+  const summary = useMemo(() => {
+    const active = packages.filter((pkg) => pkg.status === "active").length;
+    const drafts = packages.filter((pkg) => pkg.status === "draft").length;
+    const archived = packages.filter((pkg) => pkg.status === "archived").length;
+    const monthlyProjection = packages
+      .filter((pkg) => pkg.status === "active")
+      .reduce((total, pkg) => total + pkg.price, 0);
+
+    return { active, drafts, archived, monthlyProjection };
+  }, [packages]);
+
+  const filteredPackages = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return packages
+      .filter((pkg) => {
+        const matchesSearch =
+          !query ||
+          pkg.title.toLowerCase().includes(query) ||
+          pkg.shortDescription.toLowerCase().includes(query) ||
+          pkg.tags.some((tag) => tag.toLowerCase().includes(query));
+
+        const matchesStatus = status === "all" || pkg.status === status;
+        const matchesDealType = dealType === "all" || pkg.dealType === dealType;
+        const matchesPlatform = platform === "all" || pkg.platform === platform;
+
+        const matchesPerformance =
+          performance === "all" ||
+          (performance === "top" && pkg.analytics.conversionRate >= 8) ||
+          (performance === "mid" && pkg.analytics.conversionRate >= 5 && pkg.analytics.conversionRate < 8) ||
+          (performance === "low" && pkg.analytics.conversionRate < 5);
+
+        const matchesEarnings =
+          earningsBand === "all" ||
+          (earningsBand === "under25" && pkg.price < 25000) ||
+          (earningsBand === "25to50" && pkg.price >= 25000 && pkg.price <= 50000) ||
+          (earningsBand === "50plus" && pkg.price > 50000);
+
+        return (
+          matchesSearch &&
+          matchesStatus &&
+          matchesDealType &&
+          matchesPlatform &&
+          matchesPerformance &&
+          matchesEarnings
+        );
+      })
+      .sort((a, b) => {
+        if (sortBy === "views") return b.analytics.views - a.analytics.views;
+        if (sortBy === "conversion") return b.analytics.conversionRate - a.analytics.conversionRate;
+        if (sortBy === "orders") return b.ordersCompleted - a.ordersCompleted;
+        return b.id.localeCompare(a.id);
+      });
+  }, [packages, search, status, dealType, platform, performance, earningsBand, sortBy]);
+
+  const saveCurrentFilter = () => {
+    const payload = { status, dealType, platform, performance, earningsBand, sortBy };
+    localStorage.setItem("creator-package-filters", JSON.stringify(payload));
+    toast.success("Filter saved");
+  };
+
+  const applySavedFilter = () => {
+    const raw = localStorage.getItem("creator-package-filters");
+    if (!raw) {
+      toast.info("No saved filters found yet.");
+      return;
+    }
+
+    const parsed = JSON.parse(raw) as {
+      status: PackageStatus | "all";
+      dealType: "all" | "paid" | "barter" | "hybrid";
+      platform: "all" | "instagram" | "youtube" | "tiktok";
+      performance: "all" | "top" | "mid" | "low";
+      earningsBand: "all" | "under25" | "25to50" | "50plus";
+      sortBy: "recent" | "views" | "conversion" | "orders";
+    };
+
+    setStatus(parsed.status);
+    setDealType(parsed.dealType);
+    setPlatform(parsed.platform);
+    setPerformance(parsed.performance);
+    setEarningsBand(parsed.earningsBand);
+    setSortBy(parsed.sortBy);
+    toast.success("Saved filter applied");
+  };
+
+  const statusBadgeClass = (value: PackageStatus) =>
+    value === "active"
+      ? "bg-green-100 text-green-700"
+      : value === "draft"
+        ? "bg-muted text-muted-foreground"
+        : value === "paused"
+          ? "bg-amber-100 text-amber-700"
+          : value === "archived"
+            ? "bg-slate-100 text-slate-700"
+            : "bg-blue-100 text-blue-700";
+
+  const handleDuplicate = (pkg: CreatorPackage) => {
+    const duplicate: CreatorPackage = {
+      ...pkg,
+      id: `copy-${Date.now()}`,
+      title: `${pkg.title} (Copy)`,
+      status: "draft",
+      visibility: "private",
+    };
+    setPackages((prev) => [duplicate, ...prev]);
+    toast.success("Package duplicated as draft");
+  };
+
+  const handleArchive = (id: string) => {
+    setPackages((prev) => prev.map((pkg) => (pkg.id === id ? { ...pkg, status: "archived" } : pkg)));
+    toast.success("Package moved to archive");
+  };
+
+  const handlePauseResume = (pkg: CreatorPackage) => {
     setPackages((prev) =>
-      prev.map((pkg) =>
-        pkg.id === packageId ? { ...pkg, isActive: !pkg.isActive } : pkg
+      prev.map((item) =>
+        item.id === pkg.id
+          ? { ...item, status: item.status === "paused" ? "active" : "paused" }
+          : item
       )
     );
+    toast.success(pkg.status === "paused" ? "Package resumed" : "Package paused");
   };
-
-  const handleDeletePackage = () => {
-    if (selectedPackage) {
-      setPackages((prev) => prev.filter((pkg) => pkg.id !== selectedPackage));
-      setDeleteDialogOpen(false);
-      setSelectedPackage(null);
-    }
-  };
-
-  const activePackages = packages.filter((p) => p.isActive);
-  const inactivePackages = packages.filter((p) => !p.isActive);
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
-      {/* Header */}
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="space-y-6 p-1">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground md:text-3xl">
-            My Packages
-          </h1>
-          <p className="text-muted-foreground">
-            Create and manage your service packages
-          </p>
+          <h1 className="text-2xl font-bold text-foreground md:text-3xl">Package Studio</h1>
+          <p className="text-muted-foreground">Manage paid, barter, and hybrid offers like a professional creator business.</p>
         </div>
         <Button asChild>
           <Link href="/creator/packages/new">
@@ -185,264 +232,219 @@ export default function CreatorPackagesPage() {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <Package className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{packages.length}</p>
-              <p className="text-sm text-muted-foreground">Total Packages</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-              <Eye className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{activePackages.length}</p>
-              <p className="text-sm text-muted-foreground">Active</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-              <EyeOff className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{inactivePackages.length}</p>
-              <p className="text-sm text-muted-foreground">Inactive</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Active Packages</p><p className="text-2xl font-bold">{summary.active}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Drafts</p><p className="text-2xl font-bold">{summary.drafts}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Archived</p><p className="text-2xl font-bold">{summary.archived}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Monthly Package Value</p><p className="text-2xl font-bold text-primary">{formatPrice(summary.monthlyProjection)}</p></CardContent></Card>
       </div>
 
-      {/* Packages Grid */}
-      <div className="space-y-8">
-        {/* Active Packages */}
-        <div>
-          <h2 className="mb-4 text-lg font-semibold">Active Packages</h2>
-          {activePackages.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {activePackages.map((pkg, index) => {
-                const PlatformIcon = platformIcons[pkg.platform] || Package;
-                return (
-                  <motion.div
-                    key={pkg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="mb-4 flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                              <PlatformIcon className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold">{pkg.name}</h3>
-                              <p className="text-sm text-muted-foreground capitalize">
-                                {pkg.platform} • {pkg.contentType}
-                              </p>
-                              <Badge variant="outline" className="mt-1 capitalize">
-                                {pkg.dealType}
-                              </Badge>
-                            </div>
-                          </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedPackage(pkg.id);
-                                  setEditDialogOpen(true);
-                                }}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Copy className="mr-2 h-4 w-4" />
-                                Duplicate
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => {
-                                  setSelectedPackage(pkg.id);
-                                  setDeleteDialogOpen(true);
-                                }}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-
-                        <p className="mb-4 text-sm text-muted-foreground line-clamp-2">
-                          {pkg.description}
-                        </p>
-
-                        <div className="mb-4 flex flex-wrap gap-2">
-                          <Badge variant="secondary">
-                            <Clock className="mr-1 h-3 w-3" />
-                            {pkg.deliveryTime} days
-                          </Badge>
-                          <Badge variant="secondary">
-                            {pkg.revisions} revisions
-                          </Badge>
-                          <Badge variant="outline">{pkg.bookings} bookings</Badge>
-                        </div>
-
-                        <div className="flex items-center justify-between border-t border-border pt-4">
-                          <p className="text-xl font-bold text-primary">
-                            {formatPrice(pkg.price)}
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">
-                              Active
-                            </span>
-                            <Switch
-                              checked={pkg.isActive}
-                              onCheckedChange={() => handleToggleActive(pkg.id)}
-                            />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <Package className="mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-muted-foreground">No active packages</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Inactive Packages */}
-        {inactivePackages.length > 0 && (
-          <div>
-            <h2 className="mb-4 text-lg font-semibold text-muted-foreground">
-              Inactive Packages
-            </h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              {inactivePackages.map((pkg, index) => {
-                const PlatformIcon = platformIcons[pkg.platform] || Package;
-                return (
-                  <motion.div
-                    key={pkg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <Card className="opacity-60">
-                      <CardContent className="p-4">
-                        <div className="mb-4 flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                              <PlatformIcon className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold">{pkg.name}</h3>
-                              <p className="text-sm text-muted-foreground capitalize">
-                                {pkg.platform} • {pkg.contentType}
-                              </p>
-                              <Badge variant="outline" className="mt-1 capitalize">
-                                {pkg.dealType}
-                              </Badge>
-                            </div>
-                          </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Copy className="mr-2 h-4 w-4" />
-                                Duplicate
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => {
-                                  setSelectedPackage(pkg.id);
-                                  setDeleteDialogOpen(true);
-                                }}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-
-                        <div className="flex items-center justify-between border-t border-border pt-4">
-                          <p className="text-xl font-bold text-muted-foreground">
-                            {formatPrice(pkg.price)}
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">
-                              Inactive
-                            </span>
-                            <Switch
-                              checked={pkg.isActive}
-                              onCheckedChange={() => handleToggleActive(pkg.id)}
-                            />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Search, Filter & Sort</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by title, tags, or package intent"
+              className="pl-9"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
           </div>
-        )}
-      </div>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Package</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this package? This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeletePackage}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+            <Select value={status} onValueChange={(value) => setStatus(value as PackageStatus | "all")}>
+              <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>{statusOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={dealType} onValueChange={(value) => setDealType(value as typeof dealType)}>
+              <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
+              <SelectContent>{dealTypeOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={platform} onValueChange={(value) => setPlatform(value as typeof platform)}>
+              <SelectTrigger><SelectValue placeholder="Platform" /></SelectTrigger>
+              <SelectContent>{platformOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={performance} onValueChange={(value) => setPerformance(value as typeof performance)}>
+              <SelectTrigger><SelectValue placeholder="Performance" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Performance</SelectItem>
+                <SelectItem value="top">Top Conversion</SelectItem>
+                <SelectItem value="mid">Mid Conversion</SelectItem>
+                <SelectItem value="low">Low Conversion</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={earningsBand} onValueChange={(value) => setEarningsBand(value as typeof earningsBand)}>
+              <SelectTrigger><SelectValue placeholder="Earnings" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Earnings</SelectItem>
+                <SelectItem value="under25">Under PKR 25k</SelectItem>
+                <SelectItem value="25to50">PKR 25k - 50k</SelectItem>
+                <SelectItem value="50plus">PKR 50k+</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
+              <SelectTrigger><SelectValue placeholder="Sort" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Most Recent</SelectItem>
+                <SelectItem value="views">Most Views</SelectItem>
+                <SelectItem value="conversion">Best Conversion</SelectItem>
+                <SelectItem value="orders">Most Orders</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={saveCurrentFilter}>Save Filters</Button>
+            <Button variant="outline" size="sm" onClick={applySavedFilter}>Use Saved Filters</Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearch("");
+                setStatus("all");
+                setDealType("all");
+                setPlatform("all");
+                setPerformance("all");
+                setEarningsBand("all");
+                setSortBy("recent");
+              }}
             >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              Clear All
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <PackageCardSkeleton key={index} />
+          ))}
+        </div>
+      ) : filteredPackages.length === 0 ? (
+        <EmptyState
+          title={status === "active" ? "No active packages yet" : "No packages match your filters"}
+          description={
+            status === "active"
+              ? "Create your first barter, paid, or hybrid package to start getting inquiries."
+              : "Try adjusting status, pricing type, or performance filters."
+          }
+          action={{
+            label: "Create Package",
+            onClick: () => toast.info("Use the Create Package button to launch a new listing."),
+          }}
+        />
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {filteredPackages.map((pkg, index) => (
+            <motion.div
+              key={pkg.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.04 }}
+            >
+              <Card className="overflow-hidden border-border/70">
+                <div className="relative h-40 w-full">
+                  <Image src={pkg.thumbnail} alt={pkg.title} fill className="object-cover" />
+                  <div className="absolute left-3 top-3 flex gap-2">
+                    <Badge variant="secondary" className={statusBadgeClass(pkg.status)}>{pkg.status.replace("_", " ")}</Badge>
+                    <Badge variant="secondary" className="capitalize">{pkg.dealType}</Badge>
+                  </div>
+                </div>
+                <CardContent className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-semibold">{pkg.title}</h3>
+                      <p className="text-sm text-muted-foreground">{pkg.platform} • {pkg.category}</p>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon"><Filter className="h-4 w-4" /></Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => toast.info(`Editing ${pkg.title} in next iteration.`)}>
+                          <FilePenLine className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleDuplicate(pkg)}>
+                          <Copy className="mr-2 h-4 w-4" /> Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handlePauseResume(pkg)}>
+                          {pkg.status === "paused" ? <Play className="mr-2 h-4 w-4" /> : <Pause className="mr-2 h-4 w-4" />}
+                          {pkg.status === "paused" ? "Resume" : "Pause"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleArchive(pkg.id)}>
+                          <Archive className="mr-2 h-4 w-4" /> Archive
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => toast.info(`Preview for ${pkg.title} is opening soon.`)}>
+                          <Eye className="mr-2 h-4 w-4" /> Preview
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  <p className="line-clamp-2 text-sm text-muted-foreground">{pkg.shortDescription}</p>
+
+                  <div className="grid grid-cols-3 gap-2 rounded-lg border border-border/60 p-2 text-xs">
+                    <div><p className="text-muted-foreground">Views</p><p className="font-semibold">{pkg.analytics.views.toLocaleString()}</p></div>
+                    <div><p className="text-muted-foreground">Inquiries</p><p className="font-semibold">{pkg.analytics.inquiries}</p></div>
+                    <div><p className="text-muted-foreground">Conversion</p><p className="font-semibold">{pkg.analytics.conversionRate}%</p></div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline">Orders: {pkg.ordersCompleted}</Badge>
+                    <Badge variant="outline">Completion: {pkg.analytics.completionRate}%</Badge>
+                    <Badge variant="outline">Repeat: {pkg.analytics.repeatBrands}</Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-border pt-3">
+                    <p className="font-bold text-primary">
+                      {pkg.dealType === "barter"
+                        ? "Barter"
+                        : pkg.dealType === "hybrid"
+                          ? `${formatPrice(pkg.hybridCashAmount || pkg.price)} + barter`
+                          : formatPrice(pkg.price)}
+                    </p>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => toast.info(`Preview for ${pkg.title} is opening soon.`)}>
+                        <Eye className="mr-1 h-3 w-3" /> Preview
+                      </Button>
+                      <Button size="sm" onClick={() => toast.info(`Edit flow for ${pkg.title} is opening soon.`)}>
+                        <FilePenLine className="mr-1 h-3 w-3" /> Edit
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Top Performing Packages</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {packages
+            .slice()
+            .sort((a, b) => b.analytics.conversionRate - a.analytics.conversionRate)
+            .slice(0, 3)
+            .map((item) => (
+              <div key={item.id} className="rounded-lg border border-border/60 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="font-medium">{item.title}</p>
+                  <Badge variant="secondary" className="bg-primary/10 text-primary">
+                    <TrendingUp className="mr-1 h-3 w-3" /> {item.analytics.conversionRate}%
+                  </Badge>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div className="h-full bg-primary" style={{ width: `${Math.min(item.analytics.conversionRate * 8, 100)}%` }} />
+                </div>
+              </div>
+            ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }
