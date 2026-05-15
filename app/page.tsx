@@ -220,7 +220,7 @@ export default function Home() {
       </section>
 
       {/* Trending Creators Carousel */}
-      <section id="how-it-works" className="bg-muted/30 py-12 md:py-16">
+      <section className="bg-muted/30 py-12 md:py-16">
         <div className="container mx-auto px-4">
           <div className="mb-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -319,7 +319,7 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="bg-muted/30 py-12 md:py-16">
+      <section id="how-it-works" className="scroll-mt-24 bg-muted/30 py-12 md:py-16">
         <div className="container mx-auto px-4">
           <div className="mb-12 text-center">
             <h2 className="mb-4 text-2xl font-bold text-foreground md:text-3xl">
@@ -521,6 +521,11 @@ export default function Home() {
                 <li>
                   <Link href="/help" className="hover:text-primary">
                     Help Center
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/resources" className="hover:text-primary">
+                    Resources
                   </Link>
                 </li>
                 <li>

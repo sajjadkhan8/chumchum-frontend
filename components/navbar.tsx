@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Menu, Bell, MessageCircle, User, LogOut, Package, Wallet, Bookmark, Building2, BriefcaseBusiness } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,9 +29,17 @@ interface NavbarProps {
 export function Navbar({ showSearch = false, onSearchChange, searchValue }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [currentHash, setCurrentHash] = useState('');
   const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
   const isSignedIn = hasHydrated && isAuthenticated && !!user;
   const isCreator = isSignedIn && user.role === 'creator';
+
+  useEffect(() => {
+    const syncHash = () => setCurrentHash(window.location.hash || '');
+    syncHash();
+    window.addEventListener('hashchange', syncHash);
+    return () => window.removeEventListener('hashchange', syncHash);
+  }, [pathname]);
 
   const handleLogout = () => {
     logout();
@@ -42,6 +51,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     { href: '/#how-it-works', label: 'How It Works' },
     { href: '/about', label: 'About' },
     { href: '/help', label: 'Help Center' },
+    { href: '/resources', label: 'Resources' },
     { href: '/pricing', label: 'Pricing' },
   ];
 
@@ -80,7 +90,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const isLinkActive = (href: string) => {
     const pathOnly = href.split('?')[0];
     if (pathOnly === '/') return pathname === '/';
-    if (pathOnly.startsWith('/#')) return pathname === '/';
+    if (pathOnly.startsWith('/#')) {
+      const targetHash = `#${pathOnly.split('#')[1]}`;
+      return pathname === '/' && currentHash === targetHash;
+    }
     return pathname === pathOnly || pathname.startsWith(`${pathOnly}/`);
   };
 
