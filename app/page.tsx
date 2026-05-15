@@ -514,6 +514,11 @@ export default function Home() {
               <h4 className="mb-4 font-semibold text-foreground">Support</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
+                  <Link href="/about" className="hover:text-primary">
+                    About ChamCham
+                  </Link>
+                </li>
+                <li>
                   <Link href="/help" className="hover:text-primary">
                     Help Center
                   </Link>
@@ -526,6 +531,11 @@ export default function Home() {
                 <li>
                   <Link href="/terms" className="hover:text-primary">
                     Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="hover:text-primary">
+                    Privacy Policy
                   </Link>
                 </li>
               </ul>

@@ -40,7 +40,8 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const publicNavLinks = [
     { href: '/brand/explore', label: 'Explore Creators' },
     { href: '/#how-it-works', label: 'How It Works' },
-    { href: '/#categories', label: 'Categories' },
+    { href: '/about', label: 'About' },
+    { href: '/help', label: 'Help Center' },
     { href: '/pricing', label: 'Pricing' },
   ];
 
