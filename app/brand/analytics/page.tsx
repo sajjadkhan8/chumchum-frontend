@@ -2,7 +2,7 @@
 
 import { TrendingUp, Target, Users, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatsCard } from "@/components/stats-card";
+import { MemoizedStatsCard } from "@/components/stats-card";
 import { formatPrice } from "@/lib/utils";
 
 export default function BrandAnalyticsPage() {
@@ -14,10 +14,10 @@ export default function BrandAnalyticsPage() {
       </div>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Total Reach" value="12.4M" icon={TrendingUp} />
-        <StatsCard title="Avg Engagement" value="5.8%" icon={Target} />
-        <StatsCard title="Creators Active" value="32" icon={Users} />
-        <StatsCard title="Monthly Spend" value={formatPrice(945000)} icon={Wallet} />
+        <MemoizedStatsCard title="Total Reach" value="12.4M" icon={TrendingUp} />
+        <MemoizedStatsCard title="Avg Engagement" value="5.8%" icon={Target} />
+        <MemoizedStatsCard title="Creators Active" value="32" icon={Users} />
+        <MemoizedStatsCard title="Monthly Spend" value={formatPrice(945000)} icon={Wallet} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

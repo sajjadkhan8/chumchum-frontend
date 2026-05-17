@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { memo } from 'react';
 import { Clock, CheckCircle, Gift, Sparkles, TrendingUp, Instagram, Youtube } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,7 +46,7 @@ export function PackageCard({ pkg, onOrder, className }: PackageCardProps) {
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className={cn('overflow-hidden rounded-2xl border-primary/10', className)}>
+      <Card className={cn('overflow-hidden rounded-2xl border-primary/10 shadow-sm transition-shadow hover:shadow-md', className)}>
         <CardContent className="p-0">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border p-4">
@@ -147,3 +148,6 @@ export function PackageCard({ pkg, onOrder, className }: PackageCardProps) {
     </motion.div>
   );
 }
+
+export const MemoizedPackageCard = memo(PackageCard)
+

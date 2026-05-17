@@ -147,9 +147,6 @@
   }
   body {
     @apply bg-background text-foreground overflow-x-hidden;
-    background-image:
-      radial-gradient(circle at 14% 2%, color-mix(in oklab, var(--primary) 18%, transparent), transparent 36%),
-      radial-gradient(circle at 88% 18%, color-mix(in oklab, var(--accent) 16%, transparent), transparent 34%);
     text-size-adjust: 100%;
   }
 

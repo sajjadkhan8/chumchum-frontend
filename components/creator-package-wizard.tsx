@@ -357,7 +357,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         </Card>
       )}
 
-      <Card className="sticky top-16 z-20 border-border/80 bg-background/95 backdrop-blur">
+      <Card className="sticky top-16 z-20 border-border/80 bg-background/98">
         <CardContent className="p-4">
           <div className="flex gap-2 overflow-x-auto pb-1">
             {steps.map((step) => (
@@ -654,7 +654,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         )}
       </motion.div>
 
-      <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-20 flex gap-2 rounded-2xl border border-primary/10 bg-background/95 p-3 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0">
+      <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-20 flex gap-2 rounded-2xl border border-primary/10 bg-background/98 p-3 md:static md:border-0 md:bg-transparent md:p-0">
         <Button
           type="button"
           variant="outline"

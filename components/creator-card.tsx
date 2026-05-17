@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Star, Clock, Gift, TrendingUp, Zap, Instagram, Youtube } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -57,7 +58,7 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
     >
       <Card
         className={cn(
-          'group overflow-hidden rounded-2xl border-primary/10 shadow-sm transition-shadow hover:shadow-lg',
+          'group overflow-hidden rounded-2xl border-primary/10 shadow-sm transition-shadow hover:shadow-md',
           variant === 'horizontal' && 'md:flex',
           className
         )}
@@ -83,19 +84,19 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
             {/* Badges */}
             <div className="absolute left-2.5 top-2.5 flex max-w-[90%] flex-wrap gap-1.5 sm:left-3 sm:top-3">
               {creator.isTrending && (
-                <Badge className="bg-primary/90 text-[11px] text-primary-foreground backdrop-blur-sm">
+                <Badge className="bg-primary/90 text-[11px] text-primary-foreground">
                   <TrendingUp className="mr-1 h-3 w-3" />
                   Trending
                 </Badge>
               )}
               {creator.dealTypes.includes('barter') && (
-                <Badge className="bg-accent/90 text-[11px] text-accent-foreground backdrop-blur-sm">
+                <Badge className="bg-accent/90 text-[11px] text-accent-foreground">
                   <Gift className="mr-1 h-3 w-3" />
                   Barter
                 </Badge>
               )}
               {creator.isFastResponder && (
-                <Badge variant="secondary" className="text-[11px] backdrop-blur-sm">
+                <Badge variant="secondary" className="text-[11px]">
                   <Zap className="mr-1 h-3 w-3" />
                   Fast
                 </Badge>
@@ -219,3 +220,6 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
     </motion.div>
   );
 }
+
+export const MemoizedCreatorCard = memo(CreatorCard)
+

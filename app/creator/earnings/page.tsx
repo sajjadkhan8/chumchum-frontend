@@ -38,7 +38,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { StatsCard } from "@/components/stats-card";
+import { MemoizedStatsCard } from "@/components/stats-card";
 import { formatPrice, formatDate } from "@/lib/utils";
 
 const earningsData = {
@@ -167,12 +167,12 @@ export default function CreatorEarningsPage() {
 
       {/* Stats Grid */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
+        <MemoizedStatsCard
           title="Total Earnings"
           value={formatPrice(earningsData.totalEarnings)}
           icon={DollarSign}
         />
-        <StatsCard
+        <MemoizedStatsCard
           title="Available Balance"
           value={formatPrice(earningsData.availableBalance)}
           icon={Wallet}
@@ -228,13 +228,13 @@ export default function CreatorEarningsPage() {
             </Dialog>
           }
         />
-        <StatsCard
+        <MemoizedStatsCard
           title="Pending Balance"
           value={formatPrice(earningsData.pendingBalance)}
           icon={Clock}
           subtitle="In escrow"
         />
-        <StatsCard
+        <MemoizedStatsCard
           title="This Month"
           value={formatPrice(earningsData.thisMonth)}
           change={monthlyChange}

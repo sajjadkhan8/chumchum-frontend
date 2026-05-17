@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -87,3 +88,6 @@ export function StatsCard({
     </motion.div>
   );
 }
+
+export const MemoizedStatsCard = memo(StatsCard)
+

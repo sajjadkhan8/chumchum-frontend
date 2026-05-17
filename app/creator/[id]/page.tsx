@@ -30,7 +30,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { PackageCard } from "@/components/package-card";
+import { MemoizedPackageCard } from "@/components/package-card";
 import { ReviewCard } from "@/components/review-card";
 import { QuickDealModal } from "@/components/quick-deal-modal";
 import { creators } from "@/data/creators";
@@ -389,7 +389,7 @@ export default function CreatorProfilePage({
                     <div className="space-y-3">
                       <h3 className="text-lg font-semibold">Featured Packages</h3>
                       {(featuredPackages.length > 0 ? featuredPackages : creatorPackages.slice(0, 2)).map((pkg) => (
-                        <PackageCard
+                        <MemoizedPackageCard
                           key={`featured-${pkg.id}`}
                           pkg={pkg}
                           onOrder={canHireCreator ? () => handleBookPackage(pkg.id) : undefined}
@@ -400,7 +400,7 @@ export default function CreatorProfilePage({
                     <div className="space-y-3">
                       <h3 className="text-lg font-semibold">Trending Packages</h3>
                       {(trendingPackages.length > 0 ? trendingPackages : creatorPackages.slice(0, 2)).map((pkg) => (
-                        <PackageCard
+                        <MemoizedPackageCard
                           key={`trending-${pkg.id}`}
                           pkg={pkg}
                           onOrder={canHireCreator ? () => handleBookPackage(pkg.id) : undefined}
@@ -412,7 +412,7 @@ export default function CreatorProfilePage({
                       <h3 className="text-lg font-semibold">Barter Friendly Packages</h3>
                       {barterFriendlyPackages.length > 0 ? (
                         barterFriendlyPackages.map((pkg) => (
-                          <PackageCard
+                          <MemoizedPackageCard
                             key={`barter-${pkg.id}`}
                             pkg={pkg}
                             onOrder={canHireCreator ? () => handleBookPackage(pkg.id) : undefined}
@@ -430,7 +430,7 @@ export default function CreatorProfilePage({
                     <div className="space-y-3">
                       <h3 className="text-lg font-semibold">Best Performing Packages</h3>
                       {bestPerformingPackages.map((pkg) => (
-                        <PackageCard
+                        <MemoizedPackageCard
                           key={`best-${pkg.id}`}
                           pkg={pkg}
                           onOrder={canHireCreator ? () => handleBookPackage(pkg.id) : undefined}

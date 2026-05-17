@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,7 +25,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Navbar } from "@/components/navbar";
 import { BottomNav } from "@/components/bottom-nav";
-import { CreatorCard } from "@/components/creator-card";
+import { MemoizedCreatorCard } from "@/components/creator-card";
 import { BrandBanner } from "@/components/brand-banner";
 import { BrandLogo } from "@/components/brand-logo";
 import { creators } from "@/data/creators";
@@ -57,17 +57,45 @@ export default function Home() {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  const trendingCreators = creators.slice(0, 8);
-  const risingStars = creators.filter((c) => c.isTrending).slice(0, 6);
-  const verifiedCreators = creators.filter((c) => c.isVerified).slice(0, 4);
+  const trendingCreators = useMemo(() => creators.slice(0, 8), []);
+  const risingStars = useMemo(() => creators.filter((c) => c.isTrending).slice(0, 6), []);
+  const verifiedCreators = useMemo(() => creators.filter((c) => c.isVerified).slice(0, 4), []);
+  const scrollRafRef = useRef<number | null>(null);
 
-  const handleScroll = () => {
-    if (trendingRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = trendingRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-    }
-  };
+  const updateScrollState = useCallback(() => {
+    if (!trendingRef.current) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = trendingRef.current;
+    const nextCanScrollLeft = scrollLeft > 0;
+    const nextCanScrollRight = scrollLeft < scrollWidth - clientWidth - 10;
+
+    setCanScrollLeft((current) => (current === nextCanScrollLeft ? current : nextCanScrollLeft));
+    setCanScrollRight((current) => (current === nextCanScrollRight ? current : nextCanScrollRight));
+  }, []);
+
+  useEffect(() => {
+    const el = trendingRef.current;
+    if (!el) return;
+
+    const onScroll = () => {
+      if (scrollRafRef.current !== null) return;
+
+      scrollRafRef.current = window.requestAnimationFrame(() => {
+        scrollRafRef.current = null;
+        updateScrollState();
+      });
+    };
+
+    el.addEventListener('scroll', onScroll, { passive: true });
+    updateScrollState();
+
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      if (scrollRafRef.current !== null) {
+        window.cancelAnimationFrame(scrollRafRef.current);
+      }
+    };
+  }, [updateScrollState]);
 
   const scroll = (direction: "left" | "right") => {
     if (trendingRef.current) {
@@ -260,7 +288,6 @@ export default function Home() {
 
           <div
             ref={trendingRef}
-            onScroll={handleScroll}
             className="scrollbar-hide -mx-4 flex gap-4 overflow-x-auto px-4 pb-4"
           >
             {trendingCreators.map((creator, index) => (
@@ -271,7 +298,7 @@ export default function Home() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
               >
-                <CreatorCard creator={creator} variant="compact" />
+                <MemoizedCreatorCard creator={creator} variant="compact" />
               </motion.div>
             ))}
           </div>
@@ -311,7 +338,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
               >
-                <CreatorCard creator={creator} />
+                <MemoizedCreatorCard creator={creator} />
               </motion.div>
             ))}
           </div>
@@ -411,7 +438,7 @@ export default function Home() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
               >
-                <CreatorCard creator={creator} variant="compact" />
+                <MemoizedCreatorCard creator={creator} variant="compact" />
               </motion.div>
             ))}
           </div>

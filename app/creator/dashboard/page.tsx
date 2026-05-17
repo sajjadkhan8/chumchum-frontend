@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import { StatsCard } from "@/components/stats-card";
+import { MemoizedStatsCard } from "@/components/stats-card";
 import { formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { BrandBanner } from "@/components/brand-banner";
@@ -133,28 +133,28 @@ export default function CreatorDashboardPage() {
 
       {/* Stats Grid */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
+        <MemoizedStatsCard
           title="Total Earnings"
           value={formatPrice(mockStats.totalEarnings)}
           change={mockStats.earningsChange}
           icon={DollarSign}
           trend="up"
         />
-        <StatsCard
+        <MemoizedStatsCard
           title="Active Orders"
           value={mockStats.activeOrders.toString()}
           change={mockStats.ordersChange}
           icon={Package}
           trend="down"
         />
-        <StatsCard
+        <MemoizedStatsCard
           title="Profile Views"
           value={mockStats.profileViews.toLocaleString()}
           change={mockStats.viewsChange}
           icon={Eye}
           trend="up"
         />
-        <StatsCard
+        <MemoizedStatsCard
           title="Rating"
           value={mockStats.rating.toString()}
           subtitle={`${mockStats.reviewCount} reviews`}
