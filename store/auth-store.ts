@@ -43,7 +43,7 @@ export const useAuthStore = create<AuthState>()(
           id: '1',
           email,
           role: isCreator ? 'creator' : 'brand',
-          name: isCreator ? 'Ali Khan' : 'FoodPanda Pakistan',
+          name: isCreator ? 'Faisal Al Harbi' : 'Noon Food KSA',
           avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
           createdAt: new Date(),
         };
@@ -60,7 +60,7 @@ export const useAuthStore = create<AuthState>()(
           phone,
           email: '',
           role: 'creator',
-          name: 'Hassan Raza',
+          name: 'Khalid Al Dosari',
           avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${phone}`,
           createdAt: new Date(),
         };
@@ -119,7 +119,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'chamcham-auth',
+      name: 'zingzing-auth',
       version: 2,
       migrate: (persistedState, version) => {
         if (!persistedState || typeof persistedState !== 'object') {

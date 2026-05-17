@@ -59,7 +59,7 @@ export default function TermsPage() {
               Terms of Service
             </h1>
             <p className="max-w-2xl text-base text-muted-foreground md:text-lg">
-              Please read these terms carefully before using ChamCham. By accessing or using
+              Please read these terms carefully before using ZingZing. By accessing or using
               our platform, you agree to be bound by the conditions set out below.
             </p>
             <p className="text-xs text-muted-foreground">
@@ -100,7 +100,7 @@ export default function TermsPage() {
             {/* 1. Acceptance */}
             <Section id="acceptance" icon={Handshake} title="Acceptance of Terms">
               <p>
-                By creating an account, browsing, or otherwise using the ChamCham platform
+                By creating an account, browsing, or otherwise using the ZingZing platform
                 (&quot;Platform&quot;), you confirm that you are at least 18 years old and have
                 the legal capacity to enter into a binding agreement. If you are accessing the
                 Platform on behalf of a company or other legal entity, you represent that you
@@ -115,9 +115,9 @@ export default function TermsPage() {
             {/* 2. Platform Description */}
             <Section id="platform" icon={Globe} title="Platform Description">
               <p>
-                ChamCham is an influencer-marketing marketplace that connects Pakistani brands
+                ZingZing is an influencer-marketing marketplace that connects Saudi brands
                 with content creators for paid, barter, and hybrid collaboration campaigns.
-                ChamCham acts solely as an intermediary and technology facilitator — we are
+                ZingZing acts solely as an intermediary and technology facilitator — we are
                 not a party to any deal, contract, or arrangement entered into between a brand
                 and a creator.
               </p>
@@ -137,10 +137,10 @@ export default function TermsPage() {
                 credentials and for all activities that occur under your account.
               </p>
               <InfoList items={[
-                'Notify support@chamcham.pk immediately of any unauthorised use.',
+                'Notify support@zingzing.sa immediately of any unauthorised use.',
                 'Do not share your credentials with third parties.',
                 'One individual or company may only hold one active account per role (brand / creator).',
-                'ChamCham reserves the right to suspend or terminate accounts that violate these Terms.',
+                'ZingZing reserves the right to suspend or terminate accounts that violate these Terms.',
               ]} />
             </Section>
 
@@ -153,7 +153,7 @@ export default function TermsPage() {
                 'Provide accurate campaign briefs and clear deliverable expectations.',
                 'Respond to creator inquiries in a timely manner.',
                 'Honour agreed payment or barter terms upon campaign completion.',
-                'Comply with PEMRA, FBR, and all other applicable Pakistani advertising laws.',
+                'Comply with all applicable Saudi advertising, e-commerce, and consumer-protection laws, including disclosure obligations set by relevant authorities.',
               ]} />
               <h3 className="mt-6 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                 Creators
@@ -170,15 +170,15 @@ export default function TermsPage() {
             <Section id="payments" icon={CreditCard} title="Payments & Barter Deals">
               <p>
                 All monetary transactions are conducted directly between the brand and the
-                creator outside the Platform unless ChamCham&apos;s escrow service (where
-                available) is explicitly selected. ChamCham charges a service fee, which will
+                creator outside the Platform unless ZingZing&apos;s escrow service (where
+                available) is explicitly selected. ZingZing charges a service fee, which will
                 be disclosed at the time of transaction.
               </p>
               <InfoList items={[
                 'Barter deal terms (product value, delivery timeline) must be agreed in writing via Platform messages before campaign start.',
-                'Refund or dispute requests for escrow-managed payments are handled by ChamCham Support within 7 business days.',
-                'ChamCham is not liable for non-payment or unfulfilled barter obligations between parties.',
-                'Applicable taxes (e.g., WHT, GST) are the responsibility of the respective party.',
+                'Refund or dispute requests for escrow-managed payments are handled by ZingZing Support within 7 business days.',
+                'ZingZing is not liable for non-payment or unfulfilled barter obligations between parties.',
+                'Applicable taxes (including VAT obligations administered by ZATCA) are the responsibility of the respective party.',
               ]} />
             </Section>
 
@@ -187,11 +187,11 @@ export default function TermsPage() {
               <p>
                 You retain ownership of content you create. By posting content on the
                 Platform (profile photos, portfolio samples, campaign deliverables), you grant
-                ChamCham a worldwide, royalty-free, non-exclusive licence to display, reproduce,
+                ZingZing a worldwide, royalty-free, non-exclusive licence to display, reproduce,
                 and promote that content solely for Platform operations and marketing.
               </p>
               <p>
-                ChamCham&apos;s own trademarks, logos, UI designs, and proprietary technology
+                ZingZing&apos;s own trademarks, logos, UI designs, and proprietary technology
                 are protected by intellectual property law. You may not reproduce, distribute,
                 or create derivative works without prior written consent.
               </p>
@@ -206,7 +206,7 @@ export default function TermsPage() {
                 </Link>
                 , which is incorporated into these Terms by reference. We collect and process
                 personal data only as described therein and in compliance with applicable
-                Pakistani data-protection requirements.
+                Saudi data-protection requirements.
               </p>
             </Section>
 
@@ -227,14 +227,14 @@ export default function TermsPage() {
             <Section id="disclaimers" icon={AlertTriangle} title="Disclaimers & Liability">
               <p>
                 The Platform is provided &quot;as is&quot; and &quot;as available&quot; without
-                warranties of any kind, express or implied. ChamCham does not warrant that
+                warranties of any kind, express or implied. ZingZing does not warrant that
                 the Platform will be error-free, uninterrupted, or free of harmful components.
               </p>
               <p>
-                To the maximum extent permitted by law, ChamCham&apos;s total aggregate
+                To the maximum extent permitted by law, ZingZing&apos;s total aggregate
                 liability for any claim arising out of or relating to these Terms or your use
-                of the Platform shall not exceed the greater of PKR 10,000 or the total fees
-                paid by you to ChamCham in the three months preceding the claim.
+                of the Platform shall not exceed the greater of SAR 10,000 or the total fees
+                paid by you to ZingZing in the three months preceding the claim.
               </p>
             </Section>
 
@@ -242,9 +242,9 @@ export default function TermsPage() {
             <Section id="governing-law" icon={Scale} title="Governing Law">
               <p>
                 These Terms are governed by and construed in accordance with the laws of
-                the Islamic Republic of Pakistan. Any dispute arising out of or relating to
+                the Kingdom of Saudi Arabia. Any dispute arising out of or relating to
                 these Terms shall be subject to the exclusive jurisdiction of the courts of
-                Karachi, Pakistan, unless resolved through mutual good-faith negotiation
+                Jeddah, Saudi Arabia, unless resolved through mutual good-faith negotiation
                 or binding arbitration as agreed by both parties.
               </p>
             </Section>
@@ -252,7 +252,7 @@ export default function TermsPage() {
             {/* 11. Changes */}
             <Section id="changes" icon={RefreshCw} title="Changes to Terms">
               <p>
-                ChamCham may revise these Terms at any time. Material changes will be
+                ZingZing may revise these Terms at any time. Material changes will be
                 communicated via email or a prominent in-app notice at least 14 days before
                 taking effect. Continued use of the Platform after the effective date of
                 revised Terms constitutes your acceptance of those changes.
@@ -266,20 +266,20 @@ export default function TermsPage() {
                 out to our Legal &amp; Trust team:
               </p>
               <div className="mt-4 rounded-2xl border border-border bg-muted/40 p-5 text-sm">
-                <p className="font-semibold text-foreground">ChamCham — Legal &amp; Trust</p>
+                <p className="font-semibold text-foreground">ZingZing — Legal &amp; Trust</p>
                 <p className="mt-1 text-muted-foreground">
                   Email:{' '}
-                  <a href="mailto:legal@chamcham.pk" className="font-medium text-primary hover:underline">
-                    legal@chamcham.pk
+                  <a href="mailto:legal@zingzing.sa" className="font-medium text-primary hover:underline">
+                    legal@zingzing.sa
                   </a>
                 </p>
                 <p className="mt-0.5 text-muted-foreground">
                   Support:{' '}
-                  <a href="mailto:support@chamcham.pk" className="font-medium text-primary hover:underline">
-                    support@chamcham.pk
+                  <a href="mailto:support@zingzing.sa" className="font-medium text-primary hover:underline">
+                    support@zingzing.sa
                   </a>
                 </p>
-                <p className="mt-0.5 text-muted-foreground">Karachi, Pakistan</p>
+                <p className="mt-0.5 text-muted-foreground">Jeddah, Saudi Arabia</p>
               </div>
             </Section>
 
@@ -290,7 +290,7 @@ export default function TermsPage() {
               <div>
                 <p className="font-semibold text-foreground">Ready to get started?</p>
                 <p className="mt-0.5 text-sm text-muted-foreground">
-                  Join thousands of brands and creators already collaborating on ChamCham.
+                  Join thousands of brands and creators already collaborating on ZingZing.
                 </p>
               </div>
               <div className="flex shrink-0 gap-3">

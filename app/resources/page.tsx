@@ -72,7 +72,7 @@ const resourceGroups = [
     icon: FileText,
     items: [
       {
-        title: 'Pakistan Content Compliance Tips',
+        title: 'Saudi Arabia Content Compliance Tips',
         description: 'Best practices for clear sponsorship disclosures and campaign safety requirements.',
       },
       {
@@ -101,7 +101,7 @@ export default function ResourcesPage() {
             <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">Templates and playbooks for better campaigns</h1>
             <p className="mt-3 max-w-3xl text-base text-muted-foreground md:text-lg">
               Practical resources for brands and creators to plan faster, negotiate clearly,
-              and run higher-quality collaborations on ChamCham.
+              and run higher-quality collaborations on ZingZing.
             </p>
           </div>
         </section>

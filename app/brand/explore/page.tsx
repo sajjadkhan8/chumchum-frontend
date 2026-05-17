@@ -108,7 +108,7 @@ function ExplorePageContent() {
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search food vloggers in Lahore or TikTok tech creators"
+              placeholder="Search food vloggers in Riyadh or TikTok tech creators"
               className="h-12 rounded-full bg-muted pl-12 text-base"
               value={filters.search || ''}
               onChange={(e) => setFilters({ search: e.target.value })}

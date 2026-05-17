@@ -89,7 +89,7 @@ export default function CreatorProfilePage({
   const avgEngagement =
     creator.platforms.reduce((sum, p) => sum + p.engagementRate, 0) /
     creator.platforms.length;
-  const creatorLanguages = ["Urdu", "English"];
+  const creatorLanguages = ["Arabic", "English"];
   const creatorPortfolio = creator.contentPreviews;
   const featuredPackages = creatorPackages.filter((pkg) => pkg.isPopular).slice(0, 2);
   const trendingPackages = [...creatorPackages]

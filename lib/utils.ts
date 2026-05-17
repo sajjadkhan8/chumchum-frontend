@@ -18,7 +18,7 @@ export function formatFollowers(count: number): string {
 export function formatPrice(amount: number): string {
   return new Intl.NumberFormat('en-PK', {
     style: 'currency',
-    currency: 'PKR',
+    currency: 'SAR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);

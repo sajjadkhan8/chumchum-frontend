@@ -15,7 +15,7 @@ export interface User {
 export type Platform = 'instagram' | 'tiktok' | 'youtube' | 'facebook' | 'snapchat';
 export type DealType = 'paid' | 'barter' | 'hybrid';
 export type BarterType = 'food' | 'hotel' | 'salon' | 'events' | 'products';
-export type City = 'Lahore' | 'Karachi' | 'Islamabad' | 'Rawalpindi' | 'Faisalabad';
+export type City = 'Riyadh' | 'Jeddah' | 'Dammam' | 'Mecca' | 'Medina' | 'Khobar' | 'Tabuk';
 
 export interface SocialStats {
   platform: Platform;

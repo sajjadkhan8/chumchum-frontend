@@ -28,8 +28,8 @@ const channels = [
     icon: Mail,
     title: 'Email Support',
     description: 'For general questions, billing, and account issues.',
-    value: 'support@chamcham.pk',
-    href: 'mailto:support@chamcham.pk',
+    value: 'support@zingzing.sa',
+    href: 'mailto:support@zingzing.sa',
     badge: 'Replies within 24 hrs',
     badgeVariant: 'secondary' as const,
   },
@@ -37,8 +37,8 @@ const channels = [
     icon: ShieldCheck,
     title: 'Legal & Trust',
     description: 'Privacy requests, term disputes, and compliance.',
-    value: 'legal@chamcham.pk',
-    href: 'mailto:legal@chamcham.pk',
+    value: 'legal@zingzing.sa',
+    href: 'mailto:legal@zingzing.sa',
     badge: 'Replies within 48 hrs',
     badgeVariant: 'secondary' as const,
   },
@@ -46,8 +46,8 @@ const channels = [
     icon: Users,
     title: 'Creator Onboarding',
     description: 'Help getting your creator profile verified and live.',
-    value: 'creators@chamcham.pk',
-    href: 'mailto:creators@chamcham.pk',
+    value: 'creators@zingzing.sa',
+    href: 'mailto:creators@zingzing.sa',
     badge: 'Mon – Sat',
     badgeVariant: 'secondary' as const,
   },
@@ -55,23 +55,23 @@ const channels = [
     icon: MessageCircle,
     title: 'Brand Partnerships',
     description: 'Enterprise deals, managed campaigns, and custom pricing.',
-    value: 'brands@chamcham.pk',
-    href: 'mailto:brands@chamcham.pk',
+    value: 'brands@zingzing.sa',
+    href: 'mailto:brands@zingzing.sa',
     badge: 'Priority response',
     badgeVariant: 'default' as const,
   },
 ];
 
 const officeDetails = [
-  { icon: MapPin, label: 'Address', value: 'Gulberg III, Lahore, Pakistan' },
-  { icon: Phone, label: 'Phone', value: '+92 42 111 224 226' },
-  { icon: Clock, label: 'Hours', value: 'Mon – Sat, 10:00 AM – 7:00 PM PKT' },
+  { icon: MapPin, label: 'Address', value: 'King Fahd Road, Riyadh, Saudi Arabia' },
+  { icon: Phone, label: 'Phone', value: '+966 11 424 2246' },
+  { icon: Clock, label: 'Hours', value: 'Sun – Thu, 9:00 AM – 6:00 PM AST' },
 ];
 
 const faqs = [
   {
     q: 'How do I report a problem with a campaign or order?',
-    a: "Email support@chamcham.pk with your order ID and a brief description. Our team will respond within 24 hours and escalate urgent cases same-day.",
+    a: "Email support@zingzing.sa with your order ID and a brief description. Our team will respond within 24 hours and escalate urgent cases same-day.",
   },
   {
     q: 'How long does creator verification take?',
@@ -79,11 +79,11 @@ const faqs = [
   },
   {
     q: 'Can I request a refund for an incomplete campaign?',
-    a: 'If you used ChamCham\'s escrow service and the deliverables were not met, raise a dispute via the Orders page. Disputes are reviewed within 7 business days.',
+    a: 'If you used ZingZing\'s escrow service and the deliverables were not met, raise a dispute via the Orders page. Disputes are reviewed within 7 business days.',
   },
   {
     q: 'How do I delete my account and personal data?',
-    a: 'Send a deletion request from your registered email to legal@chamcham.pk with the subject "Account Deletion Request". We will process it within 30 days.',
+    a: 'Send a deletion request from your registered email to legal@zingzing.sa with the subject "Account Deletion Request". We will process it within 30 days.',
   },
 ];
 
@@ -121,7 +121,7 @@ export default function ContactPage() {
             </h1>
             <p className="max-w-2xl text-base text-muted-foreground md:text-lg">
               Whether you&apos;re a brand launching your first campaign or a creator optimising
-              your profile, our team is ready to help you get the most out of ChamCham.
+              your profile, our team is ready to help you get the most out of ZingZing.
             </p>
           </div>
         </div>
@@ -175,7 +175,7 @@ export default function ContactPage() {
                   <Label htmlFor="name">Full name <span className="text-destructive">*</span></Label>
                   <Input
                     id="name"
-                    placeholder="Ali Khan"
+                    placeholder="Faisal Al Harbi"
                     value={form.name}
                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   />
@@ -276,7 +276,7 @@ export default function ContactPage() {
         {/* Footer CTA */}
         <div className="flex flex-col items-start gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="font-semibold text-foreground">New to ChamCham?</p>
+            <p className="font-semibold text-foreground">New to ZingZing?</p>
             <p className="mt-0.5 text-sm text-muted-foreground">
               Create your free account and start connecting with brands or creators today.
             </p>

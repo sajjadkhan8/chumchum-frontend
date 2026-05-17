@@ -57,17 +57,16 @@ const categories = [
   "Entertainment",
 ];
 
-const languages = ["English", "Urdu", "Punjabi", "Sindhi", "Pashto"];
+const languages = ["English", "Arabic"];
 
 const cities = [
-  "Karachi",
-  "Lahore",
-  "Islamabad",
-  "Rawalpindi",
-  "Faisalabad",
-  "Multan",
-  "Peshawar",
-  "Quetta",
+  "Jeddah",
+  "Riyadh",
+  "Dammam",
+  "Mecca",
+  "Medina",
+  "Khobar",
+  "Tabuk",
 ];
 
 function CreatorSettingsPageContent() {
@@ -77,15 +76,15 @@ function CreatorSettingsPageContent() {
   const [isSaving, setIsSaving] = useState(false);
 
   const [profile, setProfile] = useState({
-    name: "Ayesha Khan",
-    handle: "ayeshak",
-    bio: "Fashion & lifestyle content creator based in Lahore. Passionate about sustainable fashion and empowering women.",
-    email: "ayesha@example.com",
-    phone: "+92 300 1234567",
-    city: "Lahore",
+    name: "Reem Al Otaibi",
+    handle: "reemwellness",
+    bio: "Fashion & lifestyle content creator based in Riyadh. Passionate about sustainable fashion and empowering women.",
+    email: "reem@zingzing.sa",
+    phone: "+966 55 123 4567",
+    city: "Riyadh",
     categories: ["Fashion", "Lifestyle"],
-    languages: ["English", "Urdu"],
-    website: "https://ayeshakhan.com",
+    languages: ["English", "Arabic"],
+    website: "https://reemwellness.sa",
     niche: "Fashion & Lifestyle",
     coverImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200",
     availabilityStatus: "Available this week",
@@ -95,18 +94,20 @@ function CreatorSettingsPageContent() {
   });
 
   const [socialAccounts, setSocialAccounts] = useState([
-    { platform: "instagram", username: "ayeshak", profileUrl: "https://instagram.com/ayeshak", followers: 125000, avgViews: 48000, engagementRate: 5.6, verified: true },
-    { platform: "youtube", username: "AyeshaKhan", profileUrl: "https://youtube.com/@AyeshaKhan", followers: 45000, avgViews: 18000, engagementRate: 4.8, verified: true },
-    { platform: "tiktok", username: "ayeshak", profileUrl: "https://tiktok.com/@ayeshak", followers: 89000, avgViews: 62000, engagementRate: 7.1, verified: false },
-    { platform: "facebook", username: "AyeshaKhanOfficial", profileUrl: "https://facebook.com/ayeshakhanofficial", followers: 38000, avgViews: 12000, engagementRate: 3.9, verified: false },
-    { platform: "snapchat", username: "ayeshak.snap", profileUrl: "https://snapchat.com/add/ayeshak.snap", followers: 21000, avgViews: 9000, engagementRate: 4.2, verified: false },
+    { platform: "instagram", username: "reemwellness", profileUrl: "https://instagram.com/reemwellness", followers: 125000, avgViews: 48000, engagementRate: 5.6, verified: true },
+    { platform: "youtube", username: "ReemWellness", profileUrl: "https://youtube.com/@ReemWellness", followers: 45000, avgViews: 18000, engagementRate: 4.8, verified: true },
+    { platform: "tiktok", username: "reemwellness", profileUrl: "https://tiktok.com/@reemwellness", followers: 89000, avgViews: 62000, engagementRate: 7.1, verified: false },
+    { platform: "facebook", username: "ReemWellnessOfficial", profileUrl: "https://facebook.com/reemwellnessofficial", followers: 38000, avgViews: 12000, engagementRate: 3.9, verified: false },
+    { platform: "snapchat", username: "reemwellness.snap", profileUrl: "https://snapchat.com/add/reemwellness.snap", followers: 21000, avgViews: 9000, engagementRate: 4.2, verified: false },
   ]);
 
   const [paymentSettings, setPaymentSettings] = useState({
-    jazzCashNumber: "03001234567",
-    easyPaisaNumber: "03111234567",
-    accountTitle: "Ayesha Khan",
-    ibanOrAccount: "PK36SCBL0000001123456702",
+    stcPayNumber: "+966551234567",
+    madaCard: "Mada **** 4582",
+    accountTitle: "Reem Al Otaibi",
+    ibanOrAccount: "SA0380000000608010167519",
+    applePayNumber: "+966551234567",
+    bankTransferIban: "SA0380000000608010167519",
   });
 
   const [creatorPreferences, setCreatorPreferences] = useState({
@@ -119,7 +120,7 @@ function CreatorSettingsPageContent() {
   const analyticsData = {
     engagementTrend: "+8.4% MoM",
     topPlatform: "Instagram",
-    monthlyEarnings: "PKR 145,000",
+    monthlyEarnings: "SAR 145,000",
     profileViews: "3,240",
     packagePerformance: "Top package conversion: 18%",
   };
@@ -565,17 +566,33 @@ function CreatorSettingsPageContent() {
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>JazzCash</Label>
+                  <Label>STC Pay</Label>
                   <Input
-                    value={paymentSettings.jazzCashNumber}
-                    onChange={(e) => setPaymentSettings((p) => ({ ...p, jazzCashNumber: e.target.value }))}
+                    value={paymentSettings.stcPayNumber}
+                    onChange={(e) => setPaymentSettings((p) => ({ ...p, stcPayNumber: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>EasyPaisa</Label>
+                  <Label>Mada</Label>
                   <Input
-                    value={paymentSettings.easyPaisaNumber}
-                    onChange={(e) => setPaymentSettings((p) => ({ ...p, easyPaisaNumber: e.target.value }))}
+                    value={paymentSettings.madaCard}
+                    onChange={(e) => setPaymentSettings((p) => ({ ...p, madaCard: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Apple Pay</Label>
+                  <Input
+                    value={paymentSettings.applePayNumber}
+                    onChange={(e) => setPaymentSettings((p) => ({ ...p, applePayNumber: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Bank Transfer</Label>
+                  <Input
+                    value={paymentSettings.bankTransferIban}
+                    onChange={(e) => setPaymentSettings((p) => ({ ...p, bankTransferIban: e.target.value }))}
                   />
                 </div>
               </div>
@@ -634,7 +651,7 @@ function CreatorSettingsPageContent() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Minimum Collaboration Budget (PKR)</Label>
+                <Label>Minimum Collaboration Budget (SAR)</Label>
                 <Input
                   type="number"
                   value={creatorPreferences.minimumBudget}

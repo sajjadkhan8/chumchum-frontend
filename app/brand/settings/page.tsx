@@ -60,14 +60,13 @@ const companySizes = [
 ];
 
 const cities = [
-  "Karachi",
-  "Lahore",
-  "Islamabad",
-  "Rawalpindi",
-  "Faisalabad",
-  "Multan",
-  "Peshawar",
-  "Quetta",
+  "Jeddah",
+  "Riyadh",
+  "Dammam",
+  "Mecca",
+  "Medina",
+  "Khobar",
+  "Tabuk",
 ];
 
 function BrandSettingsPageContent() {
@@ -76,19 +75,19 @@ function BrandSettingsPageContent() {
   const [isSaving, setIsSaving] = useState(false);
 
   const [profile, setProfile] = useState({
-    companyName: "FreshMart Pakistan",
-    email: "marketing@freshmart.pk",
-    phone: "+92 21 1234567",
-    website: "https://freshmart.pk",
+    companyName: "Riyadh Gourmet Group",
+    email: "marketing@riyadhgourmet.sa",
+    phone: "+966 11 123 4567",
+    website: "https://riyadhgourmet.sa",
     industry: "Food & Beverage",
     companySize: "51-200 employees",
-    city: "Karachi",
+    city: "Jeddah",
     description:
-      "Leading organic food retailer in Pakistan, committed to bringing fresh and healthy products to every home.",
+      "Leading organic food retailer in Saudi Arabia, committed to bringing fresh and healthy products to every home.",
     logo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=400",
-    contactName: "Ali Hassan",
-    contactEmail: "ali@freshmart.pk",
-    contactPhone: "+92 300 1234567",
+    contactName: "Khalid Al Dosari",
+    contactEmail: "khalid@riyadhgourmet.sa",
+    contactPhone: "+966 55 987 6543",
   });
 
   const [notifications, setNotifications] = useState({
@@ -109,15 +108,15 @@ function BrandSettingsPageContent() {
 
   const [campaignPreferences, setCampaignPreferences] = useState({
     preferredCreatorCategories: "Food, Lifestyle, Beauty",
-    targetCities: "Karachi, Lahore, Islamabad",
+    targetCities: "Jeddah, Riyadh, Dammam",
     targetPlatforms: "Instagram, TikTok, YouTube",
-    campaignBudgetRange: "PKR 150,000 - PKR 800,000",
+    campaignBudgetRange: "SAR 150,000 - SAR 800,000",
   });
 
   const [verification, setVerification] = useState({
     businessStatus: "Verified",
-    contactEmail: "verification@freshmart.pk",
-    phoneNumber: "+92 300 9876543",
+    contactEmail: "verification@riyadhgourmet.sa",
+    phoneNumber: "+966 50 778 8899",
   });
 
   const handleSave = async () => {
@@ -550,7 +549,7 @@ function BrandSettingsPageContent() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="budget">Budget (PKR)</Label>
+                  <Label htmlFor="budget">Budget (SAR)</Label>
                   <Input
                     id="budget"
                     type="number"
@@ -712,9 +711,9 @@ function BrandSettingsPageContent() {
                         <AvatarFallback>AH</AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">Ali Hassan</p>
+                        <p className="font-medium">Khalid Al Dosari</p>
                         <p className="text-sm text-muted-foreground">
-                          ali@freshmart.pk • Owner
+                          khalid@riyadhgourmet.sa • Owner
                         </p>
                       </div>
                     </div>
@@ -725,9 +724,9 @@ function BrandSettingsPageContent() {
                         <AvatarFallback>SK</AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">Sara Khan</p>
+                        <p className="font-medium">Layan Al Shamri</p>
                         <p className="text-sm text-muted-foreground">
-                          sara@freshmart.pk • Admin
+                          layan@riyadhgourmet.sa • Admin
                         </p>
                       </div>
                     </div>

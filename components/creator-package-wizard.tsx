@@ -265,7 +265,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       dealType: formData.dealType,
       barterValue:
         formData.dealType === "barter" || formData.dealType === "hybrid"
-          ? `Min PKR ${Number(formData.minimumBarterValue || 0).toLocaleString()}`
+          ? `Min SAR ${Number(formData.minimumBarterValue || 0).toLocaleString()}`
           : undefined,
       barterDescription:
         formData.dealType === "barter" || formData.dealType === "hybrid"
@@ -438,7 +438,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
               <div className="space-y-2">
                 <Label>Tags (comma-separated)</Label>
-                <Input value={formData.tags} onChange={(e) => updateField("tags", e.target.value)} placeholder="Lahore, Restaurant, Reel, Conversion" />
+                <Input value={formData.tags} onChange={(e) => updateField("tags", e.target.value)} placeholder="Riyadh, Restaurant, Reel, Conversion" />
               </div>
             </CardContent>
           </Card>
@@ -500,7 +500,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
               {(formData.dealType === "paid" || formData.dealType === "hybrid") && (
                 <div className="space-y-2">
-                  <Label>{formData.dealType === "hybrid" ? "Cash Amount (PKR)" : "Price (PKR)"}</Label>
+                  <Label>{formData.dealType === "hybrid" ? "Cash Amount (SAR)" : "Price (SAR)"}</Label>
                   <Input
                     type="number"
                     value={formData.dealType === "hybrid" ? formData.hybridCashAmount : formData.price}
@@ -535,17 +535,17 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Estimated Barter Value (PKR)</Label>
+                      <Label>Estimated Barter Value (SAR)</Label>
                       <Input type="number" value={formData.estimatedBarterValue} onChange={(e) => updateField("estimatedBarterValue", e.target.value)} placeholder="45000" />
                     </div>
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Preferred Brands</Label>
-                      <Input value={formData.preferredBrands} onChange={(e) => updateField("preferredBrands", e.target.value)} placeholder="Pearl Continental, Khaadi, Nishat" />
+                      <Input value={formData.preferredBrands} onChange={(e) => updateField("preferredBrands", e.target.value)} placeholder="Noon Food, Oud Royale, Noura Abaya House" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Minimum Barter Value (PKR)</Label>
+                      <Label>Minimum Barter Value (SAR)</Label>
                       <Input type="number" value={formData.minimumBarterValue} onChange={(e) => updateField("minimumBarterValue", e.target.value)} placeholder="20000" />
                     </div>
                   </div>
@@ -614,10 +614,10 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                   <Badge variant="outline">{deliverables.filter(Boolean).length} deliverables</Badge>
                 </div>
                 <p className="mt-3 font-semibold text-primary">
-                  {formData.dealType === "paid" && (formData.price ? `PKR ${Number(formData.price).toLocaleString()}` : "PKR 0")}
-                  {formData.dealType === "barter" && `Barter (Min PKR ${Number(formData.minimumBarterValue || 0).toLocaleString()})`}
+                  {formData.dealType === "paid" && (formData.price ? `SAR ${Number(formData.price).toLocaleString()}` : "SAR 0")}
+                  {formData.dealType === "barter" && `Barter (Min SAR ${Number(formData.minimumBarterValue || 0).toLocaleString()})`}
                   {formData.dealType === "hybrid" &&
-                    `PKR ${Number(formData.hybridCashAmount || 0).toLocaleString()} + barter (Min PKR ${Number(formData.minimumBarterValue || 0).toLocaleString()})`}
+                    `SAR ${Number(formData.hybridCashAmount || 0).toLocaleString()} + barter (Min SAR ${Number(formData.minimumBarterValue || 0).toLocaleString()})`}
                 </p>
               </div>
 

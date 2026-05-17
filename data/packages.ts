@@ -1,7 +1,7 @@
 import type { Package, DealType, Platform } from '@/types';
 
 export const mockPackages: Package[] = [
-  // Ali Khan's packages
+  // Faisal Al Harbi's packages
   {
     id: 'pkg-1',
     creatorId: '1',
@@ -39,7 +39,7 @@ export const mockPackages: Package[] = [
     deliveryDays: 7,
     price: 0,
     dealType: 'barter' as DealType,
-    barterValue: 'Dining experience worth PKR 15,000+',
+    barterValue: 'Dining experience worth SAR 15,000+',
     barterDescription: 'Feature a full dine-in experience for two at your flagship outlet.',
     barterCategory: 'food',
     estimatedBarterValue: 15000,
@@ -49,7 +49,7 @@ export const mockPackages: Package[] = [
     isPopular: true,
     ordersCompleted: 28,
   },
-  // Sara Ahmed's packages
+  // Nora Al Saud's packages
   {
     id: 'pkg-4',
     creatorId: '2',
@@ -87,7 +87,7 @@ export const mockPackages: Package[] = [
     deliveryDays: 7,
     price: 0,
     dealType: 'barter' as DealType,
-    barterValue: 'Services worth PKR 35,000+',
+    barterValue: 'Services worth SAR 35,000+',
     barterDescription: 'Showcase premium salon treatment experience and before/after transformation.',
     barterCategory: 'salon',
     estimatedBarterValue: 35000,
@@ -97,7 +97,7 @@ export const mockPackages: Package[] = [
     isPopular: true,
     ordersCompleted: 18,
   },
-  // Hassan Raza's packages
+  // Abdulrahman Al Qahtani's packages
   {
     id: 'pkg-7',
     creatorId: '3',
@@ -126,7 +126,7 @@ export const mockPackages: Package[] = [
     isPopular: false,
     ordersCompleted: 41,
   },
-  // Ayesha Noor's packages
+  // Reem Al Otaibi's packages
   {
     id: 'pkg-9',
     creatorId: '4',
@@ -150,7 +150,7 @@ export const mockPackages: Package[] = [
     deliveryDays: 30,
     price: 100000,
     dealType: 'hybrid' as DealType,
-    barterValue: 'Products worth PKR 25,000+ monthly',
+    barterValue: 'Products worth SAR 25,000+ monthly',
     barterDescription: 'Monthly nutrition and athleisure kit placement in workout content.',
     barterCategory: 'products',
     estimatedBarterValue: 25000,
@@ -200,7 +200,7 @@ export const mockPackages: Package[] = [
     deliveryDays: 8,
     price: 90000,
     dealType: 'hybrid' as DealType,
-    barterValue: 'Flagship device worth PKR 120,000+',
+    barterValue: 'Flagship device worth SAR 120,000+',
     barterDescription: 'Creator keeps the reviewed device for long-term software update coverage.',
     barterCategory: 'products',
     estimatedBarterValue: 120000,
@@ -221,7 +221,7 @@ export const mockPackages: Package[] = [
     deliveryDays: 6,
     price: 0,
     dealType: 'barter' as DealType,
-    barterValue: '2-night stay worth PKR 60,000+',
+    barterValue: '2-night stay worth SAR 60,000+',
     barterDescription: 'Weekend family staycation with dining and property activity access.',
     barterCategory: 'hotel',
     estimatedBarterValue: 60000,

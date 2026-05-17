@@ -107,9 +107,9 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
         {/* Logo */}
         <Link href="/" className="flex min-h-11 items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-            <span className="text-lg font-bold text-primary-foreground">C</span>
+            <span className="text-lg font-bold text-primary-foreground">Z</span>
           </div>
-          <span className="text-xl font-bold text-foreground">ChamCham</span>
+          <span className="text-xl font-bold text-foreground">ZingZing</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -135,7 +135,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search food vloggers in Lahore or TikTok tech creators"
+                placeholder="Search food vloggers in Riyadh or TikTok tech creators"
                 className="w-full rounded-full bg-muted pl-10"
                 value={searchValue}
                 onChange={(e) => onSearchChange?.(e.target.value)}

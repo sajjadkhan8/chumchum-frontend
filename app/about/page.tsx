@@ -57,11 +57,11 @@ export default function AboutPage() {
         <section className="border-b border-border bg-gradient-to-br from-primary/5 via-background to-accent/5">
           <div className="container mx-auto max-w-6xl px-4 py-12 md:py-16">
             <Badge variant="secondary" className="rounded-full text-xs font-medium">
-              About ChamCham
+              About ZingZing
             </Badge>
             <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">Built for modern creator-brand partnerships</h1>
             <p className="mt-4 max-w-3xl text-base text-muted-foreground md:text-lg">
-              ChamCham is Pakistan&apos;s collaboration platform where brands discover the right creators,
+              ZingZing is Saudi Arabia&apos;s collaboration platform where brands discover the right creators,
               negotiate clear deals, and manage campaign execution with confidence.
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
@@ -73,7 +73,7 @@ export default function AboutPage() {
         </section>
 
         <section className="container mx-auto max-w-6xl px-4 py-10 md:py-14">
-          <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Why teams choose ChamCham</h2>
+          <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Why teams choose ZingZing</h2>
           <p className="mt-2 text-muted-foreground">Everything needed to run influencer campaigns without scattered tools or guesswork.</p>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {pillars.map((pillar) => (
@@ -93,7 +93,7 @@ export default function AboutPage() {
         <Separator />
 
         <section className="container mx-auto max-w-6xl px-4 py-10 md:py-14">
-          <h2 className="text-2xl font-bold tracking-tight md:text-3xl">How ChamCham works</h2>
+          <h2 className="text-2xl font-bold tracking-tight md:text-3xl">How ZingZing works</h2>
           <p className="mt-2 text-muted-foreground">A simple three-step workflow to launch and scale collaborations.</p>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {steps.map((item) => (

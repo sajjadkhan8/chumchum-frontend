@@ -26,9 +26,9 @@ export default function BrandAnalyticsPage() {
             <CardTitle>Top Cities</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>Karachi: 34% campaign reach</p>
-            <p>Lahore: 29% campaign reach</p>
-            <p>Islamabad: 18% campaign reach</p>
+            <p>Jeddah: 34% campaign reach</p>
+            <p>Riyadh: 29% campaign reach</p>
+            <p>Dammam: 18% campaign reach</p>
           </CardContent>
         </Card>
         <Card>

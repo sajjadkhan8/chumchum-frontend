@@ -18,9 +18,10 @@ const sora = Sora({
 })
 
 export const metadata: Metadata = {
-  title: 'ChamCham - Pakistan ka Influencer Marketplace',
-  description: 'Discover creators and collaborate with paid deals, barter deals, and hybrid partnerships. Pakistan\'s first influencer marketplace.',
-  keywords: ['influencer marketing', 'Pakistan', 'creators', 'brand collaborations', 'barter deals'],
+  title: "ZingZing - Saudi Arabia's Influencer Marketplace",
+  description:
+    "Discover creators and collaborate through paid, barter, and hybrid partnerships on Saudi Arabia's premium influencer marketplace.",
+  keywords: ['influencer marketing', 'Saudi Arabia', 'creators', 'brand collaborations', 'barter deals'],
 }
 
 export const viewport: Viewport = {

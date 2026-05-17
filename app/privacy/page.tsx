@@ -55,7 +55,7 @@ export default function PrivacyPage() {
             </h1>
             <p className="max-w-2xl text-base text-muted-foreground md:text-lg">
               Your privacy matters. This policy explains what data we collect, how we use
-              it, and the controls you have over your information on ChamCham.
+              it, and the controls you have over your information on ZingZing.
             </p>
             <p className="text-xs text-muted-foreground">
               Last updated: <span className="font-medium text-foreground">{LAST_UPDATED}</span>
@@ -94,13 +94,13 @@ export default function PrivacyPage() {
 
             <Section id="overview" icon={ShieldCheck} title="Overview">
               <p>
-                ChamCham (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) operates the ChamCham
-                influencer-marketing platform at chamcham.pk. This Privacy Policy describes how
+                ZingZing (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) operates the ZingZing
+                influencer-marketing platform at zingzing.sa. This Privacy Policy describes how
                 we collect, use, store, and protect personal information when you use our platform
                 as a brand, creator, or visitor.
               </p>
               <p>
-                By using ChamCham you agree to the practices described in this policy. If you do
+                By using ZingZing you agree to the practices described in this policy. If you do
                 not agree, please discontinue use of the platform.
               </p>
               <HighlightBox>
@@ -166,7 +166,7 @@ export default function PrivacyPage() {
               <SubHeading>For legal reasons</SubHeading>
               <p>
                 We may disclose data if required to do so by law, court order, or to protect the
-                rights, property, or safety of ChamCham, its users, or the public.
+                rights, property, or safety of ZingZing, its users, or the public.
               </p>
             </Section>
 
@@ -215,8 +215,8 @@ export default function PrivacyPage() {
               ]} />
               <p>
                 To exercise any of these rights, email{' '}
-                <a href="mailto:legal@chamcham.pk" className="font-medium text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
-                  legal@chamcham.pk
+                <a href="mailto:legal@zingzing.sa" className="font-medium text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
+                  legal@zingzing.sa
                 </a>{' '}
                 from your registered address. We will respond within 30 days.
               </p>
@@ -224,10 +224,10 @@ export default function PrivacyPage() {
 
             <Section id="transfers" icon={Globe} title="International Transfers">
               <p>
-                ChamCham is headquartered in Pakistan. Our infrastructure uses cloud providers
+                ZingZing is headquartered in Saudi Arabia. Our infrastructure uses cloud providers
                 whose servers may be located in other countries. Where data is transferred outside
-                Pakistan, we ensure appropriate safeguards are in place through contractual
-                obligations aligned with international data-protection best practices.
+                Saudi Arabia, we ensure appropriate safeguards are in place through contractual
+                obligations aligned with international data-protection best practices and Saudi PDPL requirements.
               </p>
             </Section>
 
@@ -249,20 +249,20 @@ export default function PrivacyPage() {
                 Data Protection team:
               </p>
               <div className="mt-4 rounded-2xl border border-border bg-muted/40 p-5 text-sm">
-                <p className="font-semibold text-foreground">ChamCham — Data Protection</p>
+                <p className="font-semibold text-foreground">ZingZing — Data Protection</p>
                 <p className="mt-1 text-muted-foreground">
                   Email:{' '}
-                  <a href="mailto:legal@chamcham.pk" className="font-medium text-primary hover:underline">
-                    legal@chamcham.pk
+                  <a href="mailto:legal@zingzing.sa" className="font-medium text-primary hover:underline">
+                    legal@zingzing.sa
                   </a>
                 </p>
                 <p className="mt-0.5 text-muted-foreground">
                   General support:{' '}
-                  <a href="mailto:support@chamcham.pk" className="font-medium text-primary hover:underline">
-                    support@chamcham.pk
+                  <a href="mailto:support@zingzing.sa" className="font-medium text-primary hover:underline">
+                    support@zingzing.sa
                   </a>
                 </p>
-                <p className="mt-0.5 text-muted-foreground">Lahore, Pakistan</p>
+                <p className="mt-0.5 text-muted-foreground">Riyadh, Saudi Arabia</p>
               </div>
             </Section>
 

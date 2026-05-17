@@ -168,11 +168,11 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
                 exit={{ opacity: 0, height: 0 }}
               >
                 <Label htmlFor="budget" className="text-sm font-medium">
-                  Budget (PKR)
+                  Budget (SAR)
                 </Label>
                 <div className="relative mt-2">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                    PKR
+                    SAR
                   </span>
                   <Input
                     id="budget"
@@ -230,7 +230,7 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
                   </div>
                   <div>
                     <Label htmlFor="barter-value" className="text-sm font-medium">
-                      Estimated Value (PKR)
+                      Estimated Value (SAR)
                     </Label>
                     <Input
                       id="barter-value"

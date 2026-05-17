@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 const faqs = [
   {
     category: 'Deals',
-    q: 'How do barter deals work on ChamCham?',
+    q: 'How do barter deals work on ZingZing?',
     a: 'Brands define the offer details and estimated value, and creators can accept or negotiate in chat.',
   },
   {
@@ -39,7 +39,7 @@ const faqs = [
   {
     category: 'Security',
     q: 'How do I report suspicious activity?',
-    a: 'Use the in-app report option or contact support@chamcham.pk immediately. Include screenshots and relevant message links where possible.',
+    a: 'Use the in-app report option or contact support@zingzing.sa immediately. Include screenshots and relevant message links where possible.',
   },
 ];
 
@@ -96,7 +96,7 @@ export default function HelpPage() {
                 <CardTitle className="text-lg">Getting Started</CardTitle>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
-                New to ChamCham? Learn how to create your profile, find matches, and start your first collaboration.
+                New to ZingZing? Learn how to create your profile, find matches, and start your first collaboration.
               </CardContent>
             </Card>
             <Card className="border-border/70">
@@ -177,7 +177,7 @@ export default function HelpPage() {
               </Button>
               <Button asChild size="sm">
                 <Link href="/about" className="flex items-center gap-1.5">
-                  How ChamCham Works <ArrowRight className="h-4 w-4" />
+                  How ZingZing Works <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
             </div>

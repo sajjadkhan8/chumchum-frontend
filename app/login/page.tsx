@@ -77,9 +77,9 @@ export default function LoginPage() {
         <div>
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white">
-              <span className="text-xl font-bold text-primary">C</span>
+              <span className="text-xl font-bold text-primary">Z</span>
             </div>
-            <span className="text-2xl font-bold text-white">ChamCham</span>
+            <span className="text-2xl font-bold text-white">ZingZing</span>
           </Link>
         </div>
         
@@ -89,7 +89,7 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl font-bold leading-tight text-white xl:text-5xl"
           >
-            Pakistan ka
+            Saudi Arabia's
             <br />
             Influencer
             <br />
@@ -101,7 +101,7 @@ export default function LoginPage() {
             transition={{ delay: 0.1 }}
             className="max-w-md text-lg text-white/80"
           >
-            Connect with top creators across Pakistan. Paid deals, barter collaborations, and everything in between.
+            Connect with top creators across Saudi Arabia. Paid deals, barter collaborations, and everything in between.
           </motion.p>
         </div>
 
@@ -125,7 +125,7 @@ export default function LoginPage() {
               ))}
             </div>
             <p className="text-sm text-white/80">
-              <span className="font-semibold text-white">10,000+</span> creators across Pakistan
+              <span className="font-semibold text-white">10,000+</span> creators across Saudi Arabia
             </p>
           </div>
         </motion.div>
@@ -137,9 +137,9 @@ export default function LoginPage() {
           {/* Mobile Logo */}
           <Link href="/" className="mb-8 flex items-center gap-2 lg:hidden">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-              <span className="text-lg font-bold text-primary-foreground">C</span>
+              <span className="text-lg font-bold text-primary-foreground">Z</span>
             </div>
-            <span className="text-xl font-bold text-foreground">ChamCham</span>
+            <span className="text-xl font-bold text-foreground">ZingZing</span>
           </Link>
 
           <motion.div
@@ -244,12 +244,12 @@ export default function LoginPage() {
                     <Label htmlFor="phone">Phone Number</Label>
                     <div className="flex gap-2">
                       <div className="flex h-10 items-center rounded-md border border-input bg-muted px-3 text-sm">
-                        +92
+                        +966
                       </div>
                       <Input
                         id="phone"
                         type="tel"
-                        placeholder="3XX XXXXXXX"
+                        placeholder="5X XXX XXXX"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         className="flex-1"

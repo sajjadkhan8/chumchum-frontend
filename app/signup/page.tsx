@@ -71,9 +71,9 @@ export default function SignupPage() {
         <div>
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white">
-              <span className="text-xl font-bold text-primary">C</span>
+              <span className="text-xl font-bold text-primary">Z</span>
             </div>
-            <span className="text-2xl font-bold text-white">ChamCham</span>
+            <span className="text-2xl font-bold text-white">ZingZing</span>
           </Link>
         </div>
         
@@ -83,7 +83,7 @@ export default function SignupPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl font-bold leading-tight text-white xl:text-5xl"
           >
-            Join Pakistan&apos;s
+            Join Saudi Arabia&apos;s
             <br />
             Largest Creator
             <br />
@@ -95,7 +95,7 @@ export default function SignupPage() {
             transition={{ delay: 0.1 }}
             className="max-w-md text-lg text-white/80"
           >
-            Whether you&apos;re a creator looking for brand deals or a brand searching for influencers, ChamCham connects you with the right partners.
+            Whether you&apos;re a creator looking for brand deals or a brand searching for influencers, ZingZing connects you with the right partners.
           </motion.p>
         </div>
 
@@ -124,9 +124,9 @@ export default function SignupPage() {
           {/* Mobile Logo */}
           <Link href="/" className="mb-8 flex items-center gap-2 lg:hidden">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-              <span className="text-lg font-bold text-primary-foreground">C</span>
+              <span className="text-lg font-bold text-primary-foreground">Z</span>
             </div>
-            <span className="text-xl font-bold text-foreground">ChamCham</span>
+            <span className="text-xl font-bold text-foreground">ZingZing</span>
           </Link>
 
           {step === 'role' ? (
@@ -136,7 +136,7 @@ export default function SignupPage() {
             >
               <h2 className="text-2xl font-bold text-foreground">Create your account</h2>
               <p className="mt-2 text-muted-foreground">
-                Choose how you want to use ChamCham
+                Choose how you want to use ZingZing
               </p>
 
               <div className="mt-8 space-y-4">
@@ -209,7 +209,7 @@ export default function SignupPage() {
                   <Input
                     id="name"
                     type="text"
-                    placeholder={role === 'creator' ? 'Ali Khan' : 'FoodPanda Pakistan'}
+                    placeholder={role === 'creator' ? 'Faisal Al Harbi' : 'Noon Food KSA'}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required

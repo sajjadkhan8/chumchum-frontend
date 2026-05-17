@@ -7,13 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const plans = [
   {
     name: 'Starter',
-    price: 'PKR 0',
-    description: 'Perfect for first-time collaborations in Pakistan.',
+    price: 'SAR 0',
+    description: 'Perfect for first-time collaborations in Saudi Arabia.',
     features: ['Browse creators', 'Send 5 offers/month', 'Basic campaign tracking'],
   },
   {
     name: 'Growth',
-    price: 'PKR 19,500/mo',
+    price: 'SAR 19,500/mo',
     description: 'For scaling brands running multiple influencer campaigns.',
     features: ['Unlimited offers', 'Priority chat support', 'Performance insights'],
   },
@@ -33,7 +33,7 @@ export default function PricingPage() {
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-bold md:text-4xl">Pricing</h1>
           <p className="mt-2 text-muted-foreground">
-            Simple plans designed for Pakistan-first influencer campaigns.
+            Simple plans designed for Saudi Arabia-first influencer campaigns.
           </p>
         </div>
 

@@ -26,7 +26,7 @@ export default function CreatorHelpPage() {
             <CardTitle>Account & Payments</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>Configure JazzCash, EasyPaisa, and bank withdrawal settings.</p>
+            <p>Configure STC Pay, Mada, Apple Pay, and Bank Transfer withdrawal settings.</p>
             <p>Review payout statuses and processing timelines.</p>
           </CardContent>
         </Card>

@@ -99,7 +99,7 @@ export default function Home() {
                 className="mb-4 bg-primary/10 text-primary hover:bg-primary/15"
               >
                 <Sparkles className="mr-1 h-3 w-3" />
-                Pakistan&apos;s First Influencer Marketplace
+                Saudi Arabia&apos;s First Influencer Marketplace
               </Badge>
             </motion.div>
 
@@ -114,7 +114,7 @@ export default function Home() {
                 Top Creators
               </span>
               <br />
-              in Pakistan
+              in Saudi Arabia
             </motion.h1>
 
             <motion.p
@@ -323,7 +323,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="mb-12 text-center">
             <h2 className="mb-4 text-2xl font-bold text-foreground md:text-3xl">
-              How ChamCham Works
+              How ZingZing Works
             </h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
               Get started in minutes with our simple, streamlined process
@@ -426,7 +426,7 @@ export default function Home() {
               Ready to Get Started?
             </h2>
             <p className="mb-8 text-lg text-primary-foreground/80">
-              Join thousands of brands and creators already using ChamCham to
+              Join thousands of brands and creators already using ZingZing to
               grow their business.
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
@@ -459,9 +459,9 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="grid gap-8 md:grid-cols-4">
             <div>
-              <h3 className="mb-4 text-xl font-bold text-primary">ChamCham</h3>
+              <h3 className="mb-4 text-xl font-bold text-primary">ZingZing</h3>
               <p className="text-sm text-muted-foreground">
-                Pakistan&apos;s first influencer marketplace connecting brands
+                Saudi Arabia&apos;s first influencer marketplace connecting brands
                 with verified creators.
               </p>
             </div>
@@ -515,7 +515,7 @@ export default function Home() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <Link href="/about" className="hover:text-primary">
-                    About ChamCham
+                    About ZingZing
                   </Link>
                 </li>
                 <li>
@@ -547,7 +547,7 @@ export default function Home() {
             </div>
           </div>
           <div className="mt-8 border-t border-border pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; 2026 ChamCham. All rights reserved.</p>
+            <p>&copy; 2026 ZingZing. All rights reserved.</p>
           </div>
         </div>
       </footer>
