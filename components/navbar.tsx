@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
+import { BrandLogo } from '@/components/brand-logo';
 
 interface NavbarProps {
   showSearch?: boolean;
@@ -101,16 +102,11 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      className="sticky top-0 z-50 w-full border-b border-primary/20 bg-brand-panel text-white"
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex min-h-11 items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-            <span className="text-lg font-bold text-primary-foreground">Z</span>
-          </div>
-          <span className="text-xl font-bold text-foreground">ZingZing</span>
-        </Link>
+        <BrandLogo textClassName="text-white" />
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-6 md:flex">
@@ -120,7 +116,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               href={link.href}
               className={cn(
                 'text-sm font-medium transition-colors hover:text-primary',
-                isLinkActive(link.href) ? 'text-primary' : 'text-muted-foreground'
+                isLinkActive(link.href) ? 'text-primary' : 'text-white/80'
               )}
             >
               {link.label}
@@ -136,7 +132,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               <Input
                 type="search"
                 placeholder="Search food vloggers in Riyadh or TikTok tech creators"
-                className="w-full rounded-full bg-muted pl-10"
+                className="w-full rounded-full border-white/15 bg-white/10 pl-10 text-white placeholder:text-white/65"
                 value={searchValue}
                 onChange={(e) => onSearchChange?.(e.target.value)}
               />
@@ -210,10 +206,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
           ) : (
             <>
               <Link href="/login" className="hidden sm:block">
-                <Button variant="ghost">Log in</Button>
+                <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white">Log in</Button>
               </Link>
               <Link href="/brand/explore" className="hidden lg:block">
-                <Button variant="outline" className="rounded-full">Find Creators</Button>
+                <Button variant="outline" className="rounded-full border-white/30 bg-white/5 text-white hover:bg-white/10">Find Creators</Button>
               </Link>
               <Link href="/signup">
                 <Button className="rounded-full">Sign Up</Button>

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { BottomNav } from '@/components/bottom-nav';
 import { useAuthStore } from '@/store/auth-store';
+import { BrandBanner } from '@/components/brand-banner';
 
 export default function BrandLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -36,7 +37,12 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">{children}</main>
+      <main className="pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
+        <div className="container mx-auto px-4 pt-4 sm:px-6 lg:px-8">
+          <BrandBanner variant="light" className="h-20 w-full sm:h-24" />
+        </div>
+        {children}
+      </main>
       <BottomNav />
     </div>
   );

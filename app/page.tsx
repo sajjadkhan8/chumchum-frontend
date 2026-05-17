@@ -26,9 +26,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Navbar } from "@/components/navbar";
 import { BottomNav } from "@/components/bottom-nav";
 import { CreatorCard } from "@/components/creator-card";
+import { BrandBanner } from "@/components/brand-banner";
+import { BrandLogo } from "@/components/brand-logo";
 import { creators } from "@/data/creators";
 import { formatFollowers } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
+import { BRAND } from "@/lib/brand";
 
 const categories = [
   { id: "fashion", name: "Fashion", icon: "👗", count: 245 },
@@ -81,14 +84,11 @@ export default function Home() {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 pt-20 pb-16 md:pt-28 md:pb-24">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-accent/20 blur-3xl" />
-        </div>
+      <section className="relative overflow-hidden pt-12 pb-16 md:pt-16 md:pb-24">
 
         <div className="container relative mx-auto px-4">
-          <div className="mx-auto max-w-4xl text-center">
+          <div className="mx-auto max-w-5xl text-center">
+            <BrandBanner variant="dark" priority className="mb-8 h-40 w-full sm:h-52" />
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -96,7 +96,7 @@ export default function Home() {
             >
               <Badge
                 variant="secondary"
-                className="mb-4 bg-primary/10 text-primary hover:bg-primary/15"
+                className="mb-4 border border-primary/20 bg-primary/10 text-primary hover:bg-primary/15"
               >
                 <Sparkles className="mr-1 h-3 w-3" />
                 Saudi Arabia&apos;s First Influencer Marketplace
@@ -123,7 +123,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              Find the perfect influencer for your brand or showcase your talent
+              {BRAND.tagline} Find the perfect influencer for your brand or showcase your talent
               to thousands of businesses. Quick deals, instant messaging, and
               secure payments.
             </motion.p>
@@ -220,7 +220,7 @@ export default function Home() {
       </section>
 
       {/* Trending Creators Carousel */}
-      <section className="bg-muted/30 py-12 md:py-16">
+      <section className="bg-gradient-to-b from-muted/50 to-background py-12 md:py-16">
         <div className="container mx-auto px-4">
           <div className="mb-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -319,7 +319,7 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="scroll-mt-24 bg-muted/30 py-12 md:py-16">
+      <section id="how-it-works" className="scroll-mt-24 bg-gradient-to-b from-background to-muted/50 py-12 md:py-16">
         <div className="container mx-auto px-4">
           <div className="mb-12 text-center">
             <h2 className="mb-4 text-2xl font-bold text-foreground md:text-3xl">
@@ -419,9 +419,10 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-primary py-16 md:py-24">
+      <section className="bg-brand-panel py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl text-center">
+            <BrandBanner variant="light" className="mb-8 h-32 w-full sm:h-40" />
             <h2 className="mb-4 text-3xl font-bold text-primary-foreground md:text-4xl">
               Ready to Get Started?
             </h2>
@@ -455,19 +456,21 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-background py-12">
+      <footer className="border-t border-primary/20 bg-brand-panel py-12 text-white">
         <div className="container mx-auto px-4">
           <div className="grid gap-8 md:grid-cols-4">
             <div>
-              <h3 className="mb-4 text-xl font-bold text-primary">ZingZing</h3>
-              <p className="text-sm text-muted-foreground">
+              <div className="mb-4">
+                <BrandLogo withText={false} iconSize={42} />
+              </div>
+              <p className="text-sm text-white/75">
                 Saudi Arabia&apos;s first influencer marketplace connecting brands
                 with verified creators.
               </p>
             </div>
             <div>
-              <h4 className="mb-4 font-semibold text-foreground">For Brands</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <h4 className="mb-4 font-semibold text-white">For Brands</h4>
+              <ul className="space-y-2 text-sm text-white/70">
                 <li>
                   <Link href="/brand/explore" className="hover:text-primary">
                     Find Creators
@@ -486,10 +489,10 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="mb-4 font-semibold text-foreground">
+              <h4 className="mb-4 font-semibold text-white">
                 For Creators
               </h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <ul className="space-y-2 text-sm text-white/70">
                 <li>
                   <Link href="/signup" className="hover:text-primary">
                     Join as Creator
@@ -511,8 +514,8 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="mb-4 font-semibold text-foreground">Support</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <h4 className="mb-4 font-semibold text-white">Support</h4>
+              <ul className="space-y-2 text-sm text-white/70">
                 <li>
                   <Link href="/about" className="hover:text-primary">
                     About ZingZing
@@ -546,7 +549,7 @@ export default function Home() {
               </ul>
             </div>
           </div>
-          <div className="mt-8 border-t border-border pt-8 text-center text-sm text-muted-foreground">
+          <div className="mt-8 border-t border-white/15 pt-8 text-center text-sm text-white/60">
             <p>&copy; 2026 ZingZing. All rights reserved.</p>
           </div>
         </div>

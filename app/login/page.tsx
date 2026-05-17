@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthStore } from '@/store/auth-store';
 import { toast } from 'sonner';
+import { BrandLogo } from '@/components/brand-logo';
+import { BRAND } from '@/lib/brand';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -73,14 +75,16 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left Side - Branding */}
-      <div className="hidden bg-gradient-to-br from-primary via-primary to-primary/80 lg:flex lg:w-1/2 lg:flex-col lg:justify-between lg:p-12">
+      <div
+        className="hidden bg-brand-panel lg:flex lg:w-1/2 lg:flex-col lg:justify-between lg:p-12"
+        style={{
+          backgroundImage: `linear-gradient(140deg, rgba(5,8,42,.8), rgba(5,8,42,.9)), url(${BRAND.assets.bannerDark})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
         <div>
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white">
-              <span className="text-xl font-bold text-primary">Z</span>
-            </div>
-            <span className="text-2xl font-bold text-white">ZingZing</span>
-          </Link>
+          <BrandLogo textClassName="text-white" />
         </div>
         
         <div className="space-y-6">
@@ -135,12 +139,7 @@ export default function LoginPage() {
       <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 lg:px-16 xl:px-24">
         <div className="mx-auto w-full max-w-md">
           {/* Mobile Logo */}
-          <Link href="/" className="mb-8 flex items-center gap-2 lg:hidden">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-              <span className="text-lg font-bold text-primary-foreground">Z</span>
-            </div>
-            <span className="text-xl font-bold text-foreground">ZingZing</span>
-          </Link>
+          <BrandLogo className="mb-8 lg:hidden" />
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}

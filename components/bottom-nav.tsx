@@ -43,7 +43,7 @@ export function BottomNav() {
     <motion.nav
       initial={{ y: 100 }}
       animate={{ y: 0 }}
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-primary/20 bg-brand-panel text-white md:hidden"
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.35rem)' }}
     >
       <div className="flex h-[4.25rem] items-center justify-around px-1.5">
@@ -58,7 +58,7 @@ export function BottomNav() {
               aria-label={item.label}
               className={cn(
                 'relative min-h-11 flex flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2 transition-colors',
-                isActive ? 'text-primary' : 'text-muted-foreground'
+                isActive ? 'text-primary' : 'text-white/75'
               )}
             >
               <div className="relative">
