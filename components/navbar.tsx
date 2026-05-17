@@ -234,7 +234,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                     <Link
                       href={link.href}
                       className={cn(
-                        'min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary',
+                        'min-h-11 rounded-xl px-3 py-2 text-base font-medium transition-colors hover:bg-white/10 hover:text-primary',
                         isLinkActive(link.href) ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
                       )}
                     >
@@ -245,13 +245,13 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                 {isSignedIn && user ? (
                   <>
                     <SheetClose asChild>
-                      <Link href={messagesLink} className={cn('min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary', isLinkActive(messagesLink) ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>
+                      <Link href={messagesLink} className={cn('min-h-11 rounded-xl px-3 py-2 text-base font-medium transition-colors hover:bg-white/10 hover:text-primary', isLinkActive(messagesLink) ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>
                         Messages
                       </Link>
                     </SheetClose>
                     {profileMenu.map((item) => (
                       <SheetClose asChild key={item.label}>
-                        <Link href={item.href} className={cn('min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary', isLinkActive(item.href) ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>
+                        <Link href={item.href} className={cn('min-h-11 rounded-xl px-3 py-2 text-base font-medium transition-colors hover:bg-white/10 hover:text-primary', isLinkActive(item.href) ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>
                           {item.label}
                         </Link>
                       </SheetClose>
@@ -266,7 +266,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                 ) : (
                   <>
                     <SheetClose asChild>
-                      <Link href="/login" className="min-h-11 rounded-lg px-3 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-primary">
+                      <Link href="/login" className="min-h-11 rounded-xl px-3 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-white/10 hover:text-primary">
                         Log in
                       </Link>
                     </SheetClose>

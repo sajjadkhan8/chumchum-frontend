@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { StatsCard } from "@/components/stats-card";
 import { CreatorCard } from "@/components/creator-card";
+import { BrandBanner } from "@/components/brand-banner";
 import { creators } from "@/data/creators";
 import { formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
@@ -94,10 +95,11 @@ export default function BrandDashboardPage() {
 
   return (
     <div className="container mx-auto p-4 pb-6 md:p-6">
+      <BrandBanner variant="light" className="mb-6 h-24 w-full md:h-28" />
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 md:mb-8 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground md:text-3xl">
+          <h1 className="text-2xl font-bold text-brand-gradient md:text-3xl">
             Brand Dashboard
           </h1>
           <p className="text-muted-foreground">
@@ -145,7 +147,7 @@ export default function BrandDashboardPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Active Orders */}
         <div className="lg:col-span-2 space-y-6">
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Active Campaigns</CardTitle>
               <Button variant="ghost" size="sm" asChild>
@@ -160,7 +162,7 @@ export default function BrandDashboardPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="rounded-lg border border-border/50 p-4"
+                      className="rounded-2xl border border-primary/10 bg-background/70 p-4"
                   >
                     <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex min-w-0 items-center gap-3">
@@ -207,7 +209,7 @@ export default function BrandDashboardPage() {
           </Card>
 
           {/* Recommended Creators */}
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Recommended For You</CardTitle>
               <Button variant="ghost" size="sm" asChild>
@@ -237,7 +239,7 @@ export default function BrandDashboardPage() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Quick Actions */}
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
@@ -296,7 +298,7 @@ export default function BrandDashboardPage() {
           </Card>
 
           {/* Saved Creators */}
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Saved Creators</CardTitle>
               <Button variant="ghost" size="sm" asChild>
@@ -310,7 +312,7 @@ export default function BrandDashboardPage() {
                     <Link
                       key={creator.id}
                       href={`/creator/${creator.id}`}
-                      className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
+                        className="flex items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-primary/5"
                     >
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={creator.avatar} alt={creator.name} />
@@ -348,7 +350,7 @@ export default function BrandDashboardPage() {
           </Card>
 
           {/* Budget Overview */}
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle>Monthly Budget</CardTitle>
             </CardHeader>

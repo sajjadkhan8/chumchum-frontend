@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { BrandBanner } from '@/components/brand-banner';
 
 export default function AboutPage() {
   const pillars = [
@@ -56,6 +57,7 @@ export default function AboutPage() {
       <main>
         <section className="border-b border-border bg-gradient-to-br from-primary/5 via-background to-accent/5">
           <div className="container mx-auto max-w-6xl px-4 py-12 md:py-16">
+            <BrandBanner variant="dark" className="mb-8 h-28 w-full md:h-36" />
             <Badge variant="secondary" className="rounded-full text-xs font-medium">
               About ZingZing
             </Badge>
@@ -77,7 +79,7 @@ export default function AboutPage() {
           <p className="mt-2 text-muted-foreground">Everything needed to run influencer campaigns without scattered tools or guesswork.</p>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {pillars.map((pillar) => (
-              <Card key={pillar.title} className="border-border/70">
+              <Card key={pillar.title} className="border-primary/10">
                 <CardHeader>
                   <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
                     <pillar.icon className="h-5 w-5 text-primary" />
@@ -97,7 +99,7 @@ export default function AboutPage() {
           <p className="mt-2 text-muted-foreground">A simple three-step workflow to launch and scale collaborations.</p>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {steps.map((item) => (
-              <Card key={item.step} className="relative overflow-hidden border-border/70">
+              <Card key={item.step} className="relative overflow-hidden border-primary/10">
                 <CardHeader>
                   <span className="absolute -right-4 -top-4 text-7xl font-bold text-primary/5">{item.step}</span>
                   <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">

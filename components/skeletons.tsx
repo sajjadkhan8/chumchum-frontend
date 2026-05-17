@@ -8,10 +8,10 @@ interface CreatorCardSkeletonProps {
 
 export function CreatorCardSkeleton({ className }: CreatorCardSkeletonProps) {
   return (
-    <div className={cn('overflow-hidden rounded-2xl border border-border bg-card', className)}>
+    <div className={cn('overflow-hidden rounded-2xl border border-primary/10 bg-card', className)}>
       {/* Image skeleton */}
-      <div className="aspect-[4/3] animate-pulse bg-muted" />
-      
+      <div className="aspect-[4/3] animate-pulse bg-gradient-to-br from-primary/10 via-muted to-accent/10" />
+
       {/* Content skeleton */}
       <div className="space-y-3 p-4">
         {/* Stats row */}
@@ -30,7 +30,7 @@ export function CreatorCardSkeleton({ className }: CreatorCardSkeletonProps) {
         {/* Categories */}
         <div className="flex gap-1">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-5 w-16 animate-pulse rounded-full bg-muted" />
+            <div key={i} className="h-5 w-16 animate-pulse rounded-full bg-primary/10" />
           ))}
         </div>
         
@@ -55,8 +55,8 @@ export function CreatorCardSkeleton({ className }: CreatorCardSkeletonProps) {
 
 export function PackageCardSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('overflow-hidden rounded-2xl border border-border bg-card', className)}>
-      <div className="flex items-center justify-between border-b border-border p-4">
+    <div className={cn('overflow-hidden rounded-2xl border border-primary/10 bg-card', className)}>
+      <div className="flex items-center justify-between border-b border-primary/10 p-4">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
           <div className="h-4 w-16 animate-pulse rounded bg-muted" />
@@ -82,7 +82,7 @@ export function PackageCardSkeleton({ className }: { className?: string }) {
         <div className="h-4 w-24 animate-pulse rounded bg-muted" />
       </div>
       
-      <div className="flex items-center justify-between border-t border-border bg-muted/50 p-4">
+      <div className="flex items-center justify-between border-t border-primary/10 bg-primary/5 p-4">
         <div className="h-6 w-24 animate-pulse rounded bg-muted" />
         <div className="h-9 w-24 animate-pulse rounded-full bg-muted" />
       </div>
@@ -92,7 +92,7 @@ export function PackageCardSkeleton({ className }: { className?: string }) {
 
 export function StatsCardSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('overflow-hidden rounded-2xl border border-border bg-card p-6', className)}>
+    <div className={cn('overflow-hidden rounded-2xl border border-primary/10 bg-card p-6', className)}>
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <div className="h-4 w-24 animate-pulse rounded bg-muted" />
@@ -107,7 +107,7 @@ export function StatsCardSkeleton({ className }: { className?: string }) {
 
 export function ReviewCardSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('overflow-hidden rounded-2xl border border-border bg-card p-5', className)}>
+    <div className={cn('overflow-hidden rounded-2xl border border-primary/10 bg-card p-5', className)}>
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />

@@ -404,8 +404,8 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                       key={platform.id}
                       type="button"
                       onClick={() => updateField("platform", platform.id)}
-                      className={`flex items-center justify-center gap-2 rounded-lg border p-3 text-sm ${
-                        formData.platform === platform.id ? "border-primary bg-primary/10 text-primary" : "border-border"
+                      className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm ${
+                        formData.platform === platform.id ? "border-primary bg-primary/10 text-primary" : "border-primary/10"
                       }`}
                     >
                       <platform.icon className="h-4 w-4" />
@@ -489,7 +489,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                     key={option.key}
                     type="button"
                     onClick={() => updateField("dealType", option.key)}
-                    className={`flex items-center justify-center gap-2 rounded-lg border p-3 text-sm ${
+                    className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm ${
                       formData.dealType === option.key ? "border-primary bg-primary/10 text-primary" : "border-border"
                     }`}
                   >
@@ -515,7 +515,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
               )}
 
               {(formData.dealType === "barter" || formData.dealType === "hybrid") && (
-                <div className="space-y-3 rounded-lg border border-border/60 p-3">
+                <div className="space-y-3 rounded-2xl border border-primary/10 p-3">
                   <div className="space-y-2">
                     <Label>Barter Expectations</Label>
                     <Textarea rows={3} value={formData.barterExpectations} onChange={(e) => updateField("barterExpectations", e.target.value)} placeholder="Hotel stay, salon service, product gifting, or event invite expectations" />
@@ -605,7 +605,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
               <CardTitle>Step 5 - Publish</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 p-4 sm:p-6">
-              <div className="rounded-lg border border-border/60 p-4">
+              <div className="rounded-2xl border border-primary/10 p-4">
                 <p className="font-semibold">{formData.title || "Untitled Package"}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{formData.shortDescription || "No short description yet"}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -654,7 +654,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         )}
       </motion.div>
 
-      <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-20 flex gap-2 rounded-xl border border-border bg-background/95 p-3 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0">
+      <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-20 flex gap-2 rounded-2xl border border-primary/10 bg-background/95 p-3 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0">
         <Button
           type="button"
           variant="outline"

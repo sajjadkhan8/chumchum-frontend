@@ -27,6 +27,7 @@ import { Progress } from "@/components/ui/progress";
 import { StatsCard } from "@/components/stats-card";
 import { formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
+import { BrandBanner } from "@/components/brand-banner";
 
 const mockStats = {
   totalEarnings: 485000,
@@ -119,9 +120,10 @@ export default function CreatorDashboardPage() {
 
   return (
     <div className="container mx-auto p-4 pb-6 md:p-6">
+      <BrandBanner variant="dark" className="mb-6 h-24 w-full md:h-28" />
       {/* Header */}
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl font-bold text-foreground md:text-3xl">
+        <h1 className="text-2xl font-bold text-brand-gradient md:text-3xl">
           Dashboard
         </h1>
         <p className="text-muted-foreground">
@@ -162,7 +164,7 @@ export default function CreatorDashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Recent Orders */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Recent Orders</CardTitle>
             <Button variant="ghost" size="sm" asChild>
@@ -215,7 +217,7 @@ export default function CreatorDashboardPage() {
         {/* Quick Actions & Messages */}
         <div className="space-y-6">
           {/* Quick Actions */}
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
@@ -248,7 +250,7 @@ export default function CreatorDashboardPage() {
           </Card>
 
           {/* Recent Messages */}
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Messages</CardTitle>
               <Button variant="ghost" size="sm" asChild>
@@ -288,7 +290,7 @@ export default function CreatorDashboardPage() {
           </Card>
 
           {/* Monthly Goal Progress */}
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle>Monthly Goal</CardTitle>
             </CardHeader>

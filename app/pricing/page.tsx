@@ -3,6 +3,7 @@ import { CheckCircle2 } from 'lucide-react';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BrandBanner } from '@/components/brand-banner';
 
 const plans = [
   {
@@ -30,6 +31,7 @@ export default function PricingPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto max-w-6xl px-4 py-10 md:py-14">
+        <BrandBanner variant="light" className="mb-8 h-28 w-full md:h-36" />
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-bold md:text-4xl">Pricing</h1>
           <p className="mt-2 text-muted-foreground">
@@ -39,7 +41,7 @@ export default function PricingPage() {
 
         <div className="grid gap-4 md:grid-cols-3">
           {plans.map((plan) => (
-            <Card key={plan.name} className="border-border/60">
+            <Card key={plan.name} className="border-primary/10">
               <CardHeader>
                 <CardTitle className="text-xl">{plan.name}</CardTitle>
                 <p className="text-2xl font-bold text-primary">{plan.price}</p>

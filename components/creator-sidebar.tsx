@@ -111,13 +111,13 @@ function CreatorSidebarNav({ compact = false, closeOnNavigate = false, onNavigat
                   key={item.href}
                   href={item.href}
                   onClick={onNavigate}
-                  className={cn(
-                    'flex items-center gap-2 rounded-lg px-2.5 text-sm transition-colors',
-                    compact ? 'min-h-11 py-2.5' : 'py-2',
-                    isActive
-                      ? 'bg-primary/10 font-medium text-primary'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  )}
+                    className={cn(
+                      'flex items-center gap-2 rounded-xl px-2.5 text-sm transition-colors',
+                      compact ? 'min-h-11 py-2.5' : 'py-2',
+                      isActive
+                        ? 'bg-primary/10 font-medium text-primary shadow-sm'
+                        : 'text-muted-foreground hover:bg-primary/5 hover:text-foreground'
+                    )}
                 >
                   <Icon className="h-4 w-4" />
                   <span>{item.label}</span>
@@ -143,9 +143,9 @@ function CreatorSidebarNav({ compact = false, closeOnNavigate = false, onNavigat
 
 export function CreatorSidebar() {
   return (
-    <Card className="sticky top-20 hidden h-[calc(100vh-6rem)] w-72 overflow-hidden lg:block">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Creator Studio</CardTitle>
+    <Card className="sticky top-20 hidden h-[calc(100vh-6rem)] w-72 overflow-hidden border-primary/10 lg:block">
+      <CardHeader className="bg-brand-panel pb-2 text-white">
+        <CardTitle className="text-base text-white">Creator Studio</CardTitle>
       </CardHeader>
       <CardContent className="h-full overflow-y-auto pb-6">
         <CreatorSidebarNav />
@@ -163,9 +163,9 @@ export function CreatorSidebarDrawer() {
           Menu
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[88vw] max-w-sm overflow-y-auto p-0">
-        <SheetHeader className="border-b">
-          <SheetTitle>Creator Studio</SheetTitle>
+        <SheetContent side="left" className="w-[88vw] max-w-sm overflow-y-auto p-0">
+          <SheetHeader className="border-b bg-brand-panel text-white">
+            <SheetTitle className="text-white">Creator Studio</SheetTitle>
         </SheetHeader>
         <div className="p-4 pb-safe">
           <CreatorSidebarNav compact closeOnNavigate />

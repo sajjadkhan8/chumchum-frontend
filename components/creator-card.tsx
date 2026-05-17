@@ -57,7 +57,7 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
     >
       <Card
         className={cn(
-          'group overflow-hidden rounded-2xl border-border/50 shadow-sm transition-shadow hover:shadow-lg',
+          'group overflow-hidden rounded-2xl border-primary/10 shadow-sm transition-shadow hover:shadow-lg',
           variant === 'horizontal' && 'md:flex',
           className
         )}
@@ -134,10 +134,10 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
                     return (
                       <div
                         key={platform.platform}
-                        className="flex h-6 w-6 items-center justify-center rounded-full bg-muted"
+                        className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/8"
                         title={`${platform.platform}: ${formatFollowers(platform.followers)}`}
                       >
-                        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                        <Icon className="h-3.5 w-3.5 text-primary/75" />
                       </div>
                     );
                   })}
@@ -171,7 +171,7 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
             </div>
 
             {/* Pricing */}
-            <div className="flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 border-t border-primary/10 pt-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 {creator.dealTypes.includes('paid') && creator.minPrice && (
                   <p className="font-semibold text-foreground">

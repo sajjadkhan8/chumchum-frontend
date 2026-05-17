@@ -45,13 +45,13 @@ export function PackageCard({ pkg, onOrder, className }: PackageCardProps) {
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className={cn('overflow-hidden rounded-2xl border-border/50', className)}>
+      <Card className={cn('overflow-hidden rounded-2xl border-primary/10', className)}>
         <CardContent className="p-0">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border p-4">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                <PlatformIcon className="h-4 w-4 text-muted-foreground" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                <PlatformIcon className="h-4 w-4 text-primary" />
               </div>
               <span className="text-sm font-medium capitalize">{pkg.platform}</span>
             </div>
@@ -101,7 +101,7 @@ export function PackageCard({ pkg, onOrder, className }: PackageCardProps) {
             </div>
 
             {(pkg.barterDescription || pkg.creatorExpectations) && (
-              <div className="rounded-xl border border-border/50 bg-muted/40 p-3 text-xs text-muted-foreground">
+              <div className="rounded-2xl border border-primary/10 bg-primary/5 p-3 text-xs text-muted-foreground">
                 {pkg.barterDescription && <p>{pkg.barterDescription}</p>}
                 {pkg.creatorExpectations && (
                   <p className="mt-1">Creator expects: {pkg.creatorExpectations}</p>
@@ -111,7 +111,7 @@ export function PackageCard({ pkg, onOrder, className }: PackageCardProps) {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between border-t border-border bg-muted/50 p-4">
+          <div className="flex items-center justify-between border-t border-primary/10 bg-gradient-to-r from-primary/5 to-accent/5 p-4">
             <div>
               {pkg.dealType === 'barter' ? (
                 <div className="flex items-center gap-1 text-primary">
@@ -138,7 +138,7 @@ export function PackageCard({ pkg, onOrder, className }: PackageCardProps) {
                 <p className="text-xs text-muted-foreground">Estimated value: {formatPrice(pkg.estimatedBarterValue)}</p>
               ) : null}
             </div>
-            <Button onClick={onOrder} className="rounded-full" disabled={!onOrder}>
+            <Button onClick={onOrder} className="rounded-full shadow-sm" disabled={!onOrder}>
               Order Now
             </Button>
           </div>
