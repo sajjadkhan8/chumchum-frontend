@@ -19,6 +19,8 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
+import { useTheme } from 'next-themes';
+import { ZingZingLogo } from '@/src/components/ZingZingLogo';
 
 interface NavbarProps {
   showSearch?: boolean;
@@ -30,9 +32,12 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const pathname = usePathname();
   const router = useRouter();
   const [currentHash, setCurrentHash] = useState('');
+  const [mounted, setMounted] = useState(false);
+  const { resolvedTheme } = useTheme();
   const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
   const isSignedIn = hasHydrated && isAuthenticated && !!user;
   const isCreator = isSignedIn && user.role === 'creator';
+  const logoVariant = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
 
   useEffect(() => {
     const syncHash = () => setCurrentHash(window.location.hash || '');
@@ -40,6 +45,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     window.addEventListener('hashchange', syncHash);
     return () => window.removeEventListener('hashchange', syncHash);
   }, [pathname]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -105,11 +114,11 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex min-h-11 items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-            <span className="text-lg font-bold text-primary-foreground">Z</span>
-          </div>
-          <span className="text-xl font-bold text-foreground">ZingZing</span>
+        <Link href="/" className="flex min-h-11 items-center">
+          <ZingZingLogo
+            variant={logoVariant}
+            className="h-10 w-[190px] sm:h-11 sm:w-[220px]"
+          />
         </Link>
 
         {/* Desktop Navigation */}

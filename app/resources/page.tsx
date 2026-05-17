@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, BookOpen, FileText, FolderOpen, Megaphone, ShieldCheck, Sparkles } from 'lucide-react';
 import { Navbar } from '@/components/navbar';
+import { ZingZingLogo } from '@/src/components/ZingZingLogo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -95,6 +96,9 @@ export default function ResourcesPage() {
       <main>
         <section className="border-b border-border bg-gradient-to-br from-primary/5 via-background to-accent/5">
           <div className="container mx-auto max-w-6xl px-4 py-12 md:py-16">
+            <Link href="/" className="mb-4 inline-flex items-center">
+              <ZingZingLogo variant="light" className="h-9 w-[180px]" />
+            </Link>
             <Badge variant="secondary" className="rounded-full text-xs font-medium">
               Resource Library
             </Badge>

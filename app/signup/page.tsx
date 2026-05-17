@@ -12,6 +12,7 @@ import { useAuthStore } from '@/store/auth-store';
 import type { UserRole } from '@/types';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { ZingZingLogo } from '@/src/components/ZingZingLogo';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -69,11 +70,8 @@ export default function SignupPage() {
       {/* Left Side - Branding */}
       <div className="hidden bg-gradient-to-br from-primary via-primary to-primary/80 lg:flex lg:w-1/2 lg:flex-col lg:justify-between lg:p-12">
         <div>
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white">
-              <span className="text-xl font-bold text-primary">Z</span>
-            </div>
-            <span className="text-2xl font-bold text-white">ZingZing</span>
+          <Link href="/" className="inline-flex items-center">
+            <ZingZingLogo variant="dark" className="h-11 w-[230px]" />
           </Link>
         </div>
         
@@ -122,11 +120,8 @@ export default function SignupPage() {
       <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 lg:px-16 xl:px-24">
         <div className="mx-auto w-full max-w-md">
           {/* Mobile Logo */}
-          <Link href="/" className="mb-8 flex items-center gap-2 lg:hidden">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-              <span className="text-lg font-bold text-primary-foreground">Z</span>
-            </div>
-            <span className="text-xl font-bold text-foreground">ZingZing</span>
+          <Link href="/" className="mb-8 inline-flex items-center lg:hidden">
+            <ZingZingLogo variant="light" className="h-10 w-[210px]" />
           </Link>
 
           {step === 'role' ? (

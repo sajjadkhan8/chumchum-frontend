@@ -26,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Navbar } from "@/components/navbar";
 import { BottomNav } from "@/components/bottom-nav";
 import { CreatorCard } from "@/components/creator-card";
+import { ZingZingLogo } from "@/src/components/ZingZingLogo";
 import { creators } from "@/data/creators";
 import { formatFollowers } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
@@ -459,7 +460,9 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="grid gap-8 md:grid-cols-4">
             <div>
-              <h3 className="mb-4 text-xl font-bold text-primary">ZingZing</h3>
+              <Link href="/" className="mb-4 inline-flex items-center">
+                <ZingZingLogo variant="light" className="h-9 w-[180px]" />
+              </Link>
               <p className="text-sm text-muted-foreground">
                 Saudi Arabia&apos;s first influencer marketplace connecting brands
                 with verified creators.

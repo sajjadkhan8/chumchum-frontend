@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { ZingZingLogo } from '@/src/components/ZingZingLogo';
 
 interface NavItem {
   href: string;
@@ -145,7 +146,10 @@ export function CreatorSidebar() {
   return (
     <Card className="sticky top-20 hidden h-[calc(100vh-6rem)] w-72 overflow-hidden lg:block">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">Creator Studio</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <ZingZingLogo variant="icon" size={24} className="h-6 w-6" />
+          Creator Studio
+        </CardTitle>
       </CardHeader>
       <CardContent className="h-full overflow-y-auto pb-6">
         <CreatorSidebarNav />
@@ -165,7 +169,10 @@ export function CreatorSidebarDrawer() {
       </SheetTrigger>
       <SheetContent side="left" className="w-[88vw] max-w-sm overflow-y-auto p-0">
         <SheetHeader className="border-b">
-          <SheetTitle>Creator Studio</SheetTitle>
+          <SheetTitle className="flex items-center gap-2">
+            <ZingZingLogo variant="icon" size={24} className="h-6 w-6" />
+            Creator Studio
+          </SheetTitle>
         </SheetHeader>
         <div className="p-4 pb-safe">
           <CreatorSidebarNav compact closeOnNavigate />

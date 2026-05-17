@@ -22,6 +22,14 @@ export const metadata: Metadata = {
   description:
     "Discover creators and collaborate through paid, barter, and hybrid partnerships on Saudi Arabia's premium influencer marketplace.",
   keywords: ['influencer marketing', 'Saudi Arabia', 'creators', 'brand collaborations', 'barter deals'],
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml', sizes: '32x32' },
+      { url: '/app-icon.svg', type: 'image/svg+xml', sizes: '80x80' },
+    ],
+    shortcut: ['/favicon.svg'],
+    apple: [{ url: '/app-icon.svg', sizes: '80x80', type: 'image/svg+xml' }],
+  },
 }
 
 export const viewport: Viewport = {

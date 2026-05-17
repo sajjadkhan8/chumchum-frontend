@@ -1,0 +1,26 @@
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="zz-app-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a7a3a" />
+      <stop offset="0.6" stop-color="#0f5c28" />
+      <stop offset="1" stop-color="#0a3d1a" />
+    </linearGradient>
+    <radialGradient id="zz-app-glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(24 16) rotate(42) scale(55 45)">
+      <stop offset="0" stop-color="rgba(255,255,255,0.26)" />
+      <stop offset="1" stop-color="rgba(255,255,255,0)" />
+    </radialGradient>
+    <pattern id="zz-app-grid" width="10" height="10" patternUnits="userSpaceOnUse">
+      <path d="M10 0H0V10" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+    </pattern>
+  </defs>
+  <rect width="80" height="80" rx="22" fill="url(#zz-app-bg)" />
+  <rect width="80" height="80" rx="22" fill="url(#zz-app-glow)" />
+  <rect width="80" height="80" rx="22" fill="url(#zz-app-grid)" />
+  <g transform="translate(14 12)">
+    <polygon points="26,6 46,17 46,39 26,50 6,39 6,17" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" fill="rgba(255,255,255,0.08)" />
+    <path d="M14 16h24L18 40h22" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <circle cx="38" cy="16" r="3.5" fill="#ffffff" />
+    <circle cx="14" cy="40" r="2.5" fill="#ffffff" opacity="0.55" />
+  </g>
+</svg>
+

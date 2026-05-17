@@ -15,6 +15,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { Navbar } from '@/components/navbar';
+import { ZingZingLogo } from '@/src/components/ZingZingLogo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -113,6 +114,9 @@ export default function ContactPage() {
       <div className="border-b border-border bg-gradient-to-br from-primary/5 via-background to-accent/5">
         <div className="container mx-auto max-w-6xl px-4 py-12 md:py-16">
           <div className="flex flex-col gap-3">
+            <Link href="/" className="mb-2 inline-flex items-center">
+              <ZingZingLogo variant="light" className="h-9 w-[180px]" />
+            </Link>
             <Badge variant="secondary" className="w-fit rounded-full text-xs font-medium">
               Support
             </Badge>

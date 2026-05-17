@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CheckCircle2 } from 'lucide-react';
 import { Navbar } from '@/components/navbar';
+import { ZingZingLogo } from '@/src/components/ZingZingLogo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -31,6 +32,9 @@ export default function PricingPage() {
       <Navbar />
       <main className="container mx-auto max-w-6xl px-4 py-10 md:py-14">
         <div className="mb-10 text-center">
+          <Link href="/" className="mb-4 inline-flex items-center justify-center">
+            <ZingZingLogo variant="light" className="h-9 w-[180px]" />
+          </Link>
           <h1 className="text-3xl font-bold md:text-4xl">Pricing</h1>
           <p className="mt-2 text-muted-foreground">
             Simple plans designed for Saudi Arabia-first influencer campaigns.

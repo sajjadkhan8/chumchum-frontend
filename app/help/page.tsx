@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, BookOpen, ChevronDown, LifeBuoy, MessageCircleQuestion, Search } from 'lucide-react';
 import { Navbar } from '@/components/navbar';
+import { ZingZingLogo } from '@/src/components/ZingZingLogo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,6 +67,9 @@ export default function HelpPage() {
       <main>
         <section className="border-b border-border bg-gradient-to-br from-primary/5 via-background to-accent/5">
           <div className="container mx-auto max-w-6xl px-4 py-12 md:py-16">
+            <Link href="/" className="mb-4 inline-flex items-center">
+              <ZingZingLogo variant="light" className="h-9 w-[180px]" />
+            </Link>
             <Badge variant="secondary" className="rounded-full text-xs font-medium">Support</Badge>
             <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">Help Center</h1>
             <p className="mt-3 max-w-2xl text-base text-muted-foreground md:text-lg">
