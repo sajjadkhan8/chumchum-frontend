@@ -173,6 +173,138 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Two-Tier Marketplace Section */}
+      <section className="py-12 md:py-16">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-12 text-center"
+          >
+            <Badge
+              variant="secondary"
+              className="mb-4 bg-primary/10 text-primary"
+            >
+              <Sparkles className="mr-1 h-3 w-3" />
+              Two Ways to Collaborate
+            </Badge>
+            <h2 className="text-3xl font-bold text-foreground md:text-4xl">
+              Choose Your Creator Partner
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Whether you need verified premium talent or diverse creator specialists, we have the perfect match for your campaign.
+            </p>
+          </motion.div>
+
+          <div className="grid gap-8 md:grid-cols-2">
+            {/* Platform Ambassadors */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card className="overflow-hidden border-border/50 shadow-sm transition-shadow hover:shadow-lg">
+                <CardContent className="p-8">
+                  <div className="mb-6 flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                      <span className="text-2xl">👑</span>
+                    </div>
+                    <h3 className="text-2xl font-bold">Platform Ambassadors</h3>
+                  </div>
+                  
+                  <p className="mb-6 text-muted-foreground">
+                    KSA's most trusted creators, carefully verified and managed by our platform. Quality assurance guaranteed.
+                  </p>
+
+                  <ul className="mb-8 space-y-3">
+                    {[
+                      '✓ 100K+ followers minimum',
+                      '✓ 5%+ engagement rate verified',
+                      '✓ Dedicated platform support',
+                      '✓ Premium brand partnerships',
+                      '✓ Quality assured',
+                    ].map((item, idx) => (
+                      <li key={idx} className="flex items-center gap-2 text-sm">
+                        <span className="text-primary">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button className="w-full" asChild>
+                    <Link href="/brand/ambassadors">
+                      Browse Ambassadors
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Independent Creators */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="overflow-hidden border-border/50 shadow-sm transition-shadow hover:shadow-lg">
+                <CardContent className="p-8">
+                  <div className="mb-6 flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                      <span className="text-2xl">🌟</span>
+                    </div>
+                    <h3 className="text-2xl font-bold">Independent Creators</h3>
+                  </div>
+
+                  <p className="mb-6 text-muted-foreground">
+                    Diverse talent across all niches and experience levels. Direct collaboration with creative professionals.
+                  </p>
+
+                  <ul className="mb-8 space-y-3">
+                    {[
+                      '✓ All experience levels',
+                      '✓ 10,000+ creators available',
+                      '✓ Flexible pricing & packages',
+                      '✓ Direct negotiation',
+                      '✓ Niche specialists',
+                    ].map((item, idx) => (
+                      <li key={idx} className="flex items-center gap-2 text-sm">
+                        <span className="text-muted-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/brand/explore">
+                      Explore All Creators
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+
+          {/* For Creators Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-12 rounded-lg border border-border/50 bg-muted/30 p-8 text-center"
+          >
+            <h3 className="mb-3 text-2xl font-bold">Ready to Level Up Your Influence?</h3>
+            <p className="mb-6 text-muted-foreground">
+              Join our Platform Ambassador program and earn guaranteed monthly income while working with premium brands.
+            </p>
+            <Button size="lg" asChild>
+              <Link href="/creator/ambassador-program">
+                Apply for Ambassador Program
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Categories Section */}
       <section id="categories" className="py-12 md:py-16">
         <div className="container mx-auto px-4">

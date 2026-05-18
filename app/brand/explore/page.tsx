@@ -3,10 +3,11 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Search, SlidersHorizontal, TrendingUp, Star, Wallet, MapPin } from 'lucide-react';
+import { Search, SlidersHorizontal, TrendingUp, Star, Wallet, MapPin, Crown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -15,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CreatorCard } from '@/components/creator-card';
+import { AmbassadorCard } from '@/components/ambassador-card';
 import { FilterPanel } from '@/components/filter-panel';
 import { QuickDealModal } from '@/components/quick-deal-modal';
 import { CreatorCardSkeleton } from '@/components/skeletons';
@@ -22,8 +24,10 @@ import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
 import { useFilterStore } from '@/store/filter-store';
 import { creatorsService } from '@/services/creators.service';
+import { platformAmbassadors } from '@/data/ambassadors';
 import type { Creator, DealType } from '@/types';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 const sortOptions = [
   { value: 'trending', label: 'Trending', icon: TrendingUp },
@@ -231,6 +235,30 @@ function ExplorePageContent() {
 
         {/* Creator Grid */}
         <div className="flex-1">
+          {/* Platform Ambassadors Alert Banner */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            <Card className="border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Crown className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-semibold text-foreground">Looking for verified premium creators?</p>
+                    <p className="text-sm text-muted-foreground">Check out our curated Platform Ambassadors with guaranteed quality.</p>
+                  </div>
+                </div>
+                <Link href="/brand/ambassadors">
+                  <Button size="sm" variant="outline" className="rounded-full">
+                    View Ambassadors
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+          </motion.div>
+
           {/* Results Count */}
           <div className="mb-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">

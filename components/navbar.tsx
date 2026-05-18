@@ -67,13 +67,15 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const creatorNavLinks = [
     { href: '/creator/dashboard', label: 'Dashboard' },
     { href: '/creator/packages', label: 'My Packages' },
+    { href: '/creator/ambassador-program', label: '👑 Ambassador Program' },
     { href: '/creator/orders', label: 'Orders' },
     { href: '/creator/earnings', label: 'Earnings' },
   ];
 
   const brandNavLinks = [
     { href: '/brand/dashboard', label: 'Dashboard' },
-    { href: '/brand/explore', label: 'Explore Creators' },
+    { href: '/brand/ambassadors', label: 'Platform Ambassadors' },
+    { href: '/brand/explore', label: 'All Creators' },
     { href: '/brand/orders', label: 'Campaigns' },
     { href: '/brand/saved', label: 'Saved Creators' },
   ];

@@ -241,3 +241,49 @@ export interface BrandDashboardStats {
   pendingOrders: number;
   savedCreators: number;
 }
+
+// Brand Ambassador Types (Platform-Owned)
+export type AmbassadorStatus = 'approved' | 'pending_review' | 'rejected' | 'under_review' | 'suspended';
+export type AmbassadorApplicationStatus = 'draft' | 'submitted' | 'under_review' | 'verified' | 'approved' | 'rejected';
+
+export interface AmbassadorEligibilityRequirements {
+  minFollowers: number;
+  minEngagementRate: number;
+  minRating: number;
+  verificationSteps: string[];
+}
+
+export interface AmbassadorApplication {
+  id: string;
+  creatorId: string;
+  creator: Creator;
+  status: AmbassadorApplicationStatus;
+  submittedAt: Date;
+  updatedAt: Date;
+  verificationSteps: {
+    identityVerified: boolean;
+    engagementVerified: boolean;
+    contentReviewPassed: boolean;
+    backgroundCheckPassed: boolean;
+  };
+  notes?: string;
+  approvedAt?: Date;
+  rejectionReason?: string;
+}
+
+export interface PlatformAmbassador extends Creator {
+  ambassadorStatus: AmbassadorStatus;
+  commissionPercentage: number; // Platform takes 15% of ambassador earnings
+  monthlyBase?: number; // Optional minimum monthly guarantee
+  ambassadorSince: Date;
+  performanceScore: number;
+  isExclusive: boolean; // Cannot work with competing brands
+}
+
+// Platform commission structure
+export interface CommissionStructure {
+  independentCreatorCommission: number; // 10% for independent creators
+  platformAmbassadorCommission: number; // 15% for platform ambassadors
+  processedAt: Date;
+}
+
