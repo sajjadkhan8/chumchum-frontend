@@ -287,3 +287,42 @@ export interface CommissionStructure {
   processedAt: Date;
 }
 
+// Enhanced Ambassador Scoring & Tiers
+export type AmbassadorTier = 'rising_creator' | 'emerging_ambassador' | 'verified_ambassador' | 'elite_ambassador';
+
+export interface AmbassadorScore {
+  total: number; // 0-100
+  deliveryScore: number; // 0-35 (weight: high)
+  accountAgeScore: number; // 0-15 (stability)
+  ratingScore: number; // 0-25 (quality)
+  cancellationScore: number; // 0-10 (penalty factor)
+  profileCompletenessScore: number; // 0-10 (trust)
+  consistencyScore: number; // 0-5 (engagement)
+}
+
+export interface AmbassadorTierInfo {
+  tier: AmbassadorTier;
+  name: string;
+  description: string;
+  scoreRange: [number, number]; // [min, max]
+  icon: string;
+  color: string;
+  benefits: string[];
+  nextMilestone?: number; // Points needed to next tier
+}
+
+export interface CreatorAmbassadorMetrics {
+  creatorId: string;
+  score: AmbassadorScore;
+  tier: AmbassadorTier;
+  percentileRank: number; // 0-100, where they rank vs other creators
+  strengths: string[]; // What they're doing well
+  improvements: string[]; // What they could improve
+  journeyMilestones: {
+    joinedPlatform: Date;
+    firstDelivery?: Date;
+    consistencyAchieved?: Date; // 30+ days of activity
+    ambassadorEligible?: Date; // When they hit 70+ score
+  };
+}
+

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BottomNav } from '@/components/bottom-nav';
 import { AmbassadorEligibilityChecker } from '@/components/ambassador-eligibility-checker';
+import { AmbassadorDetailedCard } from '@/components/ambassador-detailed-card';
 import { ambassadorBenefits, ambassadorApplications } from '@/data/ambassadors';
 import { creators } from '@/data/creators';
 import { useAuthStore } from '@/store/auth-store';
@@ -180,7 +181,7 @@ export default function AmbassadorProgramPage() {
             </motion.div>
           )}
 
-          {/* Eligibility Checker */}
+          {/* Enhanced Gamified Eligibility & Score */}
           {currentCreator && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -188,7 +189,10 @@ export default function AmbassadorProgramPage() {
               transition={{ delay: 0.2 }}
               className="mb-12"
             >
-              <AmbassadorEligibilityChecker creator={currentCreator} />
+              <AmbassadorDetailedCard creator={currentCreator} className="mb-6" />
+              {!applicationStatus && (
+                <AmbassadorEligibilityChecker creator={currentCreator} />
+              )}
             </motion.div>
           )}
 

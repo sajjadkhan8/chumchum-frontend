@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Creator } from '@/types';
 import { cn, formatFollowers, formatPrice } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
+import { CreatorAmbassadorBadge } from '@/components/creator-ambassador-badge';
 
 interface CreatorCardProps {
   creator: Creator;
@@ -79,9 +80,14 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
             
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-            
+             
             {/* Badges */}
             <div className="absolute left-2.5 top-2.5 flex max-w-[90%] flex-wrap gap-1.5 sm:left-3 sm:top-3">
+              {/* Ambassador Badge (Gamified) */}
+              <div className="flex">
+                <CreatorAmbassadorBadge creator={creator} />
+              </div>
+
               {creator.isTrending && (
                 <Badge className="bg-primary/90 text-[11px] text-primary-foreground backdrop-blur-sm">
                   <TrendingUp className="mr-1 h-3 w-3" />
