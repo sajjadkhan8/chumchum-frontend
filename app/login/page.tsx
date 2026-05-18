@@ -25,6 +25,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
 
+  const applyDemoCredentials = (demoEmail: string) => {
+    setAuthMethod('email');
+    setEmail(demoEmail);
+    setPassword('demo12345');
+  };
+
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -324,13 +330,36 @@ export default function LoginPage() {
             className="mt-8 rounded-xl border border-border bg-muted/50 p-4"
           >
             <p className="text-xs font-medium text-muted-foreground">Demo Accounts:</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Creator: <span className="font-mono">creator@test.com</span>
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Brand: <span className="font-mono">brand@test.com</span>
-            </p>
-            <p className="text-xs text-muted-foreground">
+            <div className="mt-2 space-y-2">
+              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-background p-2.5">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-medium text-foreground">Creator (On Ambassador Path)</p>
+                  <p className="text-xs text-muted-foreground font-mono">creator@test.com</p>
+                </div>
+                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('creator@test.com')}>
+                  Use
+                </Button>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 p-2.5">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-medium text-foreground">Ambassador (Active)</p>
+                  <p className="text-xs text-muted-foreground font-mono">ambassador@test.com</p>
+                </div>
+                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary" onClick={() => applyDemoCredentials('ambassador@test.com')}>
+                  Use
+                </Button>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-background p-2.5">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-medium text-foreground">Brand</p>
+                  <p className="text-xs text-muted-foreground font-mono">brand@test.com</p>
+                </div>
+                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('brand@test.com')}>
+                  Use
+                </Button>
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
               Password: <span className="font-mono">any password</span>
             </p>
           </motion.div>

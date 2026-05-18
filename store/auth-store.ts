@@ -36,18 +36,34 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         // Simulate API delay
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        
-        // Mock user based on email
-        const isCreator = email.includes('creator');
+
+        const normalizedEmail = email.trim().toLowerCase();
+        const isAmbassadorDemo = normalizedEmail === 'ambassador@test.com';
+        const isCreatorDemo = normalizedEmail === 'creator@test.com';
+        const isCreator = isAmbassadorDemo || isCreatorDemo || normalizedEmail.includes('creator');
+
+        const userName = isAmbassadorDemo
+          ? 'Nora Al Saud'
+          : isCreator
+            ? 'Faisal Al Harbi'
+            : 'Noon Food KSA';
+
+        const creatorProgramStatus = isAmbassadorDemo
+          ? 'active_ambassador'
+          : isCreator
+            ? 'in_path'
+            : 'none';
+
         const mockUser: User = {
-          id: '1',
-          email,
+          id: isAmbassadorDemo ? 'ambassador-1' : '1',
+          email: normalizedEmail,
           role: isCreator ? 'creator' : 'brand',
-          name: isCreator ? 'Faisal Al Harbi' : 'Noon Food KSA',
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-          createdAt: new Date(),
+          name: userName,
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${normalizedEmail}`,
+          creatorProgramStatus,
+          createdAt: isAmbassadorDemo ? new Date('2021-07-22') : new Date(),
         };
-        
+
         set({ user: mockUser, isAuthenticated: true, isLoading: false, hasHydrated: true });
       },
 
@@ -62,6 +78,7 @@ export const useAuthStore = create<AuthState>()(
           role: 'creator',
           name: 'Khalid Al Dosari',
           avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${phone}`,
+          creatorProgramStatus: 'in_path',
           createdAt: new Date(),
         };
         
@@ -78,6 +95,7 @@ export const useAuthStore = create<AuthState>()(
           role,
           name,
           avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
+          creatorProgramStatus: role === 'creator' ? 'in_path' : 'none',
           createdAt: new Date(),
         };
         

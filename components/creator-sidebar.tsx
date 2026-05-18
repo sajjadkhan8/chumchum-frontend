@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   BarChart3,
   BookOpen,
+  Crown,
   CreditCard,
   Gauge,
   HelpCircle,
@@ -14,6 +15,7 @@ import {
   Package,
   Settings,
   ShieldCheck,
+  Sparkles,
   User,
   Wallet,
   Menu,
@@ -23,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { ZingZingLogo } from '@/src/components/ZingZingLogo';
+import { useAuthStore } from '@/store/auth-store';
 
 interface NavItem {
   href: string;
@@ -92,12 +95,40 @@ const navGroups: NavGroup[] = [
   },
 ];
 
+const ambassadorNavGroup: NavGroup = {
+  title: 'Ambassador Ops',
+  items: [
+    { href: '/creator/dashboard', label: 'Command Center', icon: Crown },
+    { href: '/creator/ambassador-program', label: 'Ambassador Program', icon: Sparkles },
+    { href: '/creator/performance', label: 'SLA & Performance', icon: ShieldCheck },
+    { href: '/creator/messages', label: 'Priority Queue', icon: MessageCircle },
+  ],
+};
+
+const getNavGroups = (isActiveAmbassador: boolean): NavGroup[] => {
+  if (!isActiveAmbassador) return navGroups;
+
+  const supportIndex = navGroups.findIndex((group) => group.title === 'Support');
+  if (supportIndex < 0) return [...navGroups, ambassadorNavGroup];
+
+  return [
+    ...navGroups.slice(0, supportIndex),
+    ambassadorNavGroup,
+    ...navGroups.slice(supportIndex),
+  ];
+};
+
 function CreatorSidebarNav({ compact = false, closeOnNavigate = false, onNavigate }: { compact?: boolean; closeOnNavigate?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
+  const user = useAuthStore((state) => state.user);
+  const isActiveAmbassador =
+    user?.role === 'creator' &&
+    (user?.creatorProgramStatus === 'active_ambassador' || user?.email === 'ambassador@test.com');
+  const renderedNavGroups = getNavGroups(isActiveAmbassador);
 
   return (
     <div className="space-y-5">
-      {navGroups.map((group) => (
+      {renderedNavGroups.map((group) => (
         <div key={group.title} className="space-y-1.5">
           <p className="px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {group.title}

@@ -23,9 +23,35 @@ export default function AmbassadorProgramPage() {
   const { submitApplication, getApplicationStatus, loading } = useAmbassadorStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Mock: Get current creator
-  const currentCreator = user?.role === 'creator' ? creators[0] : null;
-  const applicationStatus = currentCreator ? getApplicationStatus(currentCreator.id) : null;
+  // Mock persona mapping for demo accounts
+  const currentCreator =
+    user?.role === 'creator'
+      ? user?.creatorProgramStatus === 'active_ambassador' || user?.email === 'ambassador@test.com'
+        ? creators[1]
+        : creators[0]
+      : null;
+
+  const resolvedApplicationStatus = currentCreator ? getApplicationStatus(currentCreator.id) : null;
+  const applicationStatus =
+    resolvedApplicationStatus ||
+    (user?.creatorProgramStatus === 'active_ambassador' && currentCreator
+      ? {
+          id: 'demo-approved-ambassador',
+          creatorId: currentCreator.id,
+          creator: currentCreator,
+          status: 'approved' as const,
+          submittedAt: new Date('2024-01-08'),
+          updatedAt: new Date('2024-02-01'),
+          verificationSteps: {
+            identityVerified: true,
+            engagementVerified: true,
+            contentReviewPassed: true,
+            backgroundCheckPassed: true,
+          },
+          notes: 'Active ambassador in good standing.',
+          approvedAt: new Date('2024-02-01'),
+        }
+      : null);
 
   const handleApplyClick = async () => {
     if (!currentCreator) return;

@@ -8,6 +8,7 @@ export interface User {
   role: UserRole;
   name: string;
   avatar?: string;
+  creatorProgramStatus?: 'none' | 'in_path' | 'active_ambassador';
   createdAt: Date;
 }
 
