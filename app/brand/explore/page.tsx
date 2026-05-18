@@ -108,7 +108,15 @@ function ExplorePageContent() {
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           {/* Search Bar */}
-          <div className="relative flex-1 lg:max-w-xl">
+          <div className="flex-1 lg:max-w-xl">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">Search creators by niche, city, or platform</p>
+              <Link href="/brand/ambassadors" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                Ambassador search
+                <Badge className="h-4 rounded-full bg-primary/10 px-1.5 text-[10px] font-semibold text-primary">New</Badge>
+              </Link>
+            </div>
+            <div className="relative">
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
@@ -117,6 +125,7 @@ function ExplorePageContent() {
               value={filters.search || ''}
               onChange={(e) => setFilters({ search: e.target.value })}
             />
+            </div>
           </div>
 
           {/* Sort & Filter Controls */}
@@ -246,7 +255,10 @@ function ExplorePageContent() {
                 <div className="flex items-center gap-3">
                   <Crown className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="font-semibold text-foreground">Looking for verified premium creators?</p>
+                      <p className="font-semibold text-foreground inline-flex items-center gap-2">
+                        Looking for verified premium creators?
+                        <Badge className="h-4 rounded-full bg-primary/10 px-1.5 text-[10px] font-semibold text-primary">New</Badge>
+                      </p>
                     <p className="text-sm text-muted-foreground">Check out our curated Platform Ambassadors with guaranteed quality.</p>
                   </div>
                 </div>

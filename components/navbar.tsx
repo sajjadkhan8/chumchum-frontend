@@ -57,6 +57,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
 
   const publicNavLinks = [
     { href: '/brand/explore', label: 'Explore Creators' },
+    { href: '/brand/ambassadors', label: 'Platform Ambassadors' },
     { href: '/#how-it-works', label: 'How It Works' },
     { href: '/about', label: 'About' },
     { href: '/help', label: 'Help Center' },
@@ -117,10 +118,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex min-h-11 items-center">
-          <ZingZingLogo
-            variant={logoVariant}
-            className="h-10 w-[190px] sm:h-11 sm:w-[220px]"
-          />
+          <ZingZingLogo variant="icon" size={40} className="h-10 w-10" />
         </Link>
 
         {/* Desktop Navigation */}

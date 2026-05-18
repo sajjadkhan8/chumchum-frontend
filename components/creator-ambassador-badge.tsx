@@ -11,6 +11,7 @@ interface CreatorAmbassadorBadgeProps {
   creator: Creator;
   showScore?: boolean;
   className?: string;
+  showNewIndicator?: boolean;
 }
 
 /**
@@ -21,6 +22,7 @@ export function CreatorAmbassadorBadge({
   creator,
   showScore = false,
   className,
+  showNewIndicator = true,
 }: CreatorAmbassadorBadgeProps) {
   const score = calculateAmbassadorScore(creator);
   const tier = getAmbassadorTier(score.total);
@@ -58,6 +60,11 @@ export function CreatorAmbassadorBadge({
       >
         <span>{tierInfo.icon}</span>
         <span className="font-semibold">{tierInfo.tier.split('_')[0]}</span>
+        {showNewIndicator && score.total >= 70 && (
+          <span className="rounded-full bg-foreground/10 px-1 py-[1px] text-[9px] font-semibold uppercase tracking-wide">
+            New
+          </span>
+        )}
         {showScore && (
           <span className="ml-1 opacity-70">({score.total})</span>
         )}
