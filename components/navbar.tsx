@@ -115,14 +115,14 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
       animate={{ y: 0 }}
       className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:gap-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex min-h-11 items-center">
           <ZingZingLogo variant="icon" size={40} className="h-10 w-10" />
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden flex-1 items-center justify-center gap-5 md:flex lg:gap-6">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -154,7 +154,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
         )}
 
         {/* Right Side Actions */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
           {isSignedIn && user ? (
             <>
               {/* Notifications */}
