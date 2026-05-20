@@ -552,7 +552,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-primary py-16 md:py-24">
+      <section className="bg-primary py-16 md:py-24 dark:bg-card">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="mb-4 text-3xl font-bold text-primary-foreground md:text-4xl">
@@ -566,7 +566,6 @@ export default function Home() {
               <Button
                 size="lg"
                 variant="secondary"
-                className="bg-white text-primary hover:bg-white/90"
                 asChild
               >
                 <Link href="/signup">
@@ -577,7 +576,7 @@ export default function Home() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white/30 bg-transparent text-white hover:bg-white/10"
+                className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
                 asChild
               >
                 <Link href="/signup">Find Creators</Link>
