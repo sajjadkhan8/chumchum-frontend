@@ -39,9 +39,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Navbar } from "@/components/navbar";
 import { BottomNav } from "@/components/bottom-nav";
-import { mockBrands } from "@/data/brands";
-import { getMessagesByConversationId, mockConversations } from "@/data/messages";
-import { creators } from "@/data/creators";
+import { creatorsService } from "@/services/creators.service";
+import { messagesService } from "@/services/messages.service";
 import { formatRelativeTime, formatPrice, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import type { Message, Conversation } from "@/types";
@@ -52,7 +51,9 @@ function MessagesPageContent() {
   const creatorParam = searchParams.get("creator");
   const { user } = useAuthStore();
   const isCreatorView = user?.role === "creator";
-  const fallbackBrand = mockBrands[0];
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   const [selectedConversation, setSelectedConversation] =
     useState<Conversation | null>(null);
@@ -92,20 +93,12 @@ function MessagesPageContent() {
       : selectedConversation.brandId
     : isCreatorView
       ? user?.id || "creator"
-      : fallbackBrand.id;
+      : user?.id || "brand";
 
   // Filter conversations based on search
   const roleScopedConversations = useMemo(() => {
-    if (isCreatorView) {
-      return mockConversations.filter(
-        (conversation) => conversation.creatorId === (user?.id || "1")
-      );
-    }
-
-    return mockConversations.filter(
-      (conversation) => conversation.brandId === fallbackBrand.id
-    );
-  }, [isCreatorView, user?.id]);
+    return conversations;
+  }, [conversations]);
 
   const filteredConversations = useMemo(() => {
     return roleScopedConversations.filter((conv) =>
@@ -115,42 +108,79 @@ function MessagesPageContent() {
     );
   }, [searchQuery, roleScopedConversations]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const loadConversations = async () => {
+      setIsLoadingConversations(true);
+      try {
+        const data = await messagesService.getConversations(user.id, user.role);
+        setConversations(data);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to load conversations";
+        toast.error(message);
+      } finally {
+        setIsLoadingConversations(false);
+      }
+    };
+
+    void loadConversations();
+  }, [user]);
+
   // Auto-select conversation if creator param is present
   useEffect(() => {
-    if (creatorParam) {
-      const creator = creators.find(
-        (c) => c.id === creatorParam || c.username === creatorParam
-      );
-      if (creator) {
-        const existingConv = mockConversations.find(
-          (conversation) => conversation.creatorId === creator.id
+    if (!creatorParam || !user || user.role !== "brand") return;
+
+    const startConversationFromParam = async () => {
+      try {
+        const existing = conversations.find(
+          (conversation) =>
+            conversation.creatorId === creatorParam || conversation.creator.username === creatorParam,
         );
-        if (existingConv) {
-          setSelectedConversation(existingConv);
-          setMessages(getMessagesByConversationId(existingConv.id));
-        } else {
-          // Create a new conversation placeholder
-          const newConv: Conversation = {
-            id: `new-${creator.id}`,
-            creatorId: creator.id,
-            creator,
-            brandId: fallbackBrand.id,
-            brand: fallbackBrand,
-            unreadCount: 0,
-            updatedAt: new Date(),
-          };
-          setSelectedConversation(newConv);
-          setMessages([]);
+
+        if (existing) {
+          setSelectedConversation(existing);
+          setShowMobileChat(true);
+          return;
         }
+
+        const creator =
+          (await creatorsService.getById(creatorParam)) ||
+          (await creatorsService.getByUsername(creatorParam));
+
+        if (!creator) return;
+
+        const createdConversation = await messagesService.createConversation(creator.id);
+        setConversations((prev) => [createdConversation, ...prev]);
+        setSelectedConversation(createdConversation);
         setShowMobileChat(true);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to start conversation";
+        toast.error(message);
       }
-    }
-  }, [creatorParam]);
+    };
+
+    void startConversationFromParam();
+  }, [conversations, creatorParam, user]);
 
   // Load messages when conversation is selected
   useEffect(() => {
     if (selectedConversation) {
-      setMessages(getMessagesByConversationId(selectedConversation.id));
+      const loadMessages = async () => {
+        setIsLoadingMessages(true);
+        try {
+          const data = await messagesService.getMessages(selectedConversation.id);
+          setMessages(data);
+          await messagesService.markAsRead(selectedConversation.id);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Failed to load messages";
+          toast.error(message);
+        } finally {
+          setIsLoadingMessages(false);
+        }
+      };
+
+      void loadMessages();
     }
   }, [selectedConversation]);
 
@@ -163,21 +193,31 @@ function MessagesPageContent() {
     if (!newMessage.trim() || !selectedConversation) return;
     setIsSending(true);
 
-    const newMsg: Message = {
-      id: `msg-${Date.now()}`,
-      conversationId: selectedConversation.id,
-      senderId: currentSenderId,
-      senderType: isCreatorView ? "creator" : "brand",
-      content: newMessage.trim(),
-      type: "text",
-      isRead: false,
-      createdAt: new Date(),
-    };
-
-    setMessages((prev) => [...prev, newMsg]);
+    const messageText = newMessage.trim();
     setNewMessage("");
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    setIsSending(false);
+    try {
+      const createdMessage = await messagesService.sendMessage(
+        selectedConversation.id,
+        currentSenderId,
+        isCreatorView ? "creator" : "brand",
+        messageText,
+      );
+
+      setMessages((prev) => [...prev, createdMessage]);
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          conversation.id === selectedConversation.id
+            ? { ...conversation, lastMessage: createdMessage, updatedAt: createdMessage.createdAt }
+            : conversation,
+        ),
+      );
+    } catch (error) {
+      setNewMessage(messageText);
+      const message = error instanceof Error ? error.message : "Failed to send message";
+      toast.error(message);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -220,6 +260,9 @@ function MessagesPageContent() {
             {/* Conversations List */}
             <ScrollArea className="flex-1">
               <div className="divide-y divide-border">
+                {isLoadingConversations && (
+                  <div className="p-4 text-sm text-muted-foreground">Loading conversations...</div>
+                )}
                 {filteredConversations.map((conv) => {
                   const participant = getConversationParticipant(conv);
                   const previewTime = conv.lastMessage?.createdAt ?? conv.updatedAt;
@@ -349,6 +392,9 @@ function MessagesPageContent() {
               {/* Messages Area */}
               <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
                 <div className="space-y-4">
+                  {isLoadingMessages && (
+                    <div className="text-sm text-muted-foreground">Loading messages...</div>
+                  )}
                   {messages.map((message) => {
                     const isOwn = message.senderId === currentSenderId;
                     return (

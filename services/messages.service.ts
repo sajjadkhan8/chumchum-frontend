@@ -1,88 +1,148 @@
+import { apiClient } from '@/lib/api/client';
+import { mapBrand, mapConversation, mapCreator, mapMessage } from '@/lib/api/mappers';
 import type { Conversation, Message, QuickDealOffer } from '@/types';
-import { mockConversations, mockMessages, getConversationsByUserId, getMessagesByConversationId } from '@/data/messages';
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+interface BackendConversation {
+  id: string;
+  creatorId: string;
+  brandId: string;
+  readByCreator?: boolean;
+  readByBrand?: boolean;
+  lastMessage?: string;
+  updatedAt?: string;
+}
+
+interface BackendMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderType: string;
+  type: string;
+  content?: string;
+  isRead?: boolean;
+  offerDealType?: string;
+  offerAmount?: number;
+  offerBarterDetails?: string;
+  offerStatus?: string;
+  createdAt?: string;
+}
+
+const buildParticipantMaps = async (conversations: BackendConversation[]) => {
+  const creatorIds = [...new Set(conversations.map((conversation) => conversation.creatorId))];
+  const brandIds = [...new Set(conversations.map((conversation) => conversation.brandId))];
+
+  const [creatorResponses, brandResponses] = await Promise.all([
+    Promise.allSettled(creatorIds.map((id) => apiClient.get<unknown>(`/api/v1/creators/${id}`))),
+    Promise.allSettled(brandIds.map((id) => apiClient.get<unknown>(`/api/v1/brands/${id}`))),
+  ]);
+
+  const creators = creatorIds.reduce<Record<string, ReturnType<typeof mapCreator>>>((acc, id, index) => {
+    const value = creatorResponses[index];
+    if (value.status === 'fulfilled') {
+      acc[id] = mapCreator(value.value as never);
+    }
+    return acc;
+  }, {});
+
+  const brands = brandIds.reduce<Record<string, ReturnType<typeof mapBrand>>>((acc, id, index) => {
+    const value = brandResponses[index];
+    if (value.status === 'fulfilled') {
+      acc[id] = mapBrand(value.value as never);
+    }
+    return acc;
+  }, {});
+
+  return { creators, brands };
+};
 
 export const messagesService = {
-  async getConversations(userId: string, role: 'creator' | 'brand'): Promise<Conversation[]> {
-    await delay(500);
-    return getConversationsByUserId(userId, role);
+  async getConversations(_userId: string, _role: 'creator' | 'brand'): Promise<Conversation[]> {
+    const response = await apiClient.get<BackendConversation[]>('/api/v1/conversations');
+    const conversations = Array.isArray(response) ? response : [];
+    const { creators, brands } = await buildParticipantMaps(conversations);
+
+    return conversations.map((conversation) => mapConversation(conversation, creators, brands));
   },
 
   async getMessages(conversationId: string): Promise<Message[]> {
-    await delay(400);
-    return getMessagesByConversationId(conversationId);
+    const response = await apiClient.get<BackendMessage[]>(`/api/v1/conversations/${conversationId}/messages`);
+    return (Array.isArray(response) ? response : []).map((message) => mapMessage(message));
+  },
+
+  async createConversation(creatorId: string): Promise<Conversation> {
+    const response = await apiClient.post<BackendConversation>('/api/v1/conversations', { to: creatorId });
+    const { creators, brands } = await buildParticipantMaps([response]);
+    return mapConversation(response, creators, brands);
   },
 
   async sendMessage(
     conversationId: string,
-    senderId: string,
-    senderType: 'creator' | 'brand',
-    content: string
+    _senderId: string,
+    _senderType: 'creator' | 'brand',
+    content: string,
   ): Promise<Message> {
-    await delay(300);
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      conversationId,
-      senderId,
-      senderType,
+    const response = await apiClient.post<BackendMessage>(`/api/v1/conversations/${conversationId}/messages`, {
       content,
-      type: 'text',
-      isRead: false,
-      createdAt: new Date(),
-    };
-    mockMessages.push(newMessage);
-    
-    // Update conversation
-    const conv = mockConversations.find((c) => c.id === conversationId);
-    if (conv) {
-      conv.lastMessage = newMessage;
-      conv.updatedAt = new Date();
-    }
-    
-    return newMessage;
+    });
+
+    return mapMessage(response);
   },
 
   async sendOffer(
     conversationId: string,
-    senderId: string,
-    senderType: 'creator' | 'brand',
-    offer: QuickDealOffer
+    _senderId: string,
+    _senderType: 'creator' | 'brand',
+    offer: QuickDealOffer,
   ): Promise<Message> {
-    await delay(400);
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      conversationId,
-      senderId,
-      senderType,
-      content: '',
-      type: 'offer',
-      offer,
-      isRead: false,
-      createdAt: new Date(),
-    };
-    mockMessages.push(newMessage);
-    
-    // Update conversation
-    const conv = mockConversations.find((c) => c.id === conversationId);
-    if (conv) {
-      conv.lastMessage = newMessage;
-      conv.updatedAt = new Date();
-    }
-    
-    return newMessage;
+    const response = await apiClient.post<BackendMessage>(`/api/v1/conversations/${conversationId}/messages/offer`, {
+      content: offer.message,
+      offerDealType: offer.dealType.toUpperCase(),
+      offerAmount: offer.amount,
+      offerBarterDetails: offer.barterDetails,
+    });
+
+    return mapMessage(response);
+  },
+
+  async sendAttachment(conversationId: string, file: File): Promise<Message> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post<BackendMessage>(
+      `/api/v1/conversations/${conversationId}/messages/attachment`,
+      formData,
+    );
+
+    return mapMessage(response);
   },
 
   async markAsRead(conversationId: string): Promise<void> {
-    await delay(200);
-    const conv = mockConversations.find((c) => c.id === conversationId);
-    if (conv) {
-      conv.unreadCount = 0;
-    }
-    mockMessages
-      .filter((m) => m.conversationId === conversationId)
-      .forEach((m) => {
-        m.isRead = true;
-      });
+    await apiClient.patch(`/api/v1/conversations/${conversationId}/read`);
+  },
+
+  async createQuickDeal(payload: {
+    creatorId: string;
+    dealType: 'paid' | 'barter' | 'hybrid';
+    amount?: number;
+    barterDetails?: string;
+    barterCategory?: string;
+    estimatedBarterValue?: number;
+    creatorExpectation?: string;
+    message: string;
+  }): Promise<{ conversationId: string; messageId: string; offerId: string }> {
+    return apiClient.post('/api/v1/quick-deals', {
+      creatorId: payload.creatorId,
+      dealType: payload.dealType.toUpperCase(),
+      amount: payload.amount,
+      barterDetails: payload.barterDetails,
+      barterCategory: payload.barterCategory,
+      estimatedBarterValue: payload.estimatedBarterValue,
+      creatorExpectation: payload.creatorExpectation,
+      message: payload.message,
+    });
+  },
+
+  async respondToQuickDeal(offerId: string, action: 'accepted' | 'rejected') {
+    return apiClient.patch(`/api/v1/quick-deals/${offerId}/respond`, { action });
   },
 };

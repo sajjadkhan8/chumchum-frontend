@@ -240,7 +240,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     }));
   };
 
-  const submitPackage = () => {
+  const submitPackage = async () => {
     const tags = formData.tags
       .split(",")
       .map((tag) => tag.trim())
@@ -308,25 +308,30 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       },
     };
 
-    if (mode === "edit" && initialPackage) {
-      updatePackage(initialPackage.id, packagePayload);
-    } else {
-      createPackage(packagePayload);
-    }
+    try {
+      if (mode === "edit" && initialPackage) {
+        await updatePackage(initialPackage.id, packagePayload);
+      } else {
+        await createPackage(packagePayload);
+      }
 
-    if (mode === "create") {
-      localStorage.removeItem(DRAFT_KEY);
-      setHasSavedDraft(false);
-    }
+      if (mode === "create") {
+        localStorage.removeItem(DRAFT_KEY);
+        setHasSavedDraft(false);
+      }
 
-    toast.success(
-      mode === "edit"
-        ? "Package updated"
-        : formData.status === "draft"
-          ? "Package saved as draft"
-          : "Package published"
-    );
-    router.push("/creator/packages");
+      toast.success(
+        mode === "edit"
+          ? "Package updated"
+          : formData.status === "draft"
+            ? "Package saved as draft"
+            : "Package published"
+      );
+      router.push("/creator/packages");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save package';
+      toast.error(message);
+    }
   };
 
   return (

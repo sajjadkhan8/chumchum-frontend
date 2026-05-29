@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { CreatorPackageWizard } from "@/components/creator-package-wizard";
@@ -11,6 +12,14 @@ import { useCreatorPackagesStore } from "@/store/creator-packages-store";
 export default function EditCreatorPackagePage() {
   const params = useParams<{ id: string }>();
   const packages = useCreatorPackagesStore((state) => state.packages);
+  const fetchPackages = useCreatorPackagesStore((state) => state.fetchPackages);
+
+  useEffect(() => {
+    if (packages.length === 0) {
+      void fetchPackages();
+    }
+  }, [fetchPackages, packages.length]);
+
   const pkg = packages.find((item) => item.id === params.id);
 
   if (!pkg) {

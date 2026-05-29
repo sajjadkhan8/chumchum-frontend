@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,9 +12,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useFilterStore } from '@/store/filter-store';
-import { categories, cities, platforms, dealTypes, barterTypes, followerRanges, priceRanges } from '@/data/creators';
 import type { Platform, City, DealType, BarterType } from '@/types';
 import { cn } from '@/lib/utils';
+import { metadataService, defaultCreatorFilterMetadata, type CreatorFilterMetadata } from '@/services/metadata.service';
 
 interface FilterPanelProps {
   className?: string;
@@ -22,6 +23,16 @@ interface FilterPanelProps {
 
 export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
   const { filters, setFilters, resetFilters, isFilterPanelOpen, setFilterPanelOpen } = useFilterStore();
+  const [metadata, setMetadata] = useState<CreatorFilterMetadata>(defaultCreatorFilterMetadata);
+
+  useEffect(() => {
+    const loadMetadata = async () => {
+      const response = await metadataService.getCreatorFilterMetadata();
+      setMetadata(response);
+    };
+
+    void loadMetadata();
+  }, []);
 
   const activeFilterCount = [
     filters.categories?.length || 0,
@@ -66,7 +77,7 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
     <>
       <Section title="Categories" value="categories">
         <div className="flex flex-wrap gap-2">
-          {categories.map((category) => (
+          {metadata.categories.map((category) => (
             <Badge key={category} variant={filters.categories?.includes(category) ? 'default' : 'outline'} className="cursor-pointer transition-colors" onClick={() => toggleArrayFilter('categories', category)}>
               {category}
             </Badge>
@@ -76,7 +87,7 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
 
       <Section title="Platform" value="platforms">
         <div className="flex flex-wrap gap-2">
-          {platforms.map((platform) => (
+          {metadata.platforms.map((platform) => (
             <Badge key={platform} variant={filters.platforms?.includes(platform) ? 'default' : 'outline'} className="cursor-pointer capitalize transition-colors" onClick={() => toggleArrayFilter('platforms', platform as Platform)}>
               {platform}
             </Badge>
@@ -86,7 +97,7 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
 
       <Section title="City" value="cities">
         <div className="space-y-2">
-          {cities.map((city) => (
+          {metadata.cities.map((city) => (
             <div key={city} className="flex items-center space-x-2">
               <Checkbox id={`city-${city}`} checked={filters.cities?.includes(city)} onCheckedChange={() => toggleArrayFilter('cities', city as City)} />
               <Label htmlFor={`city-${city}`} className="cursor-pointer text-sm">{city}</Label>
@@ -97,7 +108,7 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
 
       <Section title="Pricing Type" value="dealTypes">
         <div className="flex flex-wrap gap-2">
-          {dealTypes.map((type) => (
+          {metadata.dealTypes.map((type) => (
             <Badge key={type.value} variant={filters.dealTypes?.includes(type.value) ? 'default' : 'outline'} className={cn('cursor-pointer transition-colors', type.value === 'barter' && filters.dealTypes?.includes(type.value) && 'bg-accent text-accent-foreground')} onClick={() => toggleArrayFilter('dealTypes', type.value as DealType)}>
               {type.value === 'barter' && '🎁 '}
               {type.value === 'hybrid' && '💰🎁 '}
@@ -110,7 +121,7 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
       {(filters.dealTypes?.includes('barter') || filters.dealTypes?.includes('hybrid')) && (
         <Section title="Barter Type" value="barterTypes">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-wrap gap-2">
-            {barterTypes.map((type) => (
+            {metadata.barterTypes.map((type) => (
               <Badge key={type.value} variant={filters.barterTypes?.includes(type.value) ? 'default' : 'outline'} className="cursor-pointer transition-colors" onClick={() => toggleArrayFilter('barterTypes', type.value as BarterType)}>
                 {type.label}
               </Badge>
@@ -121,7 +132,7 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
 
       <Section title="Followers" value="followers">
         <div className="space-y-2">
-          {followerRanges.map((range) => (
+          {metadata.followerRanges.map((range) => (
             <div key={range.label} className="flex items-center space-x-2">
               <Checkbox id={`followers-${range.label}`} checked={filters.minFollowers === range.min && filters.maxFollowers === range.max} onCheckedChange={(checked) => checked ? setFilters({ minFollowers: range.min, maxFollowers: range.max }) : setFilters({ minFollowers: undefined, maxFollowers: undefined })} />
               <Label htmlFor={`followers-${range.label}`} className="cursor-pointer text-sm">{range.label}</Label>
@@ -142,7 +153,7 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
 
       <Section title="Budget" value="budget">
         <div className="space-y-2">
-          {priceRanges.map((range) => (
+          {metadata.priceRanges.map((range) => (
             <div key={range.label} className="flex items-center space-x-2">
               <Checkbox id={`price-${range.label}`} checked={filters.minPrice === range.min && filters.maxPrice === range.max} onCheckedChange={(checked) => checked ? setFilters({ minPrice: range.min, maxPrice: range.max }) : setFilters({ minPrice: undefined, maxPrice: undefined })} />
               <Label htmlFor={`price-${range.label}`} className="cursor-pointer text-sm">{range.label}</Label>

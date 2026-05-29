@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -31,7 +32,8 @@ import { formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { AmbassadorTierBadge } from "@/components/ambassador-score-display";
 import { calculateCreatorAmbassadorMetrics } from "@/lib/ambassador-scoring";
-import { creators } from "@/data/creators";
+import { creatorsService } from "@/services/creators.service";
+import type { Creator } from "@/types";
 
 const mockStats = {
   totalEarnings: 485000,
@@ -181,10 +183,46 @@ const getStatusIcon = (status: string) => {
 
 export default function CreatorDashboardPage() {
   const { user } = useAuthStore();
+  const [creatorProfile, setCreatorProfile] = useState<Creator | null>(null);
   const isActiveAmbassador = user?.creatorProgramStatus === "active_ambassador" || user?.email === "ambassador@test.com";
 
-  const primaryCreator =
-    creators.find((creator) => creator.username === "saraaesthetix") || creators[0];
+  useEffect(() => {
+    const loadCreator = async () => {
+      const profile = await creatorsService.getMe().catch(() => null);
+      setCreatorProfile(profile);
+    };
+
+    void loadCreator();
+  }, []);
+
+  const primaryCreator = useMemo<Creator>(() => {
+    if (creatorProfile) return creatorProfile;
+
+    return {
+      id: user?.id || 'unknown-creator',
+      userId: user?.id || 'unknown-user',
+      username: user?.email?.split('@')[0] || 'creator',
+      name: user?.name || 'Creator',
+      avatar: user?.avatar || '',
+      bio: '',
+      city: 'Riyadh',
+      categories: [],
+      platforms: [{ platform: 'instagram', followers: 0, engagementRate: 0, username: 'creator' }],
+      totalFollowers: 0,
+      avgEngagementRate: 0,
+      dealTypes: ['paid'],
+      responseTime: 'Within 24 hours',
+      isVerified: false,
+      isTrending: false,
+      isFastResponder: false,
+      rating: 0,
+      totalReviews: 0,
+      completedDeals: 0,
+      contentPreviews: [],
+      createdAt: new Date(),
+    };
+  }, [creatorProfile, user]);
+
   const ambassadorMetrics = calculateCreatorAmbassadorMetrics(primaryCreator);
 
   const activeStats = isActiveAmbassador ? ambassadorStats : mockStats;

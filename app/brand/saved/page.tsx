@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -17,19 +17,37 @@ import {
 } from "@/components/ui/select";
 import { CreatorCard } from "@/components/creator-card";
 import { EmptyState } from "@/components/empty-state";
-import { creators } from "@/data/creators";
 import { useAuthStore } from "@/store/auth-store";
+import { creatorsService } from "@/services/creators.service";
+import type { Creator } from "@/types";
 
 export default function BrandSavedPage() {
   const router = useRouter();
   const { savedCreators } = useAuthStore();
+  const [savedCreatorProfiles, setSavedCreatorProfiles] = useState<Creator[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("recent");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const savedCreatorsList = creators.filter((c) =>
-    savedCreators.includes(c.id)
-  );
+  useEffect(() => {
+    const fetchSavedProfiles = async () => {
+      if (savedCreators.length === 0) {
+        setSavedCreatorProfiles([]);
+        return;
+      }
+
+      const results = await Promise.allSettled(savedCreators.map((id) => creatorsService.getById(id)));
+      const creators = results
+        .map((result) => (result.status === 'fulfilled' ? result.value : null))
+        .filter((creator): creator is Creator => Boolean(creator));
+
+      setSavedCreatorProfiles(creators);
+    };
+
+    void fetchSavedProfiles();
+  }, [savedCreators]);
+
+  const savedCreatorsList = savedCreatorProfiles;
 
   const filteredCreators = savedCreatorsList.filter((creator) =>
     creator.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

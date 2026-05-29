@@ -1,30 +1,28 @@
 import { create } from 'zustand';
-import type { AmbassadorApplication } from '@/types';
-import { ambassadorApplications } from '@/data/ambassadors';
+import type { AmbassadorApplication, AmbassadorApplicationStatus } from '@/types';
+import { ambassadorService } from '@/services/ambassador.service';
 
 interface AmbassadorStore {
   applications: AmbassadorApplication[];
   loading: boolean;
   error: string | null;
 
-  // Actions
-  fetchApplications: () => void;
+  fetchApplications: () => Promise<void>;
   submitApplication: (creatorId: string) => Promise<void>;
   getApplicationStatus: (creatorId: string) => AmbassadorApplication | undefined;
-  updateApplicationStatus: (appId: string, status: any) => void;
+  updateApplicationStatus: (appId: string, status: AmbassadorApplicationStatus) => void;
 }
 
-export const useAmbassadorStore = create<AmbassadorStore>((set) => ({
-  applications: ambassadorApplications,
+export const useAmbassadorStore = create<AmbassadorStore>()((set, get) => ({
+  applications: [],
   loading: false,
   error: null,
 
   fetchApplications: async () => {
     set({ loading: true });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      set({ applications: ambassadorApplications, error: null });
+      const application = await ambassadorService.getMyApplication();
+      set({ applications: application ? [application] : [], error: null });
     } catch (err) {
       set({ error: (err as Error).message });
     } finally {
@@ -32,45 +30,27 @@ export const useAmbassadorStore = create<AmbassadorStore>((set) => ({
     }
   },
 
-  submitApplication: async (creatorId: string) => {
+  submitApplication: async (_creatorId: string) => {
     set({ loading: true });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const newApplication: AmbassadorApplication = {
-        id: `app-${Date.now()}`,
-        creatorId,
-        creator: null as any, // Would be fetched from API
-        status: 'submitted',
-        submittedAt: new Date(),
-        updatedAt: new Date(),
-        verificationSteps: {
-          identityVerified: false,
-          engagementVerified: false,
-          contentReviewPassed: false,
-          backgroundCheckPassed: false,
-        },
-        notes: 'Application submitted. Awaiting review by our team.',
-      };
-
-      set((state) => ({
-        applications: [...state.applications, newApplication],
+      const created = await ambassadorService.submitApplication();
+      set({
+        applications: [created, ...get().applications.filter((item) => item.id !== created.id)],
         error: null,
-      }));
+      });
     } catch (err) {
       set({ error: (err as Error).message });
+      throw err;
     } finally {
       set({ loading: false });
     }
   },
 
-  getApplicationStatus: (creatorId: string) => {
-    const state = useAmbassadorStore.getState();
-    return state.applications.find((app) => app.creatorId === creatorId);
+  getApplicationStatus: (creatorId: string): AmbassadorApplication | undefined => {
+    return get().applications.find((app) => app.creatorId === creatorId);
   },
 
-  updateApplicationStatus: (appId: string, status: any) => {
+  updateApplicationStatus: (appId: string, status: AmbassadorApplicationStatus) => {
     set((state) => ({
       applications: state.applications.map((app) =>
         app.id === appId ? { ...app, status, updatedAt: new Date() } : app
@@ -78,4 +58,3 @@ export const useAmbassadorStore = create<AmbassadorStore>((set) => ({
     }));
   },
 }));
-

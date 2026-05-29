@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Clock, AlertCircle, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,26 +10,36 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BottomNav } from '@/components/bottom-nav';
 import { AmbassadorEligibilityChecker } from '@/components/ambassador-eligibility-checker';
 import { AmbassadorDetailedCard } from '@/components/ambassador-detailed-card';
-import { ambassadorBenefits, ambassadorApplications } from '@/data/ambassadors';
-import { creators } from '@/data/creators';
 import { useAuthStore } from '@/store/auth-store';
 import { useAmbassadorStore } from '@/store/ambassador-store';
-import { useRouter } from 'next/navigation';
+import { ambassadorService, type AmbassadorBenefit } from '@/services/ambassador.service';
+import { creatorsService } from '@/services/creators.service';
+import type { Creator } from '@/types';
 import Link from 'next/link';
 
 export default function AmbassadorProgramPage() {
-  const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
-  const { submitApplication, getApplicationStatus, loading } = useAmbassadorStore();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { fetchApplications, submitApplication, getApplicationStatus, loading } = useAmbassadorStore();
+  useEffect(() => {
+    void fetchApplications();
+  }, [fetchApplications]);
 
-  // Mock persona mapping for demo accounts
-  const currentCreator =
-    user?.role === 'creator'
-      ? user?.creatorProgramStatus === 'active_ambassador' || user?.email === 'ambassador@test.com'
-        ? creators[1]
-        : creators[0]
-      : null;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentCreator, setCurrentCreator] = useState<Creator | null>(null);
+  const [benefits, setBenefits] = useState<AmbassadorBenefit[]>([]);
+
+  useEffect(() => {
+    const loadPageData = async () => {
+      const [creator, benefitList] = await Promise.all([
+        creatorsService.getMe().catch(() => null),
+        ambassadorService.getBenefits(),
+      ]);
+      setCurrentCreator(creator);
+      setBenefits(benefitList);
+    };
+
+    void loadPageData();
+  }, []);
 
   const resolvedApplicationStatus = currentCreator ? getApplicationStatus(currentCreator.id) : null;
   const applicationStatus =
@@ -231,7 +241,7 @@ export default function AmbassadorProgramPage() {
           >
             <h2 className="mb-8 text-3xl font-bold">Program Benefits</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {ambassadorBenefits.map((benefit, idx) => (
+              {benefits.map((benefit, idx) => (
                 <Card
                   key={idx}
                   className="border-border/50 transition-shadow hover:shadow-lg"
@@ -388,9 +398,3 @@ export default function AmbassadorProgramPage() {
     </>
   );
 }
-
-// Helper function
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ');
-}
-

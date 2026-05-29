@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -10,9 +10,6 @@ import {
   DollarSign,
   TrendingUp,
   MessageCircle,
-  Clock,
-  CheckCircle,
-  AlertCircle,
   ArrowRight,
   Star,
 } from "lucide-react";
@@ -23,11 +20,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { StatsCard } from "@/components/stats-card";
 import { CreatorCard } from "@/components/creator-card";
-import { creators } from "@/data/creators";
 import { formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
+import { creatorsService } from "@/services/creators.service";
+import { ordersService } from "@/services/orders.service";
+import { apiClient } from "@/lib/api/client";
+import type { Creator, Order } from "@/types";
 
-const mockStats = {
+const defaultStats = {
   totalSpent: 785000,
   spentChange: 18.3,
   activeOrders: 5,
@@ -35,40 +35,10 @@ const mockStats = {
   creatorsWorkedWith: 23,
   creatorsChange: 4,
   avgRating: 4.8,
+  savedCreatorsCount: 0,
+  monthlyBudgetUsed: 785000,
+  monthlyBudgetLimit: 1000000,
 };
-
-const activeOrders = [
-  {
-    id: "1",
-    creatorName: "Ayesha Khan",
-    creatorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100",
-    packageName: "Instagram Story Pack",
-    amount: 25000,
-    status: "in_progress",
-    progress: 65,
-    deadline: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: "2",
-    creatorName: "Ahmed Raza",
-    creatorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
-    packageName: "YouTube Review",
-    amount: 45000,
-    status: "pending",
-    progress: 10,
-    deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: "3",
-    creatorName: "Sana Malik",
-    creatorAvatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100",
-    packageName: "Full Campaign",
-    amount: 120000,
-    status: "review",
-    progress: 90,
-    deadline: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-  },
-];
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -85,12 +55,53 @@ const getStatusColor = (status: string) => {
   }
 };
 
+const getOrderProgress = (status: string) => {
+  if (status === "completed") return 100;
+  if (status === "in_progress") return 65;
+  if (status === "pending") return 10;
+  if (status === "accepted") return 30;
+  if (status === "delivered") return 90;
+  return 50;
+};
+
 export default function BrandDashboardPage() {
-  const { user, savedCreators } = useAuthStore();
-  const recommendedCreators = creators.slice(0, 4);
-  const savedCreatorsList = creators.filter((c) =>
-    savedCreators.includes(c.id)
-  ).slice(0, 3);
+  const { savedCreators } = useAuthStore();
+  const [stats, setStats] = useState(defaultStats);
+  const [recommendedCreators, setRecommendedCreators] = useState<Creator[]>([]);
+  const [savedCreatorsList, setSavedCreatorsList] = useState<Creator[]>([]);
+  const [activeOrders, setActiveOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        const [analytics, orders, recommended] = await Promise.all([
+          apiClient.get<typeof defaultStats>("/api/v1/analytics/brand/dashboard"),
+          ordersService.getAll(),
+          creatorsService.getTrending(4),
+        ]);
+
+        setStats((prev) => ({ ...prev, ...analytics }));
+        setActiveOrders(orders.slice(0, 3));
+        setRecommendedCreators(recommended);
+      } catch {
+        // Keep default snapshot if API is unavailable.
+      }
+    };
+
+    void loadDashboard();
+  }, []);
+
+  useEffect(() => {
+    const loadSavedCreators = async () => {
+      const results = await Promise.allSettled(savedCreators.slice(0, 3).map((id) => creatorsService.getById(id)));
+      const creators = results
+        .map((item) => (item.status === "fulfilled" ? item.value : null))
+        .filter((item): item is Creator => Boolean(item));
+      setSavedCreatorsList(creators);
+    };
+
+    void loadSavedCreators();
+  }, [savedCreators]);
 
   return (
     <div className="container mx-auto p-4 pb-6 md:p-6">
@@ -116,28 +127,28 @@ export default function BrandDashboardPage() {
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Spent"
-          value={formatPrice(mockStats.totalSpent)}
-          change={mockStats.spentChange}
+          value={formatPrice(stats.totalSpent)}
+          change={stats.spentChange}
           icon={DollarSign}
           trend="up"
         />
         <StatsCard
           title="Active Campaigns"
-          value={mockStats.activeOrders.toString()}
-          change={mockStats.ordersChange}
+          value={stats.activeOrders.toString()}
+          change={stats.ordersChange}
           icon={Package}
           trend="up"
         />
         <StatsCard
           title="Creators Worked With"
-          value={mockStats.creatorsWorkedWith.toString()}
-          change={mockStats.creatorsChange}
+          value={stats.creatorsWorkedWith.toString()}
+          change={stats.creatorsChange}
           icon={Users}
           trend="up"
         />
         <StatsCard
           title="Avg. Rating Given"
-          value={mockStats.avgRating.toString()}
+          value={stats.avgRating.toString()}
           icon={Star}
         />
       </div>
@@ -165,39 +176,39 @@ export default function BrandDashboardPage() {
                     <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex min-w-0 items-center gap-3">
                         <Avatar className="h-10 w-10">
-                          <AvatarImage
-                            src={order.creatorAvatar}
-                            alt={order.creatorName}
-                          />
+                            <AvatarImage
+                                src={order.creator.avatar}
+                                alt={order.creator.name}
+                              />
                           <AvatarFallback>
-                            {getInitials(order.creatorName)}
+                            {getInitials(order.creator.name)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <p className="line-clamp-1 font-medium">{order.creatorName}</p>
+                          <p className="line-clamp-1 font-medium">{order.creator.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {order.packageName}
+                            {order.package.title}
                           </p>
                         </div>
                       </div>
                       <Badge
                         variant="secondary"
-                        className={`w-fit ${getStatusColor(order.status)}`}
+                         className={`w-fit ${getStatusColor(order.status)}`}
                       >
                         {order.status.replace("_", " ")}
                       </Badge>
                     </div>
                     <div className="mb-2 flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Progress</span>
-                      <span className="font-medium">{order.progress}%</span>
+                        <span className="font-medium">{getOrderProgress(String(order.status))}%</span>
                     </div>
-                    <Progress value={order.progress} className="h-2" />
+                    <Progress value={getOrderProgress(String(order.status))} className="h-2" />
                     <div className="mt-3 flex items-center justify-between gap-3">
                       <p className="text-sm text-muted-foreground">
-                        Due: {formatRelativeTime(order.deadline)}
+                        Due: {formatRelativeTime(order.deliveryDate || order.updatedAt)}
                       </p>
                       <p className="font-semibold text-primary">
-                        {formatPrice(order.amount)}
+                         {formatPrice(order.amount || 0)}
                       </p>
                     </div>
                   </motion.div>
@@ -358,14 +369,14 @@ export default function BrandDashboardPage() {
                   <div className="mb-2 flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Spent</span>
                     <span className="font-medium">
-                      {formatPrice(785000)} / {formatPrice(1000000)}
+                      {formatPrice(stats.monthlyBudgetUsed)} / {formatPrice(stats.monthlyBudgetLimit)}
                     </span>
                   </div>
-                  <Progress value={78.5} className="h-2" />
+                  <Progress value={stats.monthlyBudgetLimit ? (stats.monthlyBudgetUsed / stats.monthlyBudgetLimit) * 100 : 0} className="h-2" />
                 </div>
                 <p className="text-center text-sm text-muted-foreground">
                   <span className="font-medium text-primary">
-                    {formatPrice(215000)}
+                    {formatPrice(Math.max(stats.monthlyBudgetLimit - stats.monthlyBudgetUsed, 0))}
                   </span>{" "}
                   remaining this month
                 </p>

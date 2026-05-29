@@ -15,8 +15,8 @@ import { ZingZingLogo } from '@/src/components/ZingZingLogo';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, loginWithPhone, isLoading } = useAuthStore();
-  
+  const { login, loginWithPhone, requestOtp, isLoading } = useAuthStore();
+
   const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -44,8 +44,9 @@ export default function LoginPage() {
       } else {
         router.push('/brand/dashboard');
       }
-    } catch {
-      toast.error('Invalid credentials');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid credentials';
+      toast.error(message);
     }
   };
 
@@ -54,10 +55,15 @@ export default function LoginPage() {
       toast.error('Please enter your phone number');
       return;
     }
-    // Simulate OTP send
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setOtpSent(true);
-    toast.success('OTP sent to your phone');
+
+    try {
+      await requestOtp(phone);
+      setOtpSent(true);
+      toast.success('OTP sent to your phone');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to send OTP';
+      toast.error(message);
+    }
   };
 
   const handlePhoneLogin = async (e: React.FormEvent) => {
@@ -72,8 +78,9 @@ export default function LoginPage() {
       } else {
         router.push('/brand/dashboard');
       }
-    } catch {
-      toast.error('Invalid OTP');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid OTP';
+      toast.error(message);
     }
   };
 

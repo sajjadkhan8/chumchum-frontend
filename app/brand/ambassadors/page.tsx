@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Star, TrendingUp, Users, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,19 +8,40 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AmbassadorCard } from '@/components/ambassador-card';
 import { CreatorCard } from '@/components/creator-card';
-import { platformAmbassadors, ambassadorBenefits } from '@/data/ambassadors';
-import { creators } from '@/data/creators';
 import { BottomNav } from '@/components/bottom-nav';
+import { ambassadorService, type AmbassadorBenefit } from '@/services/ambassador.service';
+import { creatorsService } from '@/services/creators.service';
+import type { Creator, PlatformAmbassador } from '@/types';
 import Link from 'next/link';
 
 export default function AmbassadorsBrowsePage() {
   const [showAll, setShowAll] = useState(false);
-  const displayedAmbassadors = showAll ? platformAmbassadors : platformAmbassadors.slice(0, 3);
+  const [ambassadors, setAmbassadors] = useState<PlatformAmbassador[]>([]);
+  const [benefits, setBenefits] = useState<AmbassadorBenefit[]>([]);
+  const [independentCreators, setIndependentCreators] = useState<Creator[]>([]);
 
-  // Get independent creators (those not in ambassador list)
-  const independentCreators = creators.filter(
-    c => !platformAmbassadors.some(a => a.id === c.id)
-  ).slice(0, 6);
+  const displayedAmbassadors = useMemo(
+    () => (showAll ? ambassadors : ambassadors.slice(0, 3)),
+    [ambassadors, showAll],
+  );
+
+  useEffect(() => {
+    const loadData = async () => {
+      const [ambassadorList, creatorList, benefitList] = await Promise.all([
+        ambassadorService.listAmbassadors(24).catch(() => []),
+        creatorsService.getAll().catch(() => []),
+        ambassadorService.getBenefits(),
+      ]);
+
+      setAmbassadors(ambassadorList);
+      setBenefits(benefitList);
+
+      const ambassadorIds = new Set(ambassadorList.map((item) => item.id));
+      setIndependentCreators(creatorList.filter((creator) => !ambassadorIds.has(creator.id)).slice(0, 6));
+    };
+
+    void loadData();
+  }, []);
 
   return (
     <>
@@ -112,7 +133,7 @@ export default function AmbassadorsBrowsePage() {
               ))}
             </div>
 
-            {!showAll && platformAmbassadors.length > 3 && (
+            {!showAll && ambassadors.length > 3 && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -125,7 +146,7 @@ export default function AmbassadorsBrowsePage() {
                   className="rounded-full"
                   onClick={() => setShowAll(true)}
                 >
-                  View All {platformAmbassadors.length} Ambassadors
+                  View All {ambassadors.length} Ambassadors
                 </Button>
               </motion.div>
             )}
@@ -140,7 +161,7 @@ export default function AmbassadorsBrowsePage() {
           >
             <h2 className="mb-8 text-3xl font-bold">Why Choose Platform Ambassadors?</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {ambassadorBenefits.map((benefit, idx) => (
+              {benefits.map((benefit, idx) => (
                 <Card key={idx} className="border-border/50">
                   <CardContent className="p-6">
                     <div className="mb-3 text-4xl">{benefit.icon}</div>

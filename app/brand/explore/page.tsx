@@ -16,7 +16,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CreatorCard } from '@/components/creator-card';
-import { AmbassadorCard } from '@/components/ambassador-card';
 import { FilterPanel } from '@/components/filter-panel';
 import { QuickDealModal } from '@/components/quick-deal-modal';
 import { CreatorCardSkeleton } from '@/components/skeletons';
@@ -24,7 +23,6 @@ import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
 import { useFilterStore } from '@/store/filter-store';
 import { creatorsService } from '@/services/creators.service';
-import { platformAmbassadors } from '@/data/ambassadors';
 import type { Creator, DealType } from '@/types';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';

@@ -1,13 +1,35 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Check, X, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { Creator } from '@/types';
-import { ambassadorEligibilityRequirements } from '@/data/ambassadors';
 import { formatFollowers } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { ambassadorService } from '@/services/ambassador.service';
+
+interface EligibilityRequirements {
+  minFollowers: number;
+  minEngagementRate: number;
+  minRating: number;
+  minCompletedDeals: number;
+  verificationSteps: string[];
+}
+
+const defaultRequirements: EligibilityRequirements = {
+  minFollowers: 100000,
+  minEngagementRate: 5,
+  minRating: 4.5,
+  minCompletedDeals: 30,
+  verificationSteps: [
+    'Identity & Residence Verification (KSA ID/Iqama)',
+    'Engagement Metrics Verification',
+    'Content Quality & Brand Safety Review',
+    'Background & Compliance Check',
+  ],
+};
 
 interface AmbassadorEligibilityCheckerProps {
   creator: Creator;
@@ -15,7 +37,16 @@ interface AmbassadorEligibilityCheckerProps {
 }
 
 export function AmbassadorEligibilityChecker({ creator, className }: AmbassadorEligibilityCheckerProps) {
-  const reqs = ambassadorEligibilityRequirements;
+  const [reqs, setReqs] = useState<EligibilityRequirements>(defaultRequirements);
+
+  useEffect(() => {
+    const loadRequirements = async () => {
+      const response = await ambassadorService.getEligibilityRequirements();
+      setReqs(response);
+    };
+
+    void loadRequirements();
+  }, []);
 
   const meetsFollowersRequirement = creator.totalFollowers >= reqs.minFollowers;
   const meetsEngagementRequirement = creator.avgEngagementRate >= reqs.minEngagementRate;

@@ -11,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/store/auth-store';
 import type { UserRole } from '@/types';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 import { ZingZingLogo } from '@/src/components/ZingZingLogo';
 
 export default function SignupPage() {
@@ -60,8 +59,9 @@ export default function SignupPage() {
       } else {
         router.push('/brand/dashboard');
       }
-    } catch {
-      toast.error('Something went wrong. Please try again.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+      toast.error(message);
     }
   };
 

@@ -1,4 +1,8 @@
+export { authService } from './auth.service';
+export { ambassadorService } from './ambassador.service';
 export { creatorsService } from './creators.service';
 export { packagesService } from './packages.service';
 export { ordersService } from './orders.service';
 export { messagesService } from './messages.service';
+export { metadataService } from './metadata.service';
+export { reviewsService } from './reviews.service';

@@ -1,77 +1,156 @@
+import { apiClient } from '@/lib/api/client';
+import { mapBrand, mapCreator, mapOrder, mapPackage } from '@/lib/api/mappers';
 import type { Order, OrderStatus } from '@/types';
-import { mockCreators } from '@/data/creators';
-import { mockBrands } from '@/data/brands';
-import { mockPackages } from '@/data/packages';
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+interface DeliverableResponse {
+  id: string;
+  order_id: string;
+  name: string;
+  status: string;
+  file_url?: string;
+  submitted_at?: string;
+  created_at?: string;
+}
 
-// Generate mock orders
-const generateMockOrders = (): Order[] => {
-  const statuses: OrderStatus[] = ['pending', 'accepted', 'in_progress', 'delivered', 'completed'];
-  const orders: Order[] = [];
+interface BackendOrderResponse {
+  id: string;
+  packageId: string;
+  packageTitle?: string;
+  creatorId: string;
+  creatorName?: string;
+  brandId: string;
+  brandName?: string;
+  dealType?: string;
+  amount?: number;
+  barterDetails?: string;
+  message?: string;
+  status?: string;
+  progress?: number;
+  deliveryDate?: string;
+  createdAt?: string;
+}
 
-  for (let i = 1; i <= 8; i++) {
-    const pkg = mockPackages[i % mockPackages.length];
-    const creator = mockCreators.find((c) => c.id === pkg.creatorId)!;
-    const brand = mockBrands[i % mockBrands.length];
+interface BackendDeliverableResponse {
+  id: string;
+  order_id: string;
+  name: string;
+  status: string;
+  file_url?: string;
+  submitted_at?: string;
+  created_at?: string;
+}
 
-    orders.push({
-      id: `order-${i}`,
-      packageId: pkg.id,
-      package: pkg,
-      creatorId: creator.id,
-      creator,
-      brandId: brand.id,
-      brand,
-      dealType: pkg.dealType,
-      amount: pkg.price || undefined,
-      barterDetails: pkg.barterValue,
-      message: `Looking forward to working with you on this ${pkg.dealType} deal!`,
-      status: statuses[i % statuses.length],
-      createdAt: new Date(Date.now() - i * 86400000 * 2),
-      updatedAt: new Date(Date.now() - i * 86400000),
-      deliveryDate: new Date(Date.now() + pkg.deliveryDays * 86400000),
-    });
-  }
+const mapDeliverable = (payload: BackendDeliverableResponse): DeliverableResponse => ({
+  id: payload.id,
+  order_id: payload.order_id,
+  name: payload.name,
+  status: payload.status,
+  file_url: payload.file_url,
+  submitted_at: payload.submitted_at,
+  created_at: payload.created_at,
+});
 
-  return orders;
+const enrichOrders = async (orders: BackendOrderResponse[]): Promise<Order[]> => {
+  const uniqueCreatorIds = [...new Set(orders.map((order) => order.creatorId).filter(Boolean))];
+  const uniqueBrandIds = [...new Set(orders.map((order) => order.brandId).filter(Boolean))];
+  const uniquePackageIds = [...new Set(orders.map((order) => order.packageId).filter(Boolean))];
+
+  const [creators, brands, packages] = await Promise.all([
+    Promise.allSettled(uniqueCreatorIds.map((id) => apiClient.get<unknown>(`/api/v1/creators/${id}`))),
+    Promise.allSettled(uniqueBrandIds.map((id) => apiClient.get<unknown>(`/api/v1/brands/${id}`))),
+    Promise.allSettled(uniquePackageIds.map((id) => apiClient.get<unknown>(`/api/v1/packages/${id}`))),
+  ]);
+
+  const creatorMap = uniqueCreatorIds.reduce<Record<string, ReturnType<typeof mapCreator>>>((acc, id, index) => {
+    const result = creators[index];
+    if (result.status === 'fulfilled') {
+      acc[id] = mapCreator(result.value as never);
+    }
+    return acc;
+  }, {});
+
+  const brandMap = uniqueBrandIds.reduce<Record<string, ReturnType<typeof mapBrand>>>((acc, id, index) => {
+    const result = brands[index];
+    if (result.status === 'fulfilled') {
+      acc[id] = mapBrand(result.value as never);
+    }
+    return acc;
+  }, {});
+
+  const packageMap = uniquePackageIds.reduce<Record<string, ReturnType<typeof mapPackage>>>((acc, id, index) => {
+    const result = packages[index];
+    if (result.status === 'fulfilled') {
+      acc[id] = mapPackage(result.value as never);
+    }
+    return acc;
+  }, {});
+
+  return orders.map((order) => mapOrder(order, packageMap, creatorMap, brandMap));
 };
 
-const mockOrders = generateMockOrders();
-
 export const ordersService = {
-  async getAll(): Promise<Order[]> {
-    await delay(600);
-    return mockOrders;
+  async getAll(filters?: { status?: OrderStatus; search?: string }): Promise<Order[]> {
+    const response = await apiClient.get<BackendOrderResponse[] | { orders?: BackendOrderResponse[] }>('/api/v1/orders', {
+      query: {
+        status: filters?.status,
+        search: filters?.search,
+      },
+    });
+
+    const orders = Array.isArray(response) ? response : response.orders || [];
+    return enrichOrders(orders);
   },
 
   async getById(id: string): Promise<Order | null> {
-    await delay(300);
-    return mockOrders.find((order) => order.id === id) || null;
+    const response = await apiClient.get<BackendOrderResponse>(`/api/v1/orders/${id}`);
+    const orders = await enrichOrders(response ? [response] : []);
+    return orders[0] || null;
   },
 
   async getByCreatorId(creatorId: string): Promise<Order[]> {
-    await delay(500);
-    return mockOrders.filter((order) => order.creatorId === creatorId);
+    const orders = await this.getAll();
+    return orders.filter((order) => order.creatorId === creatorId);
   },
 
   async getByBrandId(brandId: string): Promise<Order[]> {
-    await delay(500);
-    return mockOrders.filter((order) => order.brandId === brandId);
+    const orders = await this.getAll();
+    return orders.filter((order) => order.brandId === brandId);
   },
 
   async getByStatus(status: OrderStatus): Promise<Order[]> {
-    await delay(400);
-    return mockOrders.filter((order) => order.status === status);
+    return this.getAll({ status });
   },
 
   async updateStatus(orderId: string, status: OrderStatus): Promise<Order | null> {
-    await delay(300);
-    const order = mockOrders.find((o) => o.id === orderId);
-    if (order) {
-      order.status = status;
-      order.updatedAt = new Date();
-    }
-    return order || null;
+    const response = await apiClient.patch<BackendOrderResponse>(`/api/v1/orders/${orderId}/status`, {
+      status: status.toUpperCase(),
+    });
+
+    const enriched = await enrichOrders(response ? [response] : []);
+    return enriched[0] || null;
+  },
+
+  async updateProgress(orderId: string, progress: number): Promise<Order | null> {
+    const response = await apiClient.patch<BackendOrderResponse>(`/api/v1/orders/${orderId}/progress`, { progress });
+    const enriched = await enrichOrders(response ? [response] : []);
+    return enriched[0] || null;
+  },
+
+  async submitDeliverable(orderId: string, deliverableId: string, payload: Record<string, string>) {
+    const response = await apiClient.post<BackendDeliverableResponse>(
+      `/api/v1/orders/${orderId}/deliverables/${deliverableId}/submit`,
+      payload,
+    );
+
+    return mapDeliverable(response);
+  },
+
+  async updateDeliverableStatus(orderId: string, deliverableId: string, status: string) {
+    const response = await apiClient.patch<BackendDeliverableResponse>(
+      `/api/v1/orders/${orderId}/deliverables/${deliverableId}/status`,
+      { status },
+    );
+
+    return mapDeliverable(response);
   },
 };

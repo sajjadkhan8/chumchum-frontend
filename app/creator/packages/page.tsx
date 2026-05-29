@@ -67,10 +67,11 @@ const platformOptions = [
 function CreatorPackagesPageContent() {
   const searchParams = useSearchParams();
   const packages = useCreatorPackagesStore((state) => state.packages);
+  const isLoading = useCreatorPackagesStore((state) => state.isLoading);
+  const fetchPackages = useCreatorPackagesStore((state) => state.fetchPackages);
   const duplicatePackage = useCreatorPackagesStore((state) => state.duplicatePackage);
   const archivePackage = useCreatorPackagesStore((state) => state.archivePackage);
   const togglePausePackage = useCreatorPackagesStore((state) => state.togglePausePackage);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<PackageStatus | "all">("all");
   const [dealType, setDealType] = useState<"all" | "paid" | "barter" | "hybrid">("all");
@@ -80,9 +81,8 @@ function CreatorPackagesPageContent() {
   const [sortBy, setSortBy] = useState<"recent" | "views" | "conversion" | "orders">("recent");
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
+    void fetchPackages();
+  }, [fetchPackages]);
 
   useEffect(() => {
     const statusParam = searchParams.get("status");
@@ -192,19 +192,34 @@ function CreatorPackagesPageContent() {
             ? "bg-slate-100 text-slate-700"
             : "bg-blue-100 text-blue-700";
 
-  const handleDuplicate = (pkg: CreatorPackage) => {
-    duplicatePackage(pkg.id);
-    toast.success("Package duplicated as draft");
+  const handleDuplicate = async (pkg: CreatorPackage) => {
+    try {
+      await duplicatePackage(pkg.id);
+      toast.success("Package duplicated as draft");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to duplicate package';
+      toast.error(message);
+    }
   };
 
-  const handleArchive = (id: string) => {
-    archivePackage(id);
-    toast.success("Package moved to archive");
+  const handleArchive = async (id: string) => {
+    try {
+      await archivePackage(id);
+      toast.success("Package moved to archive");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to archive package';
+      toast.error(message);
+    }
   };
 
-  const handlePauseResume = (pkg: CreatorPackage) => {
-    togglePausePackage(pkg.id);
-    toast.success(pkg.status === "paused" ? "Package resumed" : "Package paused");
+  const handlePauseResume = async (pkg: CreatorPackage) => {
+    try {
+      await togglePausePackage(pkg.id);
+      toast.success(pkg.status === "paused" ? "Package resumed" : "Package paused");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update package status';
+      toast.error(message);
+    }
   };
 
   return (

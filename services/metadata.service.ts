@@ -1,0 +1,104 @@
+import { apiClient } from '@/lib/api/client';
+import type { BarterType, City, DealType, Platform } from '@/types';
+
+export interface RangeOption {
+  min: number;
+  max: number;
+  label: string;
+}
+
+export interface LabeledValueOption<T extends string> {
+  value: T;
+  label: string;
+}
+
+export interface CreatorFilterMetadata {
+  categories: string[];
+  cities: City[];
+  platforms: Platform[];
+  dealTypes: LabeledValueOption<DealType>[];
+  barterTypes: LabeledValueOption<BarterType>[];
+  followerRanges: RangeOption[];
+  priceRanges: RangeOption[];
+}
+
+export const defaultCreatorFilterMetadata: CreatorFilterMetadata = {
+  categories: [
+    'Food',
+    'Fashion',
+    'Beauty',
+    'Tech',
+    'Gaming',
+    'Travel',
+    'Fitness',
+    'Health',
+    'Lifestyle',
+    'Comedy',
+    'Entertainment',
+    'Education',
+    'Parenting',
+    'Automotive',
+    'Cooking',
+    'Vlogging',
+    'Reviews',
+  ],
+  cities: ['Riyadh', 'Jeddah', 'Dammam', 'Mecca', 'Medina', 'Khobar', 'Tabuk'],
+  platforms: ['instagram', 'tiktok', 'youtube', 'facebook'],
+  dealTypes: [
+    { value: 'paid', label: 'Paid' },
+    { value: 'barter', label: 'Barter' },
+    { value: 'hybrid', label: 'Hybrid' },
+  ],
+  barterTypes: [
+    { value: 'food', label: 'Food & Dining' },
+    { value: 'hotel', label: 'Hotels & Stays' },
+    { value: 'salon', label: 'Salon & Spa' },
+    { value: 'events', label: 'Events & Tickets' },
+    { value: 'products', label: 'Products' },
+  ],
+  followerRanges: [
+    { min: 0, max: 10000, label: 'Nano (0-10K)' },
+    { min: 10000, max: 50000, label: 'Micro (10K-50K)' },
+    { min: 50000, max: 500000, label: 'Mid-tier (50K-500K)' },
+    { min: 500000, max: 1000000, label: 'Macro (500K-1M)' },
+    { min: 1000000, max: Number.MAX_SAFE_INTEGER, label: 'Mega (1M+)' },
+  ],
+  priceRanges: [
+    { min: 0, max: 25000, label: 'Under SAR 25,000' },
+    { min: 25000, max: 50000, label: 'SAR 25,000 - 50,000' },
+    { min: 50000, max: 100000, label: 'SAR 50,000 - 100,000' },
+    { min: 100000, max: 250000, label: 'SAR 100,000 - 250,000' },
+    { min: 250000, max: Number.MAX_SAFE_INTEGER, label: 'SAR 250,000+' },
+  ],
+};
+
+const normalizeMetadata = (payload: Partial<CreatorFilterMetadata> | null | undefined): CreatorFilterMetadata => ({
+  categories: payload?.categories?.length ? payload.categories : defaultCreatorFilterMetadata.categories,
+  cities: payload?.cities?.length ? payload.cities : defaultCreatorFilterMetadata.cities,
+  platforms: payload?.platforms?.length ? payload.platforms : defaultCreatorFilterMetadata.platforms,
+  dealTypes: payload?.dealTypes?.length ? payload.dealTypes : defaultCreatorFilterMetadata.dealTypes,
+  barterTypes: payload?.barterTypes?.length ? payload.barterTypes : defaultCreatorFilterMetadata.barterTypes,
+  followerRanges: payload?.followerRanges?.length ? payload.followerRanges : defaultCreatorFilterMetadata.followerRanges,
+  priceRanges: payload?.priceRanges?.length ? payload.priceRanges : defaultCreatorFilterMetadata.priceRanges,
+});
+
+export const metadataService = {
+  async getCreatorFilterMetadata(): Promise<CreatorFilterMetadata> {
+    const endpoints = ['/api/v1/creators/metadata', '/api/v1/creators/filters', '/api/v1/metadata/creators'];
+
+    for (const endpoint of endpoints) {
+      try {
+        const response = await apiClient.get<Partial<CreatorFilterMetadata> | { data?: Partial<CreatorFilterMetadata> }>(endpoint, {
+          auth: false,
+        });
+        const payload = (response as { data?: Partial<CreatorFilterMetadata> })?.data || (response as Partial<CreatorFilterMetadata>);
+        return normalizeMetadata(payload);
+      } catch {
+        // Try the next endpoint before falling back to defaults.
+      }
+    }
+
+    return defaultCreatorFilterMetadata;
+  },
+};
+

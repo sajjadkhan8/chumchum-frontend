@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -33,11 +33,12 @@ import { Separator } from "@/components/ui/separator";
 import { PackageCard } from "@/components/package-card";
 import { ReviewCard } from "@/components/review-card";
 import { QuickDealModal } from "@/components/quick-deal-modal";
-import { creators } from "@/data/creators";
-import { packages } from "@/data/packages";
-import { reviews } from "@/data/reviews";
 import { formatFollowers, formatPrice, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
+import { creatorsService } from "@/services/creators.service";
+import { packagesService } from "@/services/packages.service";
+import { reviewsService } from "@/services/reviews.service";
+import type { Creator, Package as CreatorListPackage, Review } from "@/types";
 
 const platformIcons: Record<string, React.ElementType> = {
   instagram: Instagram,
@@ -54,15 +55,50 @@ export default function CreatorProfilePage({
   const { user, savedCreators, toggleSavedCreator } = useAuthStore();
   const [activeTab, setActiveTab] = useState("packages");
   const [quickDealOpen, setQuickDealOpen] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+  const [creator, setCreator] = useState<Creator | null>(null);
+  const [creatorPackages, setCreatorPackages] = useState<CreatorListPackage[]>([]);
+  const [creatorReviews, setCreatorReviews] = useState<Review[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const creator = creators.find((c) => c.id === id || c.username === id);
-  const creatorPackages = creator
-    ? packages.filter((p) => p.creatorId === creator.id)
-    : [];
-  const creatorReviews = creator
-    ? reviews.filter((r) => r.creatorId === creator.id)
-    : [];
+  useEffect(() => {
+    const loadCreatorProfile = async () => {
+      setIsLoading(true);
+      try {
+        const foundCreator =
+          (await creatorsService.getById(id)) ||
+          (await creatorsService.getByUsername(id));
+
+        if (!foundCreator) {
+          setCreator(null);
+          setCreatorPackages([]);
+          setCreatorReviews([]);
+          return;
+        }
+
+        setCreator(foundCreator);
+
+        const [packagesResponse, reviewsResponse] = await Promise.all([
+          packagesService.getByCreatorId(foundCreator.id),
+          reviewsService.getByCreatorId(foundCreator.id),
+        ]);
+
+        setCreatorPackages(packagesResponse);
+        setCreatorReviews(reviewsResponse);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadCreatorProfile();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">Loading creator profile...</p>
+      </div>
+    );
+  }
 
   if (!creator) {
     return (
@@ -102,8 +138,7 @@ export default function CreatorProfilePage({
   const completionRate = Math.min(99, Math.round((creator.completedDeals / (creator.completedDeals + 5)) * 100));
   const repeatClients = Math.max(3, Math.round(creator.completedDeals * 0.24));
 
-  const handleBookPackage = (packageId: string) => {
-    setSelectedPackage(packageId);
+  const handleBookPackage = (_packageId: string) => {
     setQuickDealOpen(true);
   };
 

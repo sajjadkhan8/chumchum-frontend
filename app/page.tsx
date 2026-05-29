@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,9 +27,9 @@ import { Navbar } from "@/components/navbar";
 import { BottomNav } from "@/components/bottom-nav";
 import { CreatorCard } from "@/components/creator-card";
 import { ZingZingLogo } from "@/src/components/ZingZingLogo";
-import { creators } from "@/data/creators";
-import { formatFollowers } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
+import { creatorsService } from "@/services/creators.service";
+import type { Creator } from "@/types";
 
 const categories = [
   { id: "fashion", name: "Fashion", icon: "👗", count: 245 },
@@ -51,13 +51,33 @@ const stats = [
 export default function Home() {
   const { user } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [trendingCreators, setTrendingCreators] = useState<Creator[]>([]);
+  const [risingStars, setRisingStars] = useState<Creator[]>([]);
+  const [verifiedCreators, setVerifiedCreators] = useState<Creator[]>([]);
   const trendingRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  const trendingCreators = creators.slice(0, 8);
-  const risingStars = creators.filter((c) => c.isTrending).slice(0, 6);
-  const verifiedCreators = creators.filter((c) => c.isVerified).slice(0, 4);
+  useEffect(() => {
+    const loadCreators = async () => {
+      try {
+        const [trending, all] = await Promise.all([
+          creatorsService.getTrending(8),
+          creatorsService.getAll(),
+        ]);
+        const trendingList = trending.length ? trending : all.slice(0, 8);
+        setTrendingCreators(trendingList);
+        setRisingStars(all.filter((creator) => creator.isTrending).slice(0, 6));
+        setVerifiedCreators(all.filter((creator) => creator.isVerified).slice(0, 4));
+      } catch {
+        setTrendingCreators([]);
+        setRisingStars([]);
+        setVerifiedCreators([]);
+      }
+    };
+
+    void loadCreators();
+  }, []);
 
   const handleScroll = () => {
     if (trendingRef.current) {

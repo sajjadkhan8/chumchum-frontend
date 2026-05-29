@@ -50,8 +50,8 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     setMounted(true);
   }, []);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push('/');
   };
 

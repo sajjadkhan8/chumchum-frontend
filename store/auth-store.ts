@@ -1,6 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { tokenStorage } from '@/lib/api/client';
+import { mapUser } from '@/lib/api/mappers';
+import { authService } from '@/services/auth.service';
+import { apiClient } from '@/lib/api/client';
 import type { User, UserRole, Creator, Brand } from '@/types';
+
+interface SavedCreatorRecord {
+  id?: string;
+  creatorId?: string;
+}
 
 interface AuthState {
   user: User | null;
@@ -11,19 +20,37 @@ interface AuthState {
   isLoading: boolean;
   hasHydrated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  requestOtp: (phone: string) => Promise<void>;
   loginWithPhone: (phone: string, otp: string) => Promise<void>;
   signup: (email: string, password: string, role: UserRole, name: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   setUser: (user: User) => void;
   setCreatorProfile: (profile: Creator) => void;
   setBrandProfile: (profile: Brand) => void;
-  toggleSavedCreator: (creatorId: string) => void;
+  loadSavedCreators: () => Promise<void>;
+  toggleSavedCreator: (creatorId: string) => Promise<void>;
   markHydrated: () => void;
 }
 
+const normalizeSaudiPhone = (phone: string): string => {
+  const trimmed = phone.trim();
+  if (trimmed.startsWith('+966')) return trimmed;
+  const normalizedLocal = trimmed.replace(/^0+/, '');
+  return `+966${normalizedLocal}`;
+};
+
+const syncSavedCreators = async (): Promise<string[]> => {
+  const response = await apiClient.get<{ creators?: SavedCreatorRecord[] } | SavedCreatorRecord[]>('/api/v1/saved-creators');
+  const list = Array.isArray(response) ? response : response?.creators || [];
+
+  return list
+    .map((item) => item.creatorId || item.id)
+    .filter((value): value is string => Boolean(value));
+};
+
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       creatorProfile: null,
       brandProfile: null,
@@ -32,78 +59,97 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
       hasHydrated: false,
 
-      login: async (email: string, _password: string) => {
+      login: async (email: string, password: string) => {
         set({ isLoading: true });
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        try {
+          const response = await authService.login(email, password);
+          tokenStorage.set(response.accessToken, response.refreshToken);
 
-        const normalizedEmail = email.trim().toLowerCase();
-        const isAmbassadorDemo = normalizedEmail === 'ambassador@test.com';
-        const isCreatorDemo = normalizedEmail === 'creator@test.com';
-        const isCreator = isAmbassadorDemo || isCreatorDemo || normalizedEmail.includes('creator');
+          const user = mapUser(response.user);
+          set({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            hasHydrated: true,
+          });
 
-        const userName = isAmbassadorDemo
-          ? 'Nora Al Saud'
-          : isCreator
-            ? 'Faisal Al Harbi'
-            : 'Noon Food KSA';
-
-        const creatorProgramStatus = isAmbassadorDemo
-          ? 'active_ambassador'
-          : isCreator
-            ? 'in_path'
-            : 'none';
-
-        const mockUser: User = {
-          id: isAmbassadorDemo ? 'ambassador-1' : '1',
-          email: normalizedEmail,
-          role: isCreator ? 'creator' : 'brand',
-          name: userName,
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${normalizedEmail}`,
-          creatorProgramStatus,
-          createdAt: isAmbassadorDemo ? new Date('2021-07-22') : new Date(),
-        };
-
-        set({ user: mockUser, isAuthenticated: true, isLoading: false, hasHydrated: true });
+          if (user.role === 'brand') {
+            await get().loadSavedCreators();
+          }
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
       },
 
-      loginWithPhone: async (phone: string, _otp: string) => {
-        set({ isLoading: true });
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        
-        const mockUser: User = {
-          id: '1',
-          phone,
-          email: '',
-          role: 'creator',
-          name: 'Khalid Al Dosari',
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${phone}`,
-          creatorProgramStatus: 'in_path',
-          createdAt: new Date(),
-        };
-        
-        set({ user: mockUser, isAuthenticated: true, isLoading: false, hasHydrated: true });
+      requestOtp: async (phone: string) => {
+        const normalizedPhone = normalizeSaudiPhone(phone);
+        await authService.sendOtp(normalizedPhone);
       },
 
-      signup: async (email: string, _password: string, role: UserRole, name: string) => {
+      loginWithPhone: async (phone: string, otp: string) => {
         set({ isLoading: true });
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        
-        const mockUser: User = {
-          id: Date.now().toString(),
-          email,
-          role,
-          name,
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-          creatorProgramStatus: role === 'creator' ? 'in_path' : 'none',
-          createdAt: new Date(),
-        };
-        
-        set({ user: mockUser, isAuthenticated: true, isLoading: false, hasHydrated: true });
+        try {
+          const normalizedPhone = normalizeSaudiPhone(phone);
+          const response = await authService.verifyOtp(normalizedPhone, otp);
+          tokenStorage.set(response.accessToken, response.refreshToken);
+
+          const user = mapUser(response.user);
+          set({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            hasHydrated: true,
+          });
+
+          if (user.role === 'brand') {
+            await get().loadSavedCreators();
+          }
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
       },
 
-      logout: () => {
-        set({ user: null, creatorProfile: null, brandProfile: null, isAuthenticated: false, hasHydrated: true });
+      signup: async (email: string, password: string, role: UserRole, name: string) => {
+        set({ isLoading: true });
+        try {
+          const response = await authService.signup(email, password, role, name);
+          tokenStorage.set(response.accessToken, response.refreshToken);
+
+          const user = mapUser(response.user);
+          set({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            hasHydrated: true,
+          });
+
+          if (user.role === 'brand') {
+            await get().loadSavedCreators();
+          }
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
+
+      logout: async () => {
+        try {
+          await authService.logout();
+        } catch {
+          // Ignore logout failures and always clear local state.
+        }
+
+        tokenStorage.clear();
+        set({
+          user: null,
+          creatorProfile: null,
+          brandProfile: null,
+          savedCreators: [],
+          isAuthenticated: false,
+          hasHydrated: true,
+        });
       },
 
       markHydrated: () => {
@@ -128,24 +174,50 @@ export const useAuthStore = create<AuthState>()(
         set({ brandProfile: profile });
       },
 
-      toggleSavedCreator: (creatorId: string) => {
-        set((state) => ({
-          savedCreators: state.savedCreators.includes(creatorId)
+      loadSavedCreators: async () => {
+        const user = get().user;
+        if (!user || user.role !== 'brand') return;
+
+        try {
+          const saved = await syncSavedCreators();
+          set({ savedCreators: saved });
+        } catch {
+          // Keep local state as-is when sync fails.
+        }
+      },
+
+      toggleSavedCreator: async (creatorId: string) => {
+        const state = get();
+        const isSaved = state.savedCreators.includes(creatorId);
+
+        set({
+          savedCreators: isSaved
             ? state.savedCreators.filter((id) => id !== creatorId)
             : [...state.savedCreators, creatorId],
-        }));
+        });
+
+        try {
+          if (isSaved) {
+            await apiClient.delete(`/api/v1/saved-creators/${creatorId}`);
+          } else {
+            await apiClient.post(`/api/v1/saved-creators/${creatorId}`);
+          }
+        } catch {
+          set({
+            savedCreators: state.savedCreators,
+          });
+        }
       },
     }),
     {
       name: 'zingzing-auth',
-      version: 2,
+      version: 3,
       migrate: (persistedState, version) => {
         if (!persistedState || typeof persistedState !== 'object') {
           return persistedState as AuthState;
         }
 
-        // Reset legacy persisted auth snapshots to prevent false "logged in" UI.
-        if (version < 2) {
+        if (version < 3) {
           return {
             ...(persistedState as AuthState),
             user: null,
@@ -160,14 +232,17 @@ export const useAuthStore = create<AuthState>()(
       },
       onRehydrateStorage: () => (state) => {
         state?.markHydrated();
+        if (state?.user?.role === 'brand') {
+          void state.loadSavedCreators();
+        }
       },
       partialize: (state) => ({
-        user: state.user, 
+        user: state.user,
         isAuthenticated: state.isAuthenticated,
         creatorProfile: state.creatorProfile,
         brandProfile: state.brandProfile,
         savedCreators: state.savedCreators,
       }),
-    }
-  )
+    },
+  ),
 );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Banknote, Sparkles, Send, Loader2 } from 'lucide-react';
 import {
@@ -23,9 +23,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import type { Creator, DealType } from '@/types';
+import type { BarterType, Creator, DealType } from '@/types';
 import { cn, formatPrice } from '@/lib/utils';
-import { barterTypes } from '@/data/creators';
+import { messagesService } from '@/services/messages.service';
+import { metadataService, defaultCreatorFilterMetadata } from '@/services/metadata.service';
 
 interface QuickDealModalProps {
   creator: Creator;
@@ -63,28 +64,69 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
   const [creatorExpectation, setCreatorExpectation] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [barterTypeOptions, setBarterTypeOptions] = useState<{ value: BarterType; label: string }[]>(
+    defaultCreatorFilterMetadata.barterTypes
+  );
+
+  useEffect(() => {
+    const loadBarterTypes = async () => {
+      const metadata = await metadataService.getCreatorFilterMetadata();
+      setBarterTypeOptions(metadata.barterTypes);
+    };
+
+    void loadBarterTypes();
+  }, []);
 
   const handleSubmit = async () => {
+    if (!message.trim()) {
+      toast.error('Please add a message before sending the offer.');
+      return;
+    }
+
+    if ((dealType === 'paid' || dealType === 'hybrid') && !budget) {
+      toast.error('Please enter a budget for paid or hybrid deals.');
+      return;
+    }
+
+    if ((dealType === 'barter' || dealType === 'hybrid') && !barterDescription.trim()) {
+      toast.error('Please describe your barter offer.');
+      return;
+    }
+
     setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    toast.success('Offer sent successfully!', {
-      description: `${creator.name} will be notified of your ${dealType} deal request.`,
-    });
-    
-    setIsSubmitting(false);
-    onClose();
-    
-    // Reset form
-    setDealType('paid');
-    setBudget('');
-    setBarterDescription('');
-    setBarterCategory('products');
-    setBarterValue('');
-    setCreatorExpectation('');
-    setMessage('');
+
+    try {
+      await messagesService.createQuickDeal({
+        creatorId: creator.id,
+        dealType,
+        amount: budget ? Number(budget) : undefined,
+        barterDetails: barterDescription || undefined,
+        barterCategory,
+        estimatedBarterValue: barterValue ? Number(barterValue) : undefined,
+        creatorExpectation: creatorExpectation || undefined,
+        message,
+      });
+
+      toast.success('Offer sent successfully!', {
+        description: `${creator.name} will be notified of your ${dealType} deal request.`,
+      });
+
+      onClose();
+
+      // Reset form
+      setDealType('paid');
+      setBudget('');
+      setBarterDescription('');
+      setBarterCategory('products');
+      setBarterValue('');
+      setCreatorExpectation('');
+      setMessage('');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send offer';
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const availableDealTypes = dealTypeOptions.filter((option) =>
@@ -220,7 +262,7 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {barterTypes.map((type) => (
+                        {barterTypeOptions.map((type) => (
                           <SelectItem key={type.value} value={type.value}>
                             {type.label}
                           </SelectItem>

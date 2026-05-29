@@ -1,11 +1,19 @@
 "use client";
 
+import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useCreatorPackagesStore } from "@/store/creator-packages-store";
 
 export default function CreatorPerformancePage() {
   const packages = useCreatorPackagesStore((state) => state.packages);
+  const fetchPackages = useCreatorPackagesStore((state) => state.fetchPackages);
+
+  useEffect(() => {
+    if (packages.length === 0) {
+      void fetchPackages();
+    }
+  }, [fetchPackages, packages.length]);
 
   const rows = packages
     .map((item) => ({
