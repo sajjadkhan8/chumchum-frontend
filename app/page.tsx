@@ -9,6 +9,7 @@ import {
   TrendingUp,
   Star,
   ArrowRight,
+  Loader2,
   Play,
   ChevronLeft,
   ChevronRight,
@@ -26,10 +27,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Navbar } from "@/components/navbar";
 import { BottomNav } from "@/components/bottom-nav";
 import { CreatorCard } from "@/components/creator-card";
+import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
 import { ZingZingLogo } from "@/src/components/ZingZingLogo";
-import { useAuthStore } from "@/store/auth-store";
 import { creatorsService } from "@/services/creators.service";
-import type { Creator } from "@/types";
+import { packagesService } from "@/services/packages.service";
+import type { Creator, CreatorPackage } from "@/types";
 
 const categories = [
   { id: "fashion", name: "Fashion", icon: "👗", count: 245 },
@@ -49,14 +52,60 @@ const stats = [
 ];
 
 export default function Home() {
-  const { user } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [featuredPagination, setFeaturedPagination] = useState({ page: 0, size: 12 });
+  const [featuredPackages, setFeaturedPackages] = useState<CreatorPackage[]>([]);
+  const [featuredTotalPages, setFeaturedTotalPages] = useState<number | undefined>(undefined);
+  const [featuredTotalElements, setFeaturedTotalElements] = useState<number | undefined>(undefined);
+  const [isFeaturedLoading, setIsFeaturedLoading] = useState(true);
+  const [isFeaturedLoadingMore, setIsFeaturedLoadingMore] = useState(false);
+  const [hasFeaturedError, setHasFeaturedError] = useState(false);
   const [trendingCreators, setTrendingCreators] = useState<Creator[]>([]);
   const [risingStars, setRisingStars] = useState<Creator[]>([]);
   const [verifiedCreators, setVerifiedCreators] = useState<Creator[]>([]);
   const trendingRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const fetchFeaturedPackages = async (
+    page = featuredPagination.page,
+    size = featuredPagination.size,
+    options?: { append?: boolean },
+  ) => {
+    const append = Boolean(options?.append);
+
+    if (append) {
+      setIsFeaturedLoadingMore(true);
+    } else {
+      setIsFeaturedLoading(true);
+      setHasFeaturedError(false);
+    }
+
+    try {
+      const response = await packagesService.getFeatured(page, size);
+      setFeaturedPackages((current) => (append ? [...current, ...response.items] : response.items));
+      setFeaturedPagination({ page: response.page, size: response.size });
+      setFeaturedTotalPages(response.totalPages);
+      setFeaturedTotalElements(response.totalElements);
+    } catch {
+      setHasFeaturedError(true);
+      if (!append) {
+        setFeaturedPackages([]);
+      }
+    } finally {
+      if (append) {
+        setIsFeaturedLoadingMore(false);
+      } else {
+        setIsFeaturedLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    void fetchFeaturedPackages(0, featuredPagination.size);
+    // Fetch on home load; keep page/size in state for future load more.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const loadCreators = async () => {
@@ -95,6 +144,19 @@ export default function Home() {
         behavior: "smooth",
       });
     }
+  };
+
+  const featuredPrimary = featuredPackages[0];
+  const featuredSecondary = featuredPackages.slice(1, 4);
+  const featuredMore = featuredPackages.slice(4);
+  const hasMoreFeatured =
+    featuredTotalPages !== undefined
+      ? featuredPagination.page + 1 < featuredTotalPages
+      : featuredPackages.length > 0 && featuredPackages.length % featuredPagination.size === 0;
+
+  const handleLoadMoreFeatured = () => {
+    if (isFeaturedLoadingMore || !hasMoreFeatured) return;
+    void fetchFeaturedPackages(featuredPagination.page + 1, featuredPagination.size, { append: true });
   };
 
   return (
@@ -189,6 +251,193 @@ export default function Home() {
                 </div>
               ))}
             </motion.div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-muted/20 py-12 md:py-16">
+        <div className="container mx-auto px-4">
+          <div className="mb-8 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground md:text-3xl">Featured Packages</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Handpicked offers ranked by backend curation.
+                {featuredTotalElements !== undefined ? ` ${featuredTotalElements} total offers.` : ""}
+              </p>
+            </div>
+            <Badge variant="secondary" className="bg-primary/10 text-primary">
+              <Sparkles className="mr-1 h-3 w-3" />
+              Ranked Feed
+            </Badge>
+          </div>
+
+          {isFeaturedLoading ? (
+            <div className="grid gap-4 lg:grid-cols-3">
+              <div className="min-h-[360px] animate-pulse rounded-2xl border border-border bg-card lg:col-span-2" />
+              <div className="grid gap-4">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="min-h-[112px] animate-pulse rounded-2xl border border-border bg-card" />
+                ))}
+              </div>
+            </div>
+          ) : hasFeaturedError ? (
+            <ErrorState
+              title="Unable to load featured packages"
+              description="Please check your connection and retry."
+              onRetry={() => {
+                void fetchFeaturedPackages(featuredPagination.page, featuredPagination.size);
+              }}
+            />
+          ) : featuredPackages.length === 0 || !featuredPrimary ? (
+            <EmptyState
+              title="No featured packages yet"
+              description="Featured offers will show up here once available."
+              action={{
+                label: "Refresh",
+                onClick: () => {
+                  void fetchFeaturedPackages(featuredPagination.page, featuredPagination.size);
+                },
+              }}
+            />
+          ) : (
+            <div className="space-y-4">
+              <div className="grid gap-4 lg:grid-cols-3">
+                <Link href={`/packages/${featuredPrimary.id}`} className="group lg:col-span-2">
+                  <Card className="overflow-hidden border-border/60 transition-shadow hover:shadow-lg">
+                    <div className="relative aspect-[16/9] w-full">
+                      <Image
+                        src={featuredPrimary.thumbnail || "https://picsum.photos/seed/featured-main/1200/675"}
+                        alt={featuredPrimary.title}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                      <div className="absolute left-4 top-4 flex items-center gap-2">
+                        {featuredPrimary.isFeatured && (
+                          <Badge className="bg-primary text-primary-foreground">Featured</Badge>
+                        )}
+                        {featuredPrimary.isPopular && (
+                          <Badge variant="secondary" className="bg-accent text-accent-foreground">Popular</Badge>
+                        )}
+                      </div>
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <h3 className="line-clamp-2 text-xl font-bold text-white md:text-2xl">{featuredPrimary.title}</h3>
+                        <p className="mt-2 line-clamp-2 text-sm text-white/85">
+                          {featuredPrimary.shortDescription || featuredPrimary.description}
+                        </p>
+                        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-white/90">
+                          <span className="font-semibold">
+                            {(featuredPrimary.currency || "SAR")} {featuredPrimary.price.toLocaleString()}
+                          </span>
+                          <span>•</span>
+                          <span>{featuredPrimary.ordersCompleted} orders completed</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </Link>
+
+                <div className="grid gap-4">
+                  {featuredSecondary.map((pkg) => (
+                    <Link key={pkg.id} href={`/packages/${pkg.id}`} className="group">
+                      <Card className="overflow-hidden border-border/60 transition-shadow hover:shadow-lg">
+                        <CardContent className="p-0">
+                          <div className="flex min-h-[112px]">
+                            <div className="relative w-32 shrink-0">
+                              <Image
+                                src={pkg.thumbnail || `https://picsum.photos/seed/${pkg.id}/400/300`}
+                                alt={pkg.title}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div className="flex-1 p-3">
+                              <div className="mb-1 flex flex-wrap items-center gap-1">
+                                {pkg.isFeatured && (
+                                  <Badge className="h-5 bg-primary/90 px-2 text-[10px] text-primary-foreground">Featured</Badge>
+                                )}
+                                {pkg.isPopular && (
+                                  <Badge variant="secondary" className="h-5 px-2 text-[10px]">Popular</Badge>
+                                )}
+                              </div>
+                              <p className="line-clamp-1 text-sm font-semibold text-foreground">{pkg.title}</p>
+                              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                                {pkg.shortDescription || pkg.description}
+                              </p>
+                              <p className="mt-2 text-xs font-medium text-primary">
+                                {(pkg.currency || "SAR")} {pkg.price.toLocaleString()} • {pkg.ordersCompleted} orders
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {featuredMore.length > 0 && (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  {featuredMore.map((pkg) => (
+                    <Link key={pkg.id} href={`/packages/${pkg.id}`} className="group">
+                      <Card className="overflow-hidden border-border/60 transition-shadow hover:shadow-lg">
+                        <div className="relative aspect-[4/3] w-full">
+                          <Image
+                            src={pkg.thumbnail || `https://picsum.photos/seed/${pkg.id}/640/480`}
+                            alt={pkg.title}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <CardContent className="p-3">
+                          <div className="mb-2 flex flex-wrap items-center gap-1">
+                            {pkg.isFeatured && (
+                              <Badge className="h-5 bg-primary/90 px-2 text-[10px] text-primary-foreground">Featured</Badge>
+                            )}
+                            {pkg.isPopular && <Badge variant="secondary" className="h-5 px-2 text-[10px]">Popular</Badge>}
+                          </div>
+                          <p className="line-clamp-1 text-sm font-semibold text-foreground">{pkg.title}</p>
+                          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                            {pkg.shortDescription || pkg.description}
+                          </p>
+                          <p className="mt-2 text-xs font-medium text-primary">
+                            {(pkg.currency || "SAR")} {pkg.price.toLocaleString()} • {pkg.ordersCompleted} orders
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              {isFeaturedLoadingMore && (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className="min-h-[220px] animate-pulse rounded-2xl border border-border bg-card" />
+                  ))}
+                </div>
+              )}
+
+              {hasMoreFeatured && (
+                <div className="pt-2 text-center">
+                  <Button onClick={handleLoadMoreFeatured} variant="outline" className="rounded-full" disabled={isFeaturedLoadingMore}>
+                    {isFeaturedLoadingMore ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      "Load more"
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="mt-4 text-right text-xs text-muted-foreground">
+            Page {featuredPagination.page + 1}
+            {featuredTotalPages ? ` of ${featuredTotalPages}` : ""} • size {featuredPagination.size}
           </div>
         </div>
       </section>

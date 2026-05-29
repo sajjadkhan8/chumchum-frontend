@@ -4,6 +4,18 @@ import type { CreatorPackage, Package, PackageAnalytics, PackageStatus } from '@
 
 interface PaginatedPackages {
   content?: unknown[];
+  totalPages?: number;
+  totalElements?: number;
+  number?: number;
+  size?: number;
+}
+
+export interface FeaturedPackagesResult {
+  items: CreatorPackage[];
+  page: number;
+  size: number;
+  totalPages?: number;
+  totalElements?: number;
 }
 
 const normalizePackages = (payload: unknown): CreatorPackage[] => {
@@ -72,6 +84,30 @@ export const packagesService = {
       .filter((pkg) => pkg.isPopular)
       .sort((a, b) => b.ordersCompleted - a.ordersCompleted)
       .slice(0, limit);
+  },
+
+  async getFeatured(page = 0, size = 12): Promise<FeaturedPackagesResult> {
+    const payload = await apiClient.get<unknown>('/api/v1/packages/featured', {
+      auth: false,
+      query: { page, size },
+    });
+
+    if (Array.isArray(payload)) {
+      return {
+        items: payload.map((item) => mapPackage(item as never)),
+        page,
+        size,
+      };
+    }
+
+    const response = payload as PaginatedPackages;
+    return {
+      items: normalizePackages(response),
+      page: response.number ?? page,
+      size: response.size ?? size,
+      totalPages: response.totalPages,
+      totalElements: response.totalElements,
+    };
   },
 
   async create(payload: Record<string, unknown>): Promise<CreatorPackage> {

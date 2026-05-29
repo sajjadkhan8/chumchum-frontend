@@ -88,6 +88,8 @@ export interface Package {
   platform: Platform;
   tags: string[];
   isPopular: boolean;
+  isFeatured?: boolean;
+  currency?: string;
   ordersCompleted: number;
 }
 

@@ -190,6 +190,8 @@ interface BackendPackageResponse {
   delivery_days?: number;
   revisions?: number;
   tags?: string[];
+  currency?: string;
+  is_featured?: boolean;
   is_popular?: boolean;
   orders_completed?: number;
   status?: string;
@@ -220,6 +222,8 @@ export const mapPackage = (input: BackendPackageResponse): CreatorPackage => ({
   hybridBarterValue: input.hybrid_barter_value,
   platform: normalizePlatform(input.platform),
   tags: input.tags || [],
+  currency: input.currency || 'SAR',
+  isFeatured: Boolean(input.is_featured),
   isPopular: Boolean(input.is_popular),
   ordersCompleted: input.orders_completed || 0,
   status: (input.status || 'draft').toLowerCase() as CreatorPackage['status'],
