@@ -4,14 +4,16 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, ArrowRight, Users, Building2, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ArrowRight, Users, Building2, CheckCircle, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { useAuthStore } from '@/store/auth-store';
 import type { UserRole } from '@/types';
 import { toast } from 'sonner';
 import { ZingZingLogo } from '@/src/components/ZingZingLogo';
+import { validatePassword, type PasswordStrengthResult } from '@/lib/password-validation';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -23,6 +25,13 @@ export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState<PasswordStrengthResult | null>(null);
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    const strength = validatePassword(value);
+    setPasswordStrength(strength);
+  };
 
   const roleOptions: { value: UserRole; label: string; icon: React.ElementType; description: string; benefits: string[] }[] = [
     {
@@ -231,7 +240,7 @@ export default function SignupPage() {
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Create a strong password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => handlePasswordChange(e.target.value)}
                       required
                     />
                     <button
@@ -246,6 +255,135 @@ export default function SignupPage() {
                       )}
                     </button>
                   </div>
+
+                  {/* Password Strength Indicator */}
+                  {password && passwordStrength && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-3 rounded-lg border border-border bg-muted/30 p-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-foreground">
+                          Password Strength
+                        </span>
+                        <span
+                          className={`text-sm font-semibold capitalize ${
+                            passwordStrength.strength === 'strong'
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : passwordStrength.strength === 'good'
+                                ? 'text-blue-600 dark:text-blue-400'
+                                : passwordStrength.strength === 'fair'
+                                  ? 'text-orange-600 dark:text-orange-400'
+                                  : 'text-destructive'
+                          }`}
+                        >
+                          {passwordStrength.strength}
+                        </span>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="space-y-1">
+                        <div className="flex gap-1">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={`h-1 flex-1 rounded-full transition-colors ${
+                                i < Math.ceil(passwordStrength.score / 20)
+                                  ? passwordStrength.strength === 'strong'
+                                    ? 'bg-emerald-600 dark:bg-emerald-400'
+                                    : passwordStrength.strength === 'good'
+                                      ? 'bg-blue-600 dark:bg-blue-400'
+                                      : passwordStrength.strength === 'fair'
+                                        ? 'bg-orange-600 dark:bg-orange-400'
+                                        : 'bg-destructive'
+                                  : 'bg-muted'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Password Requirements */}
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-foreground">
+                          Password Requirements:
+                        </p>
+                        <ul className="space-y-1.5 text-xs">
+                          <li
+                            className={`flex items-center gap-2 ${
+                              passwordStrength.requirements.minLength
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-muted-foreground'
+                            }`}
+                          >
+                            {passwordStrength.requirements.minLength ? (
+                              <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                            ) : (
+                              <Circle className="h-4 w-4 flex-shrink-0" />
+                            )}
+                            <span>At least 8 characters long</span>
+                          </li>
+                          <li
+                            className={`flex items-center gap-2 ${
+                              passwordStrength.requirements.hasLowercase
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-muted-foreground'
+                            }`}
+                          >
+                            {passwordStrength.requirements.hasLowercase ? (
+                              <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                            ) : (
+                              <Circle className="h-4 w-4 flex-shrink-0" />
+                            )}
+                            <span>Contains lowercase letter</span>
+                          </li>
+                          <li
+                            className={`flex items-center gap-2 ${
+                              passwordStrength.requirements.hasUppercase
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-muted-foreground'
+                            }`}
+                          >
+                            {passwordStrength.requirements.hasUppercase ? (
+                              <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                            ) : (
+                              <Circle className="h-4 w-4 flex-shrink-0" />
+                            )}
+                            <span>Contains uppercase letter</span>
+                          </li>
+                          <li
+                            className={`flex items-center gap-2 ${
+                              passwordStrength.requirements.hasNumber
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-muted-foreground'
+                            }`}
+                          >
+                            {passwordStrength.requirements.hasNumber ? (
+                              <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                            ) : (
+                              <Circle className="h-4 w-4 flex-shrink-0" />
+                            )}
+                            <span>Contains number</span>
+                          </li>
+                          <li
+                            className={`flex items-center gap-2 ${
+                              passwordStrength.requirements.hasSpecialChar
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-muted-foreground'
+                            }`}
+                          >
+                            {passwordStrength.requirements.hasSpecialChar ? (
+                              <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                            ) : (
+                              <Circle className="h-4 w-4 flex-shrink-0" />
+                            )}
+                            <span>Contains special character (@$!%*?&)</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
 
                 <div className="rounded-xl border border-border bg-muted/50 p-4">

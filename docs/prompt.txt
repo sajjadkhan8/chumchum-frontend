@@ -1,0 +1,1 @@
+Changes must be as per existing color, theme, styling and structure of the project. Make sure everything is according to latest UI/UX standards and production ready. Don't create changes summary. when you are done do give some suggestions if possible.
