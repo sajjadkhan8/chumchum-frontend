@@ -18,7 +18,7 @@ export function formatFollowers(count: number): string {
 export function formatPrice(amount: number): string {
   return new Intl.NumberFormat('en-PK', {
     style: 'currency',
-    currency: 'SAR',
+    currency: 'PKR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
@@ -26,6 +26,7 @@ export function formatPrice(amount: number): string {
 
 export function formatDate(date: Date): string {
   return new Intl.DateTimeFormat('en-PK', {
+    timeZone: 'Asia/Karachi',
     day: 'numeric',
     month: 'short',
     year: 'numeric',

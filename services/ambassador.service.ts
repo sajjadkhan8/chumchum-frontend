@@ -52,7 +52,7 @@ const mapApplication = (input: ApplicationResponse): AmbassadorApplication => ({
 const defaultBenefits: AmbassadorBenefit[] = [
   {
     title: 'Monthly Guaranteed Income',
-    description: 'Starting from SAR 50,000/month for eligible ambassadors.',
+    description: 'Starting from PKR 1,250,000/month for eligible ambassadors.',
     icon: '💰',
   },
   {
@@ -78,7 +78,8 @@ const defaultEligibilityRequirements: AmbassadorEligibilityRequirements & { minC
   minRating: 4.5,
   minCompletedDeals: 30,
   verificationSteps: [
-    'Identity & Residence Verification (KSA ID/Iqama)',
+    'Identity Verification (CNIC)',
+    'Tax Profile Verification (NTN/STRN where applicable)',
     'Engagement Metrics Verification',
     'Content Quality & Brand Safety Review',
     'Background & Compliance Check',

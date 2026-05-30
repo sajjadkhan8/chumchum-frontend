@@ -29,8 +29,8 @@ const channels = [
     icon: Mail,
     title: 'Email Support',
     description: 'For general questions, billing, and account issues.',
-    value: 'support@zingzing.sa',
-    href: 'mailto:support@zingzing.sa',
+    value: 'support@zingzing.pk',
+    href: 'mailto:support@zingzing.pk',
     badge: 'Replies within 24 hrs',
     badgeVariant: 'secondary' as const,
   },
@@ -38,8 +38,8 @@ const channels = [
     icon: ShieldCheck,
     title: 'Legal & Trust',
     description: 'Privacy requests, term disputes, and compliance.',
-    value: 'legal@zingzing.sa',
-    href: 'mailto:legal@zingzing.sa',
+    value: 'legal@zingzing.pk',
+    href: 'mailto:legal@zingzing.pk',
     badge: 'Replies within 48 hrs',
     badgeVariant: 'secondary' as const,
   },
@@ -47,8 +47,8 @@ const channels = [
     icon: Users,
     title: 'Creator Onboarding',
     description: 'Help getting your creator profile verified and live.',
-    value: 'creators@zingzing.sa',
-    href: 'mailto:creators@zingzing.sa',
+    value: 'creators@zingzing.pk',
+    href: 'mailto:creators@zingzing.pk',
     badge: 'Mon – Sat',
     badgeVariant: 'secondary' as const,
   },
@@ -56,23 +56,23 @@ const channels = [
     icon: MessageCircle,
     title: 'Brand Partnerships',
     description: 'Enterprise deals, managed campaigns, and custom pricing.',
-    value: 'brands@zingzing.sa',
-    href: 'mailto:brands@zingzing.sa',
+    value: 'brands@zingzing.pk',
+    href: 'mailto:brands@zingzing.pk',
     badge: 'Priority response',
     badgeVariant: 'default' as const,
   },
 ];
 
 const officeDetails = [
-  { icon: MapPin, label: 'Address', value: 'King Fahd Road, Riyadh, Saudi Arabia' },
-  { icon: Phone, label: 'Phone', value: '+966 11 424 2246' },
-  { icon: Clock, label: 'Hours', value: 'Sun – Thu, 9:00 AM – 6:00 PM AST' },
+  { icon: MapPin, label: 'Address', value: 'Shahrah-e-Faisal, Karachi, Pakistan' },
+  { icon: Phone, label: 'Phone', value: '+92 21 111 222 333' },
+  { icon: Clock, label: 'Hours', value: 'Mon – Sat, 9:00 AM – 6:00 PM PKT' },
 ];
 
 const faqs = [
   {
     q: 'How do I report a problem with a campaign or order?',
-    a: "Email support@zingzing.sa with your order ID and a brief description. Our team will respond within 24 hours and escalate urgent cases same-day.",
+    a: "Email support@zingzing.pk with your order ID and a brief description. Our team will respond within 24 hours and escalate urgent cases same-day.",
   },
   {
     q: 'How long does creator verification take?',
@@ -84,7 +84,7 @@ const faqs = [
   },
   {
     q: 'How do I delete my account and personal data?',
-    a: 'Send a deletion request from your registered email to legal@zingzing.sa with the subject "Account Deletion Request". We will process it within 30 days.',
+    a: 'Send a deletion request from your registered email to legal@zingzing.pk with the subject "Account Deletion Request". We will process it within 30 days.',
   },
 ];
 
@@ -179,7 +179,7 @@ export default function ContactPage() {
                   <Label htmlFor="name">Full name <span className="text-destructive">*</span></Label>
                   <Input
                     id="name"
-                    placeholder="Faisal Al Harbi"
+                    placeholder="Ali Hassan Khan"
                     value={form.name}
                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   />

@@ -4,6 +4,7 @@ import { tokenStorage } from '@/lib/api/client';
 import { mapUser } from '@/lib/api/mappers';
 import { authService } from '@/services/auth.service';
 import { apiClient } from '@/lib/api/client';
+import { isValidPakistaniPhone, normalizePakistaniPhone } from '@/lib/phone-utils';
 import type { User, UserRole, Creator, Brand } from '@/types';
 
 interface SavedCreatorRecord {
@@ -31,13 +32,6 @@ interface AuthState {
   toggleSavedCreator: (creatorId: string) => Promise<void>;
   markHydrated: () => void;
 }
-
-const normalizeSaudiPhone = (phone: string): string => {
-  const trimmed = phone.trim();
-  if (trimmed.startsWith('+966')) return trimmed;
-  const normalizedLocal = trimmed.replace(/^0+/, '');
-  return `+966${normalizedLocal}`;
-};
 
 const syncSavedCreators = async (): Promise<string[]> => {
   const response = await apiClient.get<{ creators?: SavedCreatorRecord[] } | SavedCreatorRecord[]>('/api/v1/saved-creators');
@@ -83,14 +77,20 @@ export const useAuthStore = create<AuthState>()(
       },
 
       requestOtp: async (phone: string) => {
-        const normalizedPhone = normalizeSaudiPhone(phone);
+        if (!isValidPakistaniPhone(phone)) {
+          throw new Error('Please enter a valid Pakistani phone number.');
+        }
+        const normalizedPhone = normalizePakistaniPhone(phone);
         await authService.sendOtp(normalizedPhone);
       },
 
       loginWithPhone: async (phone: string, otp: string) => {
         set({ isLoading: true });
         try {
-          const normalizedPhone = normalizeSaudiPhone(phone);
+          if (!isValidPakistaniPhone(phone)) {
+            throw new Error('Please enter a valid Pakistani phone number.');
+          }
+          const normalizedPhone = normalizePakistaniPhone(phone);
           const response = await authService.verifyOtp(normalizedPhone, otp);
           tokenStorage.set(response.accessToken, response.refreshToken);
 

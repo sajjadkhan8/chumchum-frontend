@@ -144,7 +144,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search food vloggers in Riyadh or TikTok tech creators"
+                placeholder="Search food vloggers in Karachi or TikTok tech creators"
                 className="w-full rounded-full bg-muted pl-10"
                 value={searchValue}
                 onChange={(e) => onSearchChange?.(e.target.value)}

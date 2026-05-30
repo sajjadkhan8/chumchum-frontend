@@ -32,7 +32,7 @@ const toCreateRequest = (pkg: CreatorPackage) => ({
   hybrid_barter_value: pkg.hybridBarterValue,
   creator_expectations: pkg.creatorExpectations,
   price: pkg.price,
-  currency: 'SAR',
+  currency: 'PKR',
   deliverables: pkg.deliverables,
   delivery_days: pkg.deliveryDays,
   revisions: pkg.revisions,

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Complete implementation of a **two-tier creator marketplace** specifically designed for the Saudi Arabian market. This system allows brands to choose between **premium verified ambassadors** and **independent creators**, each with distinct benefits, verification requirements, and commission structures.
+Complete implementation of a **two-tier creator marketplace** specifically designed for the Pakistani Arabian market. This system allows brands to choose between **premium verified ambassadors** and **independent creators**, each with distinct benefits, verification requirements, and commission structures.
 
 ## 🎯 Key Features
 
@@ -12,7 +12,7 @@ Premium tier featuring **verified, platform-managed creators** ideal for enterpr
 **Highlights:**
 - ✅ Minimum 100K followers verified
 - ✅ 5%+ engagement rate requirement  
-- ✅ Guaranteed monthly income (SAR 50K+)
+- ✅ Guaranteed monthly income (PKR 50K+)
 - ✅ 15% platform commission
 - ✅ Dedicated account manager
 - ✅ 4-step verification process
@@ -48,7 +48,7 @@ Interactive component showing creator's **real-time qualification status** for a
 Complete application lifecycle with **4-step verification process**.
 
 **Steps:**
-1. Identity & Residence Verification (KSA ID/Iqama)
+1. Identity & Residence Verification (Pakistan ID/CNIC)
 2. Engagement Metrics Verification
 3. Content Quality & Brand Safety Review
 4. Background & Compliance Check
@@ -106,7 +106,7 @@ Complete application lifecycle with **4-step verification process**.
 2. Choose path: Ambassadors (premium) or Independent Creator (flexible)
 3. Navigate with updated navbar links with ambassador section
 
-## 💼 Business Logic (KSA-Specific)
+## 💼 Business Logic (Pakistan-Specific)
 
 ### Commission Structure
 | Feature | Ambassador | Independent |
@@ -114,26 +114,26 @@ Complete application lifecycle with **4-step verification process**.
 | Followers | 100K+ | All levels |
 | Engagement | 5%+ | Varies |
 | Commission | 15% | 10% |
-| Monthly Base | SAR 50K-75K | None |
+| Monthly Base | PKR 50K-75K | None |
 | Guarantee | Yes | No |
 | Manager | Dedicated | Self-serve |
 
 ### Sample Financial Model
 ```
-Campaign: SAR 100,000
-├─ Ambassador: Platform takes 15% (SAR 15K) → Creator gets SAR 85K
-└─ Independent: Platform takes 10% (SAR 10K) → Creator gets SAR 90K
+Campaign: PKR 100,000
+├─ Ambassador: Platform takes 15% (PKR 15K) → Creator gets PKR 85K
+└─ Independent: Platform takes 10% (PKR 10K) → Creator gets PKR 90K
 
 Monthly Guarantee (Ambassador Only):
-├─ Base: SAR 50,000
+├─ Base: PKR 50,000
 └─ + Campaign earnings (50K + 85K = 135K total)
 ```
 
-### KSA Context
-- ✅ Cities: Riyadh, Jeddah, Dammam, Khobar, etc.
+### Pakistan Context
+- ✅ Cities: Karachi, Lahore, Islamabad, Multan, etc.
 - ✅ Platforms: Instagram, TikTok, YouTube (primary)
 - ✅ Languages: English (UI), Arabic (future)
-- ✅ Currencies: SAR (all pricing)
+- ✅ Currencies: PKR (all pricing)
 - ✅ Content Standards: Conservative, brand-safe, Islamic values
 
 ## 🎨 Design Features
@@ -159,15 +159,15 @@ Monthly Guarantee (Ambassador Only):
 ### 3 Sample Ambassadors
 1. **Faisal Al Harbi** (Food & Lifestyle)
    - 259K followers, 4.9★, 127 reviews
-   - Monthly base: SAR 50,000
+   - Monthly base: PKR 50,000
 
 2. **Nora Al Saud** (Fashion & Beauty)
    - 835K followers, 4.8★, 203 reviews
-   - Monthly base: SAR 75,000
+   - Monthly base: PKR 75,000
 
 3. **Abdulrahman Al Qahtani** (Tech)
    - 765K followers, 4.7★, 89 reviews
-   - Monthly base: SAR 60,000
+   - Monthly base: PKR 60,000
 
 ### Application Examples
 - 1 Approved (showing full benefits)
@@ -271,7 +271,7 @@ View details, manage, track, apply
 
 ### To Complete the System
 1. **Database** - Persist applications, verify statuses
-2. **Auth Integration** - KSA ID verification service
+2. **Auth Integration** - Pakistan ID verification service
 3. **Payment Processing** - Handle commission splits
 4. **Email Notifications** - Application status updates
 5. **Admin Panel** - Review and approve applications
@@ -374,7 +374,7 @@ This is a **complete, production-ready implementation** of a sophisticated two-t
 ✅ **Enhanced independent creator marketplace**  
 ✅ **Real-time eligibility checking**  
 ✅ **Application tracking with verification**  
-✅ **KSA-specific business logic**  
+✅ **Pakistan-specific business logic**  
 ✅ **Beautiful, responsive UI**  
 ✅ **Full TypeScript type safety**  
 ✅ **Comprehensive documentation**  
@@ -386,7 +386,7 @@ The system is designed to scale and can handle enterprise-level partnerships whi
 
 **Created**: May 18, 2024  
 **Platform**: ChumChum Creator Marketplace  
-**Region**: Saudi Arabia (KSA)  
+**Region**: Pakistan (Pakistan)  
 **Status**: ✅ Complete & Tested  
 **Build**: ✅ Successful  
 **Ready for**: Testing & Backend Integration

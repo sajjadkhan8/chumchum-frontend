@@ -40,7 +40,7 @@ const faqs = [
   {
     category: 'Security',
     q: 'How do I report suspicious activity?',
-    a: 'Use the in-app report option or contact support@zingzing.sa immediately. Include screenshots and relevant message links where possible.',
+    a: 'Use the in-app report option or contact support@zingzing.pk immediately. Include screenshots and relevant message links where possible.',
   },
 ];
 

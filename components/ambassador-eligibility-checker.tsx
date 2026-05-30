@@ -24,7 +24,8 @@ const defaultRequirements: EligibilityRequirements = {
   minRating: 4.5,
   minCompletedDeals: 30,
   verificationSteps: [
-    'Identity & Residence Verification (KSA ID/Iqama)',
+    'Identity Verification (CNIC)',
+    'Tax Profile Verification (NTN/STRN where applicable)',
     'Engagement Metrics Verification',
     'Content Quality & Brand Safety Review',
     'Background & Compliance Check',

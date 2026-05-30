@@ -95,7 +95,7 @@ export default function PrivacyPage() {
             <Section id="overview" icon={ShieldCheck} title="Overview">
               <p>
                 ZingZing (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) operates the ZingZing
-                influencer-marketing platform at zingzing.sa. This Privacy Policy describes how
+                influencer-marketing platform at zingzing.pk. This Privacy Policy describes how
                 we collect, use, store, and protect personal information when you use our platform
                 as a brand, creator, or visitor.
               </p>
@@ -215,8 +215,8 @@ export default function PrivacyPage() {
               ]} />
               <p>
                 To exercise any of these rights, email{' '}
-                <a href="mailto:legal@zingzing.sa" className="font-medium text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
-                  legal@zingzing.sa
+                <a href="mailto:legal@zingzing.pk" className="font-medium text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
+                  legal@zingzing.pk
                 </a>{' '}
                 from your registered address. We will respond within 30 days.
               </p>
@@ -224,10 +224,10 @@ export default function PrivacyPage() {
 
             <Section id="transfers" icon={Globe} title="International Transfers">
               <p>
-                ZingZing is headquartered in Saudi Arabia. Our infrastructure uses cloud providers
+                ZingZing is headquartered in Pakistan. Our infrastructure uses cloud providers
                 whose servers may be located in other countries. Where data is transferred outside
-                Saudi Arabia, we ensure appropriate safeguards are in place through contractual
-                obligations aligned with international data-protection best practices and Saudi PDPL requirements.
+                Pakistan, we ensure appropriate safeguards are in place through contractual
+                obligations aligned with international data-protection best practices and applicable Pakistan data-protection requirements.
               </p>
             </Section>
 
@@ -252,17 +252,17 @@ export default function PrivacyPage() {
                 <p className="font-semibold text-foreground">ZingZing — Data Protection</p>
                 <p className="mt-1 text-muted-foreground">
                   Email:{' '}
-                  <a href="mailto:legal@zingzing.sa" className="font-medium text-primary hover:underline">
-                    legal@zingzing.sa
+                  <a href="mailto:legal@zingzing.pk" className="font-medium text-primary hover:underline">
+                    legal@zingzing.pk
                   </a>
                 </p>
                 <p className="mt-0.5 text-muted-foreground">
                   General support:{' '}
-                  <a href="mailto:support@zingzing.sa" className="font-medium text-primary hover:underline">
-                    support@zingzing.sa
+                  <a href="mailto:support@zingzing.pk" className="font-medium text-primary hover:underline">
+                    support@zingzing.pk
                   </a>
                 </p>
-                <p className="mt-0.5 text-muted-foreground">Riyadh, Saudi Arabia</p>
+                <p className="mt-0.5 text-muted-foreground">Karachi, Pakistan</p>
               </div>
             </Section>
 

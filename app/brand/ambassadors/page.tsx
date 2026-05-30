@@ -61,7 +61,7 @@ export default function AmbassadorsBrowsePage() {
             </div>
             <h1 className="mb-4 text-4xl font-bold">Platform Ambassadors</h1>
             <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-              Direct access to KSA's most trusted creators, verified by our platform.
+              Direct access to Pakistan&apos;s most trusted creators, verified by our platform.
               These curated influencers are committed to delivering quality results.
             </p>
           </motion.div>
@@ -117,7 +117,7 @@ export default function AmbassadorsBrowsePage() {
           >
             <div className="mb-8">
               <h2 className="mb-2 text-3xl font-bold">Our Ambassadors</h2>
-              <p className="text-muted-foreground">Elite creators trusted by major Saudi brands</p>
+              <p className="text-muted-foreground">Elite creators trusted by major Pakistani brands</p>
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

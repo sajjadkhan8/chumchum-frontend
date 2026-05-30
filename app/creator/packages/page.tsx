@@ -308,9 +308,9 @@ function CreatorPackagesPageContent() {
               <SelectTrigger><SelectValue placeholder="Earnings" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Earnings</SelectItem>
-                <SelectItem value="under25">Under SAR 25k</SelectItem>
-                <SelectItem value="25to50">SAR 25k - 50k</SelectItem>
-                <SelectItem value="50plus">SAR 50k+</SelectItem>
+                <SelectItem value="under25">Under PKR 625k</SelectItem>
+                <SelectItem value="25to50">PKR 625k - 1.25M</SelectItem>
+                <SelectItem value="50plus">PKR 1.25M+</SelectItem>
               </SelectContent>
             </Select>
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>

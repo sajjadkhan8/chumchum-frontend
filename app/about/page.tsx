@@ -65,7 +65,7 @@ export default function AboutPage() {
             </Badge>
             <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">Built for modern creator-brand partnerships</h1>
             <p className="mt-4 max-w-3xl text-base text-muted-foreground md:text-lg">
-              ZingZing is Saudi Arabia&apos;s collaboration platform where brands discover the right creators,
+              ZingZing is Pakistan&apos;s collaboration platform where brands discover the right creators,
               negotiate clear deals, and manage campaign execution with confidence.
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">

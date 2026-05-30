@@ -4,49 +4,50 @@ import { mockCreators } from './creators';
 // These are the platform's curated ambassadors (vetted & managed by platform)
 export const platformAmbassadors: PlatformAmbassador[] = [
   {
-    ...mockCreators[0], // Faisal Al Harbi
+    ...mockCreators[0], // Ali Hassan Khan
     ambassadorStatus: 'approved',
     commissionPercentage: 15,
-    monthlyBase: 50000,
+    monthlyBase: 1250000,
     ambassadorSince: new Date('2023-06-15'),
     performanceScore: 9.2,
     isExclusive: true,
   },
   {
-    ...mockCreators[1], // Nora Al Saud
+    ...mockCreators[1], // Ayesha Malik
     ambassadorStatus: 'approved',
     commissionPercentage: 15,
-    monthlyBase: 75000,
+    monthlyBase: 1875000,
     ambassadorSince: new Date('2023-04-20'),
     performanceScore: 9.5,
     isExclusive: true,
   },
   {
-    ...mockCreators[2], // Abdulrahman Al Qahtani
+    ...mockCreators[2], // Hassan Ahmed
     ambassadorStatus: 'approved',
     commissionPercentage: 15,
-    monthlyBase: 60000,
+    monthlyBase: 1500000,
     ambassadorSince: new Date('2023-08-10'),
     performanceScore: 8.8,
     isExclusive: false, // Can work with non-competing brands
   },
 ];
 
-// Ambassador eligibility requirements (KSA-specific, realistic)
+// Ambassador eligibility requirements (Pakistan market)
 export const ambassadorEligibilityRequirements = {
   minFollowers: 100000, // Minimum 100k followers across all platforms
   minEngagementRate: 5.0, // Minimum 5% engagement rate
   minRating: 4.5, // Minimum 4.5 star rating
   minCompletedDeals: 30, // Must have completed at least 30 deals
   verificationSteps: [
-    'Identity & Residence Verification (KSA ID/Iqama)',
+    'Identity Verification (CNIC)',
+    'Tax Profile Verification (NTN/STRN where applicable)',
     'Engagement Metrics Verification',
     'Content Quality & Brand Safety Review',
     'Background & Compliance Check',
   ],
 };
 
-// Realistic KSA-specific ambassador application statuses
+// Realistic Pakistan-specific ambassador application statuses
 export const ambassadorApplications: AmbassadorApplication[] = [
   {
     id: 'app-001',
@@ -61,7 +62,7 @@ export const ambassadorApplications: AmbassadorApplication[] = [
       contentReviewPassed: true,
       backgroundCheckPassed: true,
     },
-    notes: 'Exceptional engagement metrics in food & lifestyle niche. Strong KSA presence.',
+    notes: 'Exceptional engagement metrics in food and lifestyle niche. Strong Pakistan audience fit.',
     approvedAt: new Date('2023-06-15'),
   },
   {
@@ -90,11 +91,11 @@ export const ambassadorApplications: AmbassadorApplication[] = [
       id: '5',
       userId: 'u5',
       username: 'layla_wellness',
-      name: 'Layla Al Shammari',
+      name: 'Laiba Raza',
       avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
       coverImage: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1200&h=400&fit=crop',
-      bio: 'Health and wellness coach specializing in fitness routines for Saudi women.',
-      city: 'Dammam' as any,
+      bio: 'Health and wellness coach specializing in fitness routines for women in Pakistan.',
+      city: 'Peshawar' as any,
       categories: ['Health', 'Fitness', 'Wellness'],
       platforms: [
         { platform: 'instagram' as any, followers: 250000, engagementRate: 5.3, username: 'layla_wellness' },
@@ -104,8 +105,8 @@ export const ambassadorApplications: AmbassadorApplication[] = [
       avgEngagementRate: 5.7,
       dealTypes: ['paid', 'barter'] as any,
       barterTypes: ['salon', 'products'] as any,
-      minPrice: 25000,
-      maxPrice: 120000,
+      minPrice: 625000,
+      maxPrice: 3000000,
       responseTime: 'Within 3 hours',
       isVerified: true,
       isTrending: true,
@@ -134,11 +135,11 @@ export const ambassadorApplications: AmbassadorApplication[] = [
       id: '6',
       userId: 'u6',
       username: 'ahmed_realestate',
-      name: 'Ahmed Al Mutairi',
+      name: 'Ahmed Raza',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
       coverImage: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1200&h=400&fit=crop',
-      bio: 'Real estate investor and property consultant serving Saudi Arabia market.',
-      city: 'Riyadh' as any,
+      bio: 'Real estate investor and property consultant serving Pakistan market.',
+      city: 'Karachi' as any,
       categories: ['Real Estate', 'Business', 'Finance'],
       platforms: [
         { platform: 'instagram' as any, followers: 95000, engagementRate: 4.2, username: 'ahmed_realestate' },
@@ -147,8 +148,8 @@ export const ambassadorApplications: AmbassadorApplication[] = [
       totalFollowers: 173000,
       avgEngagementRate: 4.0,
       dealTypes: ['paid'] as any,
-      minPrice: 40000,
-      maxPrice: 200000,
+      minPrice: 1000000,
+      maxPrice: 5000000,
       responseTime: 'Within 1 day',
       isVerified: false,
       isTrending: false,
@@ -172,36 +173,36 @@ export const ambassadorApplications: AmbassadorApplication[] = [
   },
 ];
 
-// Ambassador benefits (KSA context)
+// Ambassador benefits (Pakistan context)
 export const ambassadorBenefits = [
   {
     title: 'Monthly Guaranteed Income',
-    description: 'من 50,000 ر.س فاعلاً (Starting from SAR 50,000/month)',
+    description: 'Starting from PKR 1,250,000 per month for qualified ambassadors.',
     icon: '💰',
   },
   {
     title: 'Direct Brand Access',
-    description: 'تواصل مباشر مع الشركات الكبرى (Direct connections with enterprise brands)',
+    description: 'Direct connections with major Pakistani brands and enterprise clients.',
     icon: '🤝',
   },
   {
     title: 'Dedicated Account Manager',
-    description: 'مدير حساب شخصي في الرياض أو جدة (Personal manager in Riyadh/Jeddah)',
+    description: 'Personal account manager based in Karachi or Lahore.',
     icon: '👔',
   },
   {
     title: 'Premium Support',
-    description: 'دعم أولويات 24/7 (24/7 priority support)',
+    description: '24/7 priority support for active ambassadors.',
     icon: '⭐',
   },
   {
     title: 'Performance Bonuses',
-    description: 'حوافز إضافية حسب الأداء (Performance-based incentives)',
+    description: 'Performance-based incentive boosts on top campaigns.',
     icon: '🏆',
   },
   {
     title: 'Exclusive Content Opportunities',
-    description: 'فرص محتوى حصرية مع علامات عملاقة (Exclusive campaigns with major brands)',
+    description: 'Exclusive campaigns with high-growth brands across Pakistan.',
     icon: '🎬',
   },
 ];

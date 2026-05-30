@@ -25,7 +25,7 @@ const fallbackBrand = (brandId: string): Brand => ({
   name: 'Brand',
   logo: '',
   industry: 'General',
-  city: 'Riyadh' as City,
+  city: 'Karachi' as City,
   description: '',
   totalCampaigns: 0,
   activeOrders: 0,
@@ -44,7 +44,7 @@ const mapReview = (input: BackendReview, creatorId: string): Review => {
           name: input.brand.name || 'Brand',
           logo: input.brand.logo || '',
           industry: input.brand.industry || 'General',
-          city: (input.brand.city as City) || 'Riyadh',
+          city: (input.brand.city as City) || 'Karachi',
           description: input.brand.description || '',
         }
       : fallbackBrand(brandId),

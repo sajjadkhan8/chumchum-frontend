@@ -57,16 +57,16 @@ const categories = [
   "Entertainment",
 ];
 
-const languages = ["English", "Arabic"];
+const languages = ["English", "Urdu"];
 
 const cities = [
-  "Jeddah",
-  "Riyadh",
-  "Dammam",
-  "Mecca",
-  "Medina",
-  "Khobar",
-  "Tabuk",
+  "Karachi",
+  "Lahore",
+  "Islamabad",
+  "Rawalpindi",
+  "Faisalabad",
+  "Multan",
+  "Peshawar",
 ];
 
 function CreatorSettingsPageContent() {
@@ -76,15 +76,15 @@ function CreatorSettingsPageContent() {
   const [isSaving, setIsSaving] = useState(false);
 
   const [profile, setProfile] = useState({
-    name: "Reem Al Otaibi",
+    name: "Zara Qureshi",
     handle: "reemwellness",
-    bio: "Fashion & lifestyle content creator based in Riyadh. Passionate about sustainable fashion and empowering women.",
-    email: "reem@zingzing.sa",
-    phone: "+966 55 123 4567",
-    city: "Riyadh",
+    bio: "Fashion and lifestyle content creator based in Karachi. Passionate about sustainable fashion and empowering women.",
+    email: "zara@zingzing.pk",
+    phone: "+92 300 123 4567",
+    city: "Karachi",
     categories: ["Fashion", "Lifestyle"],
-    languages: ["English", "Arabic"],
-    website: "https://reemwellness.sa",
+    languages: ["English", "Urdu"],
+    website: "https://zarawellness.pk",
     niche: "Fashion & Lifestyle",
     coverImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200",
     availabilityStatus: "Available this week",
@@ -102,12 +102,12 @@ function CreatorSettingsPageContent() {
   ]);
 
   const [paymentSettings, setPaymentSettings] = useState({
-    stcPayNumber: "+966551234567",
-    madaCard: "Mada **** 4582",
-    accountTitle: "Reem Al Otaibi",
-    ibanOrAccount: "SA0380000000608010167519",
-    applePayNumber: "+966551234567",
-    bankTransferIban: "SA0380000000608010167519",
+    stcPayNumber: "JazzCash +92 300 1234567",
+    madaCard: "Easypaisa +92 321 7654321",
+    accountTitle: "Zara Qureshi",
+    ibanOrAccount: "PK36SCBL0000001123456702",
+    applePayNumber: "SadaPay +92 333 9988776",
+    bankTransferIban: "PK36SCBL0000001123456702",
   });
 
   const [creatorPreferences, setCreatorPreferences] = useState({
@@ -120,7 +120,7 @@ function CreatorSettingsPageContent() {
   const analyticsData = {
     engagementTrend: "+8.4% MoM",
     topPlatform: "Instagram",
-    monthlyEarnings: "SAR 145,000",
+    monthlyEarnings: "PKR 3,625,000",
     profileViews: "3,240",
     packagePerformance: "Top package conversion: 18%",
   };
@@ -566,14 +566,14 @@ function CreatorSettingsPageContent() {
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>STC Pay</Label>
+                  <Label>JazzCash</Label>
                   <Input
                     value={paymentSettings.stcPayNumber}
                     onChange={(e) => setPaymentSettings((p) => ({ ...p, stcPayNumber: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Mada</Label>
+                  <Label>Easypaisa</Label>
                   <Input
                     value={paymentSettings.madaCard}
                     onChange={(e) => setPaymentSettings((p) => ({ ...p, madaCard: e.target.value }))}
@@ -582,7 +582,7 @@ function CreatorSettingsPageContent() {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Apple Pay</Label>
+                  <Label>SadaPay</Label>
                   <Input
                     value={paymentSettings.applePayNumber}
                     onChange={(e) => setPaymentSettings((p) => ({ ...p, applePayNumber: e.target.value }))}
@@ -651,7 +651,7 @@ function CreatorSettingsPageContent() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Minimum Collaboration Budget (SAR)</Label>
+                  <Label>Minimum Collaboration Budget (PKR)</Label>
                 <Input
                   type="number"
                   value={creatorPreferences.minimumBudget}

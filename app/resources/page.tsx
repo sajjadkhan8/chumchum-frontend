@@ -73,7 +73,7 @@ const resourceGroups = [
     icon: FileText,
     items: [
       {
-        title: 'Saudi Arabia Content Compliance Tips',
+        title: 'Pakistan Content Compliance Tips',
         description: 'Best practices for clear sponsorship disclosures and campaign safety requirements.',
       },
       {

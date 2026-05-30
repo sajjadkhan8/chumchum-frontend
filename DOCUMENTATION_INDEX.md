@@ -91,7 +91,7 @@ Choose your path based on what you need:
 - Mock data details
 - Store management
 - Business metrics
-- KSA-specific considerations
+- Pakistan-specific considerations
 - Future enhancements
 - Testing scenarios
 - Commission structure
@@ -220,8 +220,8 @@ Full understanding of what was built and why
 ### Components & Usage
 → **QUICK_NAVIGATION.md** - "Component Locations" section
 
-### KSA Context
-→ **AMBASSADOR_PROGRAM_DOCUMENTATION.md** - "KSA-Specific Considerations" section
+### Pakistan Context
+→ **AMBASSADOR_PROGRAM_DOCUMENTATION.md** - "Pakistan-Specific Considerations" section
 
 ### How to Extend
 → **AMBASSADOR_FEATURES_README.md** - "How to Extend" section

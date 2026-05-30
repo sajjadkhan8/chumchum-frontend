@@ -15,7 +15,7 @@ import type {
   UserRole,
 } from '@/types';
 
-const DEFAULT_CITY: City = 'Riyadh';
+const DEFAULT_CITY: City = 'Karachi';
 
 const safeDate = (value?: string | Date | null): Date => {
   if (!value) return new Date();
@@ -222,7 +222,7 @@ export const mapPackage = (input: BackendPackageResponse): CreatorPackage => ({
   hybridBarterValue: input.hybrid_barter_value,
   platform: normalizePlatform(input.platform),
   tags: input.tags || [],
-  currency: input.currency || 'SAR',
+  currency: input.currency || 'PKR',
   isFeatured: Boolean(input.is_featured),
   isPopular: Boolean(input.is_popular),
   ordersCompleted: input.orders_completed || 0,

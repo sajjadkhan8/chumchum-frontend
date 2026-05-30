@@ -42,7 +42,7 @@ export const defaultCreatorFilterMetadata: CreatorFilterMetadata = {
     'Vlogging',
     'Reviews',
   ],
-  cities: ['Riyadh', 'Jeddah', 'Dammam', 'Mecca', 'Medina', 'Khobar', 'Tabuk'],
+  cities: ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'],
   platforms: ['instagram', 'tiktok', 'youtube', 'facebook'],
   dealTypes: [
     { value: 'paid', label: 'Paid' },
@@ -64,11 +64,11 @@ export const defaultCreatorFilterMetadata: CreatorFilterMetadata = {
     { min: 1000000, max: Number.MAX_SAFE_INTEGER, label: 'Mega (1M+)' },
   ],
   priceRanges: [
-    { min: 0, max: 25000, label: 'Under SAR 25,000' },
-    { min: 25000, max: 50000, label: 'SAR 25,000 - 50,000' },
-    { min: 50000, max: 100000, label: 'SAR 50,000 - 100,000' },
-    { min: 100000, max: 250000, label: 'SAR 100,000 - 250,000' },
-    { min: 250000, max: Number.MAX_SAFE_INTEGER, label: 'SAR 250,000+' },
+    { min: 0, max: 625000, label: 'Under PKR 625,000' },
+    { min: 625000, max: 1250000, label: 'PKR 625,000 - 1,250,000' },
+    { min: 1250000, max: 2500000, label: 'PKR 1,250,000 - 2,500,000' },
+    { min: 2500000, max: 6250000, label: 'PKR 2,500,000 - 6,250,000' },
+    { min: 6250000, max: Number.MAX_SAFE_INTEGER, label: 'PKR 6,250,000+' },
   ],
 };
 

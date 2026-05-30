@@ -1,7 +1,7 @@
 # ChumChum Two-Tier Creator Marketplace Features
 
 ## Overview
-The ChumChum platform now implements a sophisticated two-tier creator marketplace designed specifically for the Saudi Arabian market, featuring:
+The ChumChum platform now implements a sophisticated two-tier creator marketplace designed specifically for the Pakistani Arabian market, featuring:
 
 1. **Platform Ambassadors** - Verified, premium creators managed directly by the platform
 2. **Independent Creators** - Diverse creator marketplace with direct brand-creator partnerships
@@ -18,7 +18,7 @@ A premium tier of creators who are **verified, vetted, and managed directly by t
 - **5%+ minimum engagement rate** (verified by platform)
 - **4.5+ star rating** from completed deals
 - **30+ completed deals** minimum experience
-- **Guaranteed monthly base income** starting from SAR 50,000
+- **Guaranteed monthly base income** starting from PKR 50,000
 - **Platform commission: 15%** (higher commission due to platform's responsibility)
 
 ### Business Model
@@ -27,15 +27,15 @@ Ambassador Revenue Flow:
 Brand → Platform → Manager/Payment Processing → Platform (15% cut) → Ambassador (85%)
 ```
 
-**KSA-Specific Benefits:**
-- Dedicated account manager in Riyadh or Jeddah
-- Direct access to enterprise Saudi brands (ARAMCO, Alinma Bank, Saudi pharma companies, etc.)
+**Pakistan-Specific Benefits:**
+- Dedicated account manager in Karachi or Lahore
+- Direct access to enterprise Pakistani brands (ARAMCO, Alinma Bank, Pakistani pharma companies, etc.)
 - Guaranteed monthly income structure
 - Exclusive partnership opportunities
 - Professional support 24/7
 
 ### Verification Process (4 Steps)
-1. **Identity & Residence Verification** - KSA ID/Iqama validation
+1. **Identity & Residence Verification** - Pakistan ID/CNIC validation
 2. **Engagement Metrics Verification** - Platform audits follower counts and engagement
 3. **Content Quality & Brand Safety Review** - Content compliance review
 4. **Background & Compliance Check** - Final compliance verification
@@ -137,7 +137,7 @@ AmbassadorApplicationStatus = 'draft' | 'submitted' | 'under_review' | 'verified
 PlatformAmbassador extends Creator {
   ambassadorStatus: AmbassadorStatus
   commissionPercentage: number // Usually 15
-  monthlyBase?: number // SAR 50,000+
+  monthlyBase?: number // PKR 50,000+
   ambassadorSince: Date
   performanceScore: number // 0-10
   isExclusive: boolean // Can't work with competitors
@@ -209,11 +209,11 @@ New section added after hero highlighting the two-tier system with:
 
 ---
 
-## KSA-Specific Considerations
+## Pakistan-Specific Considerations
 
 ### Business Context
-- 💰 **Salary Structure**: Monthly guarantees in SAR aligned with Saudi employment expectations
-- 🏙️ **Cities**: Riyadh, Jeddah, Dammam, etc.
+- 💰 **Salary Structure**: Monthly guarantees in PKR aligned with Pakistani employment expectations
+- 🏙️ **Cities**: Karachi, Lahore, Islamabad, etc.
 - 📱 **Platforms**: Instagram (dominant), TikTok (growing), YouTube (established)
 - 🏢 **Brands**: Automotive, Finance, Healthcare, Retail, F&B, Tech
 - 📧 **Language**: English primary (UI), Arabic support planned
@@ -237,11 +237,11 @@ Independent Creator     10%          Low overhead, creator autonomy
 
 ### Financial Model
 **Example Scenario:**
-- Ambassador earning SAR 50,000/month base
-- Plus SAR 100,000 from campaigns
-- Total: SAR 150,000
-- Platform gets: SAR 15,000 (15% of campaigns)
-- Ambassador keeps: SAR 135,000
+- Ambassador earning PKR 50,000/month base
+- Plus PKR 100,000 from campaigns
+- Total: PKR 150,000
+- Platform gets: PKR 15,000 (15% of campaigns)
+- Ambassador keeps: PKR 135,000
 
 ---
 
@@ -306,7 +306,7 @@ Modified Files:
 | Feature | Independent Creator | Platform Ambassador |
 |---------|-------------------|---------------------|
 | Commission % | 10% | 15% |
-| Guarantee | None | SAR 50K+ monthly |
+| Guarantee | None | PKR 50K+ monthly |
 | Platform Responsibility | Minimal | Full |
 | Verification | Self-serve | Strict (4-step) |
 | Support Level | Standard | Premium 24/7 |
@@ -317,7 +317,7 @@ Modified Files:
 ## Next Steps for Implementation
 
 1. **Backend Integration** - Connect to real database
-2. **Payment Processing** - Integrate Stripe/2Checkout for KSA
+2. **Payment Processing** - Integrate Stripe/2Checkout for Pakistan
 3. **Verification Workflow** - Connect identity verification service
 4. **Admin Panel** - Build ambassador management dashboard
 5. **Analytics** - Add performance tracking for ambassadors
@@ -325,5 +325,5 @@ Modified Files:
 
 ---
 
-Generated for ChumChum Platform | KSA Market | May 2024
+Generated for ChumChum Platform | Pakistan Market | May 2024
 

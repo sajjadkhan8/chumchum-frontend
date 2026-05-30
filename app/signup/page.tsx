@@ -81,7 +81,7 @@ export default function SignupPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl font-bold leading-tight text-white xl:text-5xl"
           >
-            Join Saudi Arabia&apos;s
+            Join Pakistan&apos;s
             <br />
             Largest Creator
             <br />
@@ -204,7 +204,7 @@ export default function SignupPage() {
                   <Input
                     id="name"
                     type="text"
-                    placeholder={role === 'creator' ? 'Faisal Al Harbi' : 'Noon Food KSA'}
+                    placeholder={role === 'creator' ? 'Ali Hassan Khan' : 'Foodpanda Pakistan'}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required

@@ -106,7 +106,7 @@ export default function PublicPackageDetailPage() {
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center gap-4 text-sm">
               <span className="font-semibold text-primary">
-                {(pkg.currency || "SAR")} {pkg.price.toLocaleString()}
+                {(pkg.currency || "PKR")} {pkg.price.toLocaleString()}
               </span>
               <span className="text-muted-foreground">{pkg.ordersCompleted} completed orders</span>
               <span className="inline-flex items-center gap-1 text-muted-foreground">

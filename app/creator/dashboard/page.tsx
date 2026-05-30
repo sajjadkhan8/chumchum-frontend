@@ -90,7 +90,7 @@ const recentOrders = [
 const ambassadorOrders = [
   {
     id: "a1",
-    brandName: "stc Pay KSA",
+    brandName: "JazzCash Pakistan",
     brandLogo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100",
     packageName: "Ambassador Growth Sprint",
     amount: 165000,
@@ -99,7 +99,7 @@ const ambassadorOrders = [
   },
   {
     id: "a2",
-    brandName: "Saudia Holidays",
+    brandName: "Serena Hotels Pakistan",
     brandLogo: "https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=100",
     packageName: "Tourism Story Series",
     amount: 210000,
@@ -108,7 +108,7 @@ const ambassadorOrders = [
   },
   {
     id: "a3",
-    brandName: "Jarir Bookstore",
+    brandName: "Liberty Books",
     brandLogo: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=100",
     packageName: "Back-to-School Campaign",
     amount: 142000,
@@ -147,7 +147,7 @@ const ambassadorMessages = [
   },
   {
     id: "am2",
-    name: "Khaled - stc Pay Marketing",
+    name: "Khaled - JazzCash Marketing",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
     message: "Loved your campaign draft. Can we align on launch timing tomorrow?",
     time: new Date(Date.now() - 80 * 60 * 1000),
@@ -205,7 +205,7 @@ export default function CreatorDashboardPage() {
       name: user?.name || 'Creator',
       avatar: user?.avatar || '',
       bio: '',
-      city: 'Riyadh',
+      city: 'Karachi',
       categories: [],
       platforms: [{ platform: 'instagram', followers: 0, engagementRate: 0, username: 'creator' }],
       totalFollowers: 0,

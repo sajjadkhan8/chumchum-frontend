@@ -61,7 +61,7 @@ const transactions = [
   {
     id: "2",
     type: "withdrawal",
-    description: "Withdrawal - STC Pay",
+    description: "Withdrawal - JazzCash",
     amount: -50000,
     date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
     status: "completed",
@@ -85,7 +85,7 @@ const transactions = [
   {
     id: "5",
     type: "withdrawal",
-    description: "Withdrawal - Mada",
+    description: "Withdrawal - Easypaisa",
     amount: -75000,
     date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
     status: "completed",
@@ -95,15 +95,15 @@ const transactions = [
 const payoutMethods = [
   {
     id: "1",
-    type: "stcpay",
-    name: "STC Pay",
+    type: "jazzcash",
+    name: "JazzCash",
     details: "**** 1234",
     isDefault: true,
   },
   {
     id: "2",
-    type: "mada",
-    name: "Mada",
+    type: "easypaisa",
+    name: "Easypaisa",
     details: "**** 5678",
     isDefault: false,
   },
@@ -111,14 +111,14 @@ const payoutMethods = [
     id: "3",
     type: "bank",
     name: "Bank Transfer",
-    details: "IBAN SA03****7519",
+    details: "IBAN PK36****6702",
     isDefault: false,
   },
   {
     id: "4",
     type: "applepay",
     name: "Apple Pay",
-    details: "+96655****567",
+    details: "+92 300****567",
     isDefault: false,
   },
 ];
@@ -189,7 +189,7 @@ export default function CreatorEarningsPage() {
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label>Amount (SAR)</Label>
+                    <Label>Amount (PKR)</Label>
                     <Input
                       type="number"
                       placeholder="Enter amount"

@@ -210,16 +210,16 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
                 exit={{ opacity: 0, height: 0 }}
               >
                 <Label htmlFor="budget" className="text-sm font-medium">
-                  Budget (SAR)
+                  Budget (PKR)
                 </Label>
                 <div className="relative mt-2">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                    SAR
+                    PKR
                   </span>
                   <Input
                     id="budget"
                     type="number"
-                    placeholder={`Min ${formatPrice(creator.minPrice || 10000)}`}
+                    placeholder={`Min ${formatPrice(creator.minPrice || 250000)}`}
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
                     className="pl-12"
@@ -272,12 +272,12 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
                   </div>
                   <div>
                     <Label htmlFor="barter-value" className="text-sm font-medium">
-                      Estimated Value (SAR)
+                      Estimated Value (PKR)
                     </Label>
                     <Input
                       id="barter-value"
                       type="number"
-                      placeholder="50000"
+                      placeholder="1250000"
                       value={barterValue}
                       onChange={(e) => setBarterValue(e.target.value)}
                       className="mt-2"

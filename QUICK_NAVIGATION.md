@@ -165,7 +165,7 @@ Dashboard
 
 ### Benefits List
 **File**: `/data/ambassadors.ts`
-- `ambassadorBenefits` - 6 benefits with KSA context
+- `ambassadorBenefits` - 6 benefits with Pakistan context
 - Monthly income, manager support, etc.
 
 ---
@@ -252,7 +252,7 @@ Wait for verification (4 steps shown visually)
 - **4** - Verification steps
 - **15%** - Platform commission for ambassadors
 - **10%** - Platform commission for independent creators
-- **50,000** - Monthly base salary (SAR, starting)
+- **50,000** - Monthly base salary (PKR, starting)
 
 ---
 

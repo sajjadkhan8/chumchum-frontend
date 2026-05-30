@@ -182,7 +182,7 @@ export default function Home() {
                 className="mb-4 bg-primary/10 text-primary hover:bg-primary/15"
               >
                 <Sparkles className="mr-1 h-3 w-3" />
-                Saudi Arabia&apos;s First Influencer Marketplace
+                Pakistan&apos;s Influencer Marketplace
               </Badge>
             </motion.div>
 
@@ -197,7 +197,7 @@ export default function Home() {
                 Top Creators
               </span>
               <br />
-              in Saudi Arabia
+              in Pakistan
             </motion.h1>
 
             <motion.p
@@ -327,7 +327,7 @@ export default function Home() {
                         </p>
                         <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-white/90">
                           <span className="font-semibold">
-                            {(featuredPrimary.currency || "SAR")} {featuredPrimary.price.toLocaleString()}
+                            {(featuredPrimary.currency || "PKR")} {featuredPrimary.price.toLocaleString()}
                           </span>
                           <span>•</span>
                           <span>{featuredPrimary.ordersCompleted} orders completed</span>
@@ -365,7 +365,7 @@ export default function Home() {
                                 {pkg.shortDescription || pkg.description}
                               </p>
                               <p className="mt-2 text-xs font-medium text-primary">
-                                {(pkg.currency || "SAR")} {pkg.price.toLocaleString()} • {pkg.ordersCompleted} orders
+                                {(pkg.currency || "PKR")} {pkg.price.toLocaleString()} • {pkg.ordersCompleted} orders
                               </p>
                             </div>
                           </div>
@@ -401,7 +401,7 @@ export default function Home() {
                             {pkg.shortDescription || pkg.description}
                           </p>
                           <p className="mt-2 text-xs font-medium text-primary">
-                            {(pkg.currency || "SAR")} {pkg.price.toLocaleString()} • {pkg.ordersCompleted} orders
+                            {(pkg.currency || "PKR")} {pkg.price.toLocaleString()} • {pkg.ordersCompleted} orders
                           </p>
                         </CardContent>
                       </Card>
@@ -482,7 +482,7 @@ export default function Home() {
                   </div>
                   
                   <p className="mb-6 text-muted-foreground">
-                    KSA's most trusted creators, carefully verified and managed by our platform. Quality assurance guaranteed.
+                    Pakistan&apos;s most trusted creators, carefully verified and managed by our platform. Quality assurance guaranteed.
                   </p>
 
                   <ul className="mb-8 space-y-3">
@@ -864,7 +864,7 @@ export default function Home() {
                 <ZingZingLogo variant="light" className="h-9 w-[180px]" />
               </Link>
               <p className="text-sm text-muted-foreground">
-                Saudi Arabia&apos;s first influencer marketplace connecting brands
+                Pakistan&apos;s influencer marketplace connecting brands
                 with verified creators.
               </p>
             </div>

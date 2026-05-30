@@ -112,8 +112,8 @@ export const mockMessages: Message[] = [
     type: 'offer',
     offer: {
       dealType: 'hybrid',
-      amount: 35000,
-      barterDetails: 'Free meals for 3 months (worth SAR 45,000)',
+        amount: 875000,
+        barterDetails: 'Free meals for 3 months (worth PKR 1,125,000)',
       message: 'Monthly food reviews featuring our partner restaurants',
       status: 'pending',
     },

@@ -60,13 +60,13 @@ const companySizes = [
 ];
 
 const cities = [
-  "Jeddah",
-  "Riyadh",
-  "Dammam",
-  "Mecca",
-  "Medina",
-  "Khobar",
-  "Tabuk",
+  "Karachi",
+  "Lahore",
+  "Islamabad",
+  "Rawalpindi",
+  "Faisalabad",
+  "Multan",
+  "Peshawar",
 ];
 
 function BrandSettingsPageContent() {
@@ -75,19 +75,19 @@ function BrandSettingsPageContent() {
   const [isSaving, setIsSaving] = useState(false);
 
   const [profile, setProfile] = useState({
-    companyName: "Riyadh Gourmet Group",
-    email: "marketing@riyadhgourmet.sa",
-    phone: "+966 11 123 4567",
-    website: "https://riyadhgourmet.sa",
+    companyName: "Karachi Gourmet Group",
+    email: "marketing@karachigourmet.pk",
+    phone: "+92 21 1234 5678",
+    website: "https://karachigourmet.pk",
     industry: "Food & Beverage",
     companySize: "51-200 employees",
-    city: "Jeddah",
+    city: "Karachi",
     description:
-      "Leading organic food retailer in Saudi Arabia, committed to bringing fresh and healthy products to every home.",
+      "Leading organic food retailer in Pakistan, committed to bringing fresh and healthy products to every home.",
     logo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=400",
-    contactName: "Khalid Al Dosari",
-    contactEmail: "khalid@riyadhgourmet.sa",
-    contactPhone: "+966 55 987 6543",
+    contactName: "Ali Raza",
+    contactEmail: "ali@karachigourmet.pk",
+    contactPhone: "+92 300 987 6543",
   });
 
   const [notifications, setNotifications] = useState({
@@ -108,15 +108,15 @@ function BrandSettingsPageContent() {
 
   const [campaignPreferences, setCampaignPreferences] = useState({
     preferredCreatorCategories: "Food, Lifestyle, Beauty",
-    targetCities: "Jeddah, Riyadh, Dammam",
+    targetCities: "Karachi, Lahore, Islamabad",
     targetPlatforms: "Instagram, TikTok, YouTube",
-    campaignBudgetRange: "SAR 150,000 - SAR 800,000",
+    campaignBudgetRange: "PKR 3,750,000 - PKR 20,000,000",
   });
 
   const [verification, setVerification] = useState({
     businessStatus: "Verified",
-    contactEmail: "verification@riyadhgourmet.sa",
-    phoneNumber: "+966 50 778 8899",
+    contactEmail: "verification@karachigourmet.pk",
+    phoneNumber: "+92 300 778 8899",
   });
 
   const handleSave = async () => {
@@ -549,7 +549,7 @@ function BrandSettingsPageContent() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="budget">Budget (SAR)</Label>
+                  <Label htmlFor="budget">Budget (PKR)</Label>
                   <Input
                     id="budget"
                     type="number"
@@ -711,9 +711,9 @@ function BrandSettingsPageContent() {
                         <AvatarFallback>AH</AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">Khalid Al Dosari</p>
+                        <p className="font-medium">Ali Raza</p>
                         <p className="text-sm text-muted-foreground">
-                          khalid@riyadhgourmet.sa • Owner
+                          ali@karachigourmet.pk • Owner
                         </p>
                       </div>
                     </div>
@@ -724,9 +724,9 @@ function BrandSettingsPageContent() {
                         <AvatarFallback>SK</AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">Layan Al Shamri</p>
+                        <p className="font-medium">Hina Tariq</p>
                         <p className="text-sm text-muted-foreground">
-                          layan@riyadhgourmet.sa • Admin
+                          hina@karachigourmet.pk • Admin
                         </p>
                       </div>
                     </div>

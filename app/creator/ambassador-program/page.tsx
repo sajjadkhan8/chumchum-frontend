@@ -275,7 +275,7 @@ export default function AmbassadorProgramPage() {
                   and exclusive partnership opportunities. As a platform ambassador, you'll receive:
                 </p>
                 <ul className="space-y-2 pl-4">
-                  <li>✓ Monthly guaranteed base income starting from SAR 50,000</li>
+                  <li>✓ Monthly guaranteed base income starting from PKR 1,250,000</li>
                   <li>✓ Direct access to premium brands and enterprise clients</li>
                   <li>✓ Dedicated account manager for personalized support</li>
                   <li>✓ First access to exclusive and high-value campaigns</li>
@@ -302,7 +302,7 @@ export default function AmbassadorProgramPage() {
                     {
                       step: 2,
                       title: 'Identity Verification',
-                      desc: 'Verify your identity with valid Saudi ID/Iqama',
+                      desc: 'Verify your identity with valid CNIC details',
                     },
                     {
                       step: 3,

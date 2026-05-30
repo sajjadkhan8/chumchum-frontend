@@ -115,7 +115,7 @@ export default function TermsPage() {
             {/* 2. Platform Description */}
             <Section id="platform" icon={Globe} title="Platform Description">
               <p>
-                ZingZing is an influencer-marketing marketplace that connects Saudi brands
+                ZingZing is an influencer-marketing marketplace that connects Pakistani brands
                 with content creators for paid, barter, and hybrid collaboration campaigns.
                 ZingZing acts solely as an intermediary and technology facilitator — we are
                 not a party to any deal, contract, or arrangement entered into between a brand
@@ -137,7 +137,7 @@ export default function TermsPage() {
                 credentials and for all activities that occur under your account.
               </p>
               <InfoList items={[
-                'Notify support@zingzing.sa immediately of any unauthorised use.',
+                'Notify support@zingzing.pk immediately of any unauthorised use.',
                 'Do not share your credentials with third parties.',
                 'One individual or company may only hold one active account per role (brand / creator).',
                 'ZingZing reserves the right to suspend or terminate accounts that violate these Terms.',
@@ -153,7 +153,7 @@ export default function TermsPage() {
                 'Provide accurate campaign briefs and clear deliverable expectations.',
                 'Respond to creator inquiries in a timely manner.',
                 'Honour agreed payment or barter terms upon campaign completion.',
-                'Comply with all applicable Saudi advertising, e-commerce, and consumer-protection laws, including disclosure obligations set by relevant authorities.',
+                'Comply with all applicable Pakistan advertising, e-commerce, and consumer-protection laws, including disclosure obligations set by relevant authorities.',
               ]} />
               <h3 className="mt-6 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                 Creators
@@ -178,7 +178,7 @@ export default function TermsPage() {
                 'Barter deal terms (product value, delivery timeline) must be agreed in writing via Platform messages before campaign start.',
                 'Refund or dispute requests for escrow-managed payments are handled by ZingZing Support within 7 business days.',
                 'ZingZing is not liable for non-payment or unfulfilled barter obligations between parties.',
-                'Applicable taxes (including VAT obligations administered by ZATCA) are the responsibility of the respective party.',
+                'Applicable taxes (including GST, withholding tax, and FBR requirements) are the responsibility of the respective party.',
               ]} />
             </Section>
 
@@ -206,7 +206,7 @@ export default function TermsPage() {
                 </Link>
                 , which is incorporated into these Terms by reference. We collect and process
                 personal data only as described therein and in compliance with applicable
-                Saudi data-protection requirements.
+                Pakistan data-protection requirements.
               </p>
             </Section>
 
@@ -233,7 +233,7 @@ export default function TermsPage() {
               <p>
                 To the maximum extent permitted by law, ZingZing&apos;s total aggregate
                 liability for any claim arising out of or relating to these Terms or your use
-                of the Platform shall not exceed the greater of SAR 10,000 or the total fees
+                 of the Platform shall not exceed the greater of PKR 250,000 or the total fees
                 paid by you to ZingZing in the three months preceding the claim.
               </p>
             </Section>
@@ -242,9 +242,9 @@ export default function TermsPage() {
             <Section id="governing-law" icon={Scale} title="Governing Law">
               <p>
                 These Terms are governed by and construed in accordance with the laws of
-                the Kingdom of Saudi Arabia. Any dispute arising out of or relating to
+                Pakistan. Any dispute arising out of or relating to
                 these Terms shall be subject to the exclusive jurisdiction of the courts of
-                Jeddah, Saudi Arabia, unless resolved through mutual good-faith negotiation
+                Karachi, Pakistan, unless resolved through mutual good-faith negotiation
                 or binding arbitration as agreed by both parties.
               </p>
             </Section>
@@ -269,17 +269,17 @@ export default function TermsPage() {
                 <p className="font-semibold text-foreground">ZingZing — Legal &amp; Trust</p>
                 <p className="mt-1 text-muted-foreground">
                   Email:{' '}
-                  <a href="mailto:legal@zingzing.sa" className="font-medium text-primary hover:underline">
-                    legal@zingzing.sa
+                  <a href="mailto:legal@zingzing.pk" className="font-medium text-primary hover:underline">
+                    legal@zingzing.pk
                   </a>
                 </p>
                 <p className="mt-0.5 text-muted-foreground">
                   Support:{' '}
-                  <a href="mailto:support@zingzing.sa" className="font-medium text-primary hover:underline">
-                    support@zingzing.sa
+                  <a href="mailto:support@zingzing.pk" className="font-medium text-primary hover:underline">
+                    support@zingzing.pk
                   </a>
                 </p>
-                <p className="mt-0.5 text-muted-foreground">Jeddah, Saudi Arabia</p>
+                <p className="mt-0.5 text-muted-foreground">Karachi, Pakistan</p>
               </div>
             </Section>
 

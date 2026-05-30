@@ -100,7 +100,7 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl font-bold leading-tight text-white xl:text-5xl"
           >
-            Saudi Arabia's
+            Pakistan&apos;s
             <br />
             Influencer
             <br />
@@ -112,7 +112,7 @@ export default function LoginPage() {
             transition={{ delay: 0.1 }}
             className="max-w-md text-lg text-white/80"
           >
-            Connect with top creators across Saudi Arabia. Paid deals, barter collaborations, and everything in between.
+            Connect with top creators across Pakistan. Paid deals, barter collaborations, and everything in between.
           </motion.p>
         </div>
 
@@ -136,7 +136,7 @@ export default function LoginPage() {
               ))}
             </div>
             <p className="text-sm text-white/80">
-              <span className="font-semibold text-white">10,000+</span> creators across Saudi Arabia
+              <span className="font-semibold text-white">10,000+</span> creators across Pakistan
             </p>
           </div>
         </motion.div>
@@ -252,12 +252,12 @@ export default function LoginPage() {
                     <Label htmlFor="phone">Phone Number</Label>
                     <div className="flex gap-2">
                       <div className="flex h-10 items-center rounded-md border border-input bg-muted px-3 text-sm">
-                        +966
+                        +92
                       </div>
                       <Input
                         id="phone"
                         type="tel"
-                        placeholder="5X XXX XXXX"
+                        placeholder="300 1234567"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         className="flex-1"

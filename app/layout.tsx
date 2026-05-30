@@ -18,10 +18,10 @@ const sora = Sora({
 })
 
 export const metadata: Metadata = {
-  title: "ZingZing - Saudi Arabia's Influencer Marketplace",
+  title: "ZingZing - Pakistan's Influencer Marketplace",
   description:
-    "Discover creators and collaborate through paid, barter, and hybrid partnerships on Saudi Arabia's premium influencer marketplace.",
-  keywords: ['influencer marketing', 'Saudi Arabia', 'creators', 'brand collaborations', 'barter deals'],
+    "Discover creators and collaborate through paid, barter, and hybrid partnerships on Pakistan's premium influencer marketplace.",
+  keywords: ['influencer marketing', 'Pakistan', 'creators', 'brand collaborations', 'barter deals'],
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml', sizes: '32x32' },
