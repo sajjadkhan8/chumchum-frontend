@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -15,7 +15,21 @@ import { ZingZingLogo } from '@/src/components/ZingZingLogo';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, loginWithPhone, requestOtp, isLoading } = useAuthStore();
+  const { login, loginWithPhone, requestOtp, isLoading, user, isAuthenticated, hasHydrated } = useAuthStore();
+
+  // Redirect already-authenticated users to their dashboard
+  useEffect(() => {
+    if (!hasHydrated || !isAuthenticated || !user?.role) return;
+    router.replace(user.role === 'creator' ? '/creator/dashboard' : '/brand/dashboard');
+  }, [hasHydrated, isAuthenticated, user, router]);
+
+  if (hasHydrated && isAuthenticated && user?.role) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
   const [email, setEmail] = useState('');

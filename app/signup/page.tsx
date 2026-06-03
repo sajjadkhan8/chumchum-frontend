@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, ArrowRight, Users, Building2, CheckCircle, Circle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Eye, EyeOff, Loader2, ArrowRight, Users, Building2, CheckCircle, Circle } from 'lucide-react';import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
@@ -17,8 +16,22 @@ import { validatePassword, type PasswordStrengthResult } from '@/lib/password-va
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signup, isLoading } = useAuthStore();
-  
+  const { signup, isLoading, user, isAuthenticated, hasHydrated } = useAuthStore();
+
+  // Redirect already-authenticated users to their dashboard
+  useEffect(() => {
+    if (!hasHydrated || !isAuthenticated || !user?.role) return;
+    router.replace(user.role === 'creator' ? '/creator/dashboard' : '/brand/dashboard');
+  }, [hasHydrated, isAuthenticated, user, router]);
+
+  if (hasHydrated && isAuthenticated && user?.role) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   const [step, setStep] = useState<'role' | 'details'>('role');
   const [role, setRole] = useState<UserRole | null>(null);
   const [name, setName] = useState('');

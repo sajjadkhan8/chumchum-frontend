@@ -3,14 +3,14 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   Search,
   TrendingUp,
   Star,
   ArrowRight,
   Loader2,
-  Play,
   ChevronLeft,
   ChevronRight,
   Sparkles,
@@ -23,7 +23,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Navbar } from "@/components/navbar";
 import { BottomNav } from "@/components/bottom-nav";
 import { CreatorCard } from "@/components/creator-card";
@@ -32,6 +31,7 @@ import { ErrorState } from "@/components/error-state";
 import { ZingZingLogo } from "@/src/components/ZingZingLogo";
 import { creatorsService } from "@/services/creators.service";
 import { packagesService } from "@/services/packages.service";
+import { useAuthStore } from "@/store/auth-store";
 import type { Creator, CreatorPackage } from "@/types";
 
 const categories = [
@@ -52,6 +52,13 @@ const stats = [
 ];
 
 export default function Home() {
+  const router = useRouter();
+  const { user, isAuthenticated, hasHydrated } = useAuthStore((state) => ({
+    user: state.user,
+    isAuthenticated: state.isAuthenticated,
+    hasHydrated: state.hasHydrated,
+  }));
+
   const [searchQuery, setSearchQuery] = useState("");
   const [featuredPagination, setFeaturedPagination] = useState({ page: 0, size: 12 });
   const [featuredPackages, setFeaturedPackages] = useState<CreatorPackage[]>([]);
@@ -66,6 +73,9 @@ export default function Home() {
   const trendingRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const shouldRedirectAuthenticatedHome = hasHydrated && isAuthenticated && Boolean(user?.role);
+  const homeRedirectPath = user?.role === "creator" ? "/creator/dashboard" : "/brand/dashboard";
 
   const fetchFeaturedPackages = async (
     page = featuredPagination.page,
@@ -102,12 +112,19 @@ export default function Home() {
   };
 
   useEffect(() => {
-    void fetchFeaturedPackages(0, featuredPagination.size);
-    // Fetch on home load; keep page/size in state for future load more.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!shouldRedirectAuthenticatedHome) return;
+    router.replace(homeRedirectPath);
+  }, [homeRedirectPath, router, shouldRedirectAuthenticatedHome]);
 
   useEffect(() => {
+    if (shouldRedirectAuthenticatedHome) return;
+    void fetchFeaturedPackages(0, featuredPagination.size);
+    // Fetch on home load; keep page/size in state for future load more.
+  }, [featuredPagination.size, shouldRedirectAuthenticatedHome]);
+
+  useEffect(() => {
+    if (shouldRedirectAuthenticatedHome) return;
+
     const loadCreators = async () => {
       try {
         const [trending, all] = await Promise.all([
@@ -126,7 +143,7 @@ export default function Home() {
     };
 
     void loadCreators();
-  }, []);
+  }, [shouldRedirectAuthenticatedHome]);
 
   const handleScroll = () => {
     if (trendingRef.current) {
@@ -158,6 +175,14 @@ export default function Home() {
     if (isFeaturedLoadingMore || !hasMoreFeatured) return;
     void fetchFeaturedPackages(featuredPagination.page + 1, featuredPagination.size, { append: true });
   };
+
+  if (shouldRedirectAuthenticatedHome) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
