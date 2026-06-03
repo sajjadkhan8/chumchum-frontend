@@ -67,8 +67,31 @@ export const mapUser = (input: BackendUser): User => ({
 
 interface BackendCreatorResponse {
   id: string;
+  name?: string;
+  username?: string;
+  email?: string;
+  phone?: string;
+  city?: string;
+  avatar_url?: string;
   bio?: string;
   category?: string;
+  cover_image_url?: string;
+  website?: string;
+  niche?: string;
+  availability_status?: string;
+  response_time?: string;
+  min_price?: number;
+  max_price?: number;
+  is_verified?: boolean;
+  is_trending?: boolean;
+  is_fast_responder?: boolean;
+  completed_deals?: number;
+  accepts_barter?: boolean;
+  accepts_hybrid_deals?: boolean;
+  minimum_budget?: number;
+  preferred_industries?: string;
+  languages?: string[];
+  categories?: string[];
   tiktok_url?: string;
   instagram_url?: string;
   youtube_url?: string;
@@ -78,8 +101,19 @@ interface BackendCreatorResponse {
   engagement_rate?: number;
   rating?: number;
   total_reviews?: number;
+  social_accounts?: {
+    id?: string;
+    platform?: string;
+    username?: string;
+    profile_url?: string;
+    followers?: number;
+    avg_views?: number;
+    engagement_rate?: number;
+    is_verified?: boolean;
+  }[];
   user?: {
     id?: string;
+    name?: string;
     username?: string;
     image?: string;
     city?: string;
@@ -90,52 +124,76 @@ interface BackendCreatorResponse {
 }
 
 export const mapCreator = (input: BackendCreatorResponse): Creator => {
-  const username = input.user?.username || `creator-${input.id.slice(0, 8)}`;
-  const avatar = input.user?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
+  const username = input.username || input.user?.username || `creator-${input.id.slice(0, 8)}`;
+  const displayName = input.name || input.user?.name || input.user?.username || username;
+  const avatar = input.avatar_url || input.user?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
   const followers = input.followers || 0;
   const engagementRate = input.engagement_rate || 0;
-  const category = input.category || 'General';
+  const categories = input.categories?.length ? input.categories : [input.niche || input.category || 'General'];
 
-  const platforms = [
-    { key: 'instagram', url: input.instagram_url },
-    { key: 'tiktok', url: input.tiktok_url },
-    { key: 'youtube', url: input.youtube_url },
-    { key: 'facebook', url: input.facebook_url },
-  ]
-    .filter((entry) => Boolean(entry.url))
-    .map((entry) => ({
-      platform: normalizePlatform(entry.key),
-      followers,
-      engagementRate,
-      username,
-      profileUrl: entry.url,
-      avgViews: input.avg_views || 0,
-    }));
+  const socialAccounts = input.social_accounts?.length
+    ? input.social_accounts.map((account) => ({
+        platform: normalizePlatform(account.platform),
+        followers: account.followers || 0,
+        engagementRate: account.engagement_rate || 0,
+        username: account.username || username,
+        profileUrl: account.profile_url,
+        avgViews: account.avg_views || 0,
+      }))
+    : [
+        { key: 'instagram', url: input.instagram_url },
+        { key: 'tiktok', url: input.tiktok_url },
+        { key: 'youtube', url: input.youtube_url },
+        { key: 'facebook', url: input.facebook_url },
+      ]
+        .filter((entry) => Boolean(entry.url))
+        .map((entry) => ({
+          platform: normalizePlatform(entry.key),
+          followers,
+          engagementRate,
+          username,
+          profileUrl: entry.url,
+          avgViews: input.avg_views || 0,
+        }));
 
   return {
     id: input.id,
     userId: input.user?.id || input.id,
     username,
-    name: input.user?.username || username,
+    name: displayName,
+    email: input.email || input.user?.email,
+    phone: input.phone || input.user?.phone,
     avatar,
-    coverImage: avatar,
+    coverImage: input.cover_image_url || avatar,
     bio: input.bio || '',
-    city: (input.user?.city as City) || DEFAULT_CITY,
-    categories: [category],
-    platforms: platforms.length > 0 ? platforms : [{ platform: 'instagram', followers, engagementRate, username }],
+    city: (input.city as City) || (input.user?.city as City) || DEFAULT_CITY,
+    categories,
+    languages: input.languages || [],
+    website: input.website,
+    niche: input.niche || input.category,
+    availabilityStatus: input.availability_status,
+    acceptsBarter: input.accepts_barter,
+    acceptsHybridDeals: input.accepts_hybrid_deals,
+    preferredIndustries: input.preferred_industries,
+    minimumBudget: input.minimum_budget,
+    platforms: socialAccounts.length > 0 ? socialAccounts : [{ platform: 'instagram', followers, engagementRate, username }],
     totalFollowers: followers,
     avgEngagementRate: engagementRate,
-    dealTypes: ['paid', 'barter', 'hybrid'],
+    dealTypes: [
+      'paid',
+      ...(input.accepts_barter === false ? [] : ['barter' as const]),
+      ...(input.accepts_hybrid_deals === false ? [] : ['hybrid' as const]),
+    ],
     barterTypes: ['products'],
-    minPrice: 1000,
-    maxPrice: 10000,
-    responseTime: 'Within 24 hours',
-    isVerified: (input.rating || 0) >= 4,
-    isTrending: false,
-    isFastResponder: false,
+    minPrice: input.min_price,
+    maxPrice: input.max_price,
+    responseTime: input.response_time || 'Within 24 hours',
+    isVerified: Boolean(input.is_verified) || (input.rating || 0) >= 4,
+    isTrending: Boolean(input.is_trending),
+    isFastResponder: Boolean(input.is_fast_responder),
     rating: input.rating || 0,
     totalReviews: input.total_reviews || 0,
-    completedDeals: 0,
+    completedDeals: input.completed_deals || 0,
     contentPreviews: [],
     createdAt: safeDate(input.created_at),
   };
@@ -449,4 +507,3 @@ export const mapConversation = (
     updatedAt: safeDate(input.updatedAt),
   };
 };
-

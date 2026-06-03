@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -42,6 +42,8 @@ import {
 } from "@/components/ui/select";
 import { getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
+import { creatorsService, type CreatorSocialAccountPayload } from "@/services/creators.service";
+import type { Platform } from "@/types";
 import { toast } from "sonner";
 
 const categories = [
@@ -69,37 +71,50 @@ const cities = [
   "Peshawar",
 ];
 
+type EditableSocialAccount = CreatorSocialAccountPayload & {
+  platform: Platform;
+  verified?: boolean;
+};
+
+const defaultProfile = {
+  name: "",
+  handle: "",
+  bio: "",
+  email: "",
+  phone: "",
+  city: "Karachi",
+  categories: [] as string[],
+  languages: ["English", "Urdu"],
+  website: "",
+  niche: "",
+  coverImage: "",
+  availabilityStatus: "Available this week",
+  responseTime: "Within 24 hours",
+  collaborationPreferences: "",
+  avatar: "",
+};
+
+const platformOrder: Platform[] = ["instagram", "youtube", "tiktok", "facebook", "snapchat"];
+
+const buildSocialLinks = (accounts: EditableSocialAccount[]) => {
+  const byPlatform = Object.fromEntries(accounts.map((account) => [account.platform, account.profileUrl || ""]));
+
+  return {
+    instagramUrl: byPlatform.instagram,
+    youtubeUrl: byPlatform.youtube,
+    tiktokUrl: byPlatform.tiktok,
+    facebookUrl: byPlatform.facebook,
+  };
+};
+
 function CreatorSettingsPageContent() {
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState("profile");
   const [isSaving, setIsSaving] = useState(false);
 
-  const [profile, setProfile] = useState({
-    name: "Zara Qureshi",
-    handle: "reemwellness",
-    bio: "Fashion and lifestyle content creator based in Karachi. Passionate about sustainable fashion and empowering women.",
-    email: "zara@zingzing.pk",
-    phone: "+92 300 123 4567",
-    city: "Karachi",
-    categories: ["Fashion", "Lifestyle"],
-    languages: ["English", "Urdu"],
-    website: "https://zarawellness.pk",
-    niche: "Fashion & Lifestyle",
-    coverImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200",
-    availabilityStatus: "Available this week",
-    responseTime: "Within 2 hours",
-    collaborationPreferences: "Fashion hauls, skincare tutorials, unboxing, and hybrid product campaigns",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
-  });
-
-  const [socialAccounts, setSocialAccounts] = useState([
-    { platform: "instagram", username: "reemwellness", profileUrl: "https://instagram.com/reemwellness", followers: 125000, avgViews: 48000, engagementRate: 5.6, verified: true },
-    { platform: "youtube", username: "ReemWellness", profileUrl: "https://youtube.com/@ReemWellness", followers: 45000, avgViews: 18000, engagementRate: 4.8, verified: true },
-    { platform: "tiktok", username: "reemwellness", profileUrl: "https://tiktok.com/@reemwellness", followers: 89000, avgViews: 62000, engagementRate: 7.1, verified: false },
-    { platform: "facebook", username: "ReemWellnessOfficial", profileUrl: "https://facebook.com/reemwellnessofficial", followers: 38000, avgViews: 12000, engagementRate: 3.9, verified: false },
-    { platform: "snapchat", username: "reemwellness.snap", profileUrl: "https://snapchat.com/add/reemwellness.snap", followers: 21000, avgViews: 9000, engagementRate: 4.2, verified: false },
-  ]);
+  const [profile, setProfile] = useState(defaultProfile);
+  const [socialAccounts, setSocialAccounts] = useState<EditableSocialAccount[]>([]);
 
   const [paymentSettings, setPaymentSettings] = useState({
     stcPayNumber: "JazzCash +92 300 1234567",
@@ -136,12 +151,100 @@ function CreatorSettingsPageContent() {
     smsNotifications: false,
   });
 
+  const loadCreatorProfile = useCallback(async () => {
+    const creator = await creatorsService.getMe();
+    if (!creator) return;
+
+    setProfile((current) => ({
+      ...current,
+      name: creator.name || user?.name || "",
+      handle: creator.username || user?.email?.split("@")[0] || "",
+      bio: creator.bio || "",
+      email: creator.email || user?.email || "",
+      phone: creator.phone || user?.phone || "",
+      city: creator.city || "Karachi",
+      categories: creator.categories || [],
+      languages: creator.languages?.length ? creator.languages : current.languages,
+      website: creator.website || "",
+      niche: creator.niche || creator.categories?.[0] || "",
+      availabilityStatus: creator.availabilityStatus || current.availabilityStatus,
+      avatar: creator.avatar || "",
+      coverImage: creator.coverImage || "",
+      responseTime: creator.responseTime || "Within 24 hours",
+      collaborationPreferences: creator.preferredIndustries || "",
+    }));
+
+    setSocialAccounts(
+      creator.platforms
+        .filter((platform) => platform.profileUrl)
+        .map((platform) => ({
+          platform: platform.platform,
+          username: platform.username,
+          profileUrl: platform.profileUrl,
+          followers: platform.followers,
+          avgViews: platform.avgViews,
+          engagementRate: platform.engagementRate,
+          verified: false,
+        })),
+    );
+  }, [user]);
+
   const handleSave = async () => {
     setIsSaving(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSaving(false);
-    toast.success("Settings saved");
+    try {
+      await creatorsService.updateMe({
+        name: profile.name,
+        username: profile.handle,
+        email: profile.email,
+        phone: profile.phone,
+        city: profile.city,
+        avatarUrl: profile.avatar,
+        bio: profile.bio,
+        category: profile.niche || profile.categories[0],
+        coverImageUrl: profile.coverImage,
+        website: profile.website,
+        niche: profile.niche,
+        availabilityStatus: profile.availabilityStatus,
+        responseTime: profile.responseTime,
+        preferredIndustries: profile.collaborationPreferences,
+        languages: profile.languages,
+        categories: profile.categories,
+        ...buildSocialLinks(socialAccounts),
+      });
+      await loadCreatorProfile();
+      toast.success("Profile saved");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save profile";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSocialSave = async () => {
+    setIsSaving(true);
+    try {
+      const accounts = socialAccounts
+        .filter((account) => account.platform && (account.username || account.profileUrl))
+        .map(({ platform, username, profileUrl, followers, avgViews, engagementRate }) => ({
+          platform,
+          username,
+          profileUrl,
+          followers: Number(followers) || 0,
+          avgViews: Number(avgViews) || 0,
+          engagementRate: Number(engagementRate) || 0,
+        }));
+
+      await creatorsService.updateSocialAccounts(accounts);
+      await creatorsService.updateMe(buildSocialLinks(accounts as EditableSocialAccount[]));
+      await loadCreatorProfile();
+      toast.success("Social accounts saved");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save social accounts";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCategoryToggle = (category: string) => {
@@ -170,6 +273,30 @@ function CreatorSettingsPageContent() {
     snapchat: LinkIcon,
   };
 
+  const updateSocialAccount = (index: number, updates: Partial<EditableSocialAccount>) => {
+    setSocialAccounts((accounts) =>
+      accounts.map((account, accountIndex) =>
+        accountIndex === index ? { ...account, ...updates } : account,
+      ),
+    );
+  };
+
+  const addSocialAccount = () => {
+    const nextPlatform = platformOrder.find((platform) => !socialAccounts.some((account) => account.platform === platform)) || "instagram";
+    setSocialAccounts((accounts) => [
+      ...accounts,
+      {
+        platform: nextPlatform,
+        username: "",
+        profileUrl: "",
+        followers: 0,
+        avgViews: 0,
+        engagementRate: 0,
+        verified: false,
+      },
+    ]);
+  };
+
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (!tab) return;
@@ -188,6 +315,14 @@ function CreatorSettingsPageContent() {
       setActiveTab(tab);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!user || user.role !== "creator") return;
+    void loadCreatorProfile().catch((error) => {
+      const message = error instanceof Error ? error.message : "Could not load creator profile";
+      toast.error(message);
+    });
+  }, [loadCreatorProfile, user]);
 
   return (
     <div className="container mx-auto max-w-4xl p-4 pb-24 md:p-6 md:pb-6">
@@ -502,11 +637,11 @@ function CreatorSettingsPageContent() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {socialAccounts.map((account) => {
+              {socialAccounts.map((account, index) => {
                 const Icon = platformIcons[account.platform] || LinkIcon;
                 return (
                   <div
-                    key={account.platform}
+                    key={`${account.platform}-${index}`}
                     className="rounded-lg border border-border p-4"
                   >
                     <div className="mb-3 flex items-center justify-between">
@@ -528,19 +663,58 @@ function CreatorSettingsPageContent() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => toast.info(`${account.platform} disconnection is disabled in demo mode.`)}
+                        onClick={() => setSocialAccounts((accounts) => accounts.filter((_, accountIndex) => accountIndex !== index))}
                       >
                         Disconnect
                       </Button>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <Input value={account.username} readOnly />
-                      <Input value={account.profileUrl} readOnly />
-                      <Input value={`${account.followers.toLocaleString()} followers`} readOnly />
-                      <Input value={`${account.avgViews.toLocaleString()} avg views`} readOnly />
+                      <Select
+                        value={account.platform}
+                        onValueChange={(value) => updateSocialAccount(index, { platform: value as Platform })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {platformOrder.map((platform) => (
+                            <SelectItem key={platform} value={platform}>
+                              {platform}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        value={account.username}
+                        placeholder="Username"
+                        onChange={(event) => updateSocialAccount(index, { username: event.target.value })}
+                      />
+                      <Input
+                        value={account.profileUrl || ""}
+                        placeholder="Profile URL"
+                        onChange={(event) => updateSocialAccount(index, { profileUrl: event.target.value })}
+                      />
+                      <Input
+                        type="number"
+                        value={account.followers ?? 0}
+                        placeholder="Followers"
+                        onChange={(event) => updateSocialAccount(index, { followers: Number(event.target.value) })}
+                      />
+                      <Input
+                        type="number"
+                        value={account.avgViews ?? 0}
+                        placeholder="Average views"
+                        onChange={(event) => updateSocialAccount(index, { avgViews: Number(event.target.value) })}
+                      />
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={account.engagementRate ?? 0}
+                        placeholder="Engagement rate"
+                        onChange={(event) => updateSocialAccount(index, { engagementRate: Number(event.target.value) })}
+                      />
                     </div>
-                    <p className="mt-2 text-xs text-muted-foreground">Engagement rate: {account.engagementRate}%</p>
                   </div>
                 );
               })}
@@ -548,10 +722,20 @@ function CreatorSettingsPageContent() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => toast.info("Add account flow is coming soon.")}
+                onClick={addSocialAccount}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Connect Account
+              </Button>
+              <Button onClick={handleSocialSave} disabled={isSaving} className="w-full">
+                {isSaving ? (
+                  "Saving..."
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Social Accounts
+                  </>
+                )}
               </Button>
             </CardContent>
           </Card>
@@ -832,4 +1016,3 @@ export default function CreatorSettingsPage() {
     </Suspense>
   );
 }
-

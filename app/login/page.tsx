@@ -16,6 +16,13 @@ import { ZingZingLogo } from '@/src/components/ZingZingLogo';
 export default function LoginPage() {
   const router = useRouter();
   const { login, loginWithPhone, requestOtp, isLoading, user, isAuthenticated, hasHydrated } = useAuthStore();
+  const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
 
   // Redirect already-authenticated users to their dashboard
   useEffect(() => {
@@ -30,14 +37,6 @@ export default function LoginPage() {
       </div>
     );
   }
-
-  const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [otp, setOtp] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
 
   const applyDemoCredentials = (demoEmail: string) => {
     setAuthMethod('email');

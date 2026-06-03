@@ -7,6 +7,43 @@ interface SearchResponse {
   content?: unknown[];
 }
 
+interface CreatorProfileUpdatePayload {
+  name?: string;
+  username?: string;
+  email?: string;
+  phone?: string;
+  city?: string;
+  avatarUrl?: string;
+  bio?: string;
+  category?: string;
+  coverImageUrl?: string;
+  website?: string;
+  niche?: string;
+  availabilityStatus?: string;
+  responseTime?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  acceptsBarter?: boolean;
+  acceptsHybridDeals?: boolean;
+  minimumBudget?: number;
+  preferredIndustries?: string;
+  languages?: string[];
+  categories?: string[];
+  tiktokUrl?: string;
+  instagramUrl?: string;
+  youtubeUrl?: string;
+  facebookUrl?: string;
+}
+
+export interface CreatorSocialAccountPayload {
+  platform: string;
+  username: string;
+  profileUrl?: string;
+  followers?: number;
+  avgViews?: number;
+  engagementRate?: number;
+}
+
 const unwrapCreators = (payload: SearchResponse | unknown[]): unknown[] => {
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload.creators)) return payload.creators;
@@ -16,18 +53,48 @@ const unwrapCreators = (payload: SearchResponse | unknown[]): unknown[] => {
 
 export const creatorsService = {
   async getMe(): Promise<Creator | null> {
-    const endpoints = ['/api/v1/creators/me', '/api/v1/creator/profile'];
+    const response = await apiClient.get<unknown>('/api/v1/creators/me/profile');
+    return response ? mapCreator(response as never) : null;
+  },
 
-    for (const endpoint of endpoints) {
-      try {
-        const response = await apiClient.get<unknown>(endpoint);
-        if (response) return mapCreator(response as never);
-      } catch {
-        // Try the next endpoint.
-      }
-    }
+  async updateMe(payload: CreatorProfileUpdatePayload): Promise<Creator> {
+    const response = await apiClient.patch<unknown>('/api/v1/creators/me/profile', {
+      name: payload.name,
+      username: payload.username,
+      email: payload.email,
+      phone: payload.phone,
+      city: payload.city,
+      avatar_url: payload.avatarUrl,
+      bio: payload.bio,
+      category: payload.category,
+      cover_image_url: payload.coverImageUrl,
+      website: payload.website,
+      niche: payload.niche,
+      availability_status: payload.availabilityStatus,
+      response_time: payload.responseTime,
+      min_price: payload.minPrice,
+      max_price: payload.maxPrice,
+      accepts_barter: payload.acceptsBarter,
+      accepts_hybrid_deals: payload.acceptsHybridDeals,
+      minimum_budget: payload.minimumBudget,
+      preferred_industries: payload.preferredIndustries,
+      languages: payload.languages,
+      categories: payload.categories,
+      tiktok_url: payload.tiktokUrl,
+      instagram_url: payload.instagramUrl,
+      youtube_url: payload.youtubeUrl,
+      facebook_url: payload.facebookUrl,
+    });
 
-    return null;
+    return mapCreator(response as never);
+  },
+
+  async updateSocialAccounts(accounts: CreatorSocialAccountPayload[]): Promise<CreatorSocialAccountPayload[]> {
+    const response = await apiClient.put<CreatorSocialAccountPayload[]>('/api/v1/creators/me/social-accounts', {
+      accounts,
+    });
+
+    return Array.isArray(response) ? response : [];
   },
 
   async getAll(filters?: CreatorFilters): Promise<Creator[]> {

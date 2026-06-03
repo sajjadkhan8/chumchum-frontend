@@ -10,7 +10,7 @@ import { useAuthStore } from "@/store/auth-store";
 export default function CreatorLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated } = useAuthStore();
 
   const isProtectedCreatorRoute =
     pathname.startsWith('/creator/dashboard') ||
@@ -25,6 +25,8 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
     pathname.startsWith('/creator/help');
 
   useEffect(() => {
+    if (!hasHydrated) return;
+
     if (isProtectedCreatorRoute && !isAuthenticated) {
       router.replace("/login");
       return;
@@ -32,9 +34,13 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
     if (isProtectedCreatorRoute && user && user.role !== "creator") {
       router.replace("/brand/dashboard");
     }
-  }, [isAuthenticated, user, router, isProtectedCreatorRoute]);
+  }, [hasHydrated, isAuthenticated, user, router, isProtectedCreatorRoute]);
 
-  if ((isProtectedCreatorRoute && !isAuthenticated) || (isProtectedCreatorRoute && user?.role !== 'creator')) {
+  if (
+    (isProtectedCreatorRoute && !hasHydrated) ||
+    (isProtectedCreatorRoute && !isAuthenticated) ||
+    (isProtectedCreatorRoute && user?.role !== 'creator')
+  ) {
     return <div className="min-h-screen bg-background" />;
   }
 

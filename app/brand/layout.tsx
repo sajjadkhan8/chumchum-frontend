@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/auth-store';
 export default function BrandLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated } = useAuthStore();
 
   const isProtectedBrandRoute =
     pathname.startsWith('/brand/dashboard') ||
@@ -20,6 +20,8 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
     pathname.startsWith('/brand/analytics');
 
   useEffect(() => {
+    if (!hasHydrated) return;
+
     if (isProtectedBrandRoute && !isAuthenticated) {
       router.replace('/login');
       return;
@@ -27,9 +29,9 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
     if (user && user.role === 'creator') {
       router.replace('/creator/dashboard');
     }
-  }, [isAuthenticated, user, router, isProtectedBrandRoute]);
+  }, [hasHydrated, isAuthenticated, user, router, isProtectedBrandRoute]);
 
-  if ((isProtectedBrandRoute && !isAuthenticated) || user?.role === 'creator') {
+  if ((isProtectedBrandRoute && !hasHydrated) || (isProtectedBrandRoute && !isAuthenticated) || user?.role === 'creator') {
     return <div className="min-h-screen bg-background" />;
   }
 

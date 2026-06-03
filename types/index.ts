@@ -34,11 +34,21 @@ export interface Creator {
   userId: string;
   username: string;
   name: string;
+  email?: string;
+  phone?: string;
   avatar: string;
   coverImage?: string;
   bio: string;
   city: City;
   categories: string[];
+  languages?: string[];
+  website?: string;
+  niche?: string;
+  availabilityStatus?: string;
+  acceptsBarter?: boolean;
+  acceptsHybridDeals?: boolean;
+  preferredIndustries?: string;
+  minimumBudget?: number;
   platforms: SocialStats[];
   totalFollowers: number;
   avgEngagementRate: number;
@@ -328,4 +338,3 @@ export interface CreatorAmbassadorMetrics {
     ambassadorEligible?: Date; // When they hit 70+ score
   };
 }
-

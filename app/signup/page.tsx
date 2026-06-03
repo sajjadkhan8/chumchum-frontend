@@ -17,6 +17,13 @@ import { validatePassword, type PasswordStrengthResult } from '@/lib/password-va
 export default function SignupPage() {
   const router = useRouter();
   const { signup, isLoading, user, isAuthenticated, hasHydrated } = useAuthStore();
+  const [step, setStep] = useState<'role' | 'details'>('role');
+  const [role, setRole] = useState<UserRole | null>(null);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState<PasswordStrengthResult | null>(null);
 
   // Redirect already-authenticated users to their dashboard
   useEffect(() => {
@@ -31,14 +38,6 @@ export default function SignupPage() {
       </div>
     );
   }
-
-  const [step, setStep] = useState<'role' | 'details'>('role');
-  const [role, setRole] = useState<UserRole | null>(null);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState<PasswordStrengthResult | null>(null);
 
   const handlePasswordChange = (value: string) => {
     setPassword(value);
