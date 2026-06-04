@@ -323,6 +323,7 @@ interface BackendOrderResponse {
   message?: string;
   status?: string;
   progress?: number;
+  deadlineDate?: string;
   deliveryDate?: string;
   createdAt?: string;
 }
@@ -392,8 +393,10 @@ export const mapOrder = (input: BackendOrderResponse, packageMap: Record<string,
     barterDetails: input.barterDetails,
     message: input.message || '',
     status: (input.status || 'pending').toLowerCase() as Order['status'],
+    progress: input.progress,
     createdAt: safeDate(input.createdAt),
     updatedAt: safeDate(input.createdAt),
+    deadlineDate: input.deadlineDate ? safeDate(input.deadlineDate) : undefined,
     deliveryDate: input.deliveryDate ? safeDate(input.deliveryDate) : undefined,
   };
 };

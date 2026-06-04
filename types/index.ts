@@ -144,8 +144,10 @@ export interface Order {
   barterDetails?: string;
   message: string;
   status: OrderStatus;
+  progress?: number;
   createdAt: Date;
   updatedAt: Date;
+  deadlineDate?: Date;
   deliveryDate?: Date;
 }
 
