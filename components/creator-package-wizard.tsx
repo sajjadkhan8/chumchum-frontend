@@ -137,7 +137,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       minimumBarterValue: String(initialPackage.hybridBarterValue || initialPackage.estimatedBarterValue || ""),
       hybridCashAmount: String(initialPackage.hybridCashAmount || ""),
       thumbnailUrl: initialPackage.thumbnail,
-      previousWorkUrls: [""],
+      previousWorkUrls: initialPackage.mediaUrls?.length ? initialPackage.mediaUrls : [""],
       visibility: initialPackage.visibility,
       status: initialPackage.status === "draft" ? "draft" : initialPackage.status === "under_review" ? "under_review" : "active",
     };
@@ -296,6 +296,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         formData.thumbnailUrl ||
         initialPackage?.thumbnail ||
         "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800",
+      mediaUrls: formData.previousWorkUrls.map((url) => url.trim()).filter(Boolean),
       visibility: formData.visibility,
       analytics: initialPackage?.analytics || {
         views: 0,
@@ -692,4 +693,3 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     </div>
   );
 }
-

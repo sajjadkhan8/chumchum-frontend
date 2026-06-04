@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { packagesService } from '@/services/packages.service';
+import { packagesService, type PackageUpsertRequest } from '@/services/packages.service';
 import type { CreatorPackage, PackageStatus } from '@/types';
 
 interface CreatorPackagesState {
   packages: CreatorPackage[];
   isLoading: boolean;
   fetchPackages: () => Promise<void>;
+  fetchPackageById: (id: string) => Promise<CreatorPackage | null>;
   createPackage: (pkg: CreatorPackage) => Promise<void>;
   updatePackage: (id: string, pkg: CreatorPackage) => Promise<void>;
   duplicatePackage: (id: string) => Promise<void>;
@@ -14,7 +15,9 @@ interface CreatorPackagesState {
   togglePausePackage: (id: string) => Promise<void>;
 }
 
-const toCreateRequest = (pkg: CreatorPackage) => ({
+const cleanList = (values: string[] = []) => values.map((value) => value.trim()).filter(Boolean);
+
+const toCreateRequest = (pkg: CreatorPackage): PackageUpsertRequest => ({
   name: pkg.title,
   title: pkg.title,
   short_description: pkg.shortDescription,
@@ -31,16 +34,17 @@ const toCreateRequest = (pkg: CreatorPackage) => ({
   hybrid_cash_amount: pkg.hybridCashAmount,
   hybrid_barter_value: pkg.hybridBarterValue,
   creator_expectations: pkg.creatorExpectations,
-  price: pkg.price,
+  price: Math.max(0, pkg.price || 0),
   currency: 'PKR',
-  deliverables: pkg.deliverables,
+  deliverables: cleanList(pkg.deliverables),
   delivery_days: pkg.deliveryDays,
   revisions: pkg.revisions,
   status: pkg.status.toUpperCase(),
   visibility: pkg.visibility,
   response_time: pkg.responseTime,
   cover_image: pkg.thumbnail,
-  tags: pkg.tags,
+  media_urls: cleanList(pkg.mediaUrls),
+  tags: cleanList(pkg.tags),
   is_active: pkg.status === 'active',
 });
 
@@ -58,6 +62,21 @@ export const useCreatorPackagesStore = create<CreatorPackagesState>()(
         } catch {
           set({ isLoading: false });
         }
+      },
+
+      fetchPackageById: async (id) => {
+        const existing = get().packages.find((item) => item.id === id);
+        if (existing) return existing;
+
+        const pkg = await packagesService.getById(id);
+        if (!pkg) return null;
+
+        set((state) => ({
+          packages: state.packages.some((item) => item.id === id)
+            ? state.packages.map((item) => (item.id === id ? pkg : item))
+            : [pkg, ...state.packages],
+        }));
+        return pkg;
       },
 
       createPackage: async (pkg) => {

@@ -18,6 +18,37 @@ export interface FeaturedPackagesResult {
   totalElements?: number;
 }
 
+export type PackageUpsertRequest = Record<string, unknown> & {
+  name: string;
+  title: string;
+  short_description?: string;
+  description?: string;
+  full_description?: string;
+  platform: string;
+  category?: string;
+  type: string;
+  deal_type?: string;
+  barter_details?: string;
+  barter_description?: string;
+  barter_category?: string;
+  estimated_barter_value?: number;
+  hybrid_cash_amount?: number;
+  hybrid_barter_value?: number;
+  creator_expectations?: string;
+  price: number;
+  currency?: string;
+  deliverables: string[];
+  delivery_days: number;
+  revisions?: number;
+  status?: string;
+  visibility?: string;
+  response_time?: string;
+  cover_image?: string;
+  media_urls?: string[];
+  tags?: string[];
+  is_active?: boolean;
+};
+
 const normalizePackages = (payload: unknown): CreatorPackage[] => {
   if (Array.isArray(payload)) {
     return payload.map((item) => mapPackage(item as never));
@@ -44,7 +75,7 @@ export const packagesService = {
     size?: number;
     sort?: string;
   }): Promise<CreatorPackage[]> {
-    const payload = await apiClient.get<unknown>('/api/v1/packages', {
+    const payload = await apiClient.get<unknown>('/api/v1/packages/mine', {
       query: {
         search: params?.search,
         status: params?.status,
@@ -110,12 +141,12 @@ export const packagesService = {
     };
   },
 
-  async create(payload: Record<string, unknown>): Promise<CreatorPackage> {
+  async create(payload: PackageUpsertRequest): Promise<CreatorPackage> {
     const response = await apiClient.post<unknown>('/api/v1/packages', payload);
     return mapPackage(response as never);
   },
 
-  async update(id: string, payload: Record<string, unknown>): Promise<CreatorPackage> {
+  async update(id: string, payload: PackageUpsertRequest): Promise<CreatorPackage> {
     const response = await apiClient.patch<unknown>(`/api/v1/packages/${id}`, payload);
     return mapPackage(response as never);
   },

@@ -1,6 +1,14 @@
 import { apiClient } from '@/lib/api/client';
 import { mapBrand, mapCreator, mapOrder, mapPackage } from '@/lib/api/mappers';
-import type { Order, OrderStatus } from '@/types';
+import type { DealType, Order, OrderStatus } from '@/types';
+
+export type CreateOrderRequest = Record<string, unknown> & {
+  packageId: string;
+  dealType?: Uppercase<DealType>;
+  amount?: number;
+  barterDetails?: string;
+  message?: string;
+};
 
 interface DeliverableResponse {
   id: string;
@@ -89,6 +97,12 @@ const enrichOrders = async (orders: BackendOrderResponse[]): Promise<Order[]> =>
 };
 
 export const ordersService = {
+  async create(payload: CreateOrderRequest): Promise<Order | null> {
+    const response = await apiClient.post<BackendOrderResponse>('/api/v1/orders', payload);
+    const enriched = await enrichOrders(response ? [response] : []);
+    return enriched[0] || null;
+  },
+
   async getAll(filters?: { status?: OrderStatus; search?: string }): Promise<Order[]> {
     const response = await apiClient.get<BackendOrderResponse[] | { orders?: BackendOrderResponse[] }>('/api/v1/orders', {
       query: {

@@ -122,13 +122,14 @@ export interface CreatorPackage extends Package {
   status: PackageStatus;
   responseTime: string;
   thumbnail: string;
+  mediaUrls?: string[];
   visibility: 'public' | 'private';
   tags: string[];
   analytics: PackageAnalytics;
 }
 
 // Order Types
-export type OrderStatus = 'pending' | 'accepted' | 'in_progress' | 'delivered' | 'completed' | 'cancelled';
+export type OrderStatus = 'pending' | 'accepted' | 'in_progress' | 'delivered' | 'review' | 'revision' | 'completed' | 'cancelled';
 
 export interface Order {
   id: string;

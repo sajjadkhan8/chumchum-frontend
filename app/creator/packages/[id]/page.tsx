@@ -1,27 +1,55 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { ArrowLeft, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PackageCardSkeleton } from "@/components/skeletons";
 import { formatPrice } from "@/lib/utils";
 import { useCreatorPackagesStore } from "@/store/creator-packages-store";
+import type { CreatorPackage } from "@/types";
 
 export default function CreatorPackagePreviewPage() {
   const params = useParams<{ id: string }>();
   const packages = useCreatorPackagesStore((state) => state.packages);
-  const fetchPackages = useCreatorPackagesStore((state) => state.fetchPackages);
+  const fetchPackageById = useCreatorPackagesStore((state) => state.fetchPackageById);
+  const [pkg, setPkg] = useState<CreatorPackage | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (packages.length === 0) {
-      void fetchPackages();
+    const existing = packages.find((item) => item.id === params.id);
+    if (existing) {
+      setPkg(existing);
+      setIsLoading(false);
+      return;
     }
-  }, [fetchPackages, packages.length]);
 
-  const pkg = packages.find((item) => item.id === params.id);
+    let isMounted = true;
+    setIsLoading(true);
+    void fetchPackageById(params.id)
+      .then((item) => {
+        if (isMounted) setPkg(item);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchPackageById, packages, params.id]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 p-1">
+        <PackageCardSkeleton />
+        <PackageCardSkeleton />
+      </div>
+    );
+  }
 
   if (!pkg) {
     return (
@@ -112,4 +140,3 @@ export default function CreatorPackagePreviewPage() {
     </div>
   );
 }
-

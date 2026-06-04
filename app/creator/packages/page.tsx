@@ -400,13 +400,17 @@ function CreatorPackagesPageContent() {
                         <DropdownMenuItem onSelect={() => handleDuplicate(pkg)}>
                           <Copy className="mr-2 h-4 w-4" /> Duplicate
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handlePauseResume(pkg)}>
-                          {pkg.status === "paused" ? <Play className="mr-2 h-4 w-4" /> : <Pause className="mr-2 h-4 w-4" />}
-                          {pkg.status === "paused" ? "Resume" : "Pause"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleArchive(pkg.id)}>
-                          <Archive className="mr-2 h-4 w-4" /> Archive
-                        </DropdownMenuItem>
+                        {(pkg.status === "active" || pkg.status === "paused") && (
+                          <DropdownMenuItem onSelect={() => handlePauseResume(pkg)}>
+                            {pkg.status === "paused" ? <Play className="mr-2 h-4 w-4" /> : <Pause className="mr-2 h-4 w-4" />}
+                            {pkg.status === "paused" ? "Resume" : "Pause"}
+                          </DropdownMenuItem>
+                        )}
+                        {pkg.status !== "archived" && (
+                          <DropdownMenuItem onSelect={() => handleArchive(pkg.id)}>
+                            <Archive className="mr-2 h-4 w-4" /> Archive
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem asChild>
                           <Link href={`/creator/packages/${pkg.id}`}>
                             <Eye className="mr-2 h-4 w-4" /> Preview
@@ -493,4 +497,3 @@ export default function CreatorPackagesPage() {
     </Suspense>
   );
 }
-

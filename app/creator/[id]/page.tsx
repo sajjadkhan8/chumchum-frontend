@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -33,6 +34,7 @@ import { Separator } from "@/components/ui/separator";
 import { PackageCard } from "@/components/package-card";
 import { ReviewCard } from "@/components/review-card";
 import { QuickDealModal } from "@/components/quick-deal-modal";
+import { PackageOrderModal } from "@/components/package-order-modal";
 import { formatFollowers, formatPrice, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { creatorsService } from "@/services/creators.service";
@@ -52,9 +54,11 @@ export default function CreatorProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
   const { user, savedCreators, toggleSavedCreator } = useAuthStore();
   const [activeTab, setActiveTab] = useState("packages");
   const [quickDealOpen, setQuickDealOpen] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<CreatorListPackage | null>(null);
   const [creator, setCreator] = useState<Creator | null>(null);
   const [creatorPackages, setCreatorPackages] = useState<CreatorListPackage[]>([]);
   const [creatorReviews, setCreatorReviews] = useState<Review[]>([]);
@@ -138,8 +142,17 @@ export default function CreatorProfilePage({
   const completionRate = Math.min(99, Math.round((creator.completedDeals / (creator.completedDeals + 5)) * 100));
   const repeatClients = Math.max(3, Math.round(creator.completedDeals * 0.24));
 
-  const handleBookPackage = (_packageId: string) => {
-    setQuickDealOpen(true);
+  const handleBookPackage = (pkg: CreatorListPackage) => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    if (user.role !== "brand") {
+      return;
+    }
+
+    setSelectedPackage(pkg);
   };
 
   return (
@@ -427,7 +440,7 @@ export default function CreatorProfilePage({
                         <PackageCard
                           key={`featured-${pkg.id}`}
                           pkg={pkg}
-                          onOrder={canHireCreator ? () => handleBookPackage(pkg.id) : undefined}
+                          onOrder={canHireCreator ? () => handleBookPackage(pkg) : undefined}
                         />
                       ))}
                     </div>
@@ -438,7 +451,7 @@ export default function CreatorProfilePage({
                         <PackageCard
                           key={`trending-${pkg.id}`}
                           pkg={pkg}
-                          onOrder={canHireCreator ? () => handleBookPackage(pkg.id) : undefined}
+                          onOrder={canHireCreator ? () => handleBookPackage(pkg) : undefined}
                         />
                       ))}
                     </div>
@@ -450,7 +463,7 @@ export default function CreatorProfilePage({
                           <PackageCard
                             key={`barter-${pkg.id}`}
                             pkg={pkg}
-                            onOrder={canHireCreator ? () => handleBookPackage(pkg.id) : undefined}
+                            onOrder={canHireCreator ? () => handleBookPackage(pkg) : undefined}
                           />
                         ))
                       ) : (
@@ -468,7 +481,7 @@ export default function CreatorProfilePage({
                         <PackageCard
                           key={`best-${pkg.id}`}
                           pkg={pkg}
-                          onOrder={canHireCreator ? () => handleBookPackage(pkg.id) : undefined}
+                          onOrder={canHireCreator ? () => handleBookPackage(pkg) : undefined}
                         />
                       ))}
                     </div>
@@ -609,6 +622,12 @@ export default function CreatorProfilePage({
         isOpen={quickDealOpen}
         onClose={() => setQuickDealOpen(false)}
         creator={creator}
+      />
+      <PackageOrderModal
+        isOpen={Boolean(selectedPackage)}
+        pkg={selectedPackage}
+        onClose={() => setSelectedPackage(null)}
+        onCreated={() => router.push("/brand/orders")}
       />
     </div>
   );

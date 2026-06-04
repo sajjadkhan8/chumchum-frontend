@@ -255,6 +255,7 @@ interface BackendPackageResponse {
   status?: string;
   response_time?: string;
   cover_image?: string;
+  media_urls?: string[];
   visibility?: 'public' | 'private';
 }
 
@@ -286,7 +287,8 @@ export const mapPackage = (input: BackendPackageResponse): CreatorPackage => ({
   ordersCompleted: input.orders_completed || 0,
   status: (input.status || 'draft').toLowerCase() as CreatorPackage['status'],
   responseTime: input.response_time || 'Within 24 hours',
-  thumbnail: input.cover_image || '',
+  thumbnail: input.cover_image || 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800',
+  mediaUrls: input.media_urls || [],
   visibility: input.visibility || 'public',
   analytics: {
     views: 0,
