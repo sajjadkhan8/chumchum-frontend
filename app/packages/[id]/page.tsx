@@ -4,19 +4,24 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Clock, TrendingUp } from "lucide-react";
+import { ArrowLeft, Clock, Star, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
+import { ReviewCard } from "@/components/review-card";
+import { creatorsService } from "@/services/creators.service";
 import { packagesService } from "@/services/packages.service";
-import type { CreatorPackage } from "@/types";
+import { reviewsService } from "@/services/reviews.service";
+import type { Creator, CreatorPackage, Review } from "@/types";
 
 export default function PublicPackageDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const [pkg, setPkg] = useState<CreatorPackage | null>(null);
+  const [creator, setCreator] = useState<Creator | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
@@ -26,9 +31,24 @@ export default function PublicPackageDetailPage() {
     try {
       const response = await packagesService.getById(params.id);
       setPkg(response);
+      if (!response) {
+        setCreator(null);
+        setReviews([]);
+        return;
+      }
+
+      const [creatorResponse, reviewsResponse] = await Promise.all([
+        creatorsService.getById(response.creatorId).catch(() => null),
+        reviewsService.getByCreatorId(response.creatorId).catch(() => []),
+      ]);
+
+      setCreator(creatorResponse);
+      setReviews(reviewsResponse);
     } catch {
       setHasError(true);
       setPkg(null);
+      setCreator(null);
+      setReviews([]);
     } finally {
       setIsLoading(false);
     }
@@ -110,10 +130,26 @@ export default function PublicPackageDetailPage() {
               </span>
               <span className="text-muted-foreground">{pkg.ordersCompleted} completed orders</span>
               <span className="inline-flex items-center gap-1 text-muted-foreground">
+                <Star className="h-4 w-4 fill-accent text-accent" />
+                {(creator?.rating ?? 0).toFixed(1)} ({creator?.totalReviews ?? reviews.length})
+              </span>
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
                 <Clock className="h-4 w-4" />
                 {pkg.deliveryDays} days delivery
               </span>
             </div>
+
+            {creator && (
+              <div className="rounded-md border border-border/60 p-3 text-sm">
+                <p className="font-medium text-foreground">{creator.name}</p>
+                <p className="mt-1 text-muted-foreground">
+                  {(creator.categories[0] || "General")} creator in {creator.city}
+                </p>
+                <Button variant="link" className="mt-1 h-auto p-0" asChild>
+                  <Link href={`/creator/${creator.id}`}>View creator profile</Link>
+                </Button>
+              </div>
+            )}
 
             <div>
               <h3 className="mb-2 text-sm font-semibold text-foreground">Deliverables</h3>
@@ -129,10 +165,29 @@ export default function PublicPackageDetailPage() {
                 )}
               </div>
             </div>
+
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-foreground">Creator Reviews</h3>
+              {reviews.length > 0 ? (
+                <div className="space-y-3">
+                  {reviews.slice(0, 3).map((review) => (
+                    <ReviewCard key={review.id} review={review} />
+                  ))}
+                  {creator && reviews.length > 3 && (
+                    <Button variant="outline" asChild>
+                      <Link href={`/creator/${creator.id}`}>View all reviews</Link>
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <p className="rounded-md bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                  No completed-order reviews yet.
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
     </div>
   );
 }
-
