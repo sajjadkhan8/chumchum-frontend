@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Search,
-  Filter,
   Package,
   Clock,
   CheckCircle,
@@ -19,10 +18,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -39,82 +37,8 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { formatPrice, formatDate, getInitials } from "@/lib/utils";
 import { toast } from "sonner";
-
-const orders = [
-  {
-    id: "ORD-001",
-    creatorName: "Reem Al Otaibi",
-    creatorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100",
-    creatorHandle: "reemwellness",
-    packageName: "Instagram Story Pack",
-    description: "3 Instagram Stories featuring our new product line",
-    amount: 25000,
-    status: "in_progress",
-    progress: 65,
-    deadline: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    deliverables: [
-      { name: "Story 1 - Unboxing", status: "completed" },
-      { name: "Story 2 - Demo", status: "in_progress" },
-      { name: "Story 3 - Review", status: "pending" },
-    ],
-  },
-  {
-    id: "ORD-002",
-    creatorName: "Faisal Al Harbi",
-    creatorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
-    creatorHandle: "faisaltech",
-    packageName: "YouTube Product Review",
-    description: "In-depth review video for our flagship product",
-    amount: 45000,
-    status: "pending",
-    progress: 0,
-    deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    deliverables: [
-      { name: "Script Approval", status: "pending" },
-      { name: "Video Recording", status: "pending" },
-      { name: "Final Edit", status: "pending" },
-    ],
-  },
-  {
-    id: "ORD-003",
-    creatorName: "Nora Al Qahtani",
-    creatorAvatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100",
-    creatorHandle: "norafamilylife",
-    packageName: "Full Campaign",
-    description: "Complete social media campaign with reels, posts, and stories",
-    amount: 120000,
-    status: "completed",
-    progress: 100,
-    deadline: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-    deliverables: [
-      { name: "3 Reels", status: "completed" },
-      { name: "5 Posts", status: "completed" },
-      { name: "10 Stories", status: "completed" },
-    ],
-    rating: 5,
-    review: "Excellent work! Nora delivered everything on time and exceeded expectations.",
-  },
-  {
-    id: "ORD-004",
-    creatorName: "Saad Al Amri",
-    creatorAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
-    creatorHandle: "saadauto",
-    packageName: "Tech Unboxing",
-    description: "Unboxing and first impressions video",
-    amount: 35000,
-    status: "review",
-    progress: 95,
-    deadline: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    deliverables: [
-      { name: "Unboxing Video", status: "completed" },
-      { name: "Social Posts", status: "review" },
-    ],
-  },
-];
+import { ordersService } from "@/services/orders.service";
+import type { Order, OrderStatus } from "@/types";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -122,10 +46,15 @@ const getStatusColor = (status: string) => {
       return "bg-green-100 text-green-700";
     case "in_progress":
       return "bg-blue-100 text-blue-700";
+    case "accepted":
+      return "bg-cyan-100 text-cyan-700";
     case "pending":
       return "bg-yellow-100 text-yellow-700";
+    case "delivered":
     case "review":
       return "bg-purple-100 text-purple-700";
+    case "revision":
+      return "bg-orange-100 text-orange-700";
     case "cancelled":
       return "bg-red-100 text-red-700";
     default:
@@ -139,24 +68,65 @@ const getStatusIcon = (status: string) => {
       return CheckCircle;
     case "in_progress":
       return Clock;
+    case "accepted":
+      return CheckCircle;
     case "pending":
       return AlertCircle;
+    case "delivered":
     case "review":
       return Eye;
+    case "revision":
+      return RefreshCw;
     default:
       return Clock;
   }
 };
 
+const getFallbackDeadline = (order: Order) => {
+  if (order.deadlineDate) return order.deadlineDate;
+  if (order.deliveryDate) return order.deliveryDate;
+  const deadline = new Date(order.createdAt);
+  deadline.setDate(deadline.getDate() + (order.package.deliveryDays || 1));
+  return deadline;
+};
+
+const getDeliverableStatus = (order: Order, index: number) => {
+  if (order.status === "completed") return "completed";
+  if (order.status === "delivered" || order.status === "review") return "review";
+  if (order.status === "revision") return index === 0 ? "revision" : "pending";
+  if (order.status === "in_progress") return index === 0 ? "in_progress" : "pending";
+  return "pending";
+};
+
 export default function BrandOrdersPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
 
+  const loadOrders = async () => {
+    setIsLoading(true);
+    try {
+      setOrders(await ordersService.getAll());
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load orders";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadOrders();
+  }, []);
+
   const filteredOrders = orders.filter((order) => {
+    const creatorName = order.creator.name.toLowerCase();
+    const packageName = order.package.title.toLowerCase();
     const matchesSearch =
-      order.creatorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.packageName.toLowerCase().includes(searchQuery.toLowerCase());
+      creatorName.includes(searchQuery.toLowerCase()) ||
+      packageName.includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || order.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -165,9 +135,24 @@ export default function BrandOrdersPage() {
   const orderCounts = {
     all: orders.length,
     pending: orders.filter((o) => o.status === "pending").length,
+    accepted: orders.filter((o) => o.status === "accepted").length,
     in_progress: orders.filter((o) => o.status === "in_progress").length,
-    review: orders.filter((o) => o.status === "review").length,
+    review: orders.filter((o) => o.status === "review" || o.status === "delivered").length,
+    revision: orders.filter((o) => o.status === "revision").length,
     completed: orders.filter((o) => o.status === "completed").length,
+  };
+
+  const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
+    try {
+      const updated = await ordersService.updateStatus(orderId, status);
+      if (updated) {
+        setOrders((current) => current.map((order) => (order.id === orderId ? updated : order)));
+      }
+      toast.success(`Order marked ${status.replace("_", " ")}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update order";
+      toast.error(message);
+    }
   };
 
   return (
@@ -203,6 +188,9 @@ export default function BrandOrdersPage() {
               <SelectItem value="pending">
                 Pending ({orderCounts.pending})
               </SelectItem>
+              <SelectItem value="accepted">
+                Accepted ({orderCounts.accepted})
+              </SelectItem>
               <SelectItem value="in_progress">
                 In Progress ({orderCounts.in_progress})
               </SelectItem>
@@ -212,15 +200,28 @@ export default function BrandOrdersPage() {
               <SelectItem value="completed">
                 Completed ({orderCounts.completed})
               </SelectItem>
+              <SelectItem value="revision">
+                Revision ({orderCounts.revision})
+              </SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         {/* Orders List */}
         <div className="space-y-4">
-          {filteredOrders.map((order, index) => {
+          {isLoading && (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">Loading orders...</CardContent>
+            </Card>
+          )}
+
+          {!isLoading && filteredOrders.map((order, index) => {
             const StatusIcon = getStatusIcon(order.status);
             const isExpanded = selectedOrder === order.id;
+            const deadline = getFallbackDeadline(order);
+            const progress = order.progress ?? (order.status === "completed" ? 100 : order.status === "pending" ? 0 : 50);
+            const deliverables = order.package.deliverables.length > 0 ? order.package.deliverables : ["Package deliverables"];
 
             return (
               <motion.div
@@ -240,21 +241,21 @@ export default function BrandOrdersPage() {
                       <div className="flex items-start gap-4">
                         <Avatar className="h-12 w-12">
                           <AvatarImage
-                            src={order.creatorAvatar}
-                            alt={order.creatorName}
+                            src={order.creator.avatar}
+                            alt={order.creator.name}
                           />
                           <AvatarFallback>
-                            {getInitials(order.creatorName)}
+                            {getInitials(order.creator.name)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <Link
-                              href={`/creator/${order.creatorHandle}`}
+                              href={`/creator/${order.creatorId}`}
                               className="font-semibold hover:underline"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              {order.creatorName}
+                              {order.creator.name}
                             </Link>
                             <Badge
                               variant="secondary"
@@ -265,7 +266,7 @@ export default function BrandOrdersPage() {
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {order.packageName}
+                            {order.package.title}
                           </p>
                           <p className="mt-1 text-xs text-muted-foreground">
                             Order {order.id} • {formatDate(order.createdAt)}
@@ -276,10 +277,10 @@ export default function BrandOrdersPage() {
                       <div className="flex items-center gap-4 md:gap-6">
                         <div className="text-right">
                           <p className="font-semibold text-primary">
-                            {formatPrice(order.amount)}
+                            {formatPrice(order.amount ?? order.package.price ?? 0)}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Due: {formatDate(order.deadline)}
+                            Due: {formatDate(deadline)}
                           </p>
                         </div>
                         <DropdownMenu>
@@ -299,19 +300,25 @@ export default function BrandOrdersPage() {
                               View Details
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onSelect={() => toast.success(`Opening chat with ${order.creatorName} soon.`)}
+                              onSelect={() => toast.success(`Opening chat with ${order.creator.name} soon.`)}
                             >
                               <MessageCircle className="mr-2 h-4 w-4" />
                               Message Creator
                             </DropdownMenuItem>
-                            {order.status === "review" && (
-                              <DropdownMenuItem onSelect={() => toast.success(`Delivery approved for ${order.id}`)}>
+                            {order.status === "pending" && (
+                              <DropdownMenuItem onSelect={() => updateOrderStatus(order.id, "cancelled")}>
+                                <XCircle className="mr-2 h-4 w-4" />
+                                Cancel Order
+                              </DropdownMenuItem>
+                            )}
+                            {(order.status === "delivered" || order.status === "review") && (
+                              <DropdownMenuItem onSelect={() => updateOrderStatus(order.id, "completed")}>
                                 <CheckCircle className="mr-2 h-4 w-4" />
                                 Approve Delivery
                               </DropdownMenuItem>
                             )}
-                            {order.status !== "completed" && (
-                              <DropdownMenuItem onSelect={() => toast.info(`Revision request drafted for ${order.id}`)}>
+                            {(order.status === "delivered" || order.status === "review") && (
+                              <DropdownMenuItem onSelect={() => updateOrderStatus(order.id, "revision")}>
                                 <RefreshCw className="mr-2 h-4 w-4" />
                                 Request Revision
                               </DropdownMenuItem>
@@ -325,9 +332,9 @@ export default function BrandOrdersPage() {
                     <div className="mt-4">
                       <div className="mb-2 flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Progress</span>
-                        <span className="font-medium">{order.progress}%</span>
+                        <span className="font-medium">{progress}%</span>
                       </div>
-                      <Progress value={order.progress} className="h-2" />
+                      <Progress value={progress} className="h-2" />
                     </div>
 
                     {/* Expanded Details */}
@@ -339,7 +346,7 @@ export default function BrandOrdersPage() {
                         className="mt-6 border-t border-border pt-6"
                       >
                         <p className="mb-4 text-sm text-muted-foreground">
-                          {order.description}
+                          {order.message || order.package.description}
                         </p>
 
                         <div className="mb-4">
@@ -347,8 +354,9 @@ export default function BrandOrdersPage() {
                             Deliverables
                           </p>
                           <div className="space-y-2">
-                            {order.deliverables.map((d, i) => {
-                              const DeliverableIcon = getStatusIcon(d.status);
+                            {deliverables.map((deliverable, i) => {
+                              const deliverableStatus = getDeliverableStatus(order, i);
+                              const DeliverableIcon = getStatusIcon(deliverableStatus);
                               return (
                                 <div
                                   key={i}
@@ -357,22 +365,22 @@ export default function BrandOrdersPage() {
                                   <div className="flex items-center gap-2">
                                     <DeliverableIcon
                                       className={`h-4 w-4 ${
-                                        d.status === "completed"
+                                        deliverableStatus === "completed"
                                           ? "text-green-600"
-                                          : d.status === "in_progress"
+                                          : deliverableStatus === "in_progress"
                                             ? "text-blue-600"
-                                            : d.status === "review"
+                                            : deliverableStatus === "review"
                                               ? "text-purple-600"
                                               : "text-muted-foreground"
                                       }`}
                                     />
-                                    <span className="text-sm">{d.name}</span>
+                                    <span className="text-sm">{deliverable}</span>
                                   </div>
                                   <Badge
                                     variant="secondary"
-                                    className={getStatusColor(d.status)}
+                                    className={getStatusColor(deliverableStatus)}
                                   >
-                                    {d.status.replace("_", " ")}
+                                    {deliverableStatus.replace("_", " ")}
                                   </Badge>
                                 </div>
                               );
@@ -381,35 +389,31 @@ export default function BrandOrdersPage() {
                         </div>
 
                         {/* Review Section for Completed Orders */}
-                        {order.status === "completed" && order.rating && (
+                        {order.status === "completed" && (
                           <div className="rounded-lg bg-green-50 p-4">
                             <div className="mb-2 flex items-center gap-1">
                               {[...Array(5)].map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`h-4 w-4 ${
-                                    i < order.rating!
-                                      ? "fill-accent text-accent"
-                                      : "text-muted"
-                                  }`}
+                                  className="h-4 w-4 fill-accent text-accent"
                                 />
                               ))}
                             </div>
                             <p className="text-sm text-green-800">
-                              {order.review}
+                              Delivery approved. Review creation will be wired in the reviews slice.
                             </p>
                           </div>
                         )}
 
                         <div className="mt-4 flex gap-2">
                           <Button variant="outline" className="flex-1" asChild>
-                            <Link href={`/messages?creator=${order.creatorHandle}`}>
+                            <Link href={`/messages?creator=${order.creatorId}`}>
                               <MessageCircle className="mr-2 h-4 w-4" />
                               Message
                             </Link>
                           </Button>
-                          {order.status === "review" && (
-                            <Button className="flex-1" onClick={() => toast.success(`Delivery approved for ${order.id}`)}>
+                          {(order.status === "delivered" || order.status === "review") && (
+                            <Button className="flex-1" onClick={() => updateOrderStatus(order.id, "completed")}>
                               <CheckCircle className="mr-2 h-4 w-4" />
                               Approve
                             </Button>
@@ -423,7 +427,7 @@ export default function BrandOrdersPage() {
             );
           })}
 
-          {filteredOrders.length === 0 && (
+          {!isLoading && filteredOrders.length === 0 && (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Package className="mb-4 h-12 w-12 text-muted-foreground" />
