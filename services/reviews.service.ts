@@ -62,6 +62,17 @@ const unwrapReviews = (payload: unknown): BackendReview[] => {
 };
 
 export const reviewsService = {
+  async create(payload: { orderId: string; rating: number; comment?: string }): Promise<Review> {
+    const response = await apiClient.post<{ review?: BackendReview } | BackendReview>('/api/v1/reviews', {
+      orderId: payload.orderId,
+      rating: payload.rating,
+      comment: payload.comment,
+    });
+
+    const review = 'review' in response && response.review ? response.review : response;
+    return mapReview(review as BackendReview, (review as BackendReview).creatorId || '');
+  },
+
   async getByCreatorId(creatorId: string): Promise<Review[]> {
     if (!creatorId) return [];
 
@@ -82,4 +93,3 @@ export const reviewsService = {
     return [];
   },
 };
-

@@ -34,10 +34,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { formatPrice, formatDate, getInitials } from "@/lib/utils";
 import { toast } from "sonner";
 import { ordersService } from "@/services/orders.service";
+import { reviewsService } from "@/services/reviews.service";
 import type { Order, OrderDeliverable, OrderStatus } from "@/types";
 
 const getStatusColor = (status: string) => {
@@ -115,6 +125,10 @@ export default function BrandOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [reviewTarget, setReviewTarget] = useState<Order | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const loadOrders = async () => {
     setIsLoading(true);
@@ -178,6 +192,32 @@ export default function BrandOrdersPage() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update deliverable";
       toast.error(message);
+    }
+  };
+
+  const openReviewDialog = (order: Order) => {
+    setReviewTarget(order);
+    setReviewRating(5);
+    setReviewComment("");
+  };
+
+  const submitReview = async () => {
+    if (!reviewTarget) return;
+
+    setIsSubmittingReview(true);
+    try {
+      await reviewsService.create({
+        orderId: reviewTarget.id,
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+      });
+      setReviewTarget(null);
+      toast.success("Review submitted");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to submit review";
+      toast.error(message);
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -458,8 +498,12 @@ export default function BrandOrdersPage() {
                               ))}
                             </div>
                             <p className="text-sm text-green-800">
-                              Delivery approved. Review creation will be wired in the reviews slice.
+                              Delivery approved. Share a review to update this creator&apos;s rating.
                             </p>
+                            <Button className="mt-3" size="sm" onClick={() => openReviewDialog(order)}>
+                              <Star className="mr-2 h-4 w-4" />
+                              Leave Review
+                            </Button>
                           </div>
                         )}
 
@@ -500,6 +544,57 @@ export default function BrandOrdersPage() {
             </Card>
           )}
         </div>
+        <Dialog open={Boolean(reviewTarget)} onOpenChange={(open) => !open && setReviewTarget(null)}>
+          <DialogContent className="max-w-[calc(100%-1rem)] sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Leave a review</DialogTitle>
+              <DialogDescription>
+                Rate {reviewTarget?.creator.name || "this creator"} for the completed order.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Rating</Label>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <Button
+                      key={rating}
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setReviewRating(rating)}
+                      aria-label={`${rating} star rating`}
+                    >
+                      <Star
+                        className={`h-5 w-5 ${
+                          rating <= reviewRating ? "fill-accent text-accent" : "text-muted-foreground"
+                        }`}
+                      />
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="review-comment">Comment</Label>
+                <Textarea
+                  id="review-comment"
+                  rows={4}
+                  value={reviewComment}
+                  onChange={(event) => setReviewComment(event.target.value)}
+                  placeholder="Share what went well"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setReviewTarget(null)} disabled={isSubmittingReview}>
+                  Cancel
+                </Button>
+                <Button onClick={submitReview} disabled={isSubmittingReview}>
+                  {isSubmittingReview ? "Submitting..." : "Submit Review"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
   );
 }
