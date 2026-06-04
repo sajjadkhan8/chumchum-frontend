@@ -38,7 +38,7 @@ import { Progress } from "@/components/ui/progress";
 import { formatPrice, formatDate, getInitials } from "@/lib/utils";
 import { toast } from "sonner";
 import { ordersService } from "@/services/orders.service";
-import type { Order, OrderStatus } from "@/types";
+import type { Order, OrderDeliverable, OrderStatus } from "@/types";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -98,6 +98,17 @@ const getDeliverableStatus = (order: Order, index: number) => {
   return "pending";
 };
 
+const getOrderDeliverables = (order: Order): OrderDeliverable[] => {
+  if (order.deliverables.length > 0) return order.deliverables;
+  const packageDeliverables = order.package.deliverables.length > 0 ? order.package.deliverables : ["Package deliverables"];
+  return packageDeliverables.map((name, index) => ({
+    id: `fallback-${order.id}-${index}`,
+    orderId: order.id,
+    name,
+    status: getDeliverableStatus(order, index),
+  }));
+};
+
 export default function BrandOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -151,6 +162,21 @@ export default function BrandOrdersPage() {
       toast.success(`Order marked ${status.replace("_", " ")}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update order";
+      toast.error(message);
+    }
+  };
+
+  const updateDeliverableStatus = async (
+    orderId: string,
+    deliverableId: string,
+    status: OrderDeliverable["status"],
+  ) => {
+    try {
+      await ordersService.updateDeliverableStatus(orderId, deliverableId, status);
+      await loadOrders();
+      toast.success(`Deliverable marked ${status.replace("_", " ")}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update deliverable";
       toast.error(message);
     }
   };
@@ -221,7 +247,7 @@ export default function BrandOrdersPage() {
             const isExpanded = selectedOrder === order.id;
             const deadline = getFallbackDeadline(order);
             const progress = order.progress ?? (order.status === "completed" ? 100 : order.status === "pending" ? 0 : 50);
-            const deliverables = order.package.deliverables.length > 0 ? order.package.deliverables : ["Package deliverables"];
+            const deliverables = getOrderDeliverables(order);
 
             return (
               <motion.div
@@ -354,13 +380,13 @@ export default function BrandOrdersPage() {
                             Deliverables
                           </p>
                           <div className="space-y-2">
-                            {deliverables.map((deliverable, i) => {
-                              const deliverableStatus = getDeliverableStatus(order, i);
+                            {deliverables.map((deliverable) => {
+                              const deliverableStatus = deliverable.status;
                               const DeliverableIcon = getStatusIcon(deliverableStatus);
                               return (
                                 <div
-                                  key={i}
-                                  className="flex items-center justify-between rounded-lg bg-muted/50 p-3"
+                                  key={deliverable.id}
+                                  className="flex flex-col gap-3 rounded-lg bg-muted/50 p-3 sm:flex-row sm:items-center sm:justify-between"
                                 >
                                   <div className="flex items-center gap-2">
                                     <DeliverableIcon
@@ -374,14 +400,46 @@ export default function BrandOrdersPage() {
                                               : "text-muted-foreground"
                                       }`}
                                     />
-                                    <span className="text-sm">{deliverable}</span>
+                                    <span className="text-sm">{deliverable.name}</span>
                                   </div>
-                                  <Badge
-                                    variant="secondary"
-                                    className={getStatusColor(deliverableStatus)}
-                                  >
-                                    {deliverableStatus.replace("_", " ")}
-                                  </Badge>
+                                  <div className="flex items-center gap-2">
+                                    {deliverable.fileUrl && (
+                                      <Button variant="outline" size="sm" asChild onClick={(e) => e.stopPropagation()}>
+                                        <a href={deliverable.fileUrl} target="_blank" rel="noreferrer">View</a>
+                                      </Button>
+                                    )}
+                                    {deliverableStatus === "review" && !deliverable.id.startsWith("fallback-") && (
+                                      <>
+                                        <Button
+                                          size="sm"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            void updateDeliverableStatus(order.id, deliverable.id, "completed");
+                                          }}
+                                        >
+                                          <CheckCircle className="mr-2 h-4 w-4" />
+                                          Approve
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            void updateDeliverableStatus(order.id, deliverable.id, "revision");
+                                          }}
+                                        >
+                                          <RefreshCw className="mr-2 h-4 w-4" />
+                                          Revision
+                                        </Button>
+                                      </>
+                                    )}
+                                    <Badge
+                                      variant="secondary"
+                                      className={getStatusColor(deliverableStatus)}
+                                    >
+                                      {deliverableStatus.replace("_", " ")}
+                                    </Badge>
+                                  </div>
                                 </div>
                               );
                             })}

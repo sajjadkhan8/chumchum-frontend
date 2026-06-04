@@ -35,11 +35,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { formatPrice, formatDate, getInitials } from "@/lib/utils";
 import { toast } from "sonner";
 import { ordersService } from "@/services/orders.service";
-import type { Order, OrderStatus } from "@/types";
+import { uploadsService } from "@/services/uploads.service";
+import type { Order, OrderDeliverable, OrderStatus } from "@/types";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -108,6 +118,17 @@ const getDeliverableStatus = (order: Order, index: number) => {
   return "pending";
 };
 
+const getOrderDeliverables = (order: Order): OrderDeliverable[] => {
+  if (order.deliverables.length > 0) return order.deliverables;
+  const packageDeliverables = order.package.deliverables.length > 0 ? order.package.deliverables : ["Package deliverables"];
+  return packageDeliverables.map((name, index) => ({
+    id: `fallback-${order.id}-${index}`,
+    orderId: order.id,
+    name,
+    status: getDeliverableStatus(order, index),
+  }));
+};
+
 function CreatorOrdersPageContent() {
   const searchParams = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -115,6 +136,11 @@ function CreatorOrdersPageContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [submissionTarget, setSubmissionTarget] = useState<{ order: Order; deliverable: OrderDeliverable } | null>(null);
+  const [submissionFileUrl, setSubmissionFileUrl] = useState("");
+  const [submissionFile, setSubmissionFile] = useState<File | null>(null);
+  const [submissionNote, setSubmissionNote] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadOrders = async () => {
     setIsLoading(true);
@@ -176,6 +202,64 @@ function CreatorOrdersPageContent() {
     }
   };
 
+  const openSubmitDialog = (order: Order, deliverable?: OrderDeliverable) => {
+    const target = deliverable || getOrderDeliverables(order).find((item) => (
+      item.status === "pending" || item.status === "in_progress" || item.status === "revision"
+    ));
+    if (!target || target.id.startsWith("fallback-")) {
+      toast.error("This order does not have a backend deliverable yet.");
+      return;
+    }
+    setSubmissionTarget({ order, deliverable: target });
+    setSubmissionFileUrl(target.fileUrl || "");
+    setSubmissionFile(null);
+    setSubmissionNote("");
+  };
+
+  const submitDeliverable = async () => {
+    if (!submissionTarget) return;
+    setIsSubmitting(true);
+    try {
+      let fileUrl = submissionFileUrl.trim();
+      if (!fileUrl) {
+        if (!submissionFile) {
+          toast.error("Add a deliverable file or preview URL.");
+          return;
+        }
+        const uploaded = await uploadsService.deliverable(
+          submissionFile,
+          submissionTarget.order.id,
+          submissionTarget.deliverable.id,
+        );
+        fileUrl = uploaded.url;
+      }
+
+      if (!fileUrl) {
+        toast.error("Upload did not return a file URL.");
+        return;
+      }
+
+      await ordersService.submitDeliverable(submissionTarget.order.id, submissionTarget.deliverable.id, {
+        fileUrl,
+        note: submissionNote.trim(),
+      });
+      if (submissionTarget.order.status === "in_progress") {
+        await ordersService.updateStatus(submissionTarget.order.id, "delivered");
+      }
+      await loadOrders();
+      setSubmissionTarget(null);
+      setSubmissionFile(null);
+      setSubmissionFileUrl("");
+      setSubmissionNote("");
+      toast.success("Deliverable submitted for brand review");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to submit deliverable";
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-6">
       {/* Header */}
@@ -234,7 +318,7 @@ function CreatorOrdersPageContent() {
           const daysRemaining = getDaysRemaining(deadline);
           const isExpanded = selectedOrder === order.id;
           const progress = order.progress ?? (order.status === "completed" ? 100 : order.status === "pending" ? 0 : 50);
-          const deliverables = order.package.deliverables.length > 0 ? order.package.deliverables : ["Package deliverables"];
+          const deliverables = getOrderDeliverables(order);
 
           return (
             <motion.div
@@ -332,7 +416,7 @@ function CreatorOrdersPageContent() {
                             </DropdownMenuItem>
                           )}
                           {order.status === "in_progress" && (
-                            <DropdownMenuItem onSelect={() => updateOrderStatus(order.id, "delivered")}>
+                            <DropdownMenuItem onSelect={() => openSubmitDialog(order)}>
                               <Upload className="mr-2 h-4 w-4" />
                               Submit Deliverable
                             </DropdownMenuItem>
@@ -368,15 +452,15 @@ function CreatorOrdersPageContent() {
                       <div>
                         <p className="mb-3 text-sm font-medium">Deliverables</p>
                         <div className="space-y-2">
-                          {deliverables.map((deliverable, i) => {
-                            const deliverableStatus = getDeliverableStatus(order, i);
+                          {deliverables.map((deliverable) => {
+                            const deliverableStatus = deliverable.status;
                             const DeliverableIcon = getStatusIcon(
                               deliverableStatus
                             );
                             return (
                               <div
-                                key={i}
-                                className="flex items-center justify-between rounded-lg bg-muted/50 p-3"
+                                key={deliverable.id}
+                                className="flex flex-col gap-3 rounded-lg bg-muted/50 p-3 sm:flex-row sm:items-center sm:justify-between"
                               >
                                 <div className="flex items-center gap-2">
                                   <DeliverableIcon
@@ -390,16 +474,29 @@ function CreatorOrdersPageContent() {
                                             : "text-muted-foreground"
                                     }`}
                                   />
-                                  <span className="text-sm">
-                                    {deliverable}
-                                  </span>
+                                  <span className="text-sm">{deliverable.name}</span>
                                 </div>
-                                <Badge
-                                  variant="secondary"
-                                  className={getStatusColor(deliverableStatus)}
-                                >
-                                  {deliverableStatus.replace("_", " ")}
-                                </Badge>
+                                <div className="flex items-center gap-2">
+                                  {deliverable.fileUrl && (
+                                    <Button variant="outline" size="sm" asChild onClick={(e) => e.stopPropagation()}>
+                                      <a href={deliverable.fileUrl} target="_blank" rel="noreferrer">View</a>
+                                    </Button>
+                                  )}
+                                  {(order.status === "in_progress" || order.status === "revision") &&
+                                    (deliverableStatus === "pending" || deliverableStatus === "in_progress" || deliverableStatus === "revision") &&
+                                    !deliverable.id.startsWith("fallback-") && (
+                                      <Button size="sm" onClick={(e) => { e.stopPropagation(); openSubmitDialog(order, deliverable); }}>
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        Submit
+                                      </Button>
+                                    )}
+                                  <Badge
+                                    variant="secondary"
+                                    className={getStatusColor(deliverableStatus)}
+                                  >
+                                    {deliverableStatus.replace("_", " ")}
+                                  </Badge>
+                                </div>
                               </div>
                             );
                           })}
@@ -422,7 +519,7 @@ function CreatorOrdersPageContent() {
                             Start Work
                           </Button>
                         ) : order.status === "in_progress" ? (
-                          <Button className="flex-1" onClick={() => updateOrderStatus(order.id, "delivered")}>
+                          <Button className="flex-1" onClick={() => openSubmitDialog(order)}>
                             <Upload className="mr-2 h-4 w-4" />
                             Submit Work
                           </Button>
@@ -448,6 +545,58 @@ function CreatorOrdersPageContent() {
           </Card>
         )}
       </div>
+      <Dialog open={Boolean(submissionTarget)} onOpenChange={(open) => !open && setSubmissionTarget(null)}>
+        <DialogContent className="max-w-[calc(100%-1rem)] sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Submit deliverable</DialogTitle>
+            <DialogDescription>
+              {submissionTarget?.deliverable.name || "Deliverable"} will be sent to the brand for review.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="deliverable-file">Upload file</Label>
+              <Input
+                id="deliverable-file"
+                type="file"
+                onChange={(event) => setSubmissionFile(event.target.files?.[0] || null)}
+              />
+              {submissionFile && (
+                <p className="text-xs text-muted-foreground">
+                  {submissionFile.name}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="deliverable-url">Or paste file URL</Label>
+              <Input
+                id="deliverable-url"
+                value={submissionFileUrl}
+                onChange={(event) => setSubmissionFileUrl(event.target.value)}
+                placeholder="https://..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="deliverable-note">Note</Label>
+              <Textarea
+                id="deliverable-note"
+                rows={4}
+                value={submissionNote}
+                onChange={(event) => setSubmissionNote(event.target.value)}
+                placeholder="Add context for the brand"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setSubmissionTarget(null)} disabled={isSubmitting}>
+                Cancel
+              </Button>
+              <Button onClick={submitDeliverable} disabled={isSubmitting}>
+                {isSubmitting ? "Submitting..." : "Submit"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

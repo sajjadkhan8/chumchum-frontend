@@ -130,6 +130,17 @@ export interface CreatorPackage extends Package {
 
 // Order Types
 export type OrderStatus = 'pending' | 'accepted' | 'in_progress' | 'delivered' | 'review' | 'revision' | 'completed' | 'cancelled';
+export type DeliverableStatus = 'pending' | 'in_progress' | 'completed' | 'revision' | 'review';
+
+export interface OrderDeliverable {
+  id: string;
+  orderId: string;
+  name: string;
+  status: DeliverableStatus;
+  fileUrl?: string;
+  submittedAt?: Date;
+  createdAt?: Date;
+}
 
 export interface Order {
   id: string;
@@ -145,6 +156,7 @@ export interface Order {
   message: string;
   status: OrderStatus;
   progress?: number;
+  deliverables: OrderDeliverable[];
   createdAt: Date;
   updatedAt: Date;
   deadlineDate?: Date;
@@ -190,11 +202,13 @@ export interface Conversation {
 }
 
 export interface QuickDealOffer {
+  id?: string;
   dealType: DealType;
   amount?: number;
   barterDetails?: string;
   message: string;
   status: 'pending' | 'accepted' | 'rejected';
+  orderId?: string;
 }
 
 // Review Types

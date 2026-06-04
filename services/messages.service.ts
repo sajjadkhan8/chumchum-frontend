@@ -24,7 +24,14 @@ interface BackendMessage {
   offerAmount?: number;
   offerBarterDetails?: string;
   offerStatus?: string;
+  offerId?: string;
   createdAt?: string;
+}
+
+interface QuickDealRespondResponse {
+  offerId: string;
+  status: 'accepted' | 'rejected';
+  orderId?: string;
 }
 
 const buildParticipantMaps = async (conversations: BackendConversation[]) => {
@@ -142,7 +149,7 @@ export const messagesService = {
     });
   },
 
-  async respondToQuickDeal(offerId: string, action: 'accepted' | 'rejected') {
+  async respondToQuickDeal(offerId: string, action: 'accepted' | 'rejected'): Promise<QuickDealRespondResponse> {
     return apiClient.patch(`/api/v1/quick-deals/${offerId}/respond`, { action });
   },
 };

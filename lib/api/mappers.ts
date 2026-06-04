@@ -7,6 +7,7 @@ import type {
   DealType,
   Message,
   Order,
+  OrderDeliverable,
   Package,
   PackageAnalytics,
   Platform,
@@ -326,7 +327,36 @@ interface BackendOrderResponse {
   deadlineDate?: string;
   deliveryDate?: string;
   createdAt?: string;
+  deliverables?: BackendOrderDeliverableResponse[];
 }
+
+interface BackendOrderDeliverableResponse {
+  id: string;
+  order_id: string;
+  name?: string;
+  status?: string;
+  file_url?: string;
+  submitted_at?: string;
+  created_at?: string;
+}
+
+const normalizeDeliverableStatus = (value?: string | null): OrderDeliverable['status'] => {
+  const lowered = (value || '').toLowerCase();
+  if (lowered === 'in_progress' || lowered === 'completed' || lowered === 'revision' || lowered === 'review') {
+    return lowered;
+  }
+  return 'pending';
+};
+
+const mapOrderDeliverable = (input: BackendOrderDeliverableResponse): OrderDeliverable => ({
+  id: input.id,
+  orderId: input.order_id,
+  name: input.name || 'Deliverable',
+  status: normalizeDeliverableStatus(input.status),
+  fileUrl: input.file_url,
+  submittedAt: input.submitted_at ? safeDate(input.submitted_at) : undefined,
+  createdAt: input.created_at ? safeDate(input.created_at) : undefined,
+});
 
 export const mapOrder = (input: BackendOrderResponse, packageMap: Record<string, Package>, creatorMap: Record<string, Creator>, brandMap: Record<string, Brand>): Order => {
   const pkg = packageMap[input.packageId] || {
@@ -394,6 +424,7 @@ export const mapOrder = (input: BackendOrderResponse, packageMap: Record<string,
     message: input.message || '',
     status: (input.status || 'pending').toLowerCase() as Order['status'],
     progress: input.progress,
+    deliverables: input.deliverables?.map(mapOrderDeliverable) || [],
     createdAt: safeDate(input.createdAt),
     updatedAt: safeDate(input.createdAt),
     deadlineDate: input.deadlineDate ? safeDate(input.deadlineDate) : undefined,
@@ -413,6 +444,8 @@ interface BackendMessageResponse {
   offerAmount?: number;
   offerBarterDetails?: string;
   offerStatus?: string;
+  offerId?: string;
+  offerOrderId?: string;
   createdAt?: string;
 }
 
@@ -420,11 +453,13 @@ const mapOfferFromMessage = (input: BackendMessageResponse): QuickDealOffer | un
   if (input.type !== 'offer') return undefined;
 
   return {
+    id: input.offerId,
     dealType: normalizeDealType(input.offerDealType),
     amount: input.offerAmount,
     barterDetails: input.offerBarterDetails,
     message: input.content || '',
     status: (input.offerStatus || 'pending').toLowerCase() as QuickDealOffer['status'],
+    orderId: input.offerOrderId,
   };
 };
 

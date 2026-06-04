@@ -35,6 +35,7 @@ import {
 import { toast } from "sonner";
 import type { CreatorPackage } from "@/types";
 import { useCreatorPackagesStore } from "@/store/creator-packages-store";
+import { uploadsService } from "@/services/uploads.service";
 
 const DRAFT_KEY = "creator-package-draft-v1";
 
@@ -145,6 +146,8 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
   const [formData, setFormData] = useState<WizardFormData>(initialForm);
   const [deliverables, setDeliverables] = useState<string[]>(initialPackage?.deliverables || [""]);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [uploadingSampleIndex, setUploadingSampleIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (mode !== "create") return;
@@ -238,6 +241,38 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       ...prev,
       previousWorkUrls: prev.previousWorkUrls.filter((_, i) => i !== index),
     }));
+  };
+
+  const uploadThumbnail = async (file?: File | null) => {
+    if (!file) return;
+
+    setIsUploadingThumbnail(true);
+    try {
+      const uploaded = await uploadsService.packageThumbnail(file);
+      updateField("thumbnailUrl", uploaded.url);
+      toast.success("Package thumbnail uploaded");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to upload thumbnail";
+      toast.error(message);
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
+  };
+
+  const uploadWorkSample = async (index: number, file?: File | null) => {
+    if (!file) return;
+
+    setUploadingSampleIndex(index);
+    try {
+      const uploaded = await uploadsService.contentPreview(file, formData.platform || undefined);
+      updateWorkSample(index, uploaded.url);
+      toast.success("Preview media uploaded");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to upload preview media";
+      toast.error(message);
+    } finally {
+      setUploadingSampleIndex(null);
+    }
   };
 
   const submitPackage = async () => {
@@ -580,14 +615,44 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
             <CardContent className="space-y-4 p-4 sm:p-6">
               <div className="space-y-2">
                 <Label>Package Thumbnail URL</Label>
-                <Input value={formData.thumbnailUrl} onChange={(e) => updateField("thumbnailUrl", e.target.value)} placeholder="https://..." />
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input value={formData.thumbnailUrl} onChange={(e) => updateField("thumbnailUrl", e.target.value)} placeholder="https://..." />
+                  <Button variant="outline" className="shrink-0" disabled={isUploadingThumbnail} asChild>
+                    <Label htmlFor="package-thumbnail-upload" className="cursor-pointer">
+                      <Upload className="mr-2 h-4 w-4" />
+                      {isUploadingThumbnail ? "Uploading..." : "Upload"}
+                    </Label>
+                  </Button>
+                  <Input
+                    id="package-thumbnail-upload"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    disabled={isUploadingThumbnail}
+                    onChange={(event) => void uploadThumbnail(event.target.files?.[0])}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label>Previous Work / Preview Gallery URLs</Label>
                 {formData.previousWorkUrls.map((url, index) => (
-                  <div key={index} className="flex items-center gap-2">
+                  <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <Input value={url} onChange={(e) => updateWorkSample(index, e.target.value)} placeholder="https://..." />
+                    <Button variant="outline" className="shrink-0" disabled={uploadingSampleIndex !== null} asChild>
+                      <Label htmlFor={`work-sample-upload-${index}`} className="cursor-pointer">
+                        <Upload className="mr-2 h-4 w-4" />
+                        {uploadingSampleIndex === index ? "Uploading..." : "Upload"}
+                      </Label>
+                    </Button>
+                    <Input
+                      id={`work-sample-upload-${index}`}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/x-msvideo"
+                      className="hidden"
+                      disabled={uploadingSampleIndex !== null}
+                      onChange={(event) => void uploadWorkSample(index, event.target.files?.[0])}
+                    />
                     {formData.previousWorkUrls.length > 1 && (
                       <Button variant="ghost" size="icon" onClick={() => removeWorkSample(index)}>
                         <Trash2 className="h-4 w-4" />
@@ -597,10 +662,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                 ))}
                 <Button variant="outline" onClick={addWorkSample}><Plus className="mr-2 h-4 w-4" />Add Sample</Button>
               </div>
-
-              <Button variant="ghost" onClick={() => toast.info("Upload flow can be plugged into storage in the next phase.")}>
-                <Upload className="mr-2 h-4 w-4" /> Upload Media
-              </Button>
             </CardContent>
           </Card>
         )}

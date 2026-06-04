@@ -60,6 +60,7 @@ function MessagesPageContent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [respondingOfferId, setRespondingOfferId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showMobileChat, setShowMobileChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -230,6 +231,36 @@ function MessagesPageContent() {
   const selectConversation = (conv: Conversation) => {
     setSelectedConversation(conv);
     setShowMobileChat(true);
+  };
+
+  const respondToOffer = async (message: Message, action: "accepted" | "rejected") => {
+    const offerId = message.offer?.id;
+    if (!offerId) {
+      toast.error("This offer cannot be updated yet.");
+      return;
+    }
+
+    setRespondingOfferId(offerId);
+    try {
+      const response = await messagesService.respondToQuickDeal(offerId, action);
+      setMessages((current) =>
+        current.map((item) =>
+          item.id === message.id && item.offer
+            ? { ...item, offer: { ...item.offer, status: response.status, orderId: response.orderId } }
+            : item,
+        ),
+      );
+      toast.success(
+        action === "accepted"
+          ? `Offer accepted${response.orderId ? " and order created" : ""}`
+          : "Offer declined",
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to update offer";
+      toast.error(errorMessage);
+    } finally {
+      setRespondingOfferId(null);
+    }
   };
 
   return (
@@ -448,13 +479,20 @@ function MessagesPageContent() {
                                 ) : null}
                                 {message.offer.status === "pending" && (
                                   <div className="flex gap-2">
-                                    <Button size="sm" className="flex-1">
-                                      Accept
+                                    <Button
+                                      size="sm"
+                                      className="flex-1"
+                                      disabled={!message.offer.id || respondingOfferId === message.offer.id}
+                                      onClick={() => void respondToOffer(message, "accepted")}
+                                    >
+                                      {respondingOfferId === message.offer.id ? "Saving..." : "Accept"}
                                     </Button>
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       className="flex-1"
+                                      disabled={!message.offer.id || respondingOfferId === message.offer.id}
+                                      onClick={() => void respondToOffer(message, "rejected")}
                                     >
                                       Decline
                                     </Button>
@@ -581,4 +619,3 @@ export default function MessagesPage() {
     </Suspense>
   );
 }
-

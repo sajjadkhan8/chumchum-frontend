@@ -43,6 +43,7 @@ import {
 import { getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { creatorsService, type CreatorSocialAccountPayload } from "@/services/creators.service";
+import { uploadsService } from "@/services/uploads.service";
 import type { Platform } from "@/types";
 import { toast } from "sonner";
 
@@ -112,6 +113,8 @@ function CreatorSettingsPageContent() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState("profile");
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   const [profile, setProfile] = useState(defaultProfile);
   const [socialAccounts, setSocialAccounts] = useState<EditableSocialAccount[]>([]);
@@ -218,6 +221,38 @@ function CreatorSettingsPageContent() {
       toast.error(message);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const uploadAvatar = async (file?: File | null) => {
+    if (!file) return;
+
+    setIsUploadingAvatar(true);
+    try {
+      const uploaded = await uploadsService.avatar(file);
+      setProfile((current) => ({ ...current, avatar: uploaded.url }));
+      toast.success("Profile photo uploaded");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not upload profile photo";
+      toast.error(message);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const uploadCoverImage = async (file?: File | null) => {
+    if (!file) return;
+
+    setIsUploadingCover(true);
+    try {
+      const uploaded = await uploadsService.coverImage(file);
+      setProfile((current) => ({ ...current, coverImage: uploaded.url }));
+      toast.success("Cover image uploaded");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not upload cover image";
+      toast.error(message);
+    } finally {
+      setIsUploadingCover(false);
     }
   };
 
@@ -380,21 +415,29 @@ function CreatorSettingsPageContent() {
                     {getInitials(profile.name)}
                   </AvatarFallback>
                 </Avatar>
-                <button className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
+                <Label
+                  htmlFor="creator-avatar-upload"
+                  className="absolute bottom-0 right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
+                >
                   <Camera className="h-4 w-4" />
-                </button>
+                </Label>
               </div>
               <div className="text-center sm:text-left">
                 <h3 className="text-lg font-semibold">{profile.name}</h3>
                 <p className="text-muted-foreground">@{profile.handle}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => toast.info("Profile image upload will be enabled with backend storage.")}
-                >
-                  Change Photo
+                <Button variant="outline" size="sm" className="mt-2" disabled={isUploadingAvatar} asChild>
+                  <Label htmlFor="creator-avatar-upload" className="cursor-pointer">
+                    {isUploadingAvatar ? "Uploading..." : "Change Photo"}
+                  </Label>
                 </Button>
+                <Input
+                  id="creator-avatar-upload"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  disabled={isUploadingAvatar}
+                  onChange={(event) => void uploadAvatar(event.target.files?.[0])}
+                />
               </div>
             </CardContent>
           </Card>
@@ -541,11 +584,27 @@ function CreatorSettingsPageContent() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="coverImage">Cover/Banner Image URL</Label>
-                  <Input
-                    id="coverImage"
-                    value={profile.coverImage}
-                    onChange={(e) => setProfile((p) => ({ ...p, coverImage: e.target.value }))}
-                  />
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      id="coverImage"
+                      value={profile.coverImage}
+                      onChange={(e) => setProfile((p) => ({ ...p, coverImage: e.target.value }))}
+                    />
+                    <Button variant="outline" className="shrink-0" disabled={isUploadingCover} asChild>
+                      <Label htmlFor="creator-cover-upload" className="cursor-pointer">
+                        <Camera className="mr-2 h-4 w-4" />
+                        {isUploadingCover ? "Uploading..." : "Upload"}
+                      </Label>
+                    </Button>
+                    <Input
+                      id="creator-cover-upload"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="hidden"
+                      disabled={isUploadingCover}
+                      onChange={(event) => void uploadCoverImage(event.target.files?.[0])}
+                    />
+                  </div>
                 </div>
               </div>
 

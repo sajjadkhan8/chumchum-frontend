@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api/client';
 import { mapBrand, mapCreator, mapOrder, mapPackage } from '@/lib/api/mappers';
-import type { DealType, Order, OrderStatus } from '@/types';
+import type { DealType, Order, OrderDeliverable, OrderStatus } from '@/types';
 
 export type CreateOrderRequest = Record<string, unknown> & {
   packageId: string;
@@ -9,16 +9,6 @@ export type CreateOrderRequest = Record<string, unknown> & {
   barterDetails?: string;
   message?: string;
 };
-
-interface DeliverableResponse {
-  id: string;
-  order_id: string;
-  name: string;
-  status: string;
-  file_url?: string;
-  submitted_at?: string;
-  created_at?: string;
-}
 
 interface BackendOrderResponse {
   id: string;
@@ -34,8 +24,10 @@ interface BackendOrderResponse {
   message?: string;
   status?: string;
   progress?: number;
+  deadlineDate?: string;
   deliveryDate?: string;
   createdAt?: string;
+  deliverables?: BackendDeliverableResponse[];
 }
 
 interface BackendDeliverableResponse {
@@ -48,14 +40,28 @@ interface BackendDeliverableResponse {
   created_at?: string;
 }
 
-const mapDeliverable = (payload: BackendDeliverableResponse): DeliverableResponse => ({
+const normalizeDeliverableStatus = (value?: string): OrderDeliverable['status'] => {
+  const lowered = (value || '').toLowerCase();
+  if (lowered === 'in_progress' || lowered === 'completed' || lowered === 'revision' || lowered === 'review') {
+    return lowered;
+  }
+  return 'pending';
+};
+
+const toOptionalDate = (value?: string): Date | undefined => {
+  if (!value) return undefined;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+};
+
+const mapDeliverable = (payload: BackendDeliverableResponse): OrderDeliverable => ({
   id: payload.id,
-  order_id: payload.order_id,
-  name: payload.name,
-  status: payload.status,
-  file_url: payload.file_url,
-  submitted_at: payload.submitted_at,
-  created_at: payload.created_at,
+  orderId: payload.order_id,
+  name: payload.name || 'Deliverable',
+  status: normalizeDeliverableStatus(payload.status),
+  fileUrl: payload.file_url,
+  submittedAt: toOptionalDate(payload.submitted_at),
+  createdAt: toOptionalDate(payload.created_at),
 });
 
 const enrichOrders = async (orders: BackendOrderResponse[]): Promise<Order[]> => {
@@ -150,7 +156,7 @@ export const ordersService = {
     return enriched[0] || null;
   },
 
-  async submitDeliverable(orderId: string, deliverableId: string, payload: Record<string, string>) {
+  async submitDeliverable(orderId: string, deliverableId: string, payload: Record<string, string>): Promise<OrderDeliverable> {
     const response = await apiClient.post<BackendDeliverableResponse>(
       `/api/v1/orders/${orderId}/deliverables/${deliverableId}/submit`,
       payload,
@@ -159,7 +165,7 @@ export const ordersService = {
     return mapDeliverable(response);
   },
 
-  async updateDeliverableStatus(orderId: string, deliverableId: string, status: string) {
+  async updateDeliverableStatus(orderId: string, deliverableId: string, status: OrderDeliverable['status']): Promise<OrderDeliverable> {
     const response = await apiClient.patch<BackendDeliverableResponse>(
       `/api/v1/orders/${orderId}/deliverables/${deliverableId}/status`,
       { status },

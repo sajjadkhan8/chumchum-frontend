@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -35,6 +35,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getInitials } from "@/lib/utils";
+import { brandsService } from "@/services/brands.service";
+import { uploadsService } from "@/services/uploads.service";
 import { toast } from "sonner";
 
 const industries = [
@@ -73,6 +75,7 @@ function BrandSettingsPageContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("profile");
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   const [profile, setProfile] = useState({
     companyName: "Karachi Gourmet Group",
@@ -119,12 +122,66 @@ function BrandSettingsPageContent() {
     phoneNumber: "+92 300 778 8899",
   });
 
+  const loadBrandProfile = useCallback(async () => {
+    try {
+      const brand = await brandsService.getMe();
+      if (!brand) return;
+
+      setProfile((current) => ({
+        ...current,
+        companyName: brand.name || current.companyName,
+        website: brand.website || "",
+        industry: brand.industry || current.industry,
+        description: brand.description || "",
+        logo: brand.logo || "",
+        city: brand.city || current.city,
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not load brand profile";
+      toast.error(message);
+    }
+  }, []);
+
   const handleSave = async () => {
     setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSaving(false);
-    toast.success("Brand settings saved");
+    try {
+      await brandsService.updateMe({
+        companyName: profile.companyName,
+        website: profile.website,
+        industry: profile.industry,
+        description: profile.description,
+        logoUrl: profile.logo,
+        monthlyBudget: Number(billing.monthlyBudget) || undefined,
+      });
+      await loadBrandProfile();
+      toast.success("Brand settings saved");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save brand settings";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const uploadLogo = async (file?: File | null) => {
+    if (!file) return;
+
+    setIsUploadingLogo(true);
+    try {
+      const uploaded = await uploadsService.brandLogo(file);
+      setProfile((current) => ({ ...current, logo: uploaded.url }));
+      toast.success("Brand logo uploaded");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not upload brand logo";
+      toast.error(message);
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadBrandProfile();
+  }, [loadBrandProfile]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -196,21 +253,29 @@ function BrandSettingsPageContent() {
                       {getInitials(profile.companyName)}
                     </AvatarFallback>
                   </Avatar>
-                  <button className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
+                  <Label
+                    htmlFor="brand-logo-upload"
+                    className="absolute bottom-0 right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
+                  >
                     <Camera className="h-4 w-4" />
-                  </button>
+                  </Label>
                 </div>
                 <div className="text-center sm:text-left">
                   <h3 className="text-lg font-semibold">{profile.companyName}</h3>
                   <p className="text-muted-foreground">{profile.industry}</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => toast.info("Logo upload will be enabled once media storage is connected.")}
-                  >
-                    Change Logo
+                  <Button variant="outline" size="sm" className="mt-2" disabled={isUploadingLogo} asChild>
+                    <Label htmlFor="brand-logo-upload" className="cursor-pointer">
+                      {isUploadingLogo ? "Uploading..." : "Change Logo"}
+                    </Label>
                   </Button>
+                  <Input
+                    id="brand-logo-upload"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    disabled={isUploadingLogo}
+                    onChange={(event) => void uploadLogo(event.target.files?.[0])}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -754,4 +819,3 @@ export default function BrandSettingsPage() {
     </Suspense>
   );
 }
-
