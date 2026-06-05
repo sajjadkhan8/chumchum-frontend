@@ -178,6 +178,9 @@ export interface Brand {
   targetCities?: string;
   targetPlatforms?: string;
   campaignBudgetRange?: string;
+  businessVerificationStatus?: string;
+  verificationContactEmail?: string;
+  verificationPhoneNumber?: string;
   totalCampaigns: number;
   activeOrders: number;
 }

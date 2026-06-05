@@ -13,6 +13,9 @@ export interface BrandProfileUpdatePayload {
   targetCities?: string;
   targetPlatforms?: string;
   campaignBudgetRange?: string;
+  businessVerificationStatus?: string;
+  verificationContactEmail?: string;
+  verificationPhoneNumber?: string;
 }
 
 export const brandsService = {
@@ -33,6 +36,9 @@ export const brandsService = {
       target_cities: payload.targetCities,
       target_platforms: payload.targetPlatforms,
       campaign_budget_range: payload.campaignBudgetRange,
+      business_verification_status: payload.businessVerificationStatus,
+      verification_contact_email: payload.verificationContactEmail,
+      verification_phone_number: payload.verificationPhoneNumber,
     });
 
     return mapBrand(response as never);

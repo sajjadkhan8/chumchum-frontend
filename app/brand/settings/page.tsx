@@ -147,6 +147,11 @@ function BrandSettingsPageContent() {
         targetPlatforms: brand.targetPlatforms || "",
         campaignBudgetRange: brand.campaignBudgetRange || "",
       });
+      setVerification({
+        businessStatus: brand.businessVerificationStatus || "Pending",
+        contactEmail: brand.verificationContactEmail || "",
+        phoneNumber: brand.verificationPhoneNumber || "",
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not load brand profile";
       toast.error(message);
@@ -211,6 +216,28 @@ function BrandSettingsPageContent() {
       toast.success("Campaign preferences saved");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not save campaign preferences";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleVerificationSave = async () => {
+    setIsSaving(true);
+    try {
+      const saved = await brandsService.updateMe({
+        businessVerificationStatus: verification.businessStatus,
+        verificationContactEmail: verification.contactEmail,
+        verificationPhoneNumber: verification.phoneNumber,
+      });
+      setVerification({
+        businessStatus: saved.businessVerificationStatus || "Pending",
+        contactEmail: saved.verificationContactEmail || "",
+        phoneNumber: saved.verificationPhoneNumber || "",
+      });
+      toast.success("Verification settings saved");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save verification settings";
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -674,9 +701,19 @@ function BrandSettingsPageContent() {
                     />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+	              </CardContent>
+	            </Card>
+              <Button onClick={handleVerificationSave} disabled={isSaving} className="w-full">
+                {isSaving ? (
+                  "Saving..."
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Verification Settings
+                  </>
+                )}
+              </Button>
+	          </TabsContent>
 
           {/* Billing Tab */}
           <TabsContent value="billing" className="space-y-6">

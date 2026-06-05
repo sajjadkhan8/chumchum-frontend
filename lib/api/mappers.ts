@@ -212,6 +212,9 @@ interface BackendBrandResponse {
   target_cities?: string;
   target_platforms?: string;
   campaign_budget_range?: string;
+  business_verification_status?: string;
+  verification_contact_email?: string;
+  verification_phone_number?: string;
   user?: {
     id?: string;
     city?: string;
@@ -232,6 +235,9 @@ export const mapBrand = (input: BackendBrandResponse): Brand => ({
   targetCities: input.target_cities,
   targetPlatforms: input.target_platforms,
   campaignBudgetRange: input.campaign_budget_range,
+  businessVerificationStatus: input.business_verification_status,
+  verificationContactEmail: input.verification_contact_email,
+  verificationPhoneNumber: input.verification_phone_number,
   totalCampaigns: 0,
   activeOrders: 0,
 });
