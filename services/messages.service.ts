@@ -8,6 +8,8 @@ interface BackendConversation {
   brandId: string;
   readByCreator?: boolean;
   readByBrand?: boolean;
+  unreadCountCreator?: number;
+  unreadCountBrand?: number;
   lastMessage?: string;
   updatedAt?: string;
 }
@@ -19,6 +21,7 @@ interface BackendMessage {
   senderType: string;
   type: string;
   content?: string;
+  attachmentUrl?: string;
   isRead?: boolean;
   offerDealType?: string;
   offerAmount?: number;
@@ -63,12 +66,12 @@ const buildParticipantMaps = async (conversations: BackendConversation[]) => {
 };
 
 export const messagesService = {
-  async getConversations(_userId: string, _role: 'creator' | 'brand'): Promise<Conversation[]> {
+  async getConversations(_userId: string, role: 'creator' | 'brand'): Promise<Conversation[]> {
     const response = await apiClient.get<BackendConversation[]>('/api/v1/conversations');
     const conversations = Array.isArray(response) ? response : [];
     const { creators, brands } = await buildParticipantMaps(conversations);
 
-    return conversations.map((conversation) => mapConversation(conversation, creators, brands));
+    return conversations.map((conversation) => mapConversation(conversation, creators, brands, role));
   },
 
   async getMessages(conversationId: string): Promise<Message[]> {
@@ -79,7 +82,7 @@ export const messagesService = {
   async createConversation(creatorId: string): Promise<Conversation> {
     const response = await apiClient.post<BackendConversation>('/api/v1/conversations', { to: creatorId });
     const { creators, brands } = await buildParticipantMaps([response]);
-    return mapConversation(response, creators, brands);
+    return mapConversation(response, creators, brands, 'brand');
   },
 
   async sendMessage(

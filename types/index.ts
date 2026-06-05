@@ -184,7 +184,8 @@ export interface Message {
   senderId: string;
   senderType: UserRole;
   content: string;
-  type: 'text' | 'offer' | 'system';
+  type: 'text' | 'offer' | 'attachment' | 'system';
+  attachmentUrl?: string;
   offer?: QuickDealOffer;
   isRead: boolean;
   createdAt: Date;
@@ -206,6 +207,7 @@ export interface QuickDealOffer {
   dealType: DealType;
   amount?: number;
   barterDetails?: string;
+  creatorExpectation?: string;
   message: string;
   status: 'pending' | 'accepted' | 'rejected';
   orderId?: string;

@@ -32,6 +32,7 @@ interface QuickDealModalProps {
   creator: Creator;
   isOpen: boolean;
   onClose: () => void;
+  onCreated?: (result: { conversationId: string; messageId: string; offerId: string }) => void;
 }
 
 const dealTypeOptions: { value: DealType; label: string; icon: React.ElementType; description: string }[] = [
@@ -55,7 +56,7 @@ const dealTypeOptions: { value: DealType; label: string; icon: React.ElementType
   },
 ];
 
-export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps) {
+export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDealModalProps) {
   const [dealType, setDealType] = useState<DealType>('paid');
   const [budget, setBudget] = useState('');
   const [barterDescription, setBarterDescription] = useState('');
@@ -96,7 +97,7 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
     setIsSubmitting(true);
 
     try {
-      await messagesService.createQuickDeal({
+      const result = await messagesService.createQuickDeal({
         creatorId: creator.id,
         dealType,
         amount: budget ? Number(budget) : undefined,
@@ -111,8 +112,6 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
         description: `${creator.name} will be notified of your ${dealType} deal request.`,
       });
 
-      onClose();
-
       // Reset form
       setDealType('paid');
       setBudget('');
@@ -121,6 +120,8 @@ export function QuickDealModal({ creator, isOpen, onClose }: QuickDealModalProps
       setBarterValue('');
       setCreatorExpectation('');
       setMessage('');
+      onCreated?.(result);
+      onClose();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to send offer';
       toast.error(errorMessage);

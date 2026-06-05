@@ -439,10 +439,12 @@ interface BackendMessageResponse {
   senderType: string;
   type: string;
   content?: string;
+  attachmentUrl?: string;
   isRead?: boolean;
   offerDealType?: string;
   offerAmount?: number;
   offerBarterDetails?: string;
+  offerCreatorExpectation?: string;
   offerStatus?: string;
   offerId?: string;
   offerOrderId?: string;
@@ -457,6 +459,7 @@ const mapOfferFromMessage = (input: BackendMessageResponse): QuickDealOffer | un
     dealType: normalizeDealType(input.offerDealType),
     amount: input.offerAmount,
     barterDetails: input.offerBarterDetails,
+    creatorExpectation: input.offerCreatorExpectation,
     message: input.content || '',
     status: (input.offerStatus || 'pending').toLowerCase() as QuickDealOffer['status'],
     orderId: input.offerOrderId,
@@ -470,6 +473,7 @@ export const mapMessage = (input: BackendMessageResponse): Message => ({
   senderType: normalizeRole(input.senderType),
   content: input.content || '',
   type: (input.type || 'text').toLowerCase() as Message['type'],
+  attachmentUrl: input.attachmentUrl,
   offer: mapOfferFromMessage(input),
   isRead: Boolean(input.isRead),
   createdAt: safeDate(input.createdAt),
@@ -481,6 +485,8 @@ interface BackendConversationResponse {
   brandId: string;
   readByCreator?: boolean;
   readByBrand?: boolean;
+  unreadCountCreator?: number;
+  unreadCountBrand?: number;
   lastMessage?: string;
   updatedAt?: string;
 }
@@ -489,9 +495,16 @@ export const mapConversation = (
   input: BackendConversationResponse,
   creatorMap: Record<string, Creator>,
   brandMap: Record<string, Brand>,
+  viewerRole?: 'creator' | 'brand',
 ): Conversation => {
   const creator = creatorMap[input.creatorId];
   const brand = brandMap[input.brandId];
+  const unreadCount =
+    viewerRole === 'creator'
+      ? input.unreadCountCreator ?? (input.readByCreator ? 0 : 1)
+      : viewerRole === 'brand'
+        ? input.unreadCountBrand ?? (input.readByBrand ? 0 : 1)
+        : input.unreadCountCreator ?? input.unreadCountBrand ?? (input.readByCreator && input.readByBrand ? 0 : 1);
 
   return {
     id: input.id,
@@ -543,7 +556,7 @@ export const mapConversation = (
           createdAt: safeDate(input.updatedAt),
         }
       : undefined,
-    unreadCount: input.readByCreator && input.readByBrand ? 0 : 1,
+    unreadCount,
     updatedAt: safeDate(input.updatedAt),
   };
 };

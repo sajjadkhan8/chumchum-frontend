@@ -1,10 +1,9 @@
 "use client";
 
-import { Suspense, useState, useRef, useEffect, useMemo } from "react";
+import { Suspense, useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Search,
   Send,
@@ -17,19 +16,16 @@ import {
   CheckCheck,
   Clock,
   Image as ImageIcon,
-  File,
   DollarSign,
+  FileText,
   Package,
   X,
-  Plus,
-  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
@@ -39,12 +35,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Navbar } from "@/components/navbar";
 import { BottomNav } from "@/components/bottom-nav";
+import { QuickDealModal } from "@/components/quick-deal-modal";
 import { creatorsService } from "@/services/creators.service";
 import { messagesService } from "@/services/messages.service";
 import { formatRelativeTime, formatPrice, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import type { Message, Conversation } from "@/types";
 import { toast } from "sonner";
+
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080").replace(/\/$/, "");
 
 function MessagesPageContent() {
   const searchParams = useSearchParams();
@@ -60,12 +59,17 @@ function MessagesPageContent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isSendingAttachment, setIsSendingAttachment] = useState(false);
   const [respondingOfferId, setRespondingOfferId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showMobileChat, setShowMobileChat] = useState(false);
+  const [isQuickDealOpen, setIsQuickDealOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const processedCreatorParamRef = useRef<string | null>(null);
 
-  const getConversationParticipant = (conversation: Conversation) => {
+  const getConversationParticipant = useCallback((conversation: Conversation) => {
     if (isCreatorView) {
       return {
         id: conversation.brand.id,
@@ -83,7 +87,7 @@ function MessagesPageContent() {
       subtitle: `@${conversation.creator.username}`,
       href: `/creator/${conversation.creator.username}`,
     };
-  };
+  }, [isCreatorView]);
 
   const selectedParticipant = selectedConversation
     ? getConversationParticipant(selectedConversation)
@@ -107,83 +111,110 @@ function MessagesPageContent() {
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery, roleScopedConversations]);
+  }, [searchQuery, roleScopedConversations, getConversationParticipant]);
+
+  const loadConversations = useCallback(async () => {
+    if (!user) return [];
+
+    setIsLoadingConversations(true);
+    try {
+      const data = await messagesService.getConversations(user.id, user.role);
+      setConversations(data);
+      return data;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load conversations";
+      toast.error(message);
+      return [];
+    } finally {
+      setIsLoadingConversations(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    if (!user) return;
-
-    const loadConversations = async () => {
-      setIsLoadingConversations(true);
-      try {
-        const data = await messagesService.getConversations(user.id, user.role);
-        setConversations(data);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to load conversations";
-        toast.error(message);
-      } finally {
-        setIsLoadingConversations(false);
-      }
-    };
-
     void loadConversations();
-  }, [user]);
+  }, [loadConversations]);
+
+  const loadMessagesForConversation = useCallback(async (conversationId: string) => {
+    setIsLoadingMessages(true);
+    try {
+      const data = await messagesService.getMessages(conversationId);
+      setMessages(data);
+      await messagesService.markAsRead(conversationId);
+      return data;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load messages";
+      toast.error(message);
+      return [];
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  }, []);
+
+  const selectConversationFromParam = useCallback(async (target: string) => {
+    const data = await loadConversations();
+    const existing = data.find(
+      (conversation) =>
+        conversation.creatorId === target || conversation.creator.username === target,
+    );
+
+    if (existing) {
+      setSelectedConversation(existing);
+      setShowMobileChat(true);
+      return;
+    }
+
+    let creator: Awaited<ReturnType<typeof creatorsService.getById>>;
+    try {
+      creator = await creatorsService.getById(target);
+    } catch {
+      creator = null;
+    }
+
+    if (!creator) {
+      try {
+        creator = await creatorsService.getByUsername(target);
+      } catch {
+        creator = null;
+      }
+    }
+
+    if (!creator) return;
+
+    const createdConversation = await messagesService.createConversation(creator.id);
+    setConversations((prev) => {
+      const withoutDuplicate = prev.filter((conversation) => conversation.id !== createdConversation.id);
+      return [createdConversation, ...withoutDuplicate];
+    });
+    setSelectedConversation(createdConversation);
+    setShowMobileChat(true);
+  }, [loadConversations]);
 
   // Auto-select conversation if creator param is present
   useEffect(() => {
     if (!creatorParam || !user || user.role !== "brand") return;
+    const processingKey = `${user.id}:${creatorParam}`;
+    if (processedCreatorParamRef.current === processingKey) return;
+    processedCreatorParamRef.current = processingKey;
 
     const startConversationFromParam = async () => {
       try {
-        const existing = conversations.find(
-          (conversation) =>
-            conversation.creatorId === creatorParam || conversation.creator.username === creatorParam,
-        );
-
-        if (existing) {
-          setSelectedConversation(existing);
-          setShowMobileChat(true);
-          return;
-        }
-
-        const creator =
-          (await creatorsService.getById(creatorParam)) ||
-          (await creatorsService.getByUsername(creatorParam));
-
-        if (!creator) return;
-
-        const createdConversation = await messagesService.createConversation(creator.id);
-        setConversations((prev) => [createdConversation, ...prev]);
-        setSelectedConversation(createdConversation);
-        setShowMobileChat(true);
+        await selectConversationFromParam(creatorParam);
       } catch (error) {
+        processedCreatorParamRef.current = null;
         const message = error instanceof Error ? error.message : "Failed to start conversation";
         toast.error(message);
       }
     };
 
     void startConversationFromParam();
-  }, [conversations, creatorParam, user]);
+  }, [creatorParam, selectConversationFromParam, user]);
 
   // Load messages when conversation is selected
   useEffect(() => {
     if (selectedConversation) {
-      const loadMessages = async () => {
-        setIsLoadingMessages(true);
-        try {
-          const data = await messagesService.getMessages(selectedConversation.id);
-          setMessages(data);
-          await messagesService.markAsRead(selectedConversation.id);
-        } catch (error) {
-          const message = error instanceof Error ? error.message : "Failed to load messages";
-          toast.error(message);
-        } finally {
-          setIsLoadingMessages(false);
-        }
-      };
-
-      void loadMessages();
+      void loadMessagesForConversation(selectedConversation.id);
     }
-  }, [selectedConversation]);
+  }, [selectedConversation, loadMessagesForConversation]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -221,6 +252,43 @@ function MessagesPageContent() {
     }
   };
 
+  const getAttachmentName = (url?: string) => {
+    if (!url) return "Attachment";
+    const path = url.split("?")[0];
+    const name = path.split("/").filter(Boolean).pop();
+    return name ? decodeURIComponent(name) : "Attachment";
+  };
+
+  const getAttachmentHref = (url?: string) => {
+    if (!url) return "#";
+    if (/^https?:\/\//i.test(url)) return url;
+    return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
+
+  const handleSendAttachment = async (file?: File | null) => {
+    if (!file || !selectedConversation) return;
+    setIsSendingAttachment(true);
+    try {
+      const createdMessage = await messagesService.sendAttachment(selectedConversation.id, file);
+      setMessages((prev) => [...prev, createdMessage]);
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          conversation.id === selectedConversation.id
+            ? { ...conversation, lastMessage: createdMessage, updatedAt: createdMessage.createdAt }
+            : conversation,
+        ),
+      );
+      toast.success("Attachment sent");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to send attachment";
+      toast.error(message);
+    } finally {
+      setIsSendingAttachment(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -231,6 +299,21 @@ function MessagesPageContent() {
   const selectConversation = (conv: Conversation) => {
     setSelectedConversation(conv);
     setShowMobileChat(true);
+  };
+
+  const openQuickDealModal = () => {
+    if (!selectedConversation || isCreatorView) return;
+    setIsQuickDealOpen(true);
+  };
+
+  const handleQuickDealCreated = async (result: { conversationId: string; messageId: string; offerId: string }) => {
+    const refreshedConversations = await loadConversations();
+    const targetConversation = refreshedConversations.find((conversation) => conversation.id === result.conversationId);
+    if (targetConversation) {
+      setSelectedConversation(targetConversation);
+      setShowMobileChat(true);
+    }
+    await loadMessagesForConversation(result.conversationId);
   };
 
   const respondToOffer = async (message: Message, action: "accepted" | "rejected") => {
@@ -410,7 +493,9 @@ function MessagesPageContent() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem>View Profile</DropdownMenuItem>
-                      <DropdownMenuItem>Send Quick Deal</DropdownMenuItem>
+                      {!isCreatorView && (
+                        <DropdownMenuItem onClick={openQuickDealModal}>Send Quick Deal</DropdownMenuItem>
+                      )}
                       <DropdownMenuItem>Clear Chat</DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive">
                         Block User
@@ -428,6 +513,8 @@ function MessagesPageContent() {
                   )}
                   {messages.map((message) => {
                     const isOwn = message.senderId === currentSenderId;
+                    const canRespondToOffer = isCreatorView && message.senderType === "brand";
+                    const orderHref = isCreatorView ? "/creator/orders" : "/brand/orders";
                     return (
                       <motion.div
                         key={message.id}
@@ -448,6 +535,24 @@ function MessagesPageContent() {
                             >
                               <p className="text-sm">{message.content}</p>
                             </div>
+                          )}
+
+                          {message.type === "attachment" && (
+                            <a
+                              href={getAttachmentHref(message.attachmentUrl)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={`flex min-w-0 items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition-colors ${
+                                isOwn
+                                  ? "border-primary/20 bg-primary text-primary-foreground hover:bg-primary/90"
+                                  : "border-border bg-muted text-foreground hover:bg-muted/80"
+                              } ${!message.attachmentUrl ? "pointer-events-none opacity-70" : ""}`}
+                            >
+                              <FileText className="h-5 w-5 shrink-0" />
+                              <span className="min-w-0 truncate">
+                                {getAttachmentName(message.attachmentUrl)}
+                              </span>
+                            </a>
                           )}
 
                           {message.type === "offer" && message.offer && (
@@ -477,35 +582,57 @@ function MessagesPageContent() {
                                     {message.offer.barterDetails}
                                   </p>
                                 ) : null}
+                                {message.offer.creatorExpectation ? (
+                                  <p className="mb-3 text-xs text-muted-foreground">
+                                    Expected from creator: {message.offer.creatorExpectation}
+                                  </p>
+                                ) : null}
                                 {message.offer.status === "pending" && (
-                                  <div className="flex gap-2">
-                                    <Button
-                                      size="sm"
-                                      className="flex-1"
-                                      disabled={!message.offer.id || respondingOfferId === message.offer.id}
-                                      onClick={() => void respondToOffer(message, "accepted")}
-                                    >
-                                      {respondingOfferId === message.offer.id ? "Saving..." : "Accept"}
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="flex-1"
-                                      disabled={!message.offer.id || respondingOfferId === message.offer.id}
-                                      onClick={() => void respondToOffer(message, "rejected")}
-                                    >
-                                      Decline
-                                    </Button>
-                                  </div>
+                                  canRespondToOffer ? (
+                                    <div className="flex gap-2">
+                                      <Button
+                                        size="sm"
+                                        className="flex-1"
+                                        disabled={!message.offer.id || respondingOfferId === message.offer.id}
+                                        onClick={() => void respondToOffer(message, "accepted")}
+                                      >
+                                        {respondingOfferId === message.offer.id ? "Saving..." : "Accept"}
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="flex-1"
+                                        disabled={!message.offer.id || respondingOfferId === message.offer.id}
+                                        onClick={() => void respondToOffer(message, "rejected")}
+                                      >
+                                        Decline
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+                                      <Clock className="mr-1 h-3 w-3" />
+                                      Awaiting creator response
+                                    </Badge>
+                                  )
                                 )}
                                 {message.offer.status === "accepted" && (
-                                  <Badge
-                                    variant="secondary"
-                                    className="bg-green-100 text-green-700"
-                                  >
-                                    <Check className="mr-1 h-3 w-3" />
-                                    Accepted
-                                  </Badge>
+                                  <div className="flex flex-col gap-2">
+                                    <Badge
+                                      variant="secondary"
+                                      className="w-fit bg-green-100 text-green-700"
+                                    >
+                                      <Check className="mr-1 h-3 w-3" />
+                                      Accepted
+                                    </Badge>
+                                    {message.offer.orderId && (
+                                      <Button size="sm" variant="outline" asChild>
+                                        <Link href={orderHref}>
+                                          <Package className="mr-1 h-3 w-3" />
+                                          View order
+                                        </Link>
+                                      </Button>
+                                    )}
+                                  </div>
                                 )}
                                 {message.offer.status === "rejected" && (
                                   <Badge
@@ -554,18 +681,33 @@ function MessagesPageContent() {
                     variant="ghost"
                     size="icon"
                     className="min-tap"
-                    onClick={() => toast.info("Media picker will be available in the next messaging release.")}
+                    disabled={isSendingAttachment}
+                    onClick={() => imageInputRef.current?.click()}
                   >
-                    <Plus className="h-5 w-5" />
+                    <ImageIcon className="h-5 w-5" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="min-tap"
-                    onClick={() => toast.info("File attachments are not enabled in demo mode.")}
+                    disabled={isSendingAttachment}
+                    onClick={() => fileInputRef.current?.click()}
                   >
                     <Paperclip className="h-5 w-5" />
                   </Button>
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => void handleSendAttachment(event.target.files?.[0])}
+                  />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    onChange={(event) => void handleSendAttachment(event.target.files?.[0])}
+                  />
                   <Input
                     type="text"
                     placeholder="Type a message..."
@@ -607,6 +749,15 @@ function MessagesPageContent() {
         </div>
       </div>
       <BottomNav />
+
+      {!isCreatorView && selectedConversation && (
+        <QuickDealModal
+          creator={selectedConversation.creator}
+          isOpen={isQuickDealOpen}
+          onClose={() => setIsQuickDealOpen(false)}
+          onCreated={(result) => void handleQuickDealCreated(result)}
+        />
+      )}
 
     </div>
   );

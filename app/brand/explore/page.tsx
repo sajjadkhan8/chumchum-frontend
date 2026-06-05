@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Search, SlidersHorizontal, TrendingUp, Star, Wallet, MapPin, Crown } from 'lucide-react';
+import { Search, TrendingUp, Star, Wallet, MapPin, Crown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -355,4 +355,3 @@ export default function ExplorePage() {
     </Suspense>
   );
 }
-
