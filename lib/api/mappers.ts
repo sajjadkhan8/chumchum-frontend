@@ -208,6 +208,10 @@ interface BackendBrandResponse {
   description?: string;
   logo_url?: string;
   monthly_budget?: number;
+  preferred_creator_categories?: string;
+  target_cities?: string;
+  target_platforms?: string;
+  campaign_budget_range?: string;
   user?: {
     id?: string;
     city?: string;
@@ -223,6 +227,11 @@ export const mapBrand = (input: BackendBrandResponse): Brand => ({
   website: input.website,
   city: (input.user?.city as City) || DEFAULT_CITY,
   description: input.description || '',
+  monthlyBudget: input.monthly_budget,
+  preferredCreatorCategories: input.preferred_creator_categories,
+  targetCities: input.target_cities,
+  targetPlatforms: input.target_platforms,
+  campaignBudgetRange: input.campaign_budget_range,
   totalCampaigns: 0,
   activeOrders: 0,
 });

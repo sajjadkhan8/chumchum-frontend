@@ -44,6 +44,22 @@ export interface CreatorSocialAccountPayload {
   engagementRate?: number;
 }
 
+interface CreatorPreferencesPayload {
+  acceptsBarter: boolean;
+  acceptsHybridDeals: boolean;
+  preferredIndustries: string;
+  minimumBudget?: number;
+}
+
+export interface CreatorPaymentSettingsPayload {
+  stcPayNumber: string;
+  madaCard: string;
+  accountTitle: string;
+  ibanOrAccount: string;
+  applePayNumber: string;
+  bankTransferIban: string;
+}
+
 const unwrapCreators = (payload: SearchResponse | unknown[]): unknown[] => {
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload.creators)) return payload.creators;
@@ -95,6 +111,19 @@ export const creatorsService = {
     });
 
     return Array.isArray(response) ? response : [];
+  },
+
+  async updatePreferences(payload: CreatorPreferencesPayload): Promise<Creator> {
+    const response = await apiClient.patch<unknown>('/api/v1/creators/me/preferences', { ...payload });
+    return mapCreator(response as never);
+  },
+
+  async getPaymentSettings(): Promise<CreatorPaymentSettingsPayload> {
+    return apiClient.get<CreatorPaymentSettingsPayload>('/api/v1/creators/me/payment-settings');
+  },
+
+  async updatePaymentSettings(payload: CreatorPaymentSettingsPayload): Promise<void> {
+    await apiClient.patch('/api/v1/creators/me/payment-settings', { ...payload });
   },
 
   async getAll(filters?: CreatorFilters): Promise<Creator[]> {

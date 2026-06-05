@@ -9,6 +9,10 @@ export interface BrandProfileUpdatePayload {
   description?: string;
   logoUrl?: string;
   monthlyBudget?: number;
+  preferredCreatorCategories?: string;
+  targetCities?: string;
+  targetPlatforms?: string;
+  campaignBudgetRange?: string;
 }
 
 export const brandsService = {
@@ -25,6 +29,10 @@ export const brandsService = {
       description: payload.description,
       logo_url: payload.logoUrl,
       monthly_budget: payload.monthlyBudget,
+      preferred_creator_categories: payload.preferredCreatorCategories,
+      target_cities: payload.targetCities,
+      target_platforms: payload.targetPlatforms,
+      campaign_budget_range: payload.campaignBudgetRange,
     });
 
     return mapBrand(response as never);

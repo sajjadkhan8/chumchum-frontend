@@ -173,6 +173,11 @@ export interface Brand {
   website?: string;
   city: City;
   description: string;
+  monthlyBudget?: number;
+  preferredCreatorCategories?: string;
+  targetCities?: string;
+  targetPlatforms?: string;
+  campaignBudgetRange?: string;
   totalCampaigns: number;
   activeOrders: number;
 }

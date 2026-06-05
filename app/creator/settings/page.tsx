@@ -44,6 +44,7 @@ import { getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { creatorsService, type CreatorSocialAccountPayload } from "@/services/creators.service";
 import { uploadsService } from "@/services/uploads.service";
+import { usersService } from "@/services/users.service";
 import type { Platform } from "@/types";
 import { toast } from "sonner";
 
@@ -120,12 +121,12 @@ function CreatorSettingsPageContent() {
   const [socialAccounts, setSocialAccounts] = useState<EditableSocialAccount[]>([]);
 
   const [paymentSettings, setPaymentSettings] = useState({
-    stcPayNumber: "JazzCash +92 300 1234567",
-    madaCard: "Easypaisa +92 321 7654321",
-    accountTitle: "Zara Qureshi",
-    ibanOrAccount: "PK36SCBL0000001123456702",
-    applePayNumber: "SadaPay +92 333 9988776",
-    bankTransferIban: "PK36SCBL0000001123456702",
+    stcPayNumber: "",
+    madaCard: "",
+    accountTitle: "",
+    ibanOrAccount: "",
+    applePayNumber: "",
+    bankTransferIban: "",
   });
 
   const [creatorPreferences, setCreatorPreferences] = useState({
@@ -176,6 +177,12 @@ function CreatorSettingsPageContent() {
       responseTime: creator.responseTime || "Within 24 hours",
       collaborationPreferences: creator.preferredIndustries || "",
     }));
+    setCreatorPreferences({
+      acceptsBarter: Boolean(creator.acceptsBarter),
+      acceptsHybridDeals: Boolean(creator.acceptsHybridDeals),
+      preferredIndustries: creator.preferredIndustries || "",
+      minimumBudget: creator.minimumBudget ? String(creator.minimumBudget) : "",
+    });
 
     setSocialAccounts(
       creator.platforms
@@ -218,6 +225,79 @@ function CreatorSettingsPageContent() {
       toast.success("Profile saved");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not save profile";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const loadNotificationPreferences = useCallback(async () => {
+    const preferences = await usersService.getNotificationPreferences();
+    setNotifications(preferences);
+  }, []);
+
+  const handleNotificationSave = async () => {
+    setIsSaving(true);
+    try {
+      const saved = await usersService.updateNotificationPreferences(notifications);
+      setNotifications(saved);
+      toast.success("Notification preferences saved");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save notification preferences";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCreatorPreferencesSave = async () => {
+    setIsSaving(true);
+    try {
+      const saved = await creatorsService.updatePreferences({
+        acceptsBarter: creatorPreferences.acceptsBarter,
+        acceptsHybridDeals: creatorPreferences.acceptsHybridDeals,
+        preferredIndustries: creatorPreferences.preferredIndustries,
+        minimumBudget: creatorPreferences.minimumBudget ? Number(creatorPreferences.minimumBudget) : undefined,
+      });
+      setCreatorPreferences({
+        acceptsBarter: Boolean(saved.acceptsBarter),
+        acceptsHybridDeals: Boolean(saved.acceptsHybridDeals),
+        preferredIndustries: saved.preferredIndustries || "",
+        minimumBudget: saved.minimumBudget ? String(saved.minimumBudget) : "",
+      });
+      setProfile((current) => ({
+        ...current,
+        collaborationPreferences: saved.preferredIndustries || "",
+      }));
+      toast.success("Creator preferences saved");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save creator preferences";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const loadPaymentSettings = useCallback(async () => {
+    const settings = await creatorsService.getPaymentSettings();
+    setPaymentSettings({
+      stcPayNumber: settings.stcPayNumber || "",
+      madaCard: settings.madaCard || "",
+      accountTitle: settings.accountTitle || "",
+      ibanOrAccount: settings.ibanOrAccount || "",
+      applePayNumber: settings.applePayNumber || "",
+      bankTransferIban: settings.bankTransferIban || "",
+    });
+  }, []);
+
+  const handlePaymentSettingsSave = async () => {
+    setIsSaving(true);
+    try {
+      await creatorsService.updatePaymentSettings(paymentSettings);
+      await loadPaymentSettings();
+      toast.success("Payment settings saved");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save payment settings";
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -357,7 +437,15 @@ function CreatorSettingsPageContent() {
       const message = error instanceof Error ? error.message : "Could not load creator profile";
       toast.error(message);
     });
-  }, [loadCreatorProfile, user]);
+    void loadNotificationPreferences().catch((error) => {
+      const message = error instanceof Error ? error.message : "Could not load notification preferences";
+      toast.error(message);
+    });
+    void loadPaymentSettings().catch((error) => {
+      const message = error instanceof Error ? error.message : "Could not load payment settings";
+      toast.error(message);
+    });
+  }, [loadCreatorProfile, loadNotificationPreferences, loadPaymentSettings, user]);
 
   return (
     <div className="container mx-auto max-w-4xl p-4 pb-24 md:p-6 md:pb-6">
@@ -857,6 +945,16 @@ function CreatorSettingsPageContent() {
               </div>
             </CardContent>
           </Card>
+          <Button onClick={handlePaymentSettingsSave} disabled={isSaving} className="w-full">
+            {isSaving ? (
+              "Saving..."
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Payment Settings
+              </>
+            )}
+          </Button>
         </TabsContent>
 
         <TabsContent value="preferences" className="space-y-6">
@@ -903,6 +1001,16 @@ function CreatorSettingsPageContent() {
               </div>
             </CardContent>
           </Card>
+          <Button onClick={handleCreatorPreferencesSave} disabled={isSaving} className="w-full">
+            {isSaving ? (
+              "Saving..."
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Creator Preferences
+              </>
+            )}
+          </Button>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
@@ -1001,6 +1109,16 @@ function CreatorSettingsPageContent() {
               ))}
             </CardContent>
           </Card>
+          <Button onClick={handleNotificationSave} disabled={isSaving} className="w-full">
+            {isSaving ? (
+              "Saving..."
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Notification Preferences
+              </>
+            )}
+          </Button>
         </TabsContent>
 
         {/* Security Tab */}

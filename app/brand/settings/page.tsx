@@ -37,6 +37,7 @@ import {
 import { getInitials } from "@/lib/utils";
 import { brandsService } from "@/services/brands.service";
 import { uploadsService } from "@/services/uploads.service";
+import { usersService } from "@/services/users.service";
 import { toast } from "sonner";
 
 const industries = [
@@ -94,11 +95,11 @@ function BrandSettingsPageContent() {
   });
 
   const [notifications, setNotifications] = useState({
-    newMessages: true,
-    orderUpdates: true,
-    creatorResponses: true,
+    newOrders: true,
+    messages: true,
+    reviews: true,
     marketing: false,
-    weeklyReport: true,
+    weeklyDigest: true,
     pushNotifications: true,
     emailNotifications: true,
     smsNotifications: false,
@@ -136,6 +137,16 @@ function BrandSettingsPageContent() {
         logo: brand.logo || "",
         city: brand.city || current.city,
       }));
+      setBilling((current) => ({
+        ...current,
+        monthlyBudget: brand.monthlyBudget ? String(brand.monthlyBudget) : "",
+      }));
+      setCampaignPreferences({
+        preferredCreatorCategories: brand.preferredCreatorCategories || "",
+        targetCities: brand.targetCities || "",
+        targetPlatforms: brand.targetPlatforms || "",
+        campaignBudgetRange: brand.campaignBudgetRange || "",
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not load brand profile";
       toast.error(message);
@@ -163,6 +174,68 @@ function BrandSettingsPageContent() {
     }
   };
 
+  const handleBillingSave = async () => {
+    setIsSaving(true);
+    try {
+      const saved = await brandsService.updateMe({
+        monthlyBudget: Number(billing.monthlyBudget) || undefined,
+      });
+      setBilling((current) => ({
+        ...current,
+        monthlyBudget: saved.monthlyBudget ? String(saved.monthlyBudget) : "",
+      }));
+      toast.success("Billing settings saved");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save billing settings";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCampaignPreferencesSave = async () => {
+    setIsSaving(true);
+    try {
+      const saved = await brandsService.updateMe({
+        preferredCreatorCategories: campaignPreferences.preferredCreatorCategories,
+        targetCities: campaignPreferences.targetCities,
+        targetPlatforms: campaignPreferences.targetPlatforms,
+        campaignBudgetRange: campaignPreferences.campaignBudgetRange,
+      });
+      setCampaignPreferences({
+        preferredCreatorCategories: saved.preferredCreatorCategories || "",
+        targetCities: saved.targetCities || "",
+        targetPlatforms: saved.targetPlatforms || "",
+        campaignBudgetRange: saved.campaignBudgetRange || "",
+      });
+      toast.success("Campaign preferences saved");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save campaign preferences";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const loadNotificationPreferences = useCallback(async () => {
+    const preferences = await usersService.getNotificationPreferences();
+    setNotifications(preferences);
+  }, []);
+
+  const handleNotificationSave = async () => {
+    setIsSaving(true);
+    try {
+      const saved = await usersService.updateNotificationPreferences(notifications);
+      setNotifications(saved);
+      toast.success("Notification preferences saved");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save notification preferences";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const uploadLogo = async (file?: File | null) => {
     if (!file) return;
 
@@ -181,7 +254,8 @@ function BrandSettingsPageContent() {
 
   useEffect(() => {
     void loadBrandProfile();
-  }, [loadBrandProfile]);
+    void loadNotificationPreferences();
+  }, [loadBrandProfile, loadNotificationPreferences]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -276,9 +350,19 @@ function BrandSettingsPageContent() {
                     disabled={isUploadingLogo}
                     onChange={(event) => void uploadLogo(event.target.files?.[0])}
                   />
-                </div>
-              </CardContent>
-            </Card>
+	                </div>
+                  <Button onClick={handleBillingSave} disabled={isSaving} className="w-full">
+                    {isSaving ? (
+                      "Saving..."
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Billing Settings
+                      </>
+                    )}
+                  </Button>
+	              </CardContent>
+	            </Card>
 
             {/* Company Info */}
             <Card>
@@ -528,9 +612,19 @@ function BrandSettingsPageContent() {
                     }
                   />
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+	              </CardContent>
+	            </Card>
+              <Button onClick={handleCampaignPreferencesSave} disabled={isSaving} className="w-full">
+                {isSaving ? (
+                  "Saving..."
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Campaign Preferences
+                  </>
+                )}
+              </Button>
+	          </TabsContent>
 
           {/* Verification Tab */}
           <TabsContent value="verification" className="space-y-6">
@@ -667,17 +761,17 @@ function BrandSettingsPageContent() {
               <CardContent className="space-y-4">
                 {[
                   {
-                    key: "newMessages",
+                    key: "messages",
                     label: "New messages",
                     description: "Get notified when creators message you",
                   },
                   {
-                    key: "orderUpdates",
+                    key: "newOrders",
                     label: "Order updates",
                     description: "Receive updates on your campaign progress",
                   },
                   {
-                    key: "creatorResponses",
+                    key: "reviews",
                     label: "Creator responses",
                     description: "Get notified when creators respond to offers",
                   },
@@ -687,7 +781,7 @@ function BrandSettingsPageContent() {
                     description: "Receive tips and promotional content",
                   },
                   {
-                    key: "weeklyReport",
+                    key: "weeklyDigest",
                     label: "Weekly report",
                     description: "Summary of your weekly campaign performance",
                   },
@@ -716,6 +810,41 @@ function BrandSettingsPageContent() {
                 ))}
               </CardContent>
             </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Notification Channels</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[
+                  { key: "pushNotifications", label: "Push notifications", description: "Receive push notifications on your device" },
+                  { key: "emailNotifications", label: "Email", description: "Receive notifications via email" },
+                  { key: "smsNotifications", label: "SMS", description: "Receive notifications via SMS" },
+                ].map((item) => (
+                  <div key={item.key} className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{item.label}</p>
+                      <p className="text-sm text-muted-foreground">{item.description}</p>
+                    </div>
+                    <Switch
+                      checked={notifications[item.key as keyof typeof notifications] as boolean}
+                      onCheckedChange={(checked) =>
+                        setNotifications((n) => ({ ...n, [item.key]: checked }))
+                      }
+                    />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+            <Button onClick={handleNotificationSave} disabled={isSaving} className="w-full">
+              {isSaving ? (
+                "Saving..."
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Notification Preferences
+                </>
+              )}
+            </Button>
           </TabsContent>
 
           {/* Security Tab */}
