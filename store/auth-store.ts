@@ -3,14 +3,9 @@ import { persist } from 'zustand/middleware';
 import { tokenStorage } from '@/lib/api/client';
 import { mapUser } from '@/lib/api/mappers';
 import { authService } from '@/services/auth.service';
-import { apiClient } from '@/lib/api/client';
+import { savedCreatorsService } from '@/services/saved-creators.service';
 import { isValidPakistaniPhone, normalizePakistaniPhone } from '@/lib/phone-utils';
 import type { User, UserRole, Creator, Brand } from '@/types';
-
-interface SavedCreatorRecord {
-  id?: string;
-  creatorId?: string;
-}
 
 interface AuthState {
   user: User | null;
@@ -34,12 +29,8 @@ interface AuthState {
 }
 
 const syncSavedCreators = async (): Promise<string[]> => {
-  const response = await apiClient.get<{ creators?: SavedCreatorRecord[] } | SavedCreatorRecord[]>('/api/v1/saved-creators');
-  const list = Array.isArray(response) ? response : response?.creators || [];
-
-  return list
-    .map((item) => item.creatorId || item.id)
-    .filter((value): value is string => Boolean(value));
+  const response = await savedCreatorsService.getAll();
+  return response.creators.map((creator) => creator.id);
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -198,9 +189,9 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           if (isSaved) {
-            await apiClient.delete(`/api/v1/saved-creators/${creatorId}`);
+            await savedCreatorsService.remove(creatorId);
           } else {
-            await apiClient.post(`/api/v1/saved-creators/${creatorId}`);
+            await savedCreatorsService.save(creatorId);
           }
         } catch {
           set({

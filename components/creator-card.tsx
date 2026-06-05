@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useState } from 'react';
+import type { MouseEvent } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Star, Clock, Gift, TrendingUp, Zap, Instagram, Youtube } from 'lucide-react';
+import { MapPin, Star, Clock, Gift, TrendingUp, Zap, Instagram, Youtube, Heart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,8 +48,22 @@ const platformIcons: Record<string, React.ElementType> = {
 };
 
 export function CreatorCard({ creator, onQuickDeal, className, variant = 'default' }: CreatorCardProps) {
-  const { user } = useAuthStore();
+  const { user, savedCreators, toggleSavedCreator } = useAuthStore();
+  const [isSaving, setIsSaving] = useState(false);
   const canSendDeal = !user || user.role === 'brand';
+  const canSaveCreator = user?.role === 'brand';
+  const isSaved = savedCreators.includes(creator.id);
+
+  const handleSaveToggle = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsSaving(true);
+    try {
+      await toggleSavedCreator(creator.id);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <motion.div
@@ -80,9 +96,23 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
             
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+            {canSaveCreator && (
+              <Button
+                type="button"
+                size="icon"
+                variant="secondary"
+                className="absolute right-2.5 top-2.5 z-10 h-9 w-9 rounded-full bg-background/90 shadow-sm backdrop-blur-sm hover:bg-background sm:right-3 sm:top-3"
+                disabled={isSaving}
+                onClick={handleSaveToggle}
+                aria-label={isSaved ? 'Remove saved creator' : 'Save creator'}
+              >
+                <Heart className={cn('h-4 w-4', isSaved && 'fill-destructive text-destructive')} />
+              </Button>
+            )}
              
             {/* Badges */}
-            <div className="absolute left-2.5 top-2.5 flex max-w-[90%] flex-wrap gap-1.5 sm:left-3 sm:top-3">
+            <div className="absolute left-2.5 top-2.5 flex max-w-[calc(100%-3.5rem)] flex-wrap gap-1.5 sm:left-3 sm:top-3">
               {/* Ambassador Badge (Gamified) */}
               <div className="flex">
                 <CreatorAmbassadorBadge creator={creator} />

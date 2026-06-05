@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Heart, Search, Grid, List } from "lucide-react";
@@ -18,34 +17,29 @@ import {
 import { CreatorCard } from "@/components/creator-card";
 import { EmptyState } from "@/components/empty-state";
 import { useAuthStore } from "@/store/auth-store";
-import { creatorsService } from "@/services/creators.service";
+import { savedCreatorsService } from "@/services/saved-creators.service";
 import type { Creator } from "@/types";
 
 export default function BrandSavedPage() {
   const router = useRouter();
-  const { savedCreators } = useAuthStore();
+  const { savedCreators, loadSavedCreators } = useAuthStore();
   const [savedCreatorProfiles, setSavedCreatorProfiles] = useState<Creator[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("recent");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchSavedProfiles = async () => {
-      if (savedCreators.length === 0) {
-        setSavedCreatorProfiles([]);
-        return;
-      }
-
-      const results = await Promise.allSettled(savedCreators.map((id) => creatorsService.getById(id)));
-      const creators = results
-        .map((result) => (result.status === 'fulfilled' ? result.value : null))
-        .filter((creator): creator is Creator => Boolean(creator));
-
-      setSavedCreatorProfiles(creators);
+      setIsLoading(true);
+      const response = await savedCreatorsService.getAll().catch(() => ({ creators: [], total: 0 }));
+      setSavedCreatorProfiles(response.creators);
+      await loadSavedCreators();
+      setIsLoading(false);
     };
 
     void fetchSavedProfiles();
-  }, [savedCreators]);
+  }, [loadSavedCreators, savedCreators.length]);
 
   const savedCreatorsList = savedCreatorProfiles;
 
@@ -87,7 +81,13 @@ export default function BrandSavedPage() {
           </p>
         </div>
 
-        {savedCreatorsList.length > 0 ? (
+        {isLoading ? (
+          <Card>
+            <CardContent className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+              Loading saved creators...
+            </CardContent>
+          </Card>
+        ) : savedCreatorsList.length > 0 ? (
           <>
             {/* Filters */}
             <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

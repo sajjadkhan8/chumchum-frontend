@@ -24,21 +24,20 @@ import { formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { creatorsService } from "@/services/creators.service";
 import { ordersService } from "@/services/orders.service";
-import { apiClient } from "@/lib/api/client";
+import { analyticsService, type BrandDashboardAnalytics } from "@/services/analytics.service";
 import type { Creator, Order } from "@/types";
 
-const defaultStats = {
-  totalSpent: 785000,
-  spentChange: 18.3,
-  activeOrders: 5,
-  ordersChange: 2,
-  creatorsWorkedWith: 23,
-  creatorsChange: 4,
-  avgRating: 4.8,
-  savedCreatorsCount: 0,
-  monthlyBudgetUsed: 785000,
-  monthlyBudgetLimit: 1000000,
+const emptyStats: BrandDashboardAnalytics = {
+  totalOrders: 0,
+  activeOrders: 0,
+  completedOrders: 0,
+  savedCreators: 0,
+  totalSpent: 0,
+  creatorsWorkedWith: 0,
+  avgRating: 0,
 };
+
+const activeOrderStatuses = new Set(["accepted", "in_progress", "delivered", "review", "revision"]);
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -66,26 +65,25 @@ const getOrderProgress = (status: string) => {
 
 export default function BrandDashboardPage() {
   const { savedCreators } = useAuthStore();
-  const [stats, setStats] = useState(defaultStats);
+  const [stats, setStats] = useState<BrandDashboardAnalytics>(emptyStats);
   const [recommendedCreators, setRecommendedCreators] = useState<Creator[]>([]);
   const [savedCreatorsList, setSavedCreatorsList] = useState<Creator[]>([]);
   const [activeOrders, setActiveOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadDashboard = async () => {
-      try {
-        const [analytics, orders, recommended] = await Promise.all([
-          apiClient.get<typeof defaultStats>("/api/v1/analytics/brand/dashboard"),
-          ordersService.getAll(),
-          creatorsService.getTrending(4),
-        ]);
+      setIsLoading(true);
+      const [analytics, orders, recommended] = await Promise.all([
+        analyticsService.getBrandDashboard().catch(() => emptyStats),
+        ordersService.getAll().catch(() => []),
+        creatorsService.getTrending(4).catch(() => []),
+      ]);
 
-        setStats((prev) => ({ ...prev, ...analytics }));
-        setActiveOrders(orders.slice(0, 3));
-        setRecommendedCreators(recommended);
-      } catch {
-        // Keep default snapshot if API is unavailable.
-      }
+      setStats(analytics);
+      setActiveOrders(orders.filter((order) => activeOrderStatuses.has(order.status)).slice(0, 3));
+      setRecommendedCreators(recommended);
+      setIsLoading(false);
     };
 
     void loadDashboard();
@@ -127,28 +125,27 @@ export default function BrandDashboardPage() {
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Spent"
-          value={formatPrice(stats.totalSpent)}
-          change={stats.spentChange}
+          value={isLoading ? "Loading..." : formatPrice(stats.totalSpent)}
           icon={DollarSign}
           trend="up"
         />
         <StatsCard
           title="Active Campaigns"
-          value={stats.activeOrders.toString()}
-          change={stats.ordersChange}
+          value={isLoading ? "..." : stats.activeOrders.toString()}
+          subtitle={`${stats.completedOrders} completed`}
           icon={Package}
           trend="up"
         />
         <StatsCard
           title="Creators Worked With"
-          value={stats.creatorsWorkedWith.toString()}
-          change={stats.creatorsChange}
+          value={isLoading ? "..." : stats.creatorsWorkedWith.toString()}
+          subtitle={`${stats.savedCreators} saved`}
           icon={Users}
           trend="up"
         />
         <StatsCard
           title="Avg. Rating Given"
-          value={stats.avgRating.toString()}
+          value={isLoading ? "..." : stats.avgRating.toFixed(1)}
           icon={Star}
         />
       </div>
@@ -165,7 +162,7 @@ export default function BrandDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {activeOrders.map((order, index) => (
+                {activeOrders.length > 0 ? activeOrders.map((order, index) => (
                   <motion.div
                     key={order.id}
                     initial={{ opacity: 0, y: 10 }}
@@ -212,7 +209,11 @@ export default function BrandDashboardPage() {
                       </p>
                     </div>
                   </motion.div>
-                ))}
+                )) : (
+                  <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                    No active campaigns yet. Accepted and in-progress creator orders will appear here.
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -369,14 +370,14 @@ export default function BrandDashboardPage() {
                   <div className="mb-2 flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Spent</span>
                     <span className="font-medium">
-                      {formatPrice(stats.monthlyBudgetUsed)} / {formatPrice(stats.monthlyBudgetLimit)}
+                      {formatPrice(stats.totalSpent)} / {formatPrice(Math.max(1000000, stats.totalSpent))}
                     </span>
                   </div>
-                  <Progress value={stats.monthlyBudgetLimit ? (stats.monthlyBudgetUsed / stats.monthlyBudgetLimit) * 100 : 0} className="h-2" />
+                  <Progress value={stats.totalSpent ? Math.min(100, (stats.totalSpent / Math.max(1000000, stats.totalSpent)) * 100) : 0} className="h-2" />
                 </div>
                 <p className="text-center text-sm text-muted-foreground">
                   <span className="font-medium text-primary">
-                    {formatPrice(Math.max(stats.monthlyBudgetLimit - stats.monthlyBudgetUsed, 0))}
+                    {formatPrice(Math.max(Math.max(1000000, stats.totalSpent) - stats.totalSpent, 0))}
                   </span>{" "}
                   remaining this month
                 </p>

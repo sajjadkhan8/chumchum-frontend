@@ -8,3 +8,4 @@ export { metadataService } from './metadata.service';
 export { reviewsService } from './reviews.service';
 export { earningsService } from './earnings.service';
 export { analyticsService } from './analytics.service';
+export { savedCreatorsService } from './saved-creators.service';

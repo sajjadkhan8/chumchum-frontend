@@ -63,6 +63,7 @@ export default function CreatorProfilePage({
   const [creatorPackages, setCreatorPackages] = useState<CreatorListPackage[]>([]);
   const [creatorReviews, setCreatorReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSavingCreator, setIsSavingCreator] = useState(false);
 
   useEffect(() => {
     const loadCreatorProfile = async () => {
@@ -155,6 +156,15 @@ export default function CreatorProfilePage({
     setSelectedPackage(pkg);
   };
 
+  const handleSavedCreatorToggle = async () => {
+    setIsSavingCreator(true);
+    try {
+      await toggleSavedCreator(creator.id);
+    } finally {
+      setIsSavingCreator(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
 
@@ -221,7 +231,8 @@ export default function CreatorProfilePage({
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => toggleSavedCreator(creator.id)}
+                    disabled={isSavingCreator}
+                    onClick={handleSavedCreatorToggle}
                   >
                     <Heart
                       className={`h-5 w-5 ${isSaved ? "fill-destructive text-destructive" : ""}`}

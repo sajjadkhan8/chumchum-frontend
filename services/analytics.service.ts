@@ -72,6 +72,37 @@ export interface CreatorPerformanceAnalytics {
   packages: CreatorPerformancePackage[];
 }
 
+export interface BrandAnalyticsCity {
+  city: string;
+  orders: number;
+  share: number;
+}
+
+export interface BrandCampaignAnalytics {
+  totalReach: number;
+  avgEngagementRate: number;
+  creatorsActive: number;
+  monthlySpend: number;
+  totalOrders: number;
+  completedOrders: number;
+  topCities: BrandAnalyticsCity[];
+  dealMix: {
+    paid: number;
+    hybrid: number;
+    barter: number;
+  };
+}
+
+export interface BrandDashboardAnalytics {
+  totalOrders: number;
+  activeOrders: number;
+  completedOrders: number;
+  savedCreators: number;
+  totalSpent: number;
+  creatorsWorkedWith: number;
+  avgRating: number;
+}
+
 export const analyticsService = {
   async getCreatorDashboard(): Promise<CreatorDashboardAnalytics> {
     return apiClient.get<CreatorDashboardAnalytics>('/api/v1/analytics/creator/dashboard');
@@ -83,5 +114,13 @@ export const analyticsService = {
 
   async getCreatorPerformance(): Promise<CreatorPerformanceAnalytics> {
     return apiClient.get<CreatorPerformanceAnalytics>('/api/v1/analytics/creator/performance');
+  },
+
+  async getBrandCampaigns(period?: string): Promise<BrandCampaignAnalytics> {
+    return apiClient.get<BrandCampaignAnalytics>('/api/v1/analytics/brand/campaigns', period ? { query: { period } } : undefined);
+  },
+
+  async getBrandDashboard(): Promise<BrandDashboardAnalytics> {
+    return apiClient.get<BrandDashboardAnalytics>('/api/v1/analytics/brand/dashboard');
   },
 };
