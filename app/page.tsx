@@ -53,11 +53,9 @@ const stats = [
 
 export default function Home() {
   const router = useRouter();
-  const { user, isAuthenticated, hasHydrated } = useAuthStore((state) => ({
-    user: state.user,
-    isAuthenticated: state.isAuthenticated,
-    hasHydrated: state.hasHydrated,
-  }));
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [featuredPagination, setFeaturedPagination] = useState({ page: 0, size: 12 });
