@@ -13,6 +13,11 @@ import { useAuthStore } from '@/store/auth-store';
 import { toast } from 'sonner';
 import { ZingZingLogo } from '@/src/components/ZingZingLogo';
 
+const getDashboardPath = (role?: string) => {
+  if (role === 'platform_admin') return '/admin/dashboard';
+  return role === 'creator' ? '/creator/dashboard' : '/brand/dashboard';
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const { login, loginWithPhone, requestOtp, isLoading, user, isAuthenticated, hasHydrated } = useAuthStore();
@@ -27,7 +32,7 @@ export default function LoginPage() {
   // Redirect already-authenticated users to their dashboard
   useEffect(() => {
     if (!hasHydrated || !isAuthenticated || !user?.role) return;
-    router.replace(user.role === 'creator' ? '/creator/dashboard' : '/brand/dashboard');
+    router.replace(getDashboardPath(user.role));
   }, [hasHydrated, isAuthenticated, user, router]);
 
   if (hasHydrated && isAuthenticated && user?.role) {
@@ -52,11 +57,7 @@ export default function LoginPage() {
       
       // Redirect based on role
       const user = useAuthStore.getState().user;
-      if (user?.role === 'creator') {
-        router.push('/creator/dashboard');
-      } else {
-        router.push('/brand/dashboard');
-      }
+      router.push(getDashboardPath(user?.role));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Invalid credentials';
       toast.error(message);
@@ -86,11 +87,7 @@ export default function LoginPage() {
       toast.success('Welcome back!');
       
       const user = useAuthStore.getState().user;
-      if (user?.role === 'creator') {
-        router.push('/creator/dashboard');
-      } else {
-        router.push('/brand/dashboard');
-      }
+      router.push(getDashboardPath(user?.role));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Invalid OTP';
       toast.error(message);

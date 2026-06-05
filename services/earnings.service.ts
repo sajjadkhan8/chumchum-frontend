@@ -21,7 +21,7 @@ export interface EarningTransaction {
 
 export interface PayoutMethod {
   id: string;
-  type: string;
+  type: Lowercase<PayoutMethodType> | PayoutMethodType | string;
   name: string;
   accountDetails: string;
   isDefault: boolean;
@@ -51,6 +51,18 @@ interface WithdrawalPage {
   limit?: number;
 }
 
+export interface CreatePayoutMethodRequest {
+  type: PayoutMethodType;
+  name: string;
+  accountDetails: string;
+  isDefault?: boolean;
+}
+
+export interface CreateWithdrawalRequest {
+  payoutMethodId: string;
+  amount: number;
+}
+
 export const earningsService = {
   async getSummary(): Promise<EarningsSummary> {
     return apiClient.get<EarningsSummary>('/api/v1/earnings/summary');
@@ -67,12 +79,7 @@ export const earningsService = {
     return apiClient.get<PayoutMethod[]>('/api/v1/payout-methods');
   },
 
-  async createPayoutMethod(payload: {
-    type: PayoutMethodType;
-    name: string;
-    accountDetails: string;
-    isDefault?: boolean;
-  }): Promise<PayoutMethod> {
+  async createPayoutMethod(payload: CreatePayoutMethodRequest): Promise<PayoutMethod> {
     return apiClient.post<PayoutMethod>('/api/v1/payout-methods', {
       type: payload.type,
       name: payload.name,
@@ -81,7 +88,7 @@ export const earningsService = {
     });
   },
 
-  async requestWithdrawal(payload: { payoutMethodId: string; amount: number }): Promise<WithdrawalRequest> {
+  async requestWithdrawal(payload: CreateWithdrawalRequest): Promise<WithdrawalRequest> {
     return apiClient.post<WithdrawalRequest>('/api/v1/withdrawals', {
       payoutMethodId: payload.payoutMethodId,
       amount: payload.amount,

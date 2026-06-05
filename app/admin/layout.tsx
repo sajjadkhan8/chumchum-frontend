@@ -1,0 +1,44 @@
+'use client';
+
+import { useEffect, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
+import { Navbar } from '@/components/navbar';
+import { AdminSidebar, AdminSidebarDrawer } from '@/components/admin-sidebar';
+import { useAuthStore } from '@/store/auth-store';
+
+export default function AdminLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const { user, isAuthenticated, hasHydrated } = useAuthStore();
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (!isAuthenticated) {
+      router.replace('/login');
+      return;
+    }
+    if (user && user.role !== 'platform_admin') {
+      router.replace(user.role === 'creator' ? '/creator/dashboard' : '/brand/dashboard');
+    }
+  }, [hasHydrated, isAuthenticated, router, user]);
+
+  if (!hasHydrated || !isAuthenticated || user?.role !== 'platform_admin') {
+    return <div className="min-h-screen bg-background" />;
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <main className="pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+          <div className="mb-4 lg:hidden">
+            <AdminSidebarDrawer />
+          </div>
+          <div className="flex gap-6">
+            <AdminSidebar />
+            <div className="min-w-0 flex-1">{children}</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

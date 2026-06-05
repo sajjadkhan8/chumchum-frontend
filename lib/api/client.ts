@@ -20,7 +20,7 @@ type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 interface RequestOptions {
   method?: HttpMethod;
   query?: Record<string, unknown>;
-  body?: BodyInit | Record<string, unknown> | null;
+  body?: BodyInit | object | null;
   headers?: Record<string, string>;
   auth?: boolean;
   signal?: AbortSignal;
@@ -232,4 +232,3 @@ export const apiClient = {
     return this.request<T>(path, { ...options, method: 'DELETE' });
   },
 };
-

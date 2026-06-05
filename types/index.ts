@@ -1,5 +1,5 @@
 // User & Auth Types
-export type UserRole = 'creator' | 'brand';
+export type UserRole = 'creator' | 'brand' | 'platform_admin';
 
 export interface User {
   id: string;
@@ -9,6 +9,7 @@ export interface User {
   name: string;
   avatar?: string;
   creatorProgramStatus?: 'none' | 'in_path' | 'active_ambassador';
+  active?: boolean;
   createdAt: Date;
 }
 

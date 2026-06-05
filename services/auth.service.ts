@@ -13,8 +13,13 @@ interface AuthTokenResponse {
     name?: string;
     avatarUrl?: string;
     creatorProgramStatus?: User['creatorProgramStatus'];
+    active?: boolean;
     createdAt?: string;
   };
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
 }
 
 export const authService = {
@@ -43,13 +48,20 @@ export const authService = {
     );
   },
 
+  async forgotPassword(email: string): Promise<ForgotPasswordResponse> {
+    return apiClient.post<ForgotPasswordResponse>('/api/v1/auth/forgot-password', { email }, { auth: false });
+  },
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    await apiClient.post('/api/v1/auth/reset-password', { token, newPassword }, { auth: false });
+  },
+
   async logout(): Promise<void> {
     await apiClient.post('/api/v1/auth/logout', null);
   },
 
   async me(): Promise<User> {
-    const response = await apiClient.get<{ id: string; email?: string; phone?: string; role?: string; name?: string; avatarUrl?: string; creatorProgramStatus?: User['creatorProgramStatus']; createdAt?: string }>('/api/v1/users/me');
+    const response = await apiClient.get<{ id: string; email?: string; phone?: string; role?: string; name?: string; avatarUrl?: string; creatorProgramStatus?: User['creatorProgramStatus']; active?: boolean; createdAt?: string }>('/api/v1/users/me');
     return mapUser(response);
   },
 };
-

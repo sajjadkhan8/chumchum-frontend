@@ -111,7 +111,7 @@ const buildSocialLinks = (accounts: EditableSocialAccount[]) => {
 
 function CreatorSettingsPageContent() {
   const searchParams = useSearchParams();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [activeTab, setActiveTab] = useState("profile");
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -153,6 +153,12 @@ function CreatorSettingsPageContent() {
     pushNotifications: true,
     emailNotifications: true,
     smsNotifications: false,
+  });
+  const [security, setSecurity] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+    deleteConfirmPassword: "",
   });
 
   const loadCreatorProfile = useCallback(async () => {
@@ -300,6 +306,65 @@ function CreatorSettingsPageContent() {
       const message = error instanceof Error ? error.message : "Could not save payment settings";
       toast.error(message);
     } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!security.currentPassword || !security.newPassword || !security.confirmPassword) {
+      toast.error("Current password, new password, and confirmation are required");
+      return;
+    }
+
+    if (security.newPassword.length < 8) {
+      toast.error("New password must be at least 8 characters");
+      return;
+    }
+
+    if (security.newPassword !== security.confirmPassword) {
+      toast.error("New password and confirmation do not match");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await usersService.changePassword({
+        currentPassword: security.currentPassword,
+        newPassword: security.newPassword,
+      });
+      setSecurity((current) => ({
+        ...current,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      }));
+      toast.success("Password updated");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not update password";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!security.deleteConfirmPassword) {
+      toast.error("Enter your password to delete your account");
+      return;
+    }
+
+    const confirmed = window.confirm("Permanently delete your account? This cannot be undone.");
+    if (!confirmed) return;
+
+    setIsSaving(true);
+    try {
+      await usersService.deleteAccount({ confirmPassword: security.deleteConfirmPassword });
+      toast.success("Account deleted");
+      await logout();
+      window.location.assign("/signup");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not delete account";
+      toast.error(message);
       setIsSaving(false);
     }
   };
@@ -1130,17 +1195,32 @@ function CreatorSettingsPageContent() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="currentPassword">Current Password</Label>
-                <Input id="currentPassword" type="password" />
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  value={security.currentPassword}
+                  onChange={(event) => setSecurity((current) => ({ ...current, currentPassword: event.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
-                <Input id="newPassword" type="password" />
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={security.newPassword}
+                  onChange={(event) => setSecurity((current) => ({ ...current, newPassword: event.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input id="confirmPassword" type="password" />
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={security.confirmPassword}
+                  onChange={(event) => setSecurity((current) => ({ ...current, confirmPassword: event.target.value }))}
+                />
               </div>
-              <Button onClick={() => toast.success("Password update request captured.")}>Update Password</Button>
+              <Button onClick={handlePasswordChange} disabled={isSaving}>Update Password</Button>
             </CardContent>
           </Card>
 
@@ -1169,14 +1249,24 @@ function CreatorSettingsPageContent() {
               <CardTitle className="text-destructive">Danger Zone</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
+              <div className="space-y-4">
                 <div>
                   <p className="font-medium">Delete Account</p>
                   <p className="text-sm text-muted-foreground">
                     Permanently delete your account and all data
                   </p>
                 </div>
-                <Button variant="destructive" onClick={() => toast.error("Account deletion is disabled in demo mode.")}>Delete Account</Button>
+                <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                  <Input
+                    type="password"
+                    placeholder="Confirm with your password"
+                    value={security.deleteConfirmPassword}
+                    onChange={(event) => setSecurity((current) => ({ ...current, deleteConfirmPassword: event.target.value }))}
+                  />
+                  <Button variant="destructive" onClick={handleDeleteAccount} disabled={isSaving}>
+                    Delete Account
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

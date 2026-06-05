@@ -19,6 +19,12 @@ interface BackendReview {
   };
 }
 
+export interface CreateReviewRequest {
+  orderId: string;
+  rating: number;
+  comment?: string;
+}
+
 const fallbackBrand = (brandId: string): Brand => ({
   id: brandId,
   userId: brandId,
@@ -62,7 +68,7 @@ const unwrapReviews = (payload: unknown): BackendReview[] => {
 };
 
 export const reviewsService = {
-  async create(payload: { orderId: string; rating: number; comment?: string }): Promise<Review> {
+  async create(payload: CreateReviewRequest): Promise<Review> {
     const response = await apiClient.post<{ review?: BackendReview } | BackendReview>('/api/v1/reviews', {
       orderId: payload.orderId,
       rating: payload.rating,

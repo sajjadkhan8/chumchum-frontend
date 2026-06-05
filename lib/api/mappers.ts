@@ -41,7 +41,9 @@ const normalizeDealType = (value?: string | null): DealType => {
 
 const normalizeRole = (value?: string | null): UserRole => {
   const lowered = (value || '').toLowerCase();
-  return lowered === 'brand' ? 'brand' : 'creator';
+  if (lowered === 'brand') return 'brand';
+  if (lowered === 'platform_admin' || lowered === 'admin') return 'platform_admin';
+  return 'creator';
 };
 
 interface BackendUser {
@@ -52,6 +54,7 @@ interface BackendUser {
   name?: string;
   avatarUrl?: string;
   creatorProgramStatus?: User['creatorProgramStatus'];
+  active?: boolean;
   createdAt?: string;
 }
 
@@ -63,6 +66,7 @@ export const mapUser = (input: BackendUser): User => ({
   name: input.name || 'User',
   avatar: input.avatarUrl,
   creatorProgramStatus: input.creatorProgramStatus || 'none',
+  active: input.active,
   createdAt: safeDate(input.createdAt),
 });
 

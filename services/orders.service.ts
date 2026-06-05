@@ -2,13 +2,32 @@ import { apiClient } from '@/lib/api/client';
 import { mapBrand, mapCreator, mapOrder, mapPackage } from '@/lib/api/mappers';
 import type { DealType, Order, OrderDeliverable, OrderStatus } from '@/types';
 
-export type CreateOrderRequest = Record<string, unknown> & {
+export interface CreateOrderRequest {
   packageId: string;
   dealType?: Uppercase<DealType>;
   amount?: number;
   barterDetails?: string;
   message?: string;
-};
+}
+
+export interface UpdateOrderStatusRequest {
+  status: Uppercase<OrderStatus>;
+  progress_update?: string;
+  message?: string;
+}
+
+export interface UpdateOrderProgressRequest {
+  progress: number;
+}
+
+export interface SubmitDeliverableRequest {
+  fileUrl?: string;
+  note?: string;
+}
+
+export interface UpdateDeliverableStatusRequest {
+  status: OrderDeliverable['status'];
+}
 
 interface BackendOrderResponse {
   id: string;
@@ -142,8 +161,9 @@ export const ordersService = {
   },
 
   async updateStatus(orderId: string, status: OrderStatus): Promise<Order | null> {
+    const payload: UpdateOrderStatusRequest = { status: status.toUpperCase() as Uppercase<OrderStatus> };
     const response = await apiClient.patch<BackendOrderResponse>(`/api/v1/orders/${orderId}/status`, {
-      status: status.toUpperCase(),
+      ...payload,
     });
 
     const enriched = await enrichOrders(response ? [response] : []);
@@ -151,12 +171,13 @@ export const ordersService = {
   },
 
   async updateProgress(orderId: string, progress: number): Promise<Order | null> {
-    const response = await apiClient.patch<BackendOrderResponse>(`/api/v1/orders/${orderId}/progress`, { progress });
+    const payload: UpdateOrderProgressRequest = { progress };
+    const response = await apiClient.patch<BackendOrderResponse>(`/api/v1/orders/${orderId}/progress`, payload);
     const enriched = await enrichOrders(response ? [response] : []);
     return enriched[0] || null;
   },
 
-  async submitDeliverable(orderId: string, deliverableId: string, payload: Record<string, string>): Promise<OrderDeliverable> {
+  async submitDeliverable(orderId: string, deliverableId: string, payload: SubmitDeliverableRequest): Promise<OrderDeliverable> {
     const response = await apiClient.post<BackendDeliverableResponse>(
       `/api/v1/orders/${orderId}/deliverables/${deliverableId}/submit`,
       payload,
@@ -166,9 +187,10 @@ export const ordersService = {
   },
 
   async updateDeliverableStatus(orderId: string, deliverableId: string, status: OrderDeliverable['status']): Promise<OrderDeliverable> {
+    const payload: UpdateDeliverableStatusRequest = { status };
     const response = await apiClient.patch<BackendDeliverableResponse>(
       `/api/v1/orders/${orderId}/deliverables/${deliverableId}/status`,
-      { status },
+      payload,
     );
 
     return mapDeliverable(response);

@@ -29,9 +29,12 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
     if (user && user.role === 'creator') {
       router.replace('/creator/dashboard');
     }
+    if (user && user.role === 'platform_admin') {
+      router.replace('/admin/dashboard');
+    }
   }, [hasHydrated, isAuthenticated, user, router, isProtectedBrandRoute]);
 
-  if ((isProtectedBrandRoute && !hasHydrated) || (isProtectedBrandRoute && !isAuthenticated) || user?.role === 'creator') {
+  if ((isProtectedBrandRoute && !hasHydrated) || (isProtectedBrandRoute && !isAuthenticated) || user?.role === 'creator' || user?.role === 'platform_admin') {
     return <div className="min-h-screen bg-background" />;
   }
 

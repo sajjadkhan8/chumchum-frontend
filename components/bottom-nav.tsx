@@ -21,6 +21,10 @@ export function BottomNav() {
     return null;
   }
 
+  if (user.role === 'platform_admin') {
+    return null;
+  }
+
   const creatorNavItems: NavItem[] = [
     { href: '/creator/dashboard', icon: Home, label: 'Home' },
     { href: '/creator/packages', icon: Search, label: 'Explore' },

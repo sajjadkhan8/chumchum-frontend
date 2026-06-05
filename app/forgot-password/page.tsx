@@ -1,17 +1,67 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { authService } from '@/services/auth.service';
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordContent() {
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token') || '';
   const [email, setEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [resetComplete, setResetComplete] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleForgotPassword = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError('');
+    setIsLoading(true);
+    try {
+      await authService.forgotPassword(email.trim());
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send reset link');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError('');
+
+    if (newPassword.length < 8) {
+      setError('New password must be at least 8 characters.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('New password and confirmation do not match.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await authService.resetPassword(token, newPassword);
+      setResetComplete(true);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not reset password');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -19,16 +69,56 @@ export default function ForgotPasswordPage() {
       <main className="container mx-auto max-w-md px-4 py-10 md:py-16">
         <Card>
           <CardHeader>
-            <CardTitle>Reset your password</CardTitle>
+            <CardTitle>{token ? 'Create a new password' : 'Reset your password'}</CardTitle>
           </CardHeader>
           <CardContent>
-            {!submitted ? (
+            {error ? (
+              <p className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
+
+            {token ? (
+              resetComplete ? (
+                <div className="space-y-4 text-sm text-muted-foreground">
+                  <p>Your password has been updated.</p>
+                  <Button asChild className="w-full">
+                    <Link href="/login">Sign in</Link>
+                  </Button>
+                </div>
+              ) : (
+                <form className="space-y-4" onSubmit={handleResetPassword}>
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New password</Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      required
+                      minLength={8}
+                      value={newPassword}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm new password</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      required
+                      minLength={8}
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? 'Updating...' : 'Update password'}
+                  </Button>
+                </form>
+              )
+            ) : !submitted ? (
               <form
                 className="space-y-4"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  setSubmitted(true);
-                }}
+                onSubmit={handleForgotPassword}
               >
                 <div className="space-y-2">
                   <Label htmlFor="email">Account email</Label>
@@ -45,7 +135,9 @@ export default function ForgotPasswordPage() {
                     />
                   </div>
                 </div>
-                <Button type="submit" className="w-full">Send reset link</Button>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Sending...' : 'Send reset link'}
+                </Button>
               </form>
             ) : (
               <div className="space-y-4 text-sm text-muted-foreground">
@@ -68,3 +160,10 @@ export default function ForgotPasswordPage() {
   );
 }
 
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <ForgotPasswordContent />
+    </Suspense>
+  );
+}

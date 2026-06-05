@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Menu, Bell, MessageCircle, User, LogOut, Package, Wallet, Bookmark, Building2, BriefcaseBusiness, Moon, Sun } from 'lucide-react';
+import { Search, Menu, Bell, MessageCircle, User, LogOut, Package, Wallet, Bookmark, Building2, BriefcaseBusiness, Moon, Sun, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -37,6 +37,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
   const isSignedIn = hasHydrated && isAuthenticated && !!user;
   const isCreator = isSignedIn && user.role === 'creator';
+  const isAdmin = isSignedIn && user.role === 'platform_admin';
   const logoVariant = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
 
   useEffect(() => {
@@ -80,10 +81,21 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     { href: '/brand/orders', label: 'Campaigns' },
     { href: '/brand/saved', label: 'Saved Creators' },
   ];
+  const adminNavLinks = [
+    { href: '/admin/dashboard', label: 'Dashboard' },
+    { href: '/admin/users', label: 'Users' },
+    { href: '/admin/orders', label: 'Orders' },
+    { href: '/admin/verification', label: 'Verification' },
+  ];
 
-  const navLinks = isSignedIn ? (isCreator ? creatorNavLinks : brandNavLinks) : publicNavLinks;
+  const navLinks = isSignedIn ? (isAdmin ? adminNavLinks : isCreator ? creatorNavLinks : brandNavLinks) : publicNavLinks;
 
-  const profileMenu = isCreator
+  const profileMenu = isAdmin
+    ? [
+        { href: '/admin/dashboard', label: 'Admin Dashboard', icon: Shield },
+        { href: '/admin/users', label: 'User Moderation', icon: User },
+      ]
+    : isCreator
     ? [
         { href: '/creator/profile/public', label: 'My Profile', icon: User },
         { href: '/creator/packages', label: 'My Packages', icon: Package },
@@ -97,7 +109,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
         { href: '/brand/settings?tab=notifications', label: 'Settings', icon: User },
       ];
 
-  const messagesLink = isSignedIn ? `/${user.role}/messages` : '/messages';
+  const messagesLink = isSignedIn && !isAdmin ? `/${user.role}/messages` : '/messages';
 
   const isLinkActive = (href: string) => {
     const pathOnly = href.split('?')[0];
@@ -173,23 +185,25 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
 
           {isSignedIn && user ? (
             <>
-              {/* Notifications */}
-              <Button variant="ghost" size="icon" className="relative hidden sm:flex">
-                <Bell className="h-5 w-5" />
-                <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs">
-                  3
-                </Badge>
-              </Button>
+              {!isAdmin && (
+                <>
+                  <Button variant="ghost" size="icon" className="relative hidden sm:flex">
+                    <Bell className="h-5 w-5" />
+                    <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs">
+                      3
+                    </Badge>
+                  </Button>
 
-              {/* Messages */}
-              <Link href={messagesLink}>
-                <Button variant="ghost" size="icon" className="relative hidden sm:flex">
-                  <MessageCircle className="h-5 w-5" />
-                  <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs">
-                    2
-                  </Badge>
-                </Button>
-              </Link>
+                  <Link href={messagesLink}>
+                    <Button variant="ghost" size="icon" className="relative hidden sm:flex">
+                      <MessageCircle className="h-5 w-5" />
+                      <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs">
+                        2
+                      </Badge>
+                    </Button>
+                  </Link>
+                </>
+              )}
 
               {/* User Menu */}
               <DropdownMenu>

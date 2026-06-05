@@ -114,7 +114,7 @@ function MessagesPageContent() {
   }, [searchQuery, roleScopedConversations, getConversationParticipant]);
 
   const loadConversations = useCallback(async () => {
-    if (!user) return [];
+    if (!user || user.role === 'platform_admin') return [];
 
     setIsLoadingConversations(true);
     try {

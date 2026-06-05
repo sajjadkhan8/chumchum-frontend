@@ -18,16 +18,30 @@ export interface FeaturedPackagesResult {
   totalElements?: number;
 }
 
-export type PackageUpsertRequest = Record<string, unknown> & {
+export type PackagePlatformRequest = 'INSTAGRAM' | 'TIKTOK' | 'YOUTUBE' | 'FACEBOOK' | 'SNAPCHAT';
+export type PackageTypeRequest = 'ONE_TIME' | 'SUBSCRIPTION';
+export type PackageDealTypeRequest = 'PAID' | 'BARTER' | 'HYBRID';
+export type PackageStatusRequest = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'ARCHIVED';
+
+export interface PackageTierRequest {
+  name: string;
+  price: number;
+  description?: string;
+  deliverables?: string[];
+  delivery_days?: number;
+  revisions?: number;
+}
+
+export interface PackageUpsertRequest {
   name: string;
   title: string;
   short_description?: string;
   description?: string;
   full_description?: string;
-  platform: string;
+  platform: PackagePlatformRequest;
   category?: string;
-  type: string;
-  deal_type?: string;
+  type: PackageTypeRequest;
+  deal_type?: PackageDealTypeRequest;
   barter_details?: string;
   barter_description?: string;
   barter_category?: string;
@@ -40,14 +54,16 @@ export type PackageUpsertRequest = Record<string, unknown> & {
   deliverables: string[];
   delivery_days: number;
   revisions?: number;
-  status?: string;
+  is_featured?: boolean;
+  status?: PackageStatusRequest;
   visibility?: string;
   response_time?: string;
   cover_image?: string;
   media_urls?: string[];
   tags?: string[];
   is_active?: boolean;
-};
+  tiers?: PackageTierRequest[];
+}
 
 const normalizePackages = (payload: unknown): CreatorPackage[] => {
   if (Array.isArray(payload)) {

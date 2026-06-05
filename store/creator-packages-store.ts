@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { packagesService, type PackageUpsertRequest } from '@/services/packages.service';
+import {
+  packagesService,
+  type PackageDealTypeRequest,
+  type PackagePlatformRequest,
+  type PackageStatusRequest,
+  type PackageUpsertRequest,
+} from '@/services/packages.service';
 import type { CreatorPackage, PackageStatus } from '@/types';
 
 interface CreatorPackagesState {
@@ -16,6 +22,9 @@ interface CreatorPackagesState {
 }
 
 const cleanList = (values: string[] = []) => values.map((value) => value.trim()).filter(Boolean);
+const toPackagePlatform = (value: string): PackagePlatformRequest => value.toUpperCase() as PackagePlatformRequest;
+const toPackageDealType = (value: string): PackageDealTypeRequest => value.toUpperCase() as PackageDealTypeRequest;
+const toPackageStatus = (value: string): PackageStatusRequest => value.toUpperCase() as PackageStatusRequest;
 
 const toCreateRequest = (pkg: CreatorPackage): PackageUpsertRequest => ({
   name: pkg.title,
@@ -23,10 +32,10 @@ const toCreateRequest = (pkg: CreatorPackage): PackageUpsertRequest => ({
   short_description: pkg.shortDescription,
   description: pkg.description,
   full_description: pkg.fullDescription,
-  platform: pkg.platform.toUpperCase(),
+  platform: toPackagePlatform(pkg.platform),
   category: pkg.category,
   type: 'ONE_TIME',
-  deal_type: pkg.dealType.toUpperCase(),
+  deal_type: toPackageDealType(pkg.dealType),
   barter_details: pkg.barterValue,
   barter_description: pkg.barterDescription,
   barter_category: pkg.barterCategory,
@@ -39,7 +48,7 @@ const toCreateRequest = (pkg: CreatorPackage): PackageUpsertRequest => ({
   deliverables: cleanList(pkg.deliverables),
   delivery_days: pkg.deliveryDays,
   revisions: pkg.revisions,
-  status: pkg.status.toUpperCase(),
+  status: toPackageStatus(pkg.status),
   visibility: pkg.visibility,
   response_time: pkg.responseTime,
   cover_image: pkg.thumbnail,

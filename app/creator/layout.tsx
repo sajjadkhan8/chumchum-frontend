@@ -31,6 +31,10 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
       router.replace("/login");
       return;
     }
+    if (isProtectedCreatorRoute && user && user.role === "platform_admin") {
+      router.replace("/admin/dashboard");
+      return;
+    }
     if (isProtectedCreatorRoute && user && user.role !== "creator") {
       router.replace("/brand/dashboard");
     }
