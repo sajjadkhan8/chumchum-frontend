@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, FileCheck2, LayoutDashboard, Menu, Shield, ShoppingBag, Users } from 'lucide-react';
+import { BarChart3, FileCheck2, LayoutDashboard, Menu, Scale, Shield, ShoppingBag, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -13,6 +13,7 @@ const adminNavItems = [
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/verification', label: 'Verification', icon: FileCheck2 },
+  { href: '/admin/disputes', label: 'Disputes & Audit', icon: Scale },
 ];
 
 function AdminNav({ compact = false, closeOnNavigate = false }: { compact?: boolean; closeOnNavigate?: boolean }) {
@@ -67,7 +68,7 @@ export function AdminSidebar() {
             <BarChart3 className="h-3.5 w-3.5" />
             Production Ops
           </div>
-          Monitor users, orders, verification, and ambassador reviews from live backend data.
+          Monitor users, orders, verification, disputes, and moderation actions from live backend data.
         </div>
       </CardContent>
     </Card>

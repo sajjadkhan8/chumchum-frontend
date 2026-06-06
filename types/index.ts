@@ -16,6 +16,7 @@ export interface User {
 // Creator Types
 export type Platform = 'instagram' | 'tiktok' | 'youtube' | 'facebook' | 'snapchat';
 export type DealType = 'paid' | 'barter' | 'hybrid';
+export type CreatorBadgeLevel = 'none' | 'verified' | 'rising_star' | 'pro' | 'elite';
 export type BarterType = 'food' | 'hotel' | 'salon' | 'events' | 'products';
 export type City = 'Karachi' | 'Lahore' | 'Islamabad' | 'Rawalpindi' | 'Faisalabad' | 'Multan' | 'Peshawar';
 
@@ -59,6 +60,7 @@ export interface Creator {
   maxPrice?: number;
   responseTime: string;
   isVerified: boolean;
+  badgeLevel?: CreatorBadgeLevel;
   isTrending: boolean;
   isFastResponder: boolean;
   rating: number;

@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/api/client';
 import { mapUser } from '@/lib/api/mappers';
 import type { OrderStatus, User } from '@/types';
+import type { CreatorBadgeLevel } from '@/types';
 
 export interface AdminDashboard {
   users: {
@@ -86,9 +87,56 @@ export interface AdminOrderFilters {
   limit?: number;
 }
 
+export interface AdminVerificationCreator {
+  id: string;
+  name: string;
+  username?: string;
+  email?: string;
+  is_verified: boolean;
+  badge_level: CreatorBadgeLevel;
+}
+
+export interface AdminVerificationBrand {
+  id: string;
+  name: string;
+  business_verification_status?: string;
+  verification_contact_email?: string;
+  verification_phone_number?: string;
+  user?: {
+    email?: string;
+  };
+}
+
+export interface AdminVerificationFilters {
+  search?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminCreatorQueueResponse {
+  creators: AdminVerificationCreator[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+interface BackendAdminVerificationCreator extends Omit<AdminVerificationCreator, 'badge_level'> {
+  badge_level?: string;
+}
+
+export interface AdminBrandQueueResponse {
+  brands: AdminVerificationBrand[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface AmbassadorApplication {
   id: string;
   creatorId: string;
+  creatorName?: string;
+  creatorEmail?: string;
   status: string;
   submittedAt?: string;
   identityVerified: boolean;
@@ -103,6 +151,66 @@ export interface AmbassadorApplication {
 
 export interface AmbassadorApplicationsResponse {
   applications: AmbassadorApplication[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export type DisputeStatus = 'open' | 'under_review' | 'waiting_for_parties' | 'resolved' | 'closed';
+export type DisputeResolution = 'none' | 'creator_favored' | 'brand_favored' | 'mutual_agreement' | 'cancel_order' | 'no_action';
+
+export interface AdminDispute {
+  id: string;
+  orderId: string;
+  orderNumber?: string;
+  packageTitle: string;
+  creatorName: string;
+  brandName: string;
+  orderAmount?: number;
+  orderStatus: OrderStatus;
+  dealType: string;
+  title: string;
+  description: string;
+  status: DisputeStatus;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  assignedAdminId?: string;
+  assignedAdminName?: string;
+  resolution: DisputeResolution;
+  resolutionNotes?: string;
+  resolvedAt?: string;
+  refundExecuted: boolean;
+  refundStatus?: 'pending' | 'completed' | 'failed';
+  refundProvider?: string;
+  providerRefundId?: string;
+  refundFailureReason?: string;
+  refundAmount?: number;
+  creatorClawbackAmount?: number;
+  refundReason?: string;
+  refundExecutedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AdminDisputesResponse {
+  disputes: AdminDispute[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface AdminAuditLog {
+  id: string;
+  adminId: string;
+  adminName: string;
+  action: string;
+  targetType: string;
+  targetId?: string;
+  details?: string;
+  createdAt: string;
+}
+
+export interface AdminAuditLogsResponse {
+  logs: AdminAuditLog[];
   total: number;
   page: number;
   limit: number;
@@ -123,6 +231,19 @@ const normalizeOrderStatus = (value?: string): OrderStatus => {
   }
   return 'pending';
 };
+
+const normalizeCreatorBadgeLevel = (value?: string): CreatorBadgeLevel => {
+  const lowered = (value || '').toLowerCase();
+  if (lowered === 'verified' || lowered === 'rising_star' || lowered === 'pro' || lowered === 'elite') {
+    return lowered;
+  }
+  return 'none';
+};
+
+const mapAdminVerificationCreator = (input: BackendAdminVerificationCreator): AdminVerificationCreator => ({
+  ...input,
+  badge_level: normalizeCreatorBadgeLevel(input.badge_level),
+});
 
 const mapAdminUser = (input: BackendAdminUser): AdminUser => ({
   ...mapUser(input),
@@ -203,8 +324,29 @@ export const adminService = {
     return mapAdminOrder(response);
   },
 
-  async updateCreatorVerification(id: string, verified: boolean) {
-    return apiClient.patch(`/api/v1/admin/creators/${id}/verification`, { verified });
+  async updateCreatorVerification(id: string, verified: boolean): Promise<AdminVerificationCreator> {
+    const response = await apiClient.patch<BackendAdminVerificationCreator>(`/api/v1/admin/creators/${id}/verification`, { verified });
+    return mapAdminVerificationCreator(response);
+  },
+
+  async updateCreatorBadge(id: string, badgeLevel: CreatorBadgeLevel): Promise<AdminVerificationCreator> {
+    const response = await apiClient.patch<BackendAdminVerificationCreator>(`/api/v1/admin/creators/${id}/badge`, { badgeLevel });
+    return mapAdminVerificationCreator(response);
+  },
+
+  async getVerificationCreators(filters: AdminVerificationFilters = {}): Promise<AdminCreatorQueueResponse> {
+    const response = await apiClient.get<Omit<AdminCreatorQueueResponse, 'creators'> & { creators: BackendAdminVerificationCreator[] }>('/api/v1/admin/creators', {
+      query: {
+        search: filters.search,
+        verified: filters.status === 'verified' ? true : filters.status === 'unverified' ? false : undefined,
+        page: filters.page ?? 0,
+        limit: filters.limit ?? 20,
+      },
+    });
+    return {
+      ...response,
+      creators: response.creators.map(mapAdminVerificationCreator),
+    };
   },
 
   async updateBrandVerification(id: string, status: string, contactEmail?: string, phoneNumber?: string) {
@@ -215,13 +357,72 @@ export const adminService = {
     });
   },
 
-  async getAmbassadorApplications(status?: string, page = 0, limit = 50): Promise<AmbassadorApplicationsResponse> {
+  async getVerificationBrands(filters: AdminVerificationFilters = {}): Promise<AdminBrandQueueResponse> {
+    return apiClient.get<AdminBrandQueueResponse>('/api/v1/admin/brands', {
+      query: {
+        search: filters.search,
+        verificationStatus: filters.status && filters.status !== 'all' ? filters.status : undefined,
+        page: filters.page ?? 0,
+        limit: filters.limit ?? 20,
+      },
+    });
+  },
+
+  async getAmbassadorApplications(filters: AdminVerificationFilters = {}): Promise<AmbassadorApplicationsResponse> {
     return apiClient.get<AmbassadorApplicationsResponse>('/api/v1/admin/ambassador/applications', {
-      query: { status, page, limit },
+      query: {
+        search: filters.search,
+        status: filters.status && filters.status !== 'all' ? filters.status : undefined,
+        page: filters.page ?? 0,
+        limit: filters.limit ?? 20,
+      },
     });
   },
 
   async reviewAmbassadorApplication(id: string, status: string, notes?: string): Promise<AmbassadorApplication> {
     return apiClient.patch<AmbassadorApplication>(`/api/v1/admin/ambassador/applications/${id}`, { status, notes });
+  },
+
+  async getDisputes(filters: { search?: string; status?: string; page?: number; limit?: number } = {}): Promise<AdminDisputesResponse> {
+    return apiClient.get<AdminDisputesResponse>('/api/v1/admin/disputes', {
+      query: {
+        search: filters.search,
+        status: filters.status && filters.status !== 'all' ? filters.status : undefined,
+        page: filters.page ?? 0,
+        limit: filters.limit ?? 20,
+      },
+    });
+  },
+
+  async createDispute(input: { orderId: string; title: string; description: string; priority: string }): Promise<AdminDispute> {
+    return apiClient.post<AdminDispute>('/api/v1/admin/disputes', input);
+  },
+
+  async updateDispute(
+    id: string,
+    input: {
+      status?: DisputeStatus;
+      priority?: AdminDispute['priority'];
+      resolution?: DisputeResolution;
+      resolutionNotes?: string;
+      assignToMe?: boolean;
+    },
+  ): Promise<AdminDispute> {
+    return apiClient.patch<AdminDispute>(`/api/v1/admin/disputes/${id}`, input);
+  },
+
+  async executeDisputeRefund(id: string, input: { amount?: number; reason: string }): Promise<AdminDispute> {
+    return apiClient.post<AdminDispute>(`/api/v1/admin/disputes/${id}/refund`, input);
+  },
+
+  async getAuditLogs(filters: { search?: string; action?: string; page?: number; limit?: number } = {}): Promise<AdminAuditLogsResponse> {
+    return apiClient.get<AdminAuditLogsResponse>('/api/v1/admin/audit-logs', {
+      query: {
+        search: filters.search,
+        action: filters.action && filters.action !== 'all' ? filters.action : undefined,
+        page: filters.page ?? 0,
+        limit: filters.limit ?? 20,
+      },
+    });
   },
 };

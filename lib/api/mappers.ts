@@ -12,6 +12,7 @@ import type {
   PackageAnalytics,
   Platform,
   QuickDealOffer,
+  CreatorBadgeLevel,
   User,
   UserRole,
 } from '@/types';
@@ -88,6 +89,7 @@ interface BackendCreatorResponse {
   min_price?: number;
   max_price?: number;
   is_verified?: boolean;
+  badge_level?: string;
   is_trending?: boolean;
   is_fast_responder?: boolean;
   completed_deals?: number;
@@ -135,6 +137,9 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
   const followers = input.followers || 0;
   const engagementRate = input.engagement_rate || 0;
   const categories = input.categories?.length ? input.categories : [input.niche || input.category || 'General'];
+  const badgeLevel = ['verified', 'rising_star', 'pro', 'elite'].includes((input.badge_level || '').toLowerCase())
+    ? (input.badge_level?.toLowerCase() as CreatorBadgeLevel)
+    : 'none';
 
   const socialAccounts = input.social_accounts?.length
     ? input.social_accounts.map((account) => ({
@@ -194,6 +199,7 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
     maxPrice: input.max_price,
     responseTime: input.response_time || 'Within 24 hours',
     isVerified: Boolean(input.is_verified) || (input.rating || 0) >= 4,
+    badgeLevel,
     isTrending: Boolean(input.is_trending),
     isFastResponder: Boolean(input.is_fast_responder),
     rating: input.rating || 0,
