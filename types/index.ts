@@ -82,6 +82,21 @@ export interface ContentPreview {
 }
 
 // Package Types
+export interface PackageTier {
+  id?: string;
+  name: string;
+  price: number;  // PKR amount
+  currency?: string;  // V1: Always PKR
+  description?: string;
+  deliverables: string[];
+  deliveryDays?: number;
+  revisions?: number;
+  position?: number;  // Order of display
+  isPrimary?: boolean;  // V1: One primary + add-ons
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export interface Package {
   id: string;
   creatorId: string;
@@ -91,6 +106,7 @@ export interface Package {
   deliveryDays: number;
   revisions?: number;
   price: number;
+  currency?: string;  // V1: Always PKR
   dealType: DealType;
   barterValue?: string;
   barterDescription?: string;
@@ -103,8 +119,8 @@ export interface Package {
   tags: string[];
   isPopular: boolean;
   isFeatured?: boolean;
-  currency?: string;
   ordersCompleted: number;
+  tiers?: PackageTier[];  // V1: Package tiers support
 }
 
 export type PackageStatus = 'active' | 'draft' | 'paused' | 'archived' | 'under_review';

@@ -7,10 +7,12 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft,
   ArrowRight,
+  Camera,
   Check,
   DollarSign,
   Gift,
   Instagram,
+  MessageCircle,
   Music2,
   Package,
   Plus,
@@ -18,6 +20,8 @@ import {
   Trash2,
   Upload,
   Youtube,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,15 +37,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import type { CreatorPackage } from "@/types";
+import type { CreatorPackage, PackageTier, Platform } from "@/types";
 import { useCreatorPackagesStore } from "@/store/creator-packages-store";
 import { uploadsService } from "@/services/uploads.service";
 
-const DRAFT_KEY = "creator-package-draft-v1";
+const DRAFT_KEY = "creator-package-draft-v2";
 
 const steps = [
   { id: 1, label: "Basic Info" },
-  { id: 2, label: "Deliverables" },
+  { id: 2, label: "Services" },
   { id: 3, label: "Pricing" },
   { id: 4, label: "Media" },
   { id: 5, label: "Publish" },
@@ -51,7 +55,66 @@ const platforms = [
   { id: "instagram", label: "Instagram", icon: Instagram },
   { id: "youtube", label: "YouTube", icon: Youtube },
   { id: "tiktok", label: "TikTok", icon: Music2 },
+  { id: "facebook", label: "Facebook", icon: MessageCircle },
+  { id: "snapchat", label: "Snapchat", icon: Camera },
 ];
+
+type ServiceGroupId = "content" | "promotion" | "live" | "story" | "production" | "custom";
+
+interface ServiceOption {
+  key: string;
+  label: string;
+  description: string;
+  groups: ServiceGroupId[];
+}
+
+const serviceGroups: { id: ServiceGroupId; label: string }[] = [
+  { id: "content", label: "Content" },
+  { id: "promotion", label: "Promotion" },
+  { id: "story", label: "Story" },
+  { id: "live", label: "Live" },
+  { id: "production", label: "Production" },
+  { id: "custom", label: "Custom" },
+];
+
+const serviceOptionsByPlatform: Record<Platform, ServiceOption[]> = {
+  instagram: [
+    { key: "insta_reel", label: "Instagram Reel", description: "Short-form vertical video post", groups: ["content", "promotion"] },
+    { key: "insta_story_frames", label: "Story Frames", description: "Multi-frame story sequence with CTA", groups: ["story", "promotion"] },
+    { key: "insta_photo_post", label: "Photo Post", description: "Single or carousel photo feed post", groups: ["content", "promotion"] },
+    { key: "insta_live", label: "Instagram Live", description: "Live product showcase or Q&A", groups: ["live", "promotion"] },
+    { key: "insta_ugc_creation", label: "UGC Content Creation", description: "Creator produces brand-owned content", groups: ["production"] },
+    { key: "insta_custom", label: "Custom Campaign", description: "Flexible custom collaboration scope", groups: ["custom"] },
+  ],
+  youtube: [
+    { key: "youtube_shorts", label: "YouTube Shorts", description: "Vertical short video placement", groups: ["content", "promotion"] },
+    { key: "youtube_integration", label: "Long-Form Integration", description: "Brand segment in long-form video", groups: ["promotion", "content"] },
+    { key: "youtube_dedicated_video", label: "Dedicated Video", description: "Full sponsored video campaign", groups: ["promotion"] },
+    { key: "youtube_live", label: "YouTube Live", description: "Live stream mention or activation", groups: ["live"] },
+    { key: "youtube_ugc_creation", label: "Video Production Only", description: "Produce content for brand channels", groups: ["production"] },
+    { key: "youtube_custom", label: "Custom Campaign", description: "Flexible custom collaboration scope", groups: ["custom"] },
+  ],
+  tiktok: [
+    { key: "tiktok_video", label: "TikTok Video", description: "Native short video post", groups: ["content", "promotion"] },
+    { key: "tiktok_series", label: "Video Series", description: "Multi-video storytelling campaign", groups: ["content", "promotion"] },
+    { key: "tiktok_live", label: "TikTok Live", description: "Live showcase and direct audience interaction", groups: ["live", "promotion"] },
+    { key: "tiktok_ugc_creation", label: "TikTok UGC Creation", description: "Creator-made brand-owned content", groups: ["production"] },
+    { key: "tiktok_custom", label: "Custom Campaign", description: "Flexible custom collaboration scope", groups: ["custom"] },
+  ],
+  facebook: [
+    { key: "facebook_video_post", label: "Facebook Video Post", description: "Video post on creator page", groups: ["content", "promotion"] },
+    { key: "facebook_photo_post", label: "Facebook Photo Post", description: "Single or carousel feed post", groups: ["content"] },
+    { key: "facebook_story", label: "Facebook Story", description: "Story sequence with CTA", groups: ["story", "promotion"] },
+    { key: "facebook_live", label: "Facebook Live", description: "Live session for product promotion", groups: ["live"] },
+    { key: "facebook_custom", label: "Custom Campaign", description: "Flexible custom collaboration scope", groups: ["custom", "production"] },
+  ],
+  snapchat: [
+    { key: "snapchat_story", label: "Snap Story", description: "Story frame sequence for launch or event", groups: ["story", "promotion"] },
+    { key: "snapchat_spotlight", label: "Spotlight Video", description: "Short entertaining or promotional clip", groups: ["content", "promotion"] },
+    { key: "snapchat_takeover", label: "Account Takeover", description: "Creator runs temporary branded takeover", groups: ["promotion"] },
+    { key: "snapchat_custom", label: "Custom Campaign", description: "Flexible custom collaboration scope", groups: ["custom", "production"] },
+  ],
+};
 
 interface WizardFormData {
   title: string;
@@ -62,6 +125,10 @@ interface WizardFormData {
   fullDescription: string;
   tags: string;
   responseTime: string;
+  serviceGroup: ServiceGroupId | "";
+  primaryServiceKey: string;
+  addonServiceKeys: string[];
+  serviceNotes: string;
   deliveryDays: string;
   revisions: string;
   dealType: "paid" | "barter" | "hybrid";
@@ -87,6 +154,10 @@ const defaultForm: WizardFormData = {
   fullDescription: "",
   tags: "",
   responseTime: "Within 3 hours",
+  serviceGroup: "",
+  primaryServiceKey: "",
+  addonServiceKeys: [],
+  serviceNotes: "",
   deliveryDays: "5",
   revisions: "2",
   dealType: "paid",
@@ -114,6 +185,19 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   const updatePackage = useCreatorPackagesStore((state) => state.updatePackage);
   const [currentStep, setCurrentStep] = useState(1);
   const [hasSavedDraft, setHasSavedDraft] = useState(false);
+  const [showTierForm, setShowTierForm] = useState(false);
+  const [expandedTiers, setExpandedTiers] = useState<Set<number>>(new Set());
+
+  // Tier management state
+  const [tiers, setTiers] = useState<PackageTier[]>(initialPackage?.tiers || []);
+  const [tierForm, setTierForm] = useState<Partial<PackageTier>>({
+    name: "",
+    price: undefined,
+    deliverables: [""],
+    description: "",
+    position: 0,
+    isPrimary: tiers.length === 0, // First tier is primary by default
+  });
 
   const initialForm = useMemo<WizardFormData>(() => {
     if (!initialPackage) return defaultForm;
@@ -127,6 +211,10 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       fullDescription: initialPackage.fullDescription,
       tags: initialPackage.tags.join(", "),
       responseTime: initialPackage.responseTime,
+      serviceGroup: "",
+      primaryServiceKey: "",
+      addonServiceKeys: [],
+      serviceNotes: "",
       deliveryDays: String(initialPackage.deliveryDays),
       revisions: String(initialPackage.revisions || 0),
       dealType: initialPackage.dealType,
@@ -145,9 +233,31 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   }, [initialPackage]);
 
   const [formData, setFormData] = useState<WizardFormData>(initialForm);
-  const [deliverables, setDeliverables] = useState<string[]>(initialPackage?.deliverables || [""]);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [uploadingSampleIndex, setUploadingSampleIndex] = useState<number | null>(null);
+
+  const serviceOptions = useMemo(() => {
+    const platform = formData.platform as Platform;
+    return serviceOptionsByPlatform[platform] || [];
+  }, [formData.platform]);
+
+  const filteredPrimaryOptions = useMemo(() => {
+    if (!formData.serviceGroup) return serviceOptions;
+    return serviceOptions.filter((option) => option.groups.includes(formData.serviceGroup as ServiceGroupId));
+  }, [serviceOptions, formData.serviceGroup]);
+
+  const resolvedDeliverables = useMemo(() => {
+    const optionMap = new Map(serviceOptions.map((option) => [option.key, option.label]));
+    const items = [
+      optionMap.get(formData.primaryServiceKey),
+      ...formData.addonServiceKeys.map((key) => optionMap.get(key)),
+      formData.serviceNotes?.trim() ? `Notes: ${formData.serviceNotes.trim()}` : undefined,
+    ].filter((item): item is string => Boolean(item));
+
+    if (items.length > 0) return items;
+    if (initialPackage?.deliverables?.length) return initialPackage.deliverables;
+    return ["Custom deliverable - confirm scope in chat"];
+  }, [serviceOptions, formData.primaryServiceKey, formData.addonServiceKeys, formData.serviceNotes, initialPackage?.deliverables]);
 
   useEffect(() => {
     if (mode !== "create") return;
@@ -161,11 +271,11 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     const payload = {
       currentStep,
       formData,
-      deliverables,
+      tiers,  // Include tiers in draft
     };
 
     localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
-  }, [mode, currentStep, formData, deliverables]);
+  }, [mode, currentStep, formData, tiers]);
 
   const restoreDraft = () => {
     const raw = localStorage.getItem(DRAFT_KEY);
@@ -175,12 +285,12 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       const draft = JSON.parse(raw) as {
         currentStep: number;
         formData: WizardFormData;
-        deliverables: string[];
+        tiers?: PackageTier[];
       };
 
       setCurrentStep(draft.currentStep || 1);
       setFormData(draft.formData || defaultForm);
-      setDeliverables(draft.deliverables?.length ? draft.deliverables : [""]);
+      if (draft.tiers?.length) setTiers(draft.tiers);
       toast.success("Draft restored");
     } catch {
       toast.error("Could not restore draft");
@@ -199,7 +309,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     }
 
     if (currentStep === 2) {
-      return deliverables.some((item) => item.trim().length > 0);
+      return Boolean(formData.primaryServiceKey);
     }
 
     if (currentStep === 3) {
@@ -209,20 +319,29 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     }
 
     return true;
-  }, [currentStep, formData, deliverables]);
+  }, [currentStep, formData]);
 
   const updateField = (field: keyof WizardFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const onAddDeliverable = () => setDeliverables((prev) => [...prev, ""]);
-
-  const onUpdateDeliverable = (index: number, value: string) => {
-    setDeliverables((prev) => prev.map((item, i) => (i === index ? value : item)));
+  const onSelectPrimaryService = (serviceKey: string) => {
+    setFormData((prev) => {
+      const nextAddons = prev.addonServiceKeys.filter((key) => key !== serviceKey);
+      return { ...prev, primaryServiceKey: serviceKey, addonServiceKeys: nextAddons };
+    });
   };
 
-  const onRemoveDeliverable = (index: number) => {
-    setDeliverables((prev) => prev.filter((_, i) => i !== index));
+  const onToggleAddon = (serviceKey: string) => {
+    setFormData((prev) => {
+      const exists = prev.addonServiceKeys.includes(serviceKey);
+      return {
+        ...prev,
+        addonServiceKeys: exists
+          ? prev.addonServiceKeys.filter((key) => key !== serviceKey)
+          : [...prev.addonServiceKeys, serviceKey],
+      };
+    });
   };
 
   const updateWorkSample = (index: number, value: string) => {
@@ -241,6 +360,56 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       ...prev,
       previousWorkUrls: prev.previousWorkUrls.filter((_, i) => i !== index),
     }));
+  };
+
+  // Tier management functions
+  const addTier = () => {
+    if (!tierForm.name || tierForm.price === undefined || !tierForm.deliverables?.length) {
+      toast.error("Fill tier name, price, and at least one deliverable");
+      return;
+    }
+
+    const newTier: PackageTier = {
+      id: `tier-${Date.now()}`,
+      name: tierForm.name,
+      price: tierForm.price,
+      deliverables: tierForm.deliverables.filter((d) => d.trim().length > 0),
+      description: tierForm.description,
+      position: tierForm.position ?? tiers.length,
+      isPrimary: tierForm.isPrimary ?? (tiers.length === 0),
+      currency: "PKR", // V1: Always PKR
+    };
+
+    setTiers((prev) => [...prev, newTier]);
+    setTierForm({
+      name: "",
+      price: undefined,
+      deliverables: [""],
+      description: "",
+      position: tiers.length + 1,
+      isPrimary: false,
+    });
+    setShowTierForm(false);
+    toast.success("Tier added");
+  };
+
+  const removeTier = (index: number) => {
+    setTiers((prev) => prev.filter((_, i) => i !== index));
+    setExpandedTiers((prev) => {
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
+    toast.success("Tier removed");
+  };
+
+  const toggleTierExpand = (index: number) => {
+    setExpandedTiers((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
   };
 
   const uploadThumbnail = async (file?: File | null) => {
@@ -289,7 +458,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       description: formData.shortDescription || formData.fullDescription,
       fullDescription: formData.fullDescription || formData.shortDescription,
       category: formData.category,
-      deliverables: deliverables.filter((item) => item.trim().length > 0),
+      deliverables: resolvedDeliverables,
       deliveryDays: Number(formData.deliveryDays || 0),
       revisions: Number(formData.revisions || 0),
       responseTime: formData.responseTime,
@@ -297,6 +466,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         formData.dealType === "barter"
           ? 0
           : Number(formData.dealType === "hybrid" ? formData.hybridCashAmount || 0 : formData.price || 0),
+      currency: "PKR",  // V1: PKR only
       dealType: formData.dealType,
       barterValue:
         formData.dealType === "barter" || formData.dealType === "hybrid"
@@ -333,6 +503,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800",
       mediaUrls: formData.previousWorkUrls.map((url) => url.trim()).filter(Boolean),
       visibility: formData.visibility,
+      tiers: tiers.length > 0 ? tiers : undefined,  // V1: Include tiers in payload
       analytics: initialPackage?.analytics || {
         views: 0,
         clicks: 0,
@@ -439,7 +610,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
               <div className="space-y-2">
                 <Label>Platform</Label>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
                   {platforms.map((platform) => (
                     <button
                       key={platform.id}
@@ -488,28 +659,109 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         {currentStep === 2 && (
           <Card>
             <CardHeader>
-              <CardTitle>Step 2 - Deliverables</CardTitle>
+              <CardTitle>Step 2 - Services</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 p-4 sm:p-6">
-              <p className="text-sm text-muted-foreground">
-                Add each deliverable clearly (reels, stories, posts, YouTube integrations, appearances).
-              </p>
-              <div className="space-y-2">
-                {deliverables.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <Input value={item} onChange={(e) => onUpdateDeliverable(index, e.target.value)} placeholder="1 Instagram Reel + 3 Story Frames" />
-                    {deliverables.length > 1 && (
-                      <Button variant="ghost" size="icon" onClick={() => onRemoveDeliverable(index)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
+              {!formData.platform && (
+                <p className="rounded-lg border border-border/60 p-3 text-sm text-muted-foreground">
+                  Select a platform in Step 1 first to unlock service options.
+                </p>
+              )}
+
+              {formData.platform && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Service Group</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {serviceGroups.map((group) => (
+                        <button
+                          key={group.id}
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              serviceGroup: group.id,
+                              primaryServiceKey: "",
+                              addonServiceKeys: [],
+                            }))
+                          }
+                          className={`rounded-full border px-3 py-1 text-sm ${
+                            formData.serviceGroup === group.id
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border text-muted-foreground"
+                          }`}
+                        >
+                          {group.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                ))}
+
+                  <div className="space-y-2">
+                    <Label>Primary Service</Label>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {filteredPrimaryOptions.map((option) => (
+                        <button
+                          key={option.key}
+                          type="button"
+                          onClick={() => onSelectPrimaryService(option.key)}
+                          className={`rounded-lg border p-3 text-left ${
+                            formData.primaryServiceKey === option.key
+                              ? "border-primary bg-primary/10"
+                              : "border-border"
+                          }`}
+                        >
+                          <p className="font-medium">{option.label}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{option.description}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Add-ons (Optional)</Label>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {serviceOptions
+                        .filter((option) => option.key !== formData.primaryServiceKey)
+                        .map((option) => {
+                          const selected = formData.addonServiceKeys.includes(option.key);
+                          return (
+                            <button
+                              key={option.key}
+                              type="button"
+                              onClick={() => onToggleAddon(option.key)}
+                              className={`rounded-lg border px-3 py-2 text-left text-sm ${
+                                selected ? "border-primary bg-primary/10 text-primary" : "border-border"
+                              }`}
+                            >
+                              {selected ? "+ " : ""}
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Service Notes (Optional)</Label>
+                    <Textarea
+                      rows={3}
+                      value={formData.serviceNotes}
+                      onChange={(e) => updateField("serviceNotes", e.target.value)}
+                      placeholder="Example: 2 hooks for approval, Urdu voiceover, include campaign hashtag"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="space-y-2 rounded-lg border border-border/60 p-3">
+                <p className="text-sm font-medium">Deliverables preview (auto-generated)</p>
+                <div className="space-y-1 text-sm text-muted-foreground">
+                  {resolvedDeliverables.map((item, index) => (
+                    <p key={`${item}-${index}`}>- {item}</p>
+                  ))}
+                </div>
               </div>
-              <Button variant="outline" onClick={onAddDeliverable}>
-                <Plus className="mr-2 h-4 w-4" /> Add Deliverable
-              </Button>
             </CardContent>
           </Card>
         )}
@@ -593,16 +845,175 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                 </div>
               )}
 
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Delivery Time (Days)</Label>
-                  <Input value={formData.deliveryDays} onChange={(e) => updateField("deliveryDays", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Revisions</Label>
-                  <Input value={formData.revisions} onChange={(e) => updateField("revisions", e.target.value)} />
-                </div>
-              </div>
+               <div className="grid gap-3 md:grid-cols-2">
+                 <div className="space-y-2">
+                   <Label>Delivery Time (Days)</Label>
+                   <Input value={formData.deliveryDays} onChange={(e) => updateField("deliveryDays", e.target.value)} />
+                 </div>
+                 <div className="space-y-2">
+                   <Label>Revisions</Label>
+                   <Input value={formData.revisions} onChange={(e) => updateField("revisions", e.target.value)} />
+                 </div>
+               </div>
+
+               {/* V1: Package Tiers Section */}
+               <div className="space-y-3 rounded-lg border border-border/60 p-4">
+                 <div className="flex items-center justify-between">
+                   <div>
+                     <h3 className="font-semibold">Package Tiers (Optional)</h3>
+                     <p className="text-sm text-muted-foreground">Add Lite/Standard/Premium options or other variants for your package</p>
+                   </div>
+                   {!showTierForm && (
+                     <Button size="sm" variant="outline" onClick={() => setShowTierForm(true)}>
+                       <Plus className="mr-2 h-4 w-4" /> Add Tier
+                     </Button>
+                   )}
+                 </div>
+
+                 {/* Add Tier Form */}
+                 {showTierForm && (
+                   <Card className="bg-muted/30">
+                     <CardContent className="space-y-3 p-3">
+                       <div className="space-y-2">
+                         <Label className="text-sm">Tier Name</Label>
+                         <Input
+                           value={tierForm.name || ""}
+                           onChange={(e) => setTierForm((prev) => ({ ...prev, name: e.target.value }))}
+                           placeholder="e.g., Lite, Standard, Premium"
+                         />
+                       </div>
+
+                       <div className="grid gap-3 md:grid-cols-2">
+                         <div className="space-y-2">
+                           <Label className="text-sm">Price (PKR)</Label>
+                           <Input
+                             type="number"
+                             value={tierForm.price || ""}
+                             onChange={(e) => setTierForm((prev) => ({ ...prev, price: Number(e.target.value) || undefined }))}
+                             placeholder="15000"
+                           />
+                         </div>
+                         <div className="space-y-2">
+                           <Label className="text-sm">Position</Label>
+                           <Input
+                             type="number"
+                             value={tierForm.position || tiers.length}
+                             onChange={(e) => setTierForm((prev) => ({ ...prev, position: Number(e.target.value) }))}
+                             placeholder="0"
+                           />
+                         </div>
+                       </div>
+
+                       <div className="space-y-2">
+                         <Label className="text-sm">Description</Label>
+                         <Textarea
+                           rows={2}
+                           value={tierForm.description || ""}
+                           onChange={(e) => setTierForm((prev) => ({ ...prev, description: e.target.value }))}
+                           placeholder="Best for small campaigns..."
+                         />
+                       </div>
+
+                       <div className="space-y-2">
+                         <Label className="text-sm">Deliverables for this Tier</Label>
+                         {(tierForm.deliverables || []).map((del, idx) => (
+                           <div key={idx} className="flex items-center gap-2">
+                             <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                             <Input
+                               value={del}
+                               onChange={(e) =>
+                                 setTierForm((prev) => ({
+                                   ...prev,
+                                   deliverables: (prev.deliverables || []).map((d, i) => (i === idx ? e.target.value : d)),
+                                 }))
+                               }
+                               placeholder="1 Instagram Reel"
+                             />
+                             {(tierForm.deliverables?.length || 0) > 1 && (
+                               <Button
+                                 variant="ghost"
+                                 size="icon"
+                                 onClick={() =>
+                                   setTierForm((prev) => ({
+                                     ...prev,
+                                     deliverables: (prev.deliverables || []).filter((_, i) => i !== idx),
+                                   }))
+                                 }
+                               >
+                                 <Trash2 className="h-4 w-4" />
+                               </Button>
+                             )}
+                           </div>
+                         ))}
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() =>
+                             setTierForm((prev) => ({
+                               ...prev,
+                               deliverables: [...(prev.deliverables || []), ""],
+                             }))
+                           }
+                         >
+                           <Plus className="mr-1 h-3 w-3" /> Add Deliverable
+                         </Button>
+                       </div>
+
+                       <div className="flex gap-2">
+                         <Button size="sm" onClick={addTier} className="flex-1">
+                           Add Tier
+                         </Button>
+                         <Button size="sm" variant="outline" onClick={() => setShowTierForm(false)} className="flex-1">
+                           Cancel
+                         </Button>
+                       </div>
+                     </CardContent>
+                   </Card>
+                 )}
+
+                 {/* Tiers List */}
+                 {tiers.length > 0 && (
+                   <div className="space-y-2">
+                     {tiers.map((tier, idx) => (
+                       <Card key={idx} className="bg-muted/20">
+                         <CardContent className="p-0">
+                           <button
+                             type="button"
+                             onClick={() => toggleTierExpand(idx)}
+                             className="flex w-full items-center justify-between gap-2 p-3 hover:bg-muted/30"
+                           >
+                             <div className="text-left">
+                               <p className="font-semibold">{tier.name}</p>
+                               <p className="text-sm text-muted-foreground">PKR {Number(tier.price).toLocaleString()} • {tier.deliverables.length} deliverables</p>
+                             </div>
+                             <div className="flex items-center gap-2">
+                               {tier.isPrimary && <Badge variant="outline" className="text-xs">Primary</Badge>}
+                               {expandedTiers.has(idx) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                             </div>
+                           </button>
+
+                           {expandedTiers.has(idx) && (
+                             <div className="space-y-2 border-t border-border/20 p-3">
+                               {tier.deliverables.map((del, delIdx) => (
+                                 <div key={delIdx} className="flex items-center gap-2 text-sm">
+                                   <Check className="h-3 w-3 text-muted-foreground" />
+                                   <span>{del}</span>
+                                 </div>
+                               ))}
+                               {tier.description && (
+                                 <p className="text-sm text-muted-foreground">{tier.description}</p>
+                               )}
+                               <Button size="sm" variant="destructive" onClick={() => removeTier(idx)}>
+                                 <Trash2 className="mr-1 h-3 w-3" /> Remove
+                               </Button>
+                             </div>
+                           )}
+                         </CardContent>
+                       </Card>
+                     ))}
+                   </div>
+                 )}
+               </div>
             </CardContent>
           </Card>
         )}
@@ -678,7 +1089,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                 <div className="mt-2 flex flex-wrap gap-2">
                   <Badge variant="outline" className="capitalize">{formData.platform || "platform"}</Badge>
                   <Badge variant="outline" className="capitalize">{formData.dealType}</Badge>
-                  <Badge variant="outline">{deliverables.filter(Boolean).length} deliverables</Badge>
+                  <Badge variant="outline">{resolvedDeliverables.length} deliverables</Badge>
                 </div>
                 <p className="mt-3 font-semibold text-primary">
                   {formData.dealType === "paid" && (formData.price ? `PKR ${Number(formData.price).toLocaleString()}` : "PKR 0")}
