@@ -15,7 +15,6 @@ import {
   Lock,
   MessageCircle,
   Music2,
-  Package,
   Plus,
   Sparkles,
   Trash2,
@@ -40,7 +39,9 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import type { CreatorPackage, PackageTier, Platform } from "@/types";
+import { creatorsService } from "@/services/creators.service";
 import { useCreatorPackagesStore } from "@/store/creator-packages-store";
+import { useAuthStore } from "@/store/auth-store";
 import { uploadsService } from "@/services/uploads.service";
 
 const DRAFT_KEY = "creator-package-draft-v3";
@@ -60,6 +61,8 @@ const platforms = [
   { id: "facebook", label: "Facebook", icon: MessageCircle },
   { id: "snapchat", label: "Snapchat", icon: Camera },
 ];
+
+const platformOrder: Platform[] = ["instagram", "youtube", "tiktok", "facebook", "snapchat"];
 
 interface ServiceOption {
   key: string;
@@ -326,6 +329,8 @@ interface CreatorPackageWizardProps {
 
 export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWizardProps) {
   const router = useRouter();
+  const creatorProfile = useAuthStore((state) => state.creatorProfile);
+  const setCreatorProfile = useAuthStore((state) => state.setCreatorProfile);
   const createPackage = useCreatorPackagesStore((state) => state.createPackage);
   const updatePackage = useCreatorPackagesStore((state) => state.updatePackage);
   const [currentStep, setCurrentStep] = useState(1);
@@ -379,6 +384,8 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   const [formData, setFormData] = useState<WizardFormData>(initialForm);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [uploadingSampleIndex, setUploadingSampleIndex] = useState<number | null>(null);
+  const [isLoadingPlatformOptions, setIsLoadingPlatformOptions] = useState(true);
+  const [connectedPlatforms, setConnectedPlatforms] = useState<Platform[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [categoryInput, setCategoryInput] = useState("");
   const [nicheInput, setNicheInput] = useState("");
@@ -419,6 +426,78 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     if (initialPackage?.deliverables?.length) return initialPackage.deliverables;
     return ["Custom deliverable - confirm scope in chat"];
   }, [formData.deliverableItems, formData.serviceNotes, initialPackage?.deliverables]);
+
+  useEffect(() => {
+    const deriveConnectedPlatforms = (platformsList: { platform: Platform; profileUrl?: string }[]) => {
+      const connected = new Set<Platform>();
+      platformsList.forEach((account) => {
+        if (account.profileUrl) connected.add(account.platform);
+      });
+      return platformOrder.filter((platform) => connected.has(platform));
+    };
+
+    let isMounted = true;
+
+    const resolveConnectedPlatforms = async () => {
+      setIsLoadingPlatformOptions(true);
+      try {
+        if (creatorProfile) {
+          const derived = deriveConnectedPlatforms(creatorProfile.platforms);
+          if (isMounted) {
+            setConnectedPlatforms(derived);
+            setIsLoadingPlatformOptions(false);
+          }
+          if (derived.length > 0) return;
+        }
+
+        const freshProfile = await creatorsService.getMe();
+        if (!isMounted) return;
+
+        if (freshProfile) {
+          setCreatorProfile(freshProfile);
+          setConnectedPlatforms(deriveConnectedPlatforms(freshProfile.platforms));
+        } else {
+          setConnectedPlatforms([]);
+        }
+      } catch {
+        if (isMounted) {
+          setConnectedPlatforms([]);
+        }
+      } finally {
+        if (isMounted) setIsLoadingPlatformOptions(false);
+      }
+    };
+
+    void resolveConnectedPlatforms();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [creatorProfile, setCreatorProfile]);
+
+  useEffect(() => {
+    if (!connectedPlatforms.length) return;
+    if (!formData.platform) return;
+    if (connectedPlatforms.includes(formData.platform as Platform)) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      platform: "",
+      selectedServiceKeys: [],
+      deliverableItems: [],
+      serviceNotes: "",
+    }));
+  }, [connectedPlatforms, formData.platform]);
+
+  const platformOptions = useMemo(
+    () => platforms.filter((platform) => connectedPlatforms.includes(platform.id as Platform)),
+    [connectedPlatforms]
+  );
+
+  const connectedPlatformSet = useMemo(
+    () => new Set(connectedPlatforms),
+    [connectedPlatforms]
+  );
 
   useEffect(() => {
     if (mode !== "create") return;
@@ -487,6 +566,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       const missing: string[] = [];
       if (!formData.title.trim()) missing.push("Title");
       if (!formData.category.trim()) missing.push("Category");
+      if (!isLoadingPlatformOptions && platformOptions.length === 0) missing.push("Connected social account");
       if (!formData.platform.trim()) missing.push("Platform");
       if (!formData.niche.trim()) missing.push("Niche");
       return missing;
@@ -1078,28 +1158,63 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
               <div className="space-y-2">
                 <Label>Platform</Label>
+                {isLoadingPlatformOptions && (
+                  <p className="rounded-lg border border-border/60 p-3 text-sm text-muted-foreground">
+                    Loading connected platforms...
+                  </p>
+                )}
+
                 <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
-                  {platforms.map((platform) => (
-                    <button
-                      key={platform.id}
-                      type="button"
-                      onClick={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          platform: platform.id,
-                          selectedServiceKeys: [],
-                          deliverableItems: [],
-                          serviceNotes: "",
-                        }))
-                      }
-                      className={`flex items-center justify-center gap-2 rounded-lg border p-3 text-sm ${
-                        formData.platform === platform.id ? "border-primary bg-primary/10 text-primary" : "border-border"
-                      }`}
-                    >
-                      <platform.icon className="h-4 w-4" />
-                      {platform.label}
-                    </button>
-                  ))}
+                  {platforms.map((platform) => {
+                    const isConnected = connectedPlatformSet.has(platform.id as Platform);
+                    const isDisabled = isLoadingPlatformOptions || !isConnected;
+
+                    return (
+                      <button
+                        key={platform.id}
+                        type="button"
+                        aria-disabled={isDisabled}
+                        onClick={() => {
+                          if (isDisabled) {
+                            toast.info(`Connect ${platform.label} in Settings -> Connected Accounts to enable.`);
+                            return;
+                          }
+
+                          setFormData((prev) => ({
+                            ...prev,
+                            platform: platform.id,
+                            selectedServiceKeys: [],
+                            deliverableItems: [],
+                            serviceNotes: "",
+                          }));
+                        }}
+                        className={`rounded-lg border p-3 text-sm transition-colors ${
+                          formData.platform === platform.id
+                            ? "border-primary bg-primary/10 text-primary"
+                            : isDisabled
+                              ? "cursor-not-allowed border-border/60 bg-muted/40 text-muted-foreground"
+                              : "border-border hover:border-border/80"
+                        }`}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <platform.icon className="h-4 w-4" />
+                          {platform.label}
+                        </div>
+                        <p className="mt-1 text-center text-[11px] text-muted-foreground">
+                          {isConnected ? "Connected" : "Connect to enable"}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="rounded-lg border border-dashed border-border/70 p-3 text-sm">
+                  <p className="text-muted-foreground">
+                    Connected accounts: {connectedPlatforms.length}/{platforms.length}. Connect more platforms to unlock package creation for them.
+                  </p>
+                  <Button asChild variant="link" className="h-auto px-0 py-1 text-sm">
+                    <Link href="/creator/settings?tab=social">Manage Connected Accounts</Link>
+                  </Button>
                 </div>
               </div>
 
@@ -1746,10 +1861,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                 </div>
               </div>
 
-              <Button className="w-full" onClick={submitPackage}>
-                <Package className="mr-2 h-4 w-4" />
-                {mode === "edit" ? "Update Package" : formData.status === "draft" ? "Save Draft" : "Publish Package"}
-              </Button>
             </CardContent>
           </Card>
         )}
@@ -1786,7 +1897,13 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
           </Button>
         ) : (
           <Button type="button" className="flex-1" onClick={submitPackage}>
-            Finish
+            {mode === "edit"
+              ? "Update Package"
+              : formData.status === "draft"
+                ? "Save Draft"
+                : formData.status === "under_review"
+                  ? "Submit for Review"
+                  : "Publish Package"}
           </Button>
         )}
       </div>
