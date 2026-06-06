@@ -19,7 +19,6 @@ import {
   Check,
   Clock,
   Package,
-  BadgeCheck,
   TrendingUp,
   Instagram,
   Youtube,
@@ -35,12 +34,13 @@ import { PackageCard } from "@/components/package-card";
 import { ReviewCard } from "@/components/review-card";
 import { QuickDealModal } from "@/components/quick-deal-modal";
 import { PackageOrderModal } from "@/components/package-order-modal";
+import { CreatorTrustBadge, getCreatorTrustLabel } from "@/components/creator-trust-badge";
 import { formatFollowers, formatPrice, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { creatorsService } from "@/services/creators.service";
 import { packagesService } from "@/services/packages.service";
 import { reviewsService } from "@/services/reviews.service";
-import type { Creator, Package as CreatorListPackage, Review } from "@/types";
+import type { Creator, CreatorPackage, Review } from "@/types";
 
 const platformIcons: Record<string, React.ElementType> = {
   instagram: Instagram,
@@ -58,9 +58,9 @@ export default function CreatorProfilePage({
   const { user, savedCreators, toggleSavedCreator } = useAuthStore();
   const [activeTab, setActiveTab] = useState("packages");
   const [quickDealOpen, setQuickDealOpen] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<CreatorListPackage | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<CreatorPackage | null>(null);
   const [creator, setCreator] = useState<Creator | null>(null);
-  const [creatorPackages, setCreatorPackages] = useState<CreatorListPackage[]>([]);
+  const [creatorPackages, setCreatorPackages] = useState<CreatorPackage[]>([]);
   const [creatorReviews, setCreatorReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingCreator, setIsSavingCreator] = useState(false);
@@ -69,9 +69,7 @@ export default function CreatorProfilePage({
     const loadCreatorProfile = async () => {
       setIsLoading(true);
       try {
-        const foundCreator =
-          (await creatorsService.getById(id)) ||
-          (await creatorsService.getByUsername(id));
+        const foundCreator = await creatorsService.getByIdentifier(id);
 
         if (!foundCreator) {
           setCreator(null);
@@ -123,6 +121,10 @@ export default function CreatorProfilePage({
 
   const isSaved = savedCreators.includes(creator.id);
   const canHireCreator = !user || user.role === 'brand';
+  const creatorMessagePath = `/messages?creator=${creator.id}`;
+  const creatorMessageHref = user
+    ? creatorMessagePath
+    : `/login?next=${encodeURIComponent(creatorMessagePath)}`;
   const totalFollowers = creator.platforms.reduce(
     (sum, p) => sum + p.followers,
     0
@@ -131,7 +133,24 @@ export default function CreatorProfilePage({
     creator.platforms.reduce((sum, p) => sum + p.engagementRate, 0) /
     creator.platforms.length;
   const creatorLanguages = ["Arabic", "English"];
-  const creatorPortfolio = creator.contentPreviews;
+  const packagePortfolio = creatorPackages.flatMap((pkg) => {
+    const mediaUrls = [pkg.thumbnail, ...(pkg.mediaUrls || [])].filter(Boolean);
+    return mediaUrls.map((url, index) => {
+      const isVideo = /\.(mp4|mov|webm)(\?|$)/i.test(url);
+      return {
+        id: `${pkg.id}-${index}`,
+        type: isVideo ? "video" as const : "image" as const,
+        thumbnail: isVideo ? pkg.thumbnail : url,
+        url,
+        platform: pkg.platform,
+        title: pkg.title,
+        views: pkg.analytics.views,
+      };
+    });
+  });
+  const creatorPortfolio = [...creator.contentPreviews, ...packagePortfolio].filter(
+    (item, index, items) => items.findIndex((candidate) => candidate.url === item.url) === index
+  );
   const featuredPackages = creatorPackages.filter((pkg) => pkg.isPopular).slice(0, 2);
   const trendingPackages = [...creatorPackages]
     .sort((a, b) => b.ordersCompleted - a.ordersCompleted)
@@ -143,7 +162,7 @@ export default function CreatorProfilePage({
   const completionRate = Math.min(99, Math.round((creator.completedDeals / (creator.completedDeals + 5)) * 100));
   const repeatClients = Math.max(3, Math.round(creator.completedDeals * 0.24));
 
-  const handleBookPackage = (pkg: CreatorListPackage) => {
+  const handleBookPackage = (pkg: CreatorPackage) => {
     if (!user) {
       router.push("/login");
       return;
@@ -196,17 +215,13 @@ export default function CreatorProfilePage({
                       {getInitials(creator.name)}
                     </AvatarFallback>
                   </Avatar>
-                  {creator.isVerified && (
-                    <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      <BadgeCheck className="h-5 w-5" />
-                    </div>
-                  )}
                 </div>
                 <div className="mb-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <h1 className="text-2xl font-bold text-foreground md:text-3xl">
                       {creator.name}
                     </h1>
+                    <CreatorTrustBadge level={creator.badgeLevel} isVerified={creator.isVerified} />
                     {creator.isTrending && (
                       <Badge
                         variant="secondary"
@@ -245,7 +260,7 @@ export default function CreatorProfilePage({
                 {canHireCreator && (
                   <>
                     <Button variant="outline" asChild>
-                      <Link href={`/messages?creator=${creator.id}`}>
+                      <Link href={creatorMessageHref}>
                         <MessageCircle className="mr-2 h-4 w-4" />
                         Message
                       </Link>
@@ -284,7 +299,7 @@ export default function CreatorProfilePage({
           <Card>
             <CardContent className="p-4">
               <p className="text-xs text-muted-foreground">Verification</p>
-              <p className="font-semibold">{creator.isVerified ? "Verified Creator" : "Verification Pending"}</p>
+              <p className="font-semibold">{getCreatorTrustLabel(creator.badgeLevel, creator.isVerified)}</p>
             </CardContent>
           </Card>
         </div>
@@ -530,31 +545,36 @@ export default function CreatorProfilePage({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
-                      <Card className="group cursor-pointer overflow-hidden">
-                        <div className="relative aspect-square">
-                          <Image
-                            src={item.thumbnail}
-                            alt={`${creator.name} portfolio item ${index + 1}`}
-                            fill
-                            className="object-cover transition-transform group-hover:scale-105"
-                          />
-                          {item.type === "video" && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90">
-                                <Play className="h-5 w-5 text-foreground" />
+                      <a href={item.url} target="_blank" rel="noreferrer" className="block">
+                        <Card className="group overflow-hidden transition-shadow hover:shadow-md">
+                          <div className="relative aspect-[4/3]">
+                            <Image
+                              src={item.thumbnail}
+                              alt={item.title || `${creator.name} portfolio item ${index + 1}`}
+                              fill
+                              className="object-cover transition-transform group-hover:scale-105"
+                            />
+                            {item.type === "video" && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90">
+                                  <Play className="h-5 w-5 text-foreground" />
+                                </div>
                               </div>
+                            )}
+                            <div className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-background/90 text-foreground opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
+                              <ExternalLink className="h-4 w-4" />
                             </div>
-                          )}
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-                            <p className="text-sm font-medium text-white">
-                              {`${creator.name} ${item.type === "video" ? "Video" : "Post"} ${index + 1}`}
-                            </p>
-                            <p className="text-xs text-white/70">
-                              {item.platform} • {item.views?.toLocaleString() ?? "0"} views
-                            </p>
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 to-transparent p-3 pt-10">
+                              <p className="line-clamp-2 text-sm font-medium text-white">
+                                {item.title || `${creator.name} ${item.type === "video" ? "Video" : "Post"}`}
+                              </p>
+                              <p className="mt-1 text-xs capitalize text-white/75">
+                                {item.platform}{item.views ? ` • ${item.views.toLocaleString()} views` : ""}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </Card>
+                        </Card>
+                      </a>
                     </motion.div>
                   )) : (
                     <div className="col-span-full">

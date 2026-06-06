@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -46,8 +46,10 @@ import { toast } from "sonner";
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080").replace(/\/$/, "");
 
 function MessagesPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const creatorParam = searchParams.get("creator");
+  const conversationParam = searchParams.get("conversation");
   const { user } = useAuthStore();
   const isCreatorView = user?.role === "creator";
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -160,34 +162,23 @@ function MessagesPageContent() {
     if (existing) {
       setSelectedConversation(existing);
       setShowMobileChat(true);
+      router.replace(`/messages?conversation=${existing.id}`);
       return;
     }
 
-    let creator: Awaited<ReturnType<typeof creatorsService.getById>>;
-    try {
-      creator = await creatorsService.getById(target);
-    } catch {
-      creator = null;
-    }
-
-    if (!creator) {
-      try {
-        creator = await creatorsService.getByUsername(target);
-      } catch {
-        creator = null;
-      }
-    }
+    const creator = await creatorsService.getByIdentifier(target);
 
     if (!creator) return;
 
-    const createdConversation = await messagesService.createConversation(creator.id);
+    const createdConversation = await messagesService.openCreatorConversation(creator.id, data);
     setConversations((prev) => {
       const withoutDuplicate = prev.filter((conversation) => conversation.id !== createdConversation.id);
       return [createdConversation, ...withoutDuplicate];
     });
     setSelectedConversation(createdConversation);
     setShowMobileChat(true);
-  }, [loadConversations]);
+    router.replace(`/messages?conversation=${createdConversation.id}`);
+  }, [loadConversations, router]);
 
   // Auto-select conversation if creator param is present
   useEffect(() => {
@@ -208,6 +199,15 @@ function MessagesPageContent() {
 
     void startConversationFromParam();
   }, [creatorParam, selectConversationFromParam, user]);
+
+  useEffect(() => {
+    if (!conversationParam || !user || selectedConversation?.id === conversationParam) return;
+    const conversation = conversations.find((item) => item.id === conversationParam);
+    if (!conversation) return;
+
+    setSelectedConversation(conversation);
+    setShowMobileChat(true);
+  }, [conversationParam, conversations, selectedConversation?.id, user]);
 
   // Load messages when conversation is selected
   useEffect(() => {
@@ -299,6 +299,7 @@ function MessagesPageContent() {
   const selectConversation = (conv: Conversation) => {
     setSelectedConversation(conv);
     setShowMobileChat(true);
+    router.replace(`/messages?conversation=${conv.id}`);
   };
 
   const openQuickDealModal = () => {
@@ -510,6 +511,18 @@ function MessagesPageContent() {
                 <div className="space-y-4">
                   {isLoadingMessages && (
                     <div className="text-sm text-muted-foreground">Loading messages...</div>
+                  )}
+                  {!isLoadingMessages && messages.length === 0 && selectedParticipant && (
+                    <div className="mx-auto flex max-w-md flex-col items-center py-12 text-center">
+                      <Avatar className="mb-4 h-16 w-16">
+                        <AvatarImage src={selectedParticipant.avatar} alt={selectedParticipant.name} />
+                        <AvatarFallback>{getInitials(selectedParticipant.name)}</AvatarFallback>
+                      </Avatar>
+                      <h2 className="font-semibold">Start a conversation with {selectedParticipant.name}</h2>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Ask about availability, package fit, or ideas for your next campaign.
+                      </p>
+                    </div>
                   )}
                   {messages.map((message) => {
                     const isOwn = message.senderId === currentSenderId;

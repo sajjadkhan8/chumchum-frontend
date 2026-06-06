@@ -85,6 +85,14 @@ export const messagesService = {
     return mapConversation(response, creators, brands, 'brand');
   },
 
+  async openCreatorConversation(
+    creatorId: string,
+    conversations: Conversation[] = [],
+  ): Promise<Conversation> {
+    const existing = conversations.find((conversation) => conversation.creatorId === creatorId);
+    return existing || this.createConversation(creatorId);
+  },
+
   async sendMessage(
     conversationId: string,
     _senderId: string,

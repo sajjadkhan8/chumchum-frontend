@@ -14,6 +14,7 @@ import type { Creator } from '@/types';
 import { cn, formatFollowers, formatPrice } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import { CreatorAmbassadorBadge } from '@/components/creator-ambassador-badge';
+import { CreatorTrustBadge } from '@/components/creator-trust-badge';
 
 interface CreatorCardProps {
   creator: Creator;
@@ -113,6 +114,8 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
              
             {/* Badges */}
             <div className="absolute left-2.5 top-2.5 flex max-w-[calc(100%-3.5rem)] flex-wrap gap-1.5 sm:left-3 sm:top-3">
+              <CreatorTrustBadge level={creator.badgeLevel} isVerified={creator.isVerified} compact />
+
               {/* Ambassador Badge (Gamified) */}
               <div className="flex">
                 <CreatorAmbassadorBadge creator={creator} />

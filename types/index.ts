@@ -76,6 +76,7 @@ export interface ContentPreview {
   thumbnail: string;
   url: string;
   platform: Platform;
+  title?: string;
   views?: number;
   likes?: number;
 }
@@ -249,6 +250,8 @@ export interface CreatorFilters {
   minRating?: number;
   minPrice?: number;
   maxPrice?: number;
+  badgeLevel?: CreatorBadgeLevel;
+  availabilityStatus?: 'available' | 'busy';
   sortBy?: 'trending' | 'budget_friendly' | 'top_rated' | 'near_you';
 }
 

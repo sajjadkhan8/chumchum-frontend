@@ -67,6 +67,8 @@ const unwrapCreators = (payload: SearchResponse | unknown[]): unknown[] => {
   return [];
 };
 
+const isUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
 export const creatorsService = {
   async getMe(): Promise<Creator | null> {
     const response = await apiClient.get<unknown>('/api/v1/creators/me/profile');
@@ -136,8 +138,9 @@ export const creatorsService = {
         minRating: filters?.minRating,
         minPrice: filters?.minPrice,
         maxPrice: filters?.maxPrice,
+        badgeLevel: filters?.badgeLevel === 'none' ? undefined : filters?.badgeLevel?.toUpperCase(),
+        availabilityStatus: filters?.availabilityStatus,
         acceptsBarter: filters?.dealTypes?.includes('barter') ? true : undefined,
-        isTrending: filters?.sortBy === 'trending' ? true : undefined,
         sortBy: filters?.sortBy,
         limit: 50,
       },
@@ -189,6 +192,10 @@ export const creatorsService = {
   async getByUsername(username: string): Promise<Creator | null> {
     const creators = await this.getAll({ search: username });
     return creators.find((creator) => creator.username === username) || null;
+  },
+
+  async getByIdentifier(identifier: string): Promise<Creator | null> {
+    return isUuid(identifier) ? this.getById(identifier) : this.getByUsername(identifier);
   },
 
   async getTrending(limit = 6): Promise<Creator[]> {

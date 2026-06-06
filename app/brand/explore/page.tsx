@@ -24,7 +24,7 @@ import { ErrorState } from '@/components/error-state';
 import { useFilterStore } from '@/store/filter-store';
 import { creatorsService } from '@/services/creators.service';
 import type { Creator, DealType } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, formatPrice } from '@/lib/utils';
 import Link from 'next/link';
 
 const sortOptions = [
@@ -94,6 +94,9 @@ function ExplorePageContent() {
     filters.barterTypes?.length || 0,
     filters.minFollowers ? 1 : 0,
     filters.minRating ? 1 : 0,
+    filters.minPrice || filters.maxPrice ? 1 : 0,
+    filters.badgeLevel ? 1 : 0,
+    filters.availabilityStatus ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
 
   return (
@@ -209,6 +212,21 @@ function ExplorePageContent() {
                 {type} &times;
               </Badge>
             ))}
+            {filters.badgeLevel && (
+              <Badge variant="secondary" className="cursor-pointer capitalize" onClick={() => setFilters({ badgeLevel: undefined })}>
+                {filters.badgeLevel.replace('_', ' ')} &times;
+              </Badge>
+            )}
+            {filters.availabilityStatus && (
+              <Badge variant="secondary" className="cursor-pointer capitalize" onClick={() => setFilters({ availabilityStatus: undefined })}>
+                {filters.availabilityStatus} &times;
+              </Badge>
+            )}
+            {(filters.minPrice || filters.maxPrice) && (
+              <Badge variant="secondary" className="cursor-pointer" onClick={() => setFilters({ minPrice: undefined, maxPrice: undefined })}>
+                {filters.minPrice ? formatPrice(filters.minPrice) : 'Any'} - {filters.maxPrice ? formatPrice(filters.maxPrice) : 'Any'} &times;
+              </Badge>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -222,6 +240,10 @@ function ExplorePageContent() {
                   minFollowers: undefined,
                   maxFollowers: undefined,
                   minRating: undefined,
+                  minPrice: undefined,
+                  maxPrice: undefined,
+                  badgeLevel: undefined,
+                  availabilityStatus: undefined,
                 })
               }
             >
@@ -306,6 +328,10 @@ function ExplorePageContent() {
                     minFollowers: undefined,
                     maxFollowers: undefined,
                     minRating: undefined,
+                    minPrice: undefined,
+                    maxPrice: undefined,
+                    badgeLevel: undefined,
+                    availabilityStatus: undefined,
                   }),
               }}
             />

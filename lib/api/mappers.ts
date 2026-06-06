@@ -118,6 +118,15 @@ interface BackendCreatorResponse {
     engagement_rate?: number;
     is_verified?: boolean;
   }[];
+  content_previews?: {
+    id?: string;
+    type?: string;
+    thumbnail_url?: string;
+    media_url?: string;
+    platform?: string;
+    views?: number;
+    likes?: number;
+  }[];
   user?: {
     id?: string;
     name?: string;
@@ -205,7 +214,17 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
     rating: input.rating || 0,
     totalReviews: input.total_reviews || 0,
     completedDeals: input.completed_deals || 0,
-    contentPreviews: [],
+    contentPreviews: (input.content_previews || [])
+      .filter((preview) => Boolean(preview.media_url || preview.thumbnail_url))
+      .map((preview, index) => ({
+        id: preview.id || `${input.id}-preview-${index}`,
+        type: (preview.type || '').toLowerCase() === 'image' ? 'image' : 'video',
+        thumbnail: preview.thumbnail_url || preview.media_url || avatar,
+        url: preview.media_url || preview.thumbnail_url || avatar,
+        platform: normalizePlatform(preview.platform),
+        views: preview.views,
+        likes: preview.likes,
+      })),
     createdAt: safeDate(input.created_at),
   };
 };

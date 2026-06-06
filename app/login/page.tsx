@@ -18,6 +18,15 @@ const getDashboardPath = (role?: string) => {
   return role === 'creator' ? '/creator/dashboard' : '/brand/dashboard';
 };
 
+const getPostLoginPath = (role?: string) => {
+  if (typeof window === 'undefined') return getDashboardPath(role);
+
+  const nextPath = new URLSearchParams(window.location.search).get('next');
+  return nextPath?.startsWith('/') && !nextPath.startsWith('//')
+    ? nextPath
+    : getDashboardPath(role);
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const { login, loginWithPhone, requestOtp, isLoading, user, isAuthenticated, hasHydrated } = useAuthStore();
@@ -32,7 +41,7 @@ export default function LoginPage() {
   // Redirect already-authenticated users to their dashboard
   useEffect(() => {
     if (!hasHydrated || !isAuthenticated || !user?.role) return;
-    router.replace(getDashboardPath(user.role));
+    router.replace(getPostLoginPath(user.role));
   }, [hasHydrated, isAuthenticated, user, router]);
 
   if (hasHydrated && isAuthenticated && user?.role) {
@@ -57,7 +66,7 @@ export default function LoginPage() {
       
       // Redirect based on role
       const user = useAuthStore.getState().user;
-      router.push(getDashboardPath(user?.role));
+      router.push(getPostLoginPath(user?.role));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Invalid credentials';
       toast.error(message);
@@ -87,7 +96,7 @@ export default function LoginPage() {
       toast.success('Welcome back!');
       
       const user = useAuthStore.getState().user;
-      router.push(getDashboardPath(user?.role));
+      router.push(getPostLoginPath(user?.role));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Invalid OTP';
       toast.error(message);

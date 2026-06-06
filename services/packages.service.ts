@@ -115,7 +115,7 @@ export const packagesService = {
     return analytics ? mergePackageAnalytics(mapped, analytics) : mapped;
   },
 
-  async getByCreatorId(creatorId: string): Promise<Package[]> {
+  async getByCreatorId(creatorId: string): Promise<CreatorPackage[]> {
     if (!creatorId) return [];
 
     const response = await apiClient.get<unknown>('/api/v1/packages', {

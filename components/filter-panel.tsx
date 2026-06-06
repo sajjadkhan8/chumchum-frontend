@@ -42,6 +42,9 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
     filters.barterTypes?.length || 0,
     filters.minFollowers ? 1 : 0,
     filters.minRating ? 1 : 0,
+    filters.minPrice || filters.maxPrice ? 1 : 0,
+    filters.badgeLevel ? 1 : 0,
+    filters.availabilityStatus ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
 
   const toggleArrayFilter = <T extends string>(
@@ -118,6 +121,48 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
         </div>
       </Section>
 
+      <Section title="Trust Level" value="trust">
+        <div className="flex flex-wrap gap-2">
+          {[
+            ['verified', 'Verified'],
+            ['rising_star', 'Rising Star'],
+            ['pro', 'Pro'],
+            ['elite', 'Elite'],
+          ].map(([value, label]) => (
+            <Button
+              type="button"
+              size="sm"
+              key={value}
+              variant={filters.badgeLevel === value ? 'default' : 'outline'}
+              className="h-8 rounded-full px-3 text-xs"
+              onClick={() => setFilters({ badgeLevel: filters.badgeLevel === value ? undefined : value as typeof filters.badgeLevel })}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Availability" value="availability">
+        <div className="flex flex-wrap gap-2">
+          {[
+            ['available', 'Available'],
+            ['busy', 'Busy'],
+          ].map(([value, label]) => (
+            <Button
+              type="button"
+              size="sm"
+              key={value}
+              variant={filters.availabilityStatus === value ? 'default' : 'outline'}
+              className="h-8 rounded-full px-3 text-xs"
+              onClick={() => setFilters({ availabilityStatus: filters.availabilityStatus === value ? undefined : value as typeof filters.availabilityStatus })}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+      </Section>
+
       {(filters.dealTypes?.includes('barter') || filters.dealTypes?.includes('hybrid')) && (
         <Section title="Barter Type" value="barterTypes">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-wrap gap-2">
@@ -167,7 +212,7 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
   const FilterContent = () => (
     <div className="space-y-4">
       {isMobile ? (
-        <Accordion type="multiple" defaultValue={['categories', 'dealTypes', 'budget']} className="w-full">
+        <Accordion type="multiple" defaultValue={['categories', 'trust', 'availability', 'budget']} className="w-full">
           {filterSections}
         </Accordion>
       ) : (
