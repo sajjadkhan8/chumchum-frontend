@@ -88,6 +88,18 @@ export const earningsService = {
     });
   },
 
+  async updatePayoutMethod(id: string, payload: Partial<Pick<PayoutMethod, 'name' | 'accountDetails' | 'isDefault'>>): Promise<PayoutMethod> {
+    return apiClient.patch<PayoutMethod>(`/api/v1/payout-methods/${id}`, {
+      name: payload.name,
+      accountDetails: payload.accountDetails,
+      isDefault: payload.isDefault,
+    });
+  },
+
+  async deletePayoutMethod(id: string): Promise<void> {
+    await apiClient.delete(`/api/v1/payout-methods/${id}`);
+  },
+
   async requestWithdrawal(payload: CreateWithdrawalRequest): Promise<WithdrawalRequest> {
     return apiClient.post<WithdrawalRequest>('/api/v1/withdrawals', {
       payoutMethodId: payload.payoutMethodId,

@@ -2,8 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
-import { motion } from "framer-motion";
+import Link from "next/link";
 import {
   User,
   Bell,
@@ -13,7 +12,6 @@ import {
   Camera,
   Save,
   Globe,
-  MapPin,
   Users,
   Mail,
   Phone,
@@ -831,6 +829,7 @@ function BrandSettingsPageContent() {
             <Card>
               <CardHeader>
                 <CardTitle>Payment Methods</CardTitle>
+                <CardDescription>Use the dedicated Payments workspace for funding, payout controls, and invoices.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between rounded-lg border border-border p-4">
@@ -845,12 +844,12 @@ function BrandSettingsPageContent() {
                       </p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => toast.info("Card edit flow is not enabled in demo mode.")}>
-                    Edit
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/brand/payments">Manage</Link>
                   </Button>
                 </div>
-                <Button variant="outline" className="mt-4 w-full" onClick={() => toast.info("Add payment method flow is coming soon.")}>
-                  Add Payment Method
+                <Button className="mt-4 w-full" asChild>
+                  <Link href="/brand/payments">Open Payments Workspace</Link>
                 </Button>
               </CardContent>
             </Card>

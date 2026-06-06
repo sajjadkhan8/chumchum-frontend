@@ -2,13 +2,11 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
-import { motion } from "framer-motion";
+import Link from "next/link";
 import {
   User,
   Bell,
   Lock,
-  CreditCard,
   Link as LinkIcon,
   Globe,
   Camera,
@@ -16,10 +14,8 @@ import {
   Youtube,
   Music2,
   Plus,
-  Trash2,
   Save,
   Check,
-  X,
   Wallet,
   BarChart3,
 } from "lucide-react";
@@ -29,10 +25,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -43,6 +37,7 @@ import {
 import { getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { creatorsService, type CreatorSocialAccountPayload } from "@/services/creators.service";
+import { paymentsService, type CreatorPayoutPreferences } from "@/services/payments.service";
 import { uploadsService } from "@/services/uploads.service";
 import { usersService } from "@/services/users.service";
 import type { Platform } from "@/types";
@@ -120,13 +115,13 @@ function CreatorSettingsPageContent() {
   const [profile, setProfile] = useState(defaultProfile);
   const [socialAccounts, setSocialAccounts] = useState<EditableSocialAccount[]>([]);
 
-  const [paymentSettings, setPaymentSettings] = useState({
-    stcPayNumber: "",
-    madaCard: "",
-    accountTitle: "",
-    ibanOrAccount: "",
-    applePayNumber: "",
-    bankTransferIban: "",
+  const [payoutPreferences, setPayoutPreferences] = useState<CreatorPayoutPreferences>({
+    autoWithdrawEnabled: false,
+    payoutSchedule: "manual",
+    minimumPayoutAmount: 5000,
+    accountHolderName: "",
+    ntnNumber: "",
+    cnicLast4: "",
   });
 
   const [creatorPreferences, setCreatorPreferences] = useState({
@@ -284,26 +279,27 @@ function CreatorSettingsPageContent() {
     }
   };
 
-  const loadPaymentSettings = useCallback(async () => {
-    const settings = await creatorsService.getPaymentSettings();
-    setPaymentSettings({
-      stcPayNumber: settings.stcPayNumber || "",
-      madaCard: settings.madaCard || "",
-      accountTitle: settings.accountTitle || "",
-      ibanOrAccount: settings.ibanOrAccount || "",
-      applePayNumber: settings.applePayNumber || "",
-      bankTransferIban: settings.bankTransferIban || "",
-    });
+  const loadPayoutPreferences = useCallback(async () => {
+    const settings = await paymentsService.getCreatorPayoutPreferences();
+    setPayoutPreferences(settings);
   }, []);
 
-  const handlePaymentSettingsSave = async () => {
+  const handlePayoutPreferencesSave = async () => {
+    if (payoutPreferences.cnicLast4 && !/^\d{4}$/.test(payoutPreferences.cnicLast4)) {
+      toast.error("CNIC last 4 digits must be exactly 4 numbers");
+      return;
+    }
+
     setIsSaving(true);
     try {
-      await creatorsService.updatePaymentSettings(paymentSettings);
-      await loadPaymentSettings();
-      toast.success("Payment settings saved");
+      const saved = await paymentsService.updateCreatorPayoutPreferences({
+        ...payoutPreferences,
+        minimumPayoutAmount: Math.max(1000, payoutPreferences.minimumPayoutAmount || 1000),
+      });
+      setPayoutPreferences(saved);
+      toast.success("Payout preferences saved");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not save payment settings";
+      const message = error instanceof Error ? error.message : "Could not save payout preferences";
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -506,11 +502,11 @@ function CreatorSettingsPageContent() {
       const message = error instanceof Error ? error.message : "Could not load notification preferences";
       toast.error(message);
     });
-    void loadPaymentSettings().catch((error) => {
-      const message = error instanceof Error ? error.message : "Could not load payment settings";
+    void loadPayoutPreferences().catch((error) => {
+      const message = error instanceof Error ? error.message : "Could not load payout preferences";
       toast.error(message);
     });
-  }, [loadCreatorProfile, loadNotificationPreferences, loadPaymentSettings, user]);
+  }, [loadCreatorProfile, loadNotificationPreferences, loadPayoutPreferences, user]);
 
   return (
     <div className="container mx-auto max-w-4xl p-4 pb-24 md:p-6 md:pb-6">
@@ -956,67 +952,65 @@ function CreatorSettingsPageContent() {
         <TabsContent value="payments" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Payment Settings</CardTitle>
-              <CardDescription>Configure your payout channels for withdrawals.</CardDescription>
+              <CardTitle>Payout Controls</CardTitle>
+              <CardDescription>Set withdrawal preferences. Manage payout methods from Earnings.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="flex items-center justify-between rounded-lg border border-border p-4">
+                <div>
+                  <p className="font-medium">Payout Methods</p>
+                  <p className="text-sm text-muted-foreground">Add, remove, and set defaults from your earnings workspace.</p>
+                </div>
+                <Button asChild>
+                  <Link href="/creator/earnings">Open Earnings</Link>
+                </Button>
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>JazzCash</Label>
+                  <Label>Account Holder Name</Label>
                   <Input
-                    value={paymentSettings.stcPayNumber}
-                    onChange={(e) => setPaymentSettings((p) => ({ ...p, stcPayNumber: e.target.value }))}
+                    value={payoutPreferences.accountHolderName}
+                    onChange={(e) => setPayoutPreferences((p) => ({ ...p, accountHolderName: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Easypaisa</Label>
+                  <Label>Minimum Withdrawal (PKR)</Label>
                   <Input
-                    value={paymentSettings.madaCard}
-                    onChange={(e) => setPaymentSettings((p) => ({ ...p, madaCard: e.target.value }))}
+                    type="number"
+                    min={1000}
+                    value={payoutPreferences.minimumPayoutAmount}
+                    onChange={(e) => setPayoutPreferences((p) => ({ ...p, minimumPayoutAmount: Number(e.target.value) || 1000 }))}
                   />
                 </div>
               </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>SadaPay</Label>
+                  <Label>NTN (Optional)</Label>
                   <Input
-                    value={paymentSettings.applePayNumber}
-                    onChange={(e) => setPaymentSettings((p) => ({ ...p, applePayNumber: e.target.value }))}
+                    value={payoutPreferences.ntnNumber}
+                    onChange={(e) => setPayoutPreferences((p) => ({ ...p, ntnNumber: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Bank Transfer</Label>
+                  <Label>CNIC Last 4 Digits</Label>
                   <Input
-                    value={paymentSettings.bankTransferIban}
-                    onChange={(e) => setPaymentSettings((p) => ({ ...p, bankTransferIban: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Account Title</Label>
-                  <Input
-                    value={paymentSettings.accountTitle}
-                    onChange={(e) => setPaymentSettings((p) => ({ ...p, accountTitle: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>IBAN / Account Number</Label>
-                  <Input
-                    value={paymentSettings.ibanOrAccount}
-                    onChange={(e) => setPaymentSettings((p) => ({ ...p, ibanOrAccount: e.target.value }))}
+                    maxLength={4}
+                    value={payoutPreferences.cnicLast4}
+                    onChange={(e) => setPayoutPreferences((p) => ({ ...p, cnicLast4: e.target.value.replace(/\D/g, "") }))}
                   />
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Button onClick={handlePaymentSettingsSave} disabled={isSaving} className="w-full">
+          <Button onClick={handlePayoutPreferencesSave} disabled={isSaving} className="w-full">
             {isSaving ? (
               "Saving..."
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
-                Save Payment Settings
+                Save Payout Controls
               </>
             )}
           </Button>

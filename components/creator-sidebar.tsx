@@ -84,7 +84,7 @@ const navGroups: NavGroup[] = [
   {
     title: 'Settings',
     items: [
-      { href: '/creator/settings/payment-methods', label: 'Payment Methods', icon: CreditCard },
+      { href: '/creator/earnings', label: 'Payment Methods', icon: CreditCard },
       { href: '/creator/settings/preferences', label: 'Preferences' },
       { href: '/creator/settings/notifications', label: 'Notifications', icon: Settings },
     ],

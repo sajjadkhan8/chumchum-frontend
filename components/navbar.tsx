@@ -38,7 +38,6 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const isSignedIn = hasHydrated && isAuthenticated && !!user;
   const isCreator = isSignedIn && user.role === 'creator';
   const isAdmin = isSignedIn && user.role === 'platform_admin';
-  const logoVariant = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
 
   useEffect(() => {
     const syncHash = () => setCurrentHash(window.location.hash || '');
@@ -79,6 +78,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     { href: '/brand/ambassadors', label: 'Platform Ambassadors' },
     { href: '/brand/explore', label: 'All Creators' },
     { href: '/brand/orders', label: 'Campaigns' },
+    { href: '/brand/payments', label: 'Payments' },
     { href: '/brand/saved', label: 'Saved Creators' },
   ];
   const adminNavLinks = [
@@ -104,6 +104,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
       ]
     : [
         { href: '/brand/settings?tab=profile', label: 'Company Profile', icon: Building2 },
+        { href: '/brand/payments', label: 'Payments', icon: Wallet },
         { href: '/brand/saved', label: 'Saved Creators', icon: Bookmark },
         { href: '/brand/orders', label: 'Campaigns', icon: BriefcaseBusiness },
         { href: '/brand/settings?tab=notifications', label: 'Settings', icon: User },

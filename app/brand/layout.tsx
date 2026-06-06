@@ -15,6 +15,7 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
     pathname.startsWith('/brand/dashboard') ||
     pathname.startsWith('/brand/orders') ||
     pathname.startsWith('/brand/saved') ||
+    pathname.startsWith('/brand/payments') ||
     pathname.startsWith('/brand/settings') ||
     pathname.startsWith('/brand/messages') ||
     pathname.startsWith('/brand/analytics');
