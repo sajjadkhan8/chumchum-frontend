@@ -1,20 +1,16 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Plus,
-  X,
   Check,
   Trash2,
   Info,
   ChevronDown,
   Copy,
-  DollarSign,
-  Clock,
   CreditCard,
   ArrowUp,
-  ArrowDown,
-  Hourglass,
   Save,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -46,7 +42,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatDate, formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import {
   earningsService,
   type EarningsSummary,
@@ -85,16 +81,6 @@ interface PaymentMethodUI extends PayoutMethod {
   icon: string;
   icon_emoji?: string;
   isExpanded?: boolean;
-}
-
-interface PayoutHistory {
-  id: string;
-  type: "withdrawal" | "pending" | "dispute";
-  description: string;
-  amount: number;
-  status: "completed" | "pending" | "processing" | "failed";
-  date: string;
-  campaign?: string;
 }
 
 const validatePayoutDetails = (type: string, details: string) => {
@@ -136,8 +122,6 @@ function CreatorPaymentsContent() {
       ntnNumber: "",
       cnicLast4: "",
     });
-   const [payoutHistory, setPayoutHistory] = useState<PayoutHistory[]>([]);
-
    const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isAddingMethod, setIsAddingMethod] = useState(false);
@@ -155,11 +139,10 @@ function CreatorPaymentsContent() {
   const loadPaymentsData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [summary, methods, preferences, withdrawalsData] = await Promise.all([
+      const [summary, methods, preferences] = await Promise.all([
         earningsService.getSummary(),
         earningsService.getPayoutMethods(),
         paymentsService.getCreatorPayoutPreferences(),
-        earningsService.getWithdrawals(),
       ]);
 
        setEarnings(summary);
@@ -172,18 +155,6 @@ function CreatorPaymentsContent() {
       }));
       setPayoutMethods(enrichedMethods);
 
-      // Build payout history from withdrawals
-      const history: PayoutHistory[] = withdrawalsData.map((w) => ({
-        id: w.id,
-        type: w.status === "completed" ? "withdrawal" : "pending",
-        description: `Withdrawal via ${
-          methods.find((m) => m.id === w.payoutMethodId)?.name || "Unknown Method"
-        }`,
-        amount: w.amount,
-        status: w.status,
-        date: w.createdAt,
-      }));
-      setPayoutHistory(history);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to load payment data";
@@ -312,67 +283,52 @@ function CreatorPaymentsContent() {
           Payment Settings
         </h1>
         <p className="text-muted-foreground">
-          Manage your payout methods, earnings, and payment preferences
+          Manage your payout methods, schedule, and compliance controls
         </p>
       </div>
+
+      <Card className="mb-6 border-primary/20 bg-primary/5">
+        <CardContent className="flex flex-col gap-3 p-4 text-sm md:flex-row md:items-center md:justify-between">
+          <p className="text-muted-foreground">
+            Need trends, totals, and payout history? Use Earnings Analytics for reporting insights.
+          </p>
+          <Button variant="outline" asChild>
+            <Link href="/creator/earnings">Open Earnings Analytics</Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Earnings Overview */}
       {earnings && (
         <Card className="mb-6 bg-gradient-to-r from-primary/5 to-primary/10">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Earnings Overview
-            </CardTitle>
+            <CardTitle className="text-base">Current Payout Readiness</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-lg bg-background/50 p-4">
-                <p className="text-sm text-muted-foreground">
-                  Available to Withdraw
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-green-600">
-                  {formatPrice(earnings.availableBalance)}
-                </p>
+                <p className="text-sm text-muted-foreground">Available to Withdraw</p>
+                <p className="mt-1 text-2xl font-semibold text-green-600">{formatPrice(earnings.availableBalance)}</p>
               </div>
               <div className="rounded-lg bg-background/50 p-4">
-                <p className="text-sm text-muted-foreground">
-                  Pending Clearance
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-amber-600">
-                  {formatPrice(earnings.pendingBalance)}
-                </p>
+                <p className="text-sm text-muted-foreground">Pending Clearance</p>
+                <p className="mt-1 text-2xl font-semibold text-amber-600">{formatPrice(earnings.pendingBalance)}</p>
               </div>
               <div className="rounded-lg bg-background/50 p-4">
-                <p className="text-sm text-muted-foreground">Total Earned</p>
-                <p className="mt-1 text-2xl font-semibold">
-                  {formatPrice(earnings.totalEarned)}
-                </p>
-              </div>
-              <div className="rounded-lg bg-background/50 p-4">
-                <p className="text-sm text-muted-foreground">Total Withdrawn</p>
-                <p className="mt-1 text-2xl font-semibold">
-                  {formatPrice(earnings.totalWithdrawn)}
-                </p>
-              </div>
-              <div className="rounded-lg bg-background/50 p-4">
-                <p className="text-sm text-muted-foreground">Platform Fees</p>
-                <p className="mt-1 text-2xl font-semibold text-red-600">
-                  -{formatPrice(earnings.platformFees)}
-                </p>
+                <p className="text-sm text-muted-foreground">Suggested Next Step</p>
+                <p className="mt-1 text-sm font-medium">Keep at least one verified payout method set as default.</p>
               </div>
             </div>
             <div className="mt-4 flex gap-2 rounded-lg bg-blue-50 p-3 text-sm text-blue-900 dark:bg-blue-950 dark:text-blue-100">
-              <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              <p>
-                Funds clear 3–5 days after the brand approves your deliverable.
-                Active disputes hold clearance.
-              </p>
+              <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              <p>Use this page for payout setup and controls. Use Earnings Analytics for reporting and history.</p>
             </div>
             {earnings.availableBalance > 0 && (
-                  <Button className="mt-4 w-full" size="lg">
-                    <ArrowUp className="mr-2 h-4 w-4" />
-                    Withdraw {formatPrice(earnings.availableBalance)}
+              <Button className="mt-4 w-full" size="lg" asChild>
+                <Link href="/creator/earnings">
+                  <ArrowUp className="mr-2 h-4 w-4" />
+                  Withdraw from Earnings Analytics
+                </Link>
               </Button>
             )}
           </CardContent>
@@ -381,10 +337,9 @@ function CreatorPaymentsContent() {
 
       {/* Tabs */}
       <Tabs defaultValue="methods" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 gap-1">
+        <TabsList className="grid w-full grid-cols-2 gap-1">
           <TabsTrigger value="methods">Payout Methods</TabsTrigger>
           <TabsTrigger value="schedule">Schedule & Preferences</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
 
         {/* Payout Methods Tab */}
@@ -889,69 +844,6 @@ function CreatorPaymentsContent() {
           </Button>
         </TabsContent>
 
-        {/* History Tab */}
-        <TabsContent value="history" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Payout History</CardTitle>
-              <Button variant="outline" size="sm">
-                View all
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {payoutHistory.length === 0 ? (
-                <div className="text-center py-8">
-                  <Clock className="mx-auto h-8 w-8 text-muted-foreground/50 mb-2" />
-                  <p className="text-muted-foreground">No payout history yet</p>
-                </div>
-              ) : (
-                payoutHistory.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between py-3 border-b last:border-b-0"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`flex h-8 w-8 items-center justify-center rounded-full text-sm ${
-                          item.status === "completed"
-                            ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100"
-                            : item.status === "pending"
-                            ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-100"
-                            : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100"
-                        }`}
-                      >
-                        {item.status === "completed" && (
-                           <ArrowDown className="h-4 w-4" />
-                         )}
-                        {item.status === "pending" && (
-                          <Hourglass className="h-4 w-4" />
-                        )}
-                        {item.status === "failed" && (
-                          <X className="h-4 w-4" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium">{item.description}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDate(new Date(item.date))}
-                        </p>
-                      </div>
-                    </div>
-                    <p
-                      className={`font-medium ${
-                        item.status === "completed"
-                          ? "text-green-600"
-                          : "text-yellow-600"
-                      }`}
-                    >
-                      + {formatPrice(item.amount)}
-                    </p>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );

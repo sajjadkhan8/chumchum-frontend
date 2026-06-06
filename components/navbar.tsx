@@ -117,7 +117,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     const loadNavSignals = async () => {
       try {
         const [conversationResult, ordersResult] = await Promise.allSettled([
-          messagesService.getConversations(user.id, user.role),
+          messagesService.getConversations(user.id, user.role as 'creator' | 'brand'),
           ordersService.getAll(),
         ]);
 
@@ -187,7 +187,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     { href: '/creator/packages', label: 'My Packages' },
     { href: '/creator/ambassador-program', label: '👑 Ambassador Program' },
     { href: '/creator/orders', label: 'Orders' },
-    { href: '/creator/earnings', label: 'Earnings' },
+    { href: '/creator/earnings', label: 'Earnings Analytics' },
   ];
 
   const brandNavLinks = [

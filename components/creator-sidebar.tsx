@@ -63,7 +63,7 @@ const navGroups: NavGroup[] = [
   {
     title: 'Analytics',
     items: [
-      { href: '/creator/earnings', label: 'Earnings', icon: Wallet },
+      { href: '/creator/earnings', label: 'Earnings Analytics', icon: Wallet },
       { href: '/creator/insights', label: 'Insights', icon: BarChart3 },
       { href: '/creator/performance', label: 'Performance', icon: Gauge },
     ],

@@ -1,18 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   AlertCircle,
   ArrowDownRight,
   ArrowUpRight,
-  Building2,
-  CheckCircle2,
   Clock,
   DollarSign,
   Download,
-  Plus,
-  ShieldCheck,
   TrendingUp,
   Wallet,
 } from "lucide-react";
@@ -45,7 +42,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { StatsCard } from "@/components/stats-card";
 import { formatDate, formatPrice } from "@/lib/utils";
 import {
@@ -53,13 +49,8 @@ import {
   type EarningTransaction,
   type EarningsSummary,
   type PayoutMethod,
-  type PayoutMethodType,
   type WithdrawalRequest,
 } from "@/services/earnings.service";
-import {
-  paymentsService,
-  type CreatorPayoutPreferences,
-} from "@/services/payments.service";
 
 type ActivityType = "earning" | "withdrawal" | "fee" | "refund";
 
@@ -78,22 +69,6 @@ const emptySummary: EarningsSummary = {
   pendingBalance: 0,
   totalWithdrawn: 0,
   platformFees: 0,
-};
-
-const defaultPayoutPreferences: CreatorPayoutPreferences = {
-  autoWithdrawEnabled: false,
-  payoutSchedule: "manual",
-  minimumPayoutAmount: 5000,
-  accountHolderName: "",
-  ntnNumber: "",
-  cnicLast4: "",
-};
-
-const payoutTypeLabels: Record<PayoutMethodType, string> = {
-  STCPAY: "JazzCash (Mobile Wallet)",
-  MADA: "Easypaisa (Mobile Wallet)",
-  APPLEPAY: "SadaPay / NayaPay",
-  BANK_TRANSFER: "Bank Transfer (IBAN)",
 };
 
 const toActivityType = (type: EarningTransaction["type"]): ActivityType => {
@@ -127,68 +102,36 @@ const statusClass = (status: string) => {
   return "bg-yellow-100 text-yellow-700";
 };
 
-const getMethodTypeLabel = (method: PayoutMethod) => {
-  const normalized = String(method.type).toUpperCase();
-  if (normalized in payoutTypeLabels) {
-    return payoutTypeLabels[normalized as PayoutMethodType];
-  }
-  return method.type.replaceAll("_", " ");
-};
-
-const validatePayoutDetails = (type: PayoutMethodType, details: string) => {
-  const clean = details.trim();
-  if (!clean) return "Account details are required";
-
-  if (type === "BANK_TRANSFER" && !/^PK\d{2}[A-Z0-9]{20,30}$/i.test(clean)) {
-    return "Use a valid Pakistani IBAN (example: PK36ABCD0123456789012345).";
-  }
-
-  if (type !== "BANK_TRANSFER" && !/^\+?\d{10,15}$/.test(clean.replaceAll("-", ""))) {
-    return "Use a valid wallet number (10 to 15 digits).";
-  }
-
-  return null;
-};
-
 export default function CreatorEarningsPage() {
   const [summary, setSummary] = useState<EarningsSummary>(emptySummary);
   const [transactions, setTransactions] = useState<EarningTransaction[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [payoutMethods, setPayoutMethods] = useState<PayoutMethod[]>([]);
-  const [payoutPrefs, setPayoutPrefs] = useState<CreatorPayoutPreferences>(defaultPayoutPreferences);
 
   const [timeRange, setTimeRange] = useState("30");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [selectedMethod, setSelectedMethod] = useState("");
 
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
-  const [methodDialogOpen, setMethodDialogOpen] = useState(false);
-  const [newMethodType, setNewMethodType] = useState<PayoutMethodType>("BANK_TRANSFER");
-  const [newMethodName, setNewMethodName] = useState("Bank Transfer");
-  const [newMethodDetails, setNewMethodDetails] = useState("");
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
-  const [isSavingMethod, setIsSavingMethod] = useState(false);
-  const [isSavingPrefs, setIsSavingPrefs] = useState(false);
 
   const loadEarnings = async () => {
     setIsLoading(true);
     try {
-      const [summaryResponse, transactionsResponse, payoutResponse, withdrawalsResponse, payoutPrefsResponse] =
+      const [summaryResponse, transactionsResponse, payoutResponse, withdrawalsResponse] =
         await Promise.all([
           earningsService.getSummary(),
           earningsService.getTransactions(),
           earningsService.getPayoutMethods(),
           earningsService.getWithdrawals(),
-          paymentsService.getCreatorPayoutPreferences(),
         ]);
 
       setSummary(summaryResponse);
       setTransactions(transactionsResponse);
       setPayoutMethods(payoutResponse);
       setWithdrawals(withdrawalsResponse);
-      setPayoutPrefs(payoutPrefsResponse);
       setSelectedMethod(
         (current) => current || payoutResponse.find((method) => method.isDefault)?.id || payoutResponse[0]?.id || "",
       );
@@ -247,73 +190,6 @@ export default function CreatorEarningsPage() {
 
   const monthlyChange = previousMonth > 0 ? ((thisMonth - previousMonth) / previousMonth) * 100 : 0;
 
-  const handleCreatePayoutMethod = async () => {
-    if (!newMethodName.trim()) {
-      toast.error("Display name is required");
-      return;
-    }
-
-    const detailsError = validatePayoutDetails(newMethodType, newMethodDetails);
-    if (detailsError) {
-      toast.error(detailsError);
-      return;
-    }
-
-    setIsSavingMethod(true);
-    try {
-      const created = await earningsService.createPayoutMethod({
-        type: newMethodType,
-        name: newMethodName.trim(),
-        accountDetails: newMethodDetails.trim(),
-        isDefault: payoutMethods.length === 0,
-      });
-      setPayoutMethods((current) => [...current, created]);
-      setSelectedMethod((current) => current || created.id);
-      setNewMethodDetails("");
-      setMethodDialogOpen(false);
-      toast.success("Payout method added");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to add payout method";
-      toast.error(message);
-    } finally {
-      setIsSavingMethod(false);
-    }
-  };
-
-  const handleSetDefaultMethod = async (methodId: string) => {
-    try {
-      await earningsService.updatePayoutMethod(methodId, { isDefault: true });
-      setPayoutMethods((current) => current.map((method) => ({ ...method, isDefault: method.id === methodId })));
-      toast.success("Default payout method updated");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to update default payout method";
-      toast.error(message);
-    }
-  };
-
-  const handleDeleteMethod = async (methodId: string) => {
-    if (!window.confirm("Remove this payout method?")) return;
-
-    try {
-      await earningsService.deletePayoutMethod(methodId);
-      setPayoutMethods((current) => {
-        const next = current.filter((method) => method.id !== methodId);
-        if (next.length > 0 && !next.some((method) => method.isDefault)) {
-          next[0] = { ...next[0], isDefault: true };
-        }
-        return next;
-      });
-      if (selectedMethod === methodId) {
-        const fallback = payoutMethods.find((method) => method.id !== methodId)?.id || "";
-        setSelectedMethod(fallback);
-      }
-      toast.success("Payout method removed");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to remove payout method";
-      toast.error(message);
-    }
-  };
-
   const handleWithdrawal = async () => {
     const amount = Number(withdrawAmount);
 
@@ -325,8 +201,8 @@ export default function CreatorEarningsPage() {
       toast.error("Enter a valid withdrawal amount");
       return;
     }
-    if (amount < Math.max(1000, payoutPrefs.minimumPayoutAmount || 0)) {
-      toast.error(`Minimum withdrawal is ${formatPrice(Math.max(1000, payoutPrefs.minimumPayoutAmount || 0))}`);
+    if (amount < 1000) {
+      toast.error(`Minimum withdrawal is ${formatPrice(1000)}`);
       return;
     }
     if (amount > summary.availableBalance) {
@@ -346,28 +222,6 @@ export default function CreatorEarningsPage() {
       toast.error(message);
     } finally {
       setIsSubmittingWithdrawal(false);
-    }
-  };
-
-  const handleSavePayoutPrefs = async () => {
-    if (payoutPrefs.cnicLast4 && !/^\d{4}$/.test(payoutPrefs.cnicLast4)) {
-      toast.error("CNIC last 4 digits must be exactly 4 numbers.");
-      return;
-    }
-
-    setIsSavingPrefs(true);
-    try {
-      const saved = await paymentsService.updateCreatorPayoutPreferences({
-        ...payoutPrefs,
-        minimumPayoutAmount: Math.max(1000, payoutPrefs.minimumPayoutAmount || 1000),
-      });
-      setPayoutPrefs(saved);
-      toast.success("Payout compliance profile updated");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to update payout preferences";
-      toast.error(message);
-    } finally {
-      setIsSavingPrefs(false);
     }
   };
 
@@ -421,8 +275,8 @@ export default function CreatorEarningsPage() {
     <div className="container mx-auto p-4 md:p-6">
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground md:text-3xl">Earnings & Payouts</h1>
-          <p className="text-muted-foreground">Manage income, withdrawals, payout methods, and compliance profile</p>
+          <h1 className="text-2xl font-bold text-foreground md:text-3xl">Earnings Analytics</h1>
+          <p className="text-muted-foreground">Track earnings performance, balances, and payout history</p>
         </div>
         <div className="flex gap-2">
           <Select value={timeRange} onValueChange={setTimeRange}>
@@ -439,6 +293,9 @@ export default function CreatorEarningsPage() {
           <Button variant="outline" onClick={() => toast.info("Statement export will be connected to reports API.")}>
             <Download className="mr-2 h-4 w-4" />
             Export
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/creator/payments">Manage Payout Settings</Link>
           </Button>
         </div>
       </div>
@@ -514,13 +371,15 @@ export default function CreatorEarningsPage() {
         />
       </div>
 
-      <Tabs defaultValue="history" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="history">History</TabsTrigger>
-          <TabsTrigger value="payout-methods">Payout Methods</TabsTrigger>
-          <TabsTrigger value="compliance">Compliance & Controls</TabsTrigger>
-        </TabsList>
+      <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
+        Configure payout methods, schedule, and compliance controls from
+        <Link href="/creator/payments" className="ml-1 font-medium text-primary underline-offset-4 hover:underline">
+          Payment Settings
+        </Link>
+        .
+      </div>
 
+      <Tabs defaultValue="history" className="space-y-6">
         <TabsContent value="history" className="grid gap-6 lg:grid-cols-3">
           <Card className="lg:col-span-2">
             <CardHeader>
@@ -561,235 +420,6 @@ export default function CreatorEarningsPage() {
                 </div>
                 Missing tax details or KYC checks can delay withdrawals.
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="payout-methods">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Payout Methods</CardTitle>
-                <CardDescription>Add multiple methods and set a default payout destination</CardDescription>
-              </div>
-              <Dialog open={methodDialogOpen} onOpenChange={setMethodDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Method
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add payout method</DialogTitle>
-                    <DialogDescription>
-                      Add a secure destination for creator withdrawals.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label>Type</Label>
-                      <Select
-                        value={newMethodType}
-                        onValueChange={(value) => {
-                          const nextType = value as PayoutMethodType;
-                          setNewMethodType(nextType);
-                          setNewMethodName(payoutTypeLabels[nextType]);
-                          setNewMethodDetails("");
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(payoutTypeLabels).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="payout-name">Display name</Label>
-                      <Input id="payout-name" value={newMethodName} onChange={(event) => setNewMethodName(event.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="payout-details">Account details</Label>
-                      <Input
-                        id="payout-details"
-                        value={newMethodDetails}
-                        onChange={(event) => setNewMethodDetails(event.target.value)}
-                        placeholder={newMethodType === "BANK_TRANSFER" ? "PK36ABCD0123456789012345" : "+923001234567"}
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setMethodDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleCreatePayoutMethod} disabled={isSavingMethod}>
-                      {isSavingMethod ? "Saving..." : "Save Method"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {payoutMethods.length > 0 ? (
-                payoutMethods.map((method) => (
-                  <div key={method.id} className="rounded-lg border border-border/60 p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                          {String(method.type).toLowerCase() === "bank_transfer" ? (
-                            <Building2 className="h-5 w-5" />
-                          ) : (
-                            <Wallet className="h-5 w-5" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium">{method.name}</p>
-                          <p className="text-sm text-muted-foreground">{getMethodTypeLabel(method)} - {method.accountDetails}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {method.isDefault && (
-                          <Badge variant="secondary" className="bg-primary/10 text-primary">
-                            Default
-                          </Badge>
-                        )}
-                        {!method.isDefault && (
-                          <Button variant="outline" size="sm" onClick={() => void handleSetDefaultMethod(method.id)}>
-                            Set Default
-                          </Button>
-                        )}
-                        <Button variant="ghost" size="sm" onClick={() => void handleDeleteMethod(method.id)}>
-                          Remove
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                  Add a payout method to request withdrawals.
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="compliance" className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Compliance Profile</CardTitle>
-              <CardDescription>Tax and identity signals used for payout risk controls</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="accountHolderName">Account holder name</Label>
-                <Input
-                  id="accountHolderName"
-                  value={payoutPrefs.accountHolderName}
-                  onChange={(event) => setPayoutPrefs((current) => ({ ...current, accountHolderName: event.target.value }))}
-                />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="ntnNumber">NTN (optional)</Label>
-                  <Input
-                    id="ntnNumber"
-                    value={payoutPrefs.ntnNumber}
-                    onChange={(event) => setPayoutPrefs((current) => ({ ...current, ntnNumber: event.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cnicLast4">CNIC last 4 digits</Label>
-                  <Input
-                    id="cnicLast4"
-                    maxLength={4}
-                    value={payoutPrefs.cnicLast4}
-                    onChange={(event) =>
-                      setPayoutPrefs((current) => ({ ...current, cnicLast4: event.target.value.replace(/\D/g, "") }))
-                    }
-                  />
-                </div>
-              </div>
-
-              <Button onClick={() => void handleSavePayoutPrefs()} disabled={isSavingPrefs}>
-                {isSavingPrefs ? "Saving..." : "Save Compliance Profile"}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Payout Controls</CardTitle>
-              <CardDescription>Configure transfer thresholds and frequency</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div>
-                  <p className="font-medium">Automatic withdrawals</p>
-                  <p className="text-sm text-muted-foreground">Auto-transfer funds on your payout schedule.</p>
-                </div>
-                <Switch
-                  checked={payoutPrefs.autoWithdrawEnabled}
-                  onCheckedChange={(checked) => setPayoutPrefs((current) => ({ ...current, autoWithdrawEnabled: checked }))}
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Payout schedule</Label>
-                  <Select
-                    value={payoutPrefs.payoutSchedule}
-                    onValueChange={(value) =>
-                      setPayoutPrefs((current) => ({ ...current, payoutSchedule: value as CreatorPayoutPreferences["payoutSchedule"] }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="manual">Manual</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                      <SelectItem value="biweekly">Bi-weekly</SelectItem>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Minimum payout amount (PKR)</Label>
-                  <Input
-                    type="number"
-                    min={1000}
-                    value={payoutPrefs.minimumPayoutAmount}
-                    onChange={(event) =>
-                      setPayoutPrefs((current) => ({
-                        ...current,
-                        minimumPayoutAmount: Number(event.target.value) || 1000,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-                <div className="flex items-center gap-2 font-medium">
-                  <ShieldCheck className="h-4 w-4" />
-                  Account trust status
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Withdrawals enabled for your account
-                </div>
-              </div>
-
-              <Button variant="outline" onClick={() => void handleSavePayoutPrefs()} disabled={isSavingPrefs}>
-                {isSavingPrefs ? "Saving..." : "Save Payout Controls"}
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>
