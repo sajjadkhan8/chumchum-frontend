@@ -12,7 +12,6 @@ import {
   AlertCircle,
   XCircle,
   MessageCircle,
-  MoreVertical,
   Eye,
   FileText,
   Upload,
@@ -22,12 +21,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +35,8 @@ import { formatPrice, formatDate, getInitials } from "@/lib/utils";
 import { toast } from "sonner";
 import { ordersService } from "@/services/orders.service";
 import { uploadsService } from "@/services/uploads.service";
+import { messagesService } from "@/services/messages.service";
+import { useAuthStore } from "@/store/auth-store";
 import type { Order, OrderDeliverable, OrderStatus } from "@/types";
 
 const getStatusColor = (status: string) => {
@@ -126,6 +121,7 @@ function CreatorOrdersPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const user = useAuthStore((state) => state.user);
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -283,6 +279,28 @@ function CreatorOrdersPageContent() {
     }
   };
 
+  const openBrandMessages = async (order: Order) => {
+    if (!user || user.role !== "creator") {
+      router.push("/creator/messages");
+      return;
+    }
+
+    try {
+      const conversations = await messagesService.getConversations(user.id, "creator");
+      const existing = conversations.find((conversation) => conversation.brandId === order.brandId);
+
+      if (existing) {
+        router.push(`/creator/messages?conversation=${existing.id}`);
+        return;
+      }
+
+      router.push("/creator/messages");
+      toast.info(`Opened messages. Start a chat with ${order.brand.name}.`);
+    } catch {
+      router.push("/creator/messages");
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-6">
       {/* Header */}
@@ -406,41 +424,6 @@ function CreatorOrdersPageContent() {
                           </p>
                         )}
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                          <DropdownMenuItem onSelect={() => toast.info(`Order ${order.id} details are visible in the expanded card.`)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => toast.success(`Message draft created for ${order.brand.name}.`)}>
-                            <MessageCircle className="mr-2 h-4 w-4" />
-                            Message Brand
-                          </DropdownMenuItem>
-                          {order.status === "pending" && (
-                            <DropdownMenuItem onSelect={() => updateOrderStatus(order.id, "accepted")}>
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Accept Order
-                            </DropdownMenuItem>
-                          )}
-                          {order.status === "accepted" && (
-                            <DropdownMenuItem onSelect={() => updateOrderStatus(order.id, "in_progress")}>
-                              <Clock className="mr-2 h-4 w-4" />
-                              Start Work
-                            </DropdownMenuItem>
-                          )}
-                          {order.status === "in_progress" && (
-                            <DropdownMenuItem onSelect={() => openSubmitDialog(order)}>
-                              <Upload className="mr-2 h-4 w-4" />
-                              Submit Deliverable
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
                   </div>
 
@@ -505,7 +488,7 @@ function CreatorOrdersPageContent() {
                                     !deliverable.id.startsWith("fallback-") && (
                                       <Button size="sm" onClick={(e) => { e.stopPropagation(); openSubmitDialog(order, deliverable); }}>
                                         <Upload className="mr-2 h-4 w-4" />
-                                        Submit
+                                        Submit Deliverable
                                       </Button>
                                     )}
                                   <Badge
@@ -522,24 +505,24 @@ function CreatorOrdersPageContent() {
                       </div>
 
                       <div className="mt-4 flex gap-2">
-                        <Button variant="outline" className="flex-1" onClick={() => toast.success(`Message draft created for ${order.brand.name}.`)}>
+                        <Button variant="outline" className="flex-1" onClick={(e) => { e.stopPropagation(); void openBrandMessages(order); }}>
                           <MessageCircle className="mr-2 h-4 w-4" />
-                          Message
+                          Message Brand
                         </Button>
                         {order.status === "pending" ? (
-                          <Button className="flex-1" onClick={() => updateOrderStatus(order.id, "accepted")}>
+                          <Button className="flex-1" onClick={(e) => { e.stopPropagation(); void updateOrderStatus(order.id, "accepted"); }}>
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Accept
                           </Button>
                         ) : order.status === "accepted" ? (
-                          <Button className="flex-1" onClick={() => updateOrderStatus(order.id, "in_progress")}>
+                          <Button className="flex-1" onClick={(e) => { e.stopPropagation(); void updateOrderStatus(order.id, "in_progress"); }}>
                             <Clock className="mr-2 h-4 w-4" />
                             Start Work
                           </Button>
                         ) : order.status === "in_progress" ? (
-                          <Button className="flex-1" onClick={() => openSubmitDialog(order)}>
+                          <Button className="flex-1" onClick={(e) => { e.stopPropagation(); openSubmitDialog(order); }}>
                             <Upload className="mr-2 h-4 w-4" />
-                            Submit Work
+                            Submit Deliverable
                           </Button>
                         ) : null}
                       </div>
