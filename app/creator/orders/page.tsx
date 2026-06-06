@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -22,13 +22,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -130,6 +123,8 @@ const getOrderDeliverables = (order: Order): OrderDeliverable[] => {
 };
 
 function CreatorOrdersPageContent() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -159,8 +154,12 @@ function CreatorOrdersPageContent() {
   }, []);
 
   useEffect(() => {
+    // Legacy status-specific routes were removed; status state now lives in ?status=... for one canonical Orders page.
     const status = searchParams.get('status');
-    if (!status) return;
+    if (!status) {
+      setStatusFilter('all');
+      return;
+    }
 
     const allowed = new Set(['all', 'pending', 'accepted', 'in_progress', 'delivered', 'review', 'revision', 'completed', 'cancelled']);
     if (allowed.has(status)) {
@@ -187,6 +186,30 @@ function CreatorOrdersPageContent() {
     review: orders.filter((o) => o.status === "review" || o.status === "delivered").length,
     revision: orders.filter((o) => o.status === "revision").length,
     completed: orders.filter((o) => o.status === "completed").length,
+    cancelled: orders.filter((o) => o.status === "cancelled").length,
+  };
+
+  const statusTabs: { key: string; label: string }[] = [
+    { key: 'all', label: `All (${orderCounts.all})` },
+    { key: 'pending', label: `Pending (${orderCounts.pending})` },
+    { key: 'accepted', label: `Accepted (${orderCounts.accepted})` },
+    { key: 'in_progress', label: `In Progress (${orderCounts.in_progress})` },
+    { key: 'review', label: `Review (${orderCounts.review})` },
+    { key: 'revision', label: `Revision (${orderCounts.revision})` },
+    { key: 'completed', label: `Completed (${orderCounts.completed})` },
+    { key: 'cancelled', label: `Cancelled (${orderCounts.cancelled})` },
+  ];
+
+  const updateStatusFilterWithUrl = (nextStatus: string) => {
+    setStatusFilter(nextStatus);
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextStatus === 'all') {
+      params.delete('status');
+    } else {
+      params.set('status', nextStatus);
+    }
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
   };
 
   const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
@@ -273,6 +296,19 @@ function CreatorOrdersPageContent() {
       </div>
 
       {/* Filters */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        {statusTabs.map((tab) => (
+          <Button
+            key={tab.key}
+            size="sm"
+            variant={statusFilter === tab.key ? "default" : "outline"}
+            onClick={() => updateStatusFilterWithUrl(tab.key)}
+          >
+            {tab.label}
+          </Button>
+        ))}
+      </div>
+
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="relative flex-1 md:max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -284,24 +320,6 @@ function CreatorOrdersPageContent() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full md:w-40">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All ({orderCounts.all})</SelectItem>
-            <SelectItem value="pending">Pending ({orderCounts.pending})</SelectItem>
-            <SelectItem value="accepted">Accepted ({orderCounts.accepted})</SelectItem>
-            <SelectItem value="in_progress">
-              In Progress ({orderCounts.in_progress})
-            </SelectItem>
-            <SelectItem value="review">Review ({orderCounts.review})</SelectItem>
-            <SelectItem value="revision">Revision ({orderCounts.revision})</SelectItem>
-            <SelectItem value="completed">
-              Completed ({orderCounts.completed})
-            </SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Orders List */}

@@ -48,17 +48,12 @@ const navGroups: NavGroup[] = [
     items: [
       { href: '/creator/packages', label: 'All Packages', icon: Layers },
       { href: '/creator/packages/new', label: 'Create Package', icon: Package },
-      { href: '/creator/packages/drafts', label: 'Drafts' },
-      { href: '/creator/packages/archived', label: 'Archived Packages' },
     ],
   },
   {
     title: 'Orders',
     items: [
-      { href: '/creator/orders/active', label: 'Active Orders' },
-      { href: '/creator/orders/completed', label: 'Completed' },
-      { href: '/creator/orders/pending-approval', label: 'Pending Approval' },
-      { href: '/creator/orders/cancelled', label: 'Cancelled' },
+      { href: '/creator/orders', label: 'All Orders' },
     ],
   },
   {

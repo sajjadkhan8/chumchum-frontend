@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Archive,
@@ -62,9 +62,13 @@ const platformOptions = [
   { value: "instagram", label: "Instagram" },
   { value: "youtube", label: "YouTube" },
   { value: "tiktok", label: "TikTok" },
+  { value: "facebook", label: "Facebook" },
+  { value: "snapchat", label: "Snapchat" },
 ];
 
 function CreatorPackagesPageContent() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const packages = useCreatorPackagesStore((state) => state.packages);
   const isLoading = useCreatorPackagesStore((state) => state.isLoading);
@@ -75,7 +79,7 @@ function CreatorPackagesPageContent() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<PackageStatus | "all">("all");
   const [dealType, setDealType] = useState<"all" | "paid" | "barter" | "hybrid">("all");
-  const [platform, setPlatform] = useState<"all" | "instagram" | "youtube" | "tiktok">("all");
+  const [platform, setPlatform] = useState<"all" | "instagram" | "youtube" | "tiktok" | "facebook" | "snapchat">("all");
   const [performance, setPerformance] = useState<"all" | "top" | "mid" | "low">("all");
   const [earningsBand, setEarningsBand] = useState<"all" | "under25" | "25to50" | "50plus">("all");
   const [sortBy, setSortBy] = useState<"recent" | "views" | "conversion" | "orders">("recent");
@@ -86,12 +90,27 @@ function CreatorPackagesPageContent() {
 
   useEffect(() => {
     const statusParam = searchParams.get("status");
-    if (!statusParam) return;
+    if (!statusParam) {
+      setStatus("all");
+      return;
+    }
 
     if (["active", "draft", "paused", "archived", "under_review"].includes(statusParam)) {
       setStatus(statusParam as PackageStatus);
     }
   }, [searchParams]);
+
+  const updateStatusWithUrl = (nextStatus: PackageStatus | "all") => {
+    setStatus(nextStatus);
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextStatus === "all") {
+      params.delete("status");
+    } else {
+      params.set("status", nextStatus);
+    }
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
 
   const summary = useMemo(() => {
     const active = packages.filter((pkg) => pkg.status === "active").length;
@@ -166,7 +185,7 @@ function CreatorPackagesPageContent() {
     const parsed = JSON.parse(raw) as {
       status: PackageStatus | "all";
       dealType: "all" | "paid" | "barter" | "hybrid";
-      platform: "all" | "instagram" | "youtube" | "tiktok";
+      platform: "all" | "instagram" | "youtube" | "tiktok" | "facebook" | "snapchat";
       performance: "all" | "top" | "mid" | "low";
       earningsBand: "all" | "under25" | "25to50" | "50plus";
       sortBy: "recent" | "views" | "conversion" | "orders";
@@ -222,6 +241,15 @@ function CreatorPackagesPageContent() {
     }
   };
 
+  const statusLanes: { key: PackageStatus | "all"; label: string }[] = [
+    { key: "all", label: `All (${packages.length})` },
+    { key: "active", label: `Active (${summary.active})` },
+    { key: "draft", label: `Draft (${summary.drafts})` },
+    { key: "paused", label: `Paused (${summary.paused})` },
+    { key: "under_review", label: `Under Review (${summary.underReview})` },
+    { key: "archived", label: `Archived (${summary.archived})` },
+  ];
+
   return (
     <div className="space-y-6 p-1">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -247,19 +275,12 @@ function CreatorPackagesPageContent() {
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-2">
-            {[
-              { key: "all", label: `All (${packages.length})` },
-              { key: "active", label: `Active (${summary.active})` },
-              { key: "draft", label: `Draft (${summary.drafts})` },
-              { key: "paused", label: `Paused (${summary.paused})` },
-              { key: "under_review", label: `Under Review (${summary.underReview})` },
-              { key: "archived", label: `Archived (${summary.archived})` },
-            ].map((lane) => (
+            {statusLanes.map((lane) => (
               <Button
                 key={lane.key}
                 size="sm"
                 variant={status === lane.key ? "default" : "outline"}
-                onClick={() => setStatus(lane.key as PackageStatus | "all")}
+                onClick={() => updateStatusWithUrl(lane.key)}
               >
                 {lane.label}
               </Button>
@@ -283,7 +304,7 @@ function CreatorPackagesPageContent() {
             />
           </div>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-            <Select value={status} onValueChange={(value) => setStatus(value as PackageStatus | "all")}>
+            <Select value={status} onValueChange={(value) => updateStatusWithUrl(value as PackageStatus | "all")}>
               <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>{statusOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
             </Select>
@@ -331,7 +352,7 @@ function CreatorPackagesPageContent() {
               size="sm"
               onClick={() => {
                 setSearch("");
-                setStatus("all");
+                updateStatusWithUrl("all");
                 setDealType("all");
                 setPlatform("all");
                 setPerformance("all");
