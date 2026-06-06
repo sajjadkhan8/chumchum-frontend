@@ -12,6 +12,7 @@ import {
   DollarSign,
   Gift,
   Instagram,
+  Lock,
   MessageCircle,
   Music2,
   Package,
@@ -19,6 +20,7 @@ import {
   Sparkles,
   Trash2,
   Upload,
+  X,
   Youtube,
   ChevronDown,
   ChevronUp,
@@ -41,7 +43,7 @@ import type { CreatorPackage, PackageTier, Platform } from "@/types";
 import { useCreatorPackagesStore } from "@/store/creator-packages-store";
 import { uploadsService } from "@/services/uploads.service";
 
-const DRAFT_KEY = "creator-package-draft-v2";
+const DRAFT_KEY = "creator-package-draft-v3";
 
 const steps = [
   { id: 1, label: "Basic Info" },
@@ -59,62 +61,198 @@ const platforms = [
   { id: "snapchat", label: "Snapchat", icon: Camera },
 ];
 
-type ServiceGroupId = "content" | "promotion" | "live" | "story" | "production" | "custom";
-
 interface ServiceOption {
   key: string;
   label: string;
   description: string;
-  groups: ServiceGroupId[];
 }
 
-const serviceGroups: { id: ServiceGroupId; label: string }[] = [
-  { id: "content", label: "Content" },
-  { id: "promotion", label: "Promotion" },
-  { id: "story", label: "Story" },
-  { id: "live", label: "Live" },
-  { id: "production", label: "Production" },
-  { id: "custom", label: "Custom" },
-];
+interface ServiceSection {
+  label: string;
+  items: ServiceOption[];
+}
 
-const serviceOptionsByPlatform: Record<Platform, ServiceOption[]> = {
+interface DeliverableItem {
+  serviceKey: string;
+  label: string;
+  quantity: number;
+}
+
+const serviceCatalogByPlatform: Record<Platform, ServiceSection[]> = {
   instagram: [
-    { key: "insta_reel", label: "Instagram Reel", description: "Short-form vertical video post", groups: ["content", "promotion"] },
-    { key: "insta_story_frames", label: "Story Frames", description: "Multi-frame story sequence with CTA", groups: ["story", "promotion"] },
-    { key: "insta_photo_post", label: "Photo Post", description: "Single or carousel photo feed post", groups: ["content", "promotion"] },
-    { key: "insta_live", label: "Instagram Live", description: "Live product showcase or Q&A", groups: ["live", "promotion"] },
-    { key: "insta_ugc_creation", label: "UGC Content Creation", description: "Creator produces brand-owned content", groups: ["production"] },
-    { key: "insta_custom", label: "Custom Campaign", description: "Flexible custom collaboration scope", groups: ["custom"] },
+    {
+      label: "Short-form video",
+      items: [
+        { key: "ig_reel_15", label: "Reel (15s)", description: "Short punchy reel with fast hook" },
+        { key: "ig_reel_30", label: "Reel (30s)", description: "Standard reel for product showcase" },
+        { key: "ig_reel_60", label: "Reel (60s)", description: "Longer storytelling reel" },
+      ],
+    },
+    {
+      label: "Stories",
+      items: [
+        { key: "ig_story_1", label: "Story Frame (1)", description: "Single story frame with CTA" },
+        { key: "ig_story_3", label: "Story Sequence (3)", description: "3-frame campaign sequence" },
+        { key: "ig_story_5", label: "Story Sequence (5)", description: "5-frame deeper campaign arc" },
+      ],
+    },
+    {
+      label: "Feed posts",
+      items: [
+        { key: "ig_photo_single", label: "Single Photo Post", description: "Static feed image with caption" },
+        { key: "ig_carousel_3_5", label: "Carousel (3-5 slides)", description: "Multi-slide product or how-to post" },
+      ],
+    },
+    {
+      label: "Live & collab",
+      items: [
+        { key: "ig_live", label: "Instagram Live", description: "Live mention, Q&A, or walkthrough" },
+        { key: "ig_collab_post", label: "Collab Post", description: "Joint post with brand account" },
+      ],
+    },
   ],
   youtube: [
-    { key: "youtube_shorts", label: "YouTube Shorts", description: "Vertical short video placement", groups: ["content", "promotion"] },
-    { key: "youtube_integration", label: "Long-Form Integration", description: "Brand segment in long-form video", groups: ["promotion", "content"] },
-    { key: "youtube_dedicated_video", label: "Dedicated Video", description: "Full sponsored video campaign", groups: ["promotion"] },
-    { key: "youtube_live", label: "YouTube Live", description: "Live stream mention or activation", groups: ["live"] },
-    { key: "youtube_ugc_creation", label: "Video Production Only", description: "Produce content for brand channels", groups: ["production"] },
-    { key: "youtube_custom", label: "Custom Campaign", description: "Flexible custom collaboration scope", groups: ["custom"] },
+    {
+      label: "Long-form video",
+      items: [
+        { key: "yt_dedicated_video", label: "Dedicated Video", description: "Full video made for brand" },
+        { key: "yt_segment_30", label: "Sponsored Segment (30s)", description: "Mid-roll or pre-roll ad read" },
+        { key: "yt_segment_60", label: "Sponsored Segment (60s)", description: "Extended integration segment" },
+      ],
+    },
+    {
+      label: "Shorts",
+      items: [
+        { key: "yt_short_15", label: "YouTube Short (15s)", description: "Fast vertical short for feed" },
+        { key: "yt_short_60", label: "YouTube Short (60s)", description: "Full-length short with CTA" },
+      ],
+    },
+    {
+      label: "Live",
+      items: [
+        { key: "yt_live_mention", label: "Live Stream Mention", description: "Brand shoutout during live" },
+        { key: "yt_live_unboxing", label: "Live Unboxing", description: "Real-time unboxing during stream" },
+      ],
+    },
+    {
+      label: "Community & extras",
+      items: [
+        { key: "yt_pinned_comment", label: "Pinned Comment", description: "Brand link pinned in comments" },
+        { key: "yt_description_link", label: "Description Link", description: "Brand URL in description" },
+      ],
+    },
   ],
   tiktok: [
-    { key: "tiktok_video", label: "TikTok Video", description: "Native short video post", groups: ["content", "promotion"] },
-    { key: "tiktok_series", label: "Video Series", description: "Multi-video storytelling campaign", groups: ["content", "promotion"] },
-    { key: "tiktok_live", label: "TikTok Live", description: "Live showcase and direct audience interaction", groups: ["live", "promotion"] },
-    { key: "tiktok_ugc_creation", label: "TikTok UGC Creation", description: "Creator-made brand-owned content", groups: ["production"] },
-    { key: "tiktok_custom", label: "Custom Campaign", description: "Flexible custom collaboration scope", groups: ["custom"] },
+    {
+      label: "Video content",
+      items: [
+        { key: "tt_video_15", label: "TikTok Video (15s)", description: "Quick trend-riding short video" },
+        { key: "tt_video_30", label: "TikTok Video (30s)", description: "Standard branded TikTok video" },
+        { key: "tt_video_60", label: "TikTok Video (60s)", description: "Storytelling or tutorial format" },
+      ],
+    },
+    {
+      label: "Live & interactive",
+      items: [
+        { key: "tt_live", label: "TikTok Live", description: "Live mention or product demo" },
+        { key: "tt_promo_code", label: "Promo Code Drop", description: "Exclusive discount announced live" },
+      ],
+    },
+    {
+      label: "Duet & stitch",
+      items: [
+        { key: "tt_duet", label: "Duet Video", description: "Side-by-side reaction format" },
+        { key: "tt_stitch", label: "Stitch Video", description: "Brand clip plus creator commentary" },
+      ],
+    },
+    {
+      label: "Shop & links",
+      items: [
+        { key: "tt_shop_tag", label: "TikTok Shop Tag", description: "Product tagged for direct purchase" },
+        { key: "tt_bio_link", label: "Bio Link Feature", description: "Brand link in profile bio" },
+      ],
+    },
   ],
   facebook: [
-    { key: "facebook_video_post", label: "Facebook Video Post", description: "Video post on creator page", groups: ["content", "promotion"] },
-    { key: "facebook_photo_post", label: "Facebook Photo Post", description: "Single or carousel feed post", groups: ["content"] },
-    { key: "facebook_story", label: "Facebook Story", description: "Story sequence with CTA", groups: ["story", "promotion"] },
-    { key: "facebook_live", label: "Facebook Live", description: "Live session for product promotion", groups: ["live"] },
-    { key: "facebook_custom", label: "Custom Campaign", description: "Flexible custom collaboration scope", groups: ["custom", "production"] },
+    {
+      label: "Video",
+      items: [
+        { key: "fb_reel", label: "Facebook Reel", description: "Short vertical video for Reels tab" },
+        { key: "fb_feed_video", label: "In-Feed Video", description: "Standard video in Facebook feed" },
+        { key: "fb_long_video", label: "Long-Form Video", description: "Video over 3 minutes" },
+      ],
+    },
+    {
+      label: "Feed posts",
+      items: [
+        { key: "fb_photo", label: "Photo Post", description: "Static image with caption and tag" },
+        { key: "fb_album", label: "Album Post", description: "Multi-photo campaign post" },
+      ],
+    },
+    {
+      label: "Stories",
+      items: [
+        { key: "fb_story", label: "Facebook Story", description: "24-hour story with CTA" },
+        { key: "fb_story_3", label: "Story Sequence (3)", description: "3-frame story narrative" },
+      ],
+    },
+    {
+      label: "Live & groups",
+      items: [
+        { key: "fb_live", label: "Facebook Live", description: "Scheduled live segment" },
+        { key: "fb_group_post", label: "Group Post", description: "Brand content in niche group" },
+      ],
+    },
   ],
   snapchat: [
-    { key: "snapchat_story", label: "Snap Story", description: "Story frame sequence for launch or event", groups: ["story", "promotion"] },
-    { key: "snapchat_spotlight", label: "Spotlight Video", description: "Short entertaining or promotional clip", groups: ["content", "promotion"] },
-    { key: "snapchat_takeover", label: "Account Takeover", description: "Creator runs temporary branded takeover", groups: ["promotion"] },
-    { key: "snapchat_custom", label: "Custom Campaign", description: "Flexible custom collaboration scope", groups: ["custom", "production"] },
+    {
+      label: "Snaps & stories",
+      items: [
+        { key: "sc_snap_photo", label: "Snap (Photo)", description: "Direct photo snap to followers" },
+        { key: "sc_snap_video", label: "Snap (Video, 10s)", description: "Short video snap" },
+        { key: "sc_story_1", label: "Story Frame (1)", description: "Single frame with brand tag" },
+        { key: "sc_story_3_5", label: "Story Sequence (3-5)", description: "Multi-snap story arc" },
+      ],
+    },
+    {
+      label: "Spotlight",
+      items: [
+        { key: "sc_spotlight_15", label: "Spotlight Video (15s)", description: "Short video for Spotlight tab" },
+        { key: "sc_spotlight_60", label: "Spotlight Video (60s)", description: "Extended Spotlight submission" },
+      ],
+    },
+    {
+      label: "Lens & AR",
+      items: [
+        { key: "sc_custom_lens", label: "Custom Lens Feature", description: "Use and promote brand AR lens" },
+        { key: "sc_geofilter", label: "Geofilter Promo", description: "Location-based branded filter" },
+      ],
+    },
+    {
+      label: "Map & links",
+      items: [
+        { key: "sc_map_checkin", label: "Snap Map Check-in", description: "Location story pinned to map" },
+        { key: "sc_swipe_up", label: "Swipe-Up Link", description: "Brand URL in story swipe-up" },
+      ],
+    },
   ],
 };
+
+const parseTags = (value: string): string[] =>
+  value
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+
+const normalizeTag = (value: string): string =>
+  value
+    .trim()
+    .replace(/^#+/, "")
+    .replace(/\s+/g, " ");
+
+const MAX_CATEGORIES = 5;
+const MAX_NICHES = 5;
+const MAX_TAGS = 5;
 
 interface WizardFormData {
   title: string;
@@ -125,9 +263,8 @@ interface WizardFormData {
   fullDescription: string;
   tags: string;
   responseTime: string;
-  serviceGroup: ServiceGroupId | "";
-  primaryServiceKey: string;
-  addonServiceKeys: string[];
+  selectedServiceKeys: string[];
+  deliverableItems: DeliverableItem[];
   serviceNotes: string;
   deliveryDays: string;
   revisions: string;
@@ -154,9 +291,8 @@ const defaultForm: WizardFormData = {
   fullDescription: "",
   tags: "",
   responseTime: "Within 3 hours",
-  serviceGroup: "",
-  primaryServiceKey: "",
-  addonServiceKeys: [],
+  selectedServiceKeys: [],
+  deliverableItems: [],
   serviceNotes: "",
   deliveryDays: "5",
   revisions: "2",
@@ -173,6 +309,15 @@ const defaultForm: WizardFormData = {
   visibility: "public",
   status: "active",
 };
+
+const buildDeliverableItemsFromLegacy = (deliverables: string[] = []): DeliverableItem[] =>
+  deliverables
+    .map((label, index) => ({
+      serviceKey: `legacy-${index}`,
+      label: label.trim(),
+      quantity: 1,
+    }))
+    .filter((item) => item.label.length > 0);
 
 interface CreatorPackageWizardProps {
   mode: "create" | "edit";
@@ -211,9 +356,8 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       fullDescription: initialPackage.fullDescription,
       tags: initialPackage.tags.join(", "),
       responseTime: initialPackage.responseTime,
-      serviceGroup: "",
-      primaryServiceKey: "",
-      addonServiceKeys: [],
+      selectedServiceKeys: [],
+      deliverableItems: buildDeliverableItemsFromLegacy(initialPackage.deliverables),
       serviceNotes: "",
       deliveryDays: String(initialPackage.deliveryDays),
       revisions: String(initialPackage.revisions || 0),
@@ -235,29 +379,46 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   const [formData, setFormData] = useState<WizardFormData>(initialForm);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [uploadingSampleIndex, setUploadingSampleIndex] = useState<number | null>(null);
+  const [tagInput, setTagInput] = useState("");
+  const [categoryInput, setCategoryInput] = useState("");
+  const [nicheInput, setNicheInput] = useState("");
 
-  const serviceOptions = useMemo(() => {
+  const serviceSections = useMemo(() => {
     const platform = formData.platform as Platform;
-    return serviceOptionsByPlatform[platform] || [];
+    return serviceCatalogByPlatform[platform] || [];
   }, [formData.platform]);
 
-  const filteredPrimaryOptions = useMemo(() => {
-    if (!formData.serviceGroup) return serviceOptions;
-    return serviceOptions.filter((option) => option.groups.includes(formData.serviceGroup as ServiceGroupId));
-  }, [serviceOptions, formData.serviceGroup]);
+  const serviceOptions = useMemo(
+    () => serviceSections.flatMap((section) => section.items),
+    [serviceSections]
+  );
+
+  const selectedServiceSet = useMemo(
+    () => new Set(formData.selectedServiceKeys),
+    [formData.selectedServiceKeys]
+  );
+
+  const serviceLabelMap = useMemo(
+    () => new Map(serviceOptions.map((option) => [option.key, option.label])),
+    [serviceOptions]
+  );
+
+  const tagsList = useMemo(() => parseTags(formData.tags), [formData.tags]);
+  const categoriesList = useMemo(() => parseTags(formData.category), [formData.category]);
+  const nichesList = useMemo(() => parseTags(formData.niche), [formData.niche]);
 
   const resolvedDeliverables = useMemo(() => {
-    const optionMap = new Map(serviceOptions.map((option) => [option.key, option.label]));
     const items = [
-      optionMap.get(formData.primaryServiceKey),
-      ...formData.addonServiceKeys.map((key) => optionMap.get(key)),
+      ...formData.deliverableItems.map((item) =>
+        item.quantity > 1 ? `${item.quantity}x ${item.label}` : item.label
+      ),
       formData.serviceNotes?.trim() ? `Notes: ${formData.serviceNotes.trim()}` : undefined,
     ].filter((item): item is string => Boolean(item));
 
     if (items.length > 0) return items;
     if (initialPackage?.deliverables?.length) return initialPackage.deliverables;
     return ["Custom deliverable - confirm scope in chat"];
-  }, [serviceOptions, formData.primaryServiceKey, formData.addonServiceKeys, formData.serviceNotes, initialPackage?.deliverables]);
+  }, [formData.deliverableItems, formData.serviceNotes, initialPackage?.deliverables]);
 
   useEffect(() => {
     if (mode !== "create") return;
@@ -289,7 +450,25 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       };
 
       setCurrentStep(draft.currentStep || 1);
-      setFormData(draft.formData || defaultForm);
+      setFormData({
+        ...defaultForm,
+        ...draft.formData,
+        selectedServiceKeys: Array.isArray(draft.formData?.selectedServiceKeys)
+          ? draft.formData.selectedServiceKeys
+          : [],
+        deliverableItems: Array.isArray(draft.formData?.deliverableItems)
+          ? draft.formData.deliverableItems
+              .map((item) => ({
+                serviceKey: typeof item?.serviceKey === "string" ? item.serviceKey : "",
+                label: typeof item?.label === "string" ? item.label : "",
+                quantity:
+                  typeof item?.quantity === "number" && item.quantity > 0
+                    ? Math.floor(item.quantity)
+                    : 1,
+              }))
+              .filter((item) => item.serviceKey && item.label)
+          : [],
+      });
       if (draft.tiers?.length) setTiers(draft.tiers);
       toast.success("Draft restored");
     } catch {
@@ -303,45 +482,263 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     toast.success("Saved draft cleared");
   };
 
-  const canMoveNext = useMemo(() => {
-    if (currentStep === 1) {
-      return Boolean(formData.title && formData.category && formData.platform && formData.niche);
+  const getStepMissingFields = (stepId: number): string[] => {
+    if (stepId === 1) {
+      const missing: string[] = [];
+      if (!formData.title.trim()) missing.push("Title");
+      if (!formData.category.trim()) missing.push("Category");
+      if (!formData.platform.trim()) missing.push("Platform");
+      if (!formData.niche.trim()) missing.push("Niche");
+      return missing;
     }
 
-    if (currentStep === 2) {
-      return Boolean(formData.primaryServiceKey);
+    if (stepId === 2) {
+      return formData.deliverableItems.length > 0 ? [] : ["At least one package deliverable"];
     }
 
-    if (currentStep === 3) {
-      if (formData.dealType === "paid") return Boolean(formData.price);
-      if (formData.dealType === "barter") return Boolean(formData.barterExpectations && formData.minimumBarterValue);
-      return Boolean(formData.hybridCashAmount && formData.minimumBarterValue);
+    if (stepId === 3) {
+      if (formData.dealType === "paid") {
+        return formData.price.trim() ? [] : ["Price (PKR)"];
+      }
+
+      if (formData.dealType === "barter") {
+        const missing: string[] = [];
+        if (!formData.barterExpectations.trim()) missing.push("Barter expectations");
+        if (!formData.minimumBarterValue.trim()) missing.push("Minimum barter value");
+        return missing;
+      }
+
+      const missing: string[] = [];
+      if (!formData.hybridCashAmount.trim()) missing.push("Cash amount (PKR)");
+      if (!formData.minimumBarterValue.trim()) missing.push("Minimum barter value");
+      return missing;
     }
 
-    return true;
-  }, [currentStep, formData]);
+    return [];
+  };
+
+  const isStepComplete = (stepId: number): boolean => getStepMissingFields(stepId).length === 0;
+
+  const maxUnlockedStep = (() => {
+    let unlocked = 1;
+    for (let stepId = 1; stepId < steps.length; stepId += 1) {
+      if (!isStepComplete(stepId)) break;
+      unlocked = stepId + 1;
+    }
+    return unlocked;
+  })();
+
+  useEffect(() => {
+    if (currentStep > maxUnlockedStep) {
+      setCurrentStep(maxUnlockedStep);
+    }
+  }, [currentStep, maxUnlockedStep]);
+
+  const canMoveNext = getStepMissingFields(currentStep).length === 0;
 
   const updateField = (field: keyof WizardFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const onSelectPrimaryService = (serviceKey: string) => {
+  const addTagsFromRawInput = (rawInput: string) => {
+    const rawPieces = rawInput
+      .split(/[,\n]/)
+      .map((part) => normalizeTag(part))
+      .filter(Boolean);
+
+    if (!rawPieces.length) return;
+
+    let reachedLimit = false;
+
     setFormData((prev) => {
-      const nextAddons = prev.addonServiceKeys.filter((key) => key !== serviceKey);
-      return { ...prev, primaryServiceKey: serviceKey, addonServiceKeys: nextAddons };
+      const existing = parseTags(prev.tags);
+      const seen = new Set(existing.map((tag) => tag.toLowerCase()));
+      const next = [...existing];
+
+      rawPieces.forEach((piece) => {
+        if (next.length >= MAX_TAGS) {
+          reachedLimit = true;
+          return;
+        }
+
+        const key = piece.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          next.push(piece);
+        }
+      });
+
+      return { ...prev, tags: next.join(", ") };
+    });
+
+    if (reachedLimit) {
+      toast.error(`You can add up to ${MAX_TAGS} tags only.`);
+    }
+
+    setTagInput("");
+  };
+
+  const addCategoriesFromRawInput = (rawInput: string) => {
+    const rawPieces = rawInput
+      .split(/[,\n]/)
+      .map((part) => normalizeTag(part))
+      .filter(Boolean);
+
+    if (!rawPieces.length) return;
+
+    let reachedLimit = false;
+
+    setFormData((prev) => {
+      const existing = parseTags(prev.category);
+      const seen = new Set(existing.map((item) => item.toLowerCase()));
+      const next = [...existing];
+
+      rawPieces.forEach((piece) => {
+        if (next.length >= MAX_CATEGORIES) {
+          reachedLimit = true;
+          return;
+        }
+
+        const key = piece.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          next.push(piece);
+        }
+      });
+
+      return { ...prev, category: next.join(", ") };
+    });
+
+    if (reachedLimit) {
+      toast.error(`You can add up to ${MAX_CATEGORIES} categories only.`);
+    }
+
+    setCategoryInput("");
+  };
+
+  const removeCategory = (categoryToRemove: string) => {
+    setFormData((prev) => {
+      const next = parseTags(prev.category).filter((item) => item !== categoryToRemove);
+      return { ...prev, category: next.join(", ") };
     });
   };
 
-  const onToggleAddon = (serviceKey: string) => {
+  const addNichesFromRawInput = (rawInput: string) => {
+    const rawPieces = rawInput
+      .split(/[,\n]/)
+      .map((part) => normalizeTag(part))
+      .filter(Boolean);
+
+    if (!rawPieces.length) return;
+
+    let reachedLimit = false;
+
     setFormData((prev) => {
-      const exists = prev.addonServiceKeys.includes(serviceKey);
+      const existing = parseTags(prev.niche);
+      const seen = new Set(existing.map((item) => item.toLowerCase()));
+      const next = [...existing];
+
+      rawPieces.forEach((piece) => {
+        if (next.length >= MAX_NICHES) {
+          reachedLimit = true;
+          return;
+        }
+
+        const key = piece.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          next.push(piece);
+        }
+      });
+
+      return { ...prev, niche: next.join(", ") };
+    });
+
+    if (reachedLimit) {
+      toast.error(`You can add up to ${MAX_NICHES} niches only.`);
+    }
+
+    setNicheInput("");
+  };
+
+  const removeNiche = (nicheToRemove: string) => {
+    setFormData((prev) => {
+      const next = parseTags(prev.niche).filter((item) => item !== nicheToRemove);
+      return { ...prev, niche: next.join(", ") };
+    });
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setFormData((prev) => {
+      const next = parseTags(prev.tags).filter((tag) => tag !== tagToRemove);
+      return { ...prev, tags: next.join(", ") };
+    });
+  };
+
+  const onToggleService = (serviceKey: string) => {
+    setFormData((prev) => {
+      const exists = prev.selectedServiceKeys.includes(serviceKey);
       return {
         ...prev,
-        addonServiceKeys: exists
-          ? prev.addonServiceKeys.filter((key) => key !== serviceKey)
-          : [...prev.addonServiceKeys, serviceKey],
+        selectedServiceKeys: exists
+          ? prev.selectedServiceKeys.filter((key) => key !== serviceKey)
+          : [...prev.selectedServiceKeys, serviceKey],
       };
     });
+  };
+
+  const addSelectedServicesToDeliverables = () => {
+    if (!formData.selectedServiceKeys.length) {
+      toast.error("Select at least one service first.");
+      return;
+    }
+
+    setFormData((prev) => {
+      const nextItems = [...prev.deliverableItems];
+
+      prev.selectedServiceKeys.forEach((serviceKey) => {
+        const label = serviceLabelMap.get(serviceKey);
+        if (!label) return;
+
+        const existingIndex = nextItems.findIndex((item) => item.serviceKey === serviceKey);
+        if (existingIndex >= 0) {
+          nextItems[existingIndex] = {
+            ...nextItems[existingIndex],
+            quantity: nextItems[existingIndex].quantity + 1,
+          };
+        } else {
+          nextItems.push({ serviceKey, label, quantity: 1 });
+        }
+      });
+
+      return {
+        ...prev,
+        deliverableItems: nextItems,
+        selectedServiceKeys: [],
+      };
+    });
+
+    toast.success("Added to deliverables");
+  };
+
+  const updateDeliverableQuantity = (serviceKey: string, delta: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      deliverableItems: prev.deliverableItems
+        .map((item) =>
+          item.serviceKey === serviceKey
+            ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+            : item
+        )
+        .filter((item) => item.quantity > 0),
+    }));
+  };
+
+  const removeDeliverableItem = (serviceKey: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      deliverableItems: prev.deliverableItems.filter((item) => item.serviceKey !== serviceKey),
+    }));
   };
 
   const updateWorkSample = (index: number, value: string) => {
@@ -573,18 +970,43 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         <CardContent className="p-4">
           <div className="flex gap-2 overflow-x-auto pb-1">
             {steps.map((step) => (
-              <button
-                key={step.id}
-                type="button"
-                onClick={() => setCurrentStep(step.id)}
-                className={`min-h-10 whitespace-nowrap rounded-full px-4 py-2 text-sm transition-all ${
-                  currentStep === step.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {step.id}. {step.label}
-              </button>
+              (() => {
+                const isUnlocked = step.id <= maxUnlockedStep;
+                const isCurrent = currentStep === step.id;
+                const isCompleted = step.id < currentStep && isStepComplete(step.id);
+
+                return (
+                  <button
+                    key={step.id}
+                    type="button"
+                    aria-disabled={!isUnlocked}
+                    onClick={() => {
+                      if (!isUnlocked) {
+                        const previousStep = Math.max(1, step.id - 1);
+                        const missing = getStepMissingFields(previousStep);
+                        toast.error(
+                          missing.length
+                            ? `Complete Step ${previousStep}: ${missing.slice(0, 2).join(", ")}`
+                            : `Complete Step ${previousStep} first.`
+                        );
+                        return;
+                      }
+                      setCurrentStep(step.id);
+                    }}
+                    className={`inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm transition-all ${
+                      isCurrent
+                        ? "bg-primary text-primary-foreground"
+                        : isUnlocked
+                          ? "bg-muted text-muted-foreground hover:text-foreground"
+                          : "cursor-not-allowed bg-muted/60 text-muted-foreground/60"
+                    }`}
+                  >
+                    <span>{step.id}. {step.label}</span>
+                    {isCompleted && <Check className="h-3.5 w-3.5" />}
+                    {!isUnlocked && <Lock className="h-3.5 w-3.5" />}
+                  </button>
+                );
+              })()
             ))}
           </div>
         </CardContent>
@@ -603,8 +1025,54 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                   <Input value={formData.title} onChange={(e) => updateField("title", e.target.value)} placeholder="Ramzan Food Reel Bundle" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Input value={formData.category} onChange={(e) => updateField("category", e.target.value)} placeholder="Food, Beauty, Tech" />
+                  <div className="flex items-center justify-between">
+                    <Label>Category</Label>
+                    <span className="text-xs text-muted-foreground">{categoriesList.length}/{MAX_CATEGORIES}</span>
+                  </div>
+                  <div className="rounded-lg border border-border/70 bg-background px-3 py-2 focus-within:border-primary/70 focus-within:ring-1 focus-within:ring-primary/30">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {categoriesList.map((category) => (
+                        <Badge key={category} variant="secondary" className="gap-1 pr-1">
+                          <span>{category}</span>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${category}`}
+                            className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                            onClick={() => removeCategory(category)}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                      <input
+                        value={categoryInput}
+                        onChange={(e) => setCategoryInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
+                            if (!categoryInput.trim()) return;
+                            e.preventDefault();
+                            addCategoriesFromRawInput(categoryInput);
+                            return;
+                          }
+
+                          if (e.key === "Backspace" && !categoryInput.trim() && categoriesList.length) {
+                            e.preventDefault();
+                            removeCategory(categoriesList[categoriesList.length - 1]);
+                          }
+                        }}
+                        onBlur={() => addCategoriesFromRawInput(categoryInput)}
+                        onPaste={(e) => {
+                          const pasted = e.clipboardData.getData("text");
+                          if (!pasted.includes(",") && !pasted.includes("\n")) return;
+                          e.preventDefault();
+                          addCategoriesFromRawInput(pasted);
+                        }}
+                        placeholder={categoriesList.length ? "Add another category" : "Type category and press Enter"}
+                        className="min-w-[180px] flex-1 border-0 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground" aria-live="polite">Add up to {MAX_CATEGORIES} categories. Press Enter, comma, or Tab.</p>
                 </div>
               </div>
 
@@ -615,7 +1083,15 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                     <button
                       key={platform.id}
                       type="button"
-                      onClick={() => updateField("platform", platform.id)}
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          platform: platform.id,
+                          selectedServiceKeys: [],
+                          deliverableItems: [],
+                          serviceNotes: "",
+                        }))
+                      }
                       className={`flex items-center justify-center gap-2 rounded-lg border p-3 text-sm ${
                         formData.platform === platform.id ? "border-primary bg-primary/10 text-primary" : "border-border"
                       }`}
@@ -627,15 +1103,55 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
                   <Label>Niche</Label>
-                  <Input value={formData.niche} onChange={(e) => updateField("niche", e.target.value)} placeholder="Street food and family dining" />
+                  <span className="text-xs text-muted-foreground">{nichesList.length}/{MAX_NICHES}</span>
                 </div>
-                <div className="space-y-2">
-                  <Label>Response Time</Label>
-                  <Input value={formData.responseTime} onChange={(e) => updateField("responseTime", e.target.value)} placeholder="Within 3 hours" />
+                <div className="rounded-lg border border-border/70 bg-background px-3 py-2 focus-within:border-primary/70 focus-within:ring-1 focus-within:ring-primary/30">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {nichesList.map((niche) => (
+                      <Badge key={niche} variant="secondary" className="gap-1 pr-1">
+                        <span>{niche}</span>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${niche}`}
+                          className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                          onClick={() => removeNiche(niche)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                    <input
+                      value={nicheInput}
+                      onChange={(e) => setNicheInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
+                          if (!nicheInput.trim()) return;
+                          e.preventDefault();
+                          addNichesFromRawInput(nicheInput);
+                          return;
+                        }
+
+                        if (e.key === "Backspace" && !nicheInput.trim() && nichesList.length) {
+                          e.preventDefault();
+                          removeNiche(nichesList[nichesList.length - 1]);
+                        }
+                      }}
+                      onBlur={() => addNichesFromRawInput(nicheInput)}
+                      onPaste={(e) => {
+                        const pasted = e.clipboardData.getData("text");
+                        if (!pasted.includes(",") && !pasted.includes("\n")) return;
+                        e.preventDefault();
+                        addNichesFromRawInput(pasted);
+                      }}
+                      placeholder={nichesList.length ? "Add another niche" : "Type niche and press Enter"}
+                      className="min-w-[180px] flex-1 border-0 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground"
+                    />
+                  </div>
                 </div>
+                <p className="text-xs text-muted-foreground" aria-live="polite">Add up to {MAX_NICHES} niches. Press Enter, comma, or Tab.</p>
               </div>
 
               <div className="space-y-2">
@@ -649,8 +1165,54 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
               </div>
 
               <div className="space-y-2">
-                <Label>Tags (comma-separated)</Label>
-                <Input value={formData.tags} onChange={(e) => updateField("tags", e.target.value)} placeholder="Karachi, Restaurant, Reel, Conversion" />
+                <div className="flex items-center justify-between">
+                  <Label>Tags</Label>
+                  <span className="text-xs text-muted-foreground">{tagsList.length}/{MAX_TAGS}</span>
+                </div>
+                <div className="rounded-lg border border-border/70 bg-background px-3 py-2 focus-within:border-primary/70 focus-within:ring-1 focus-within:ring-primary/30">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {tagsList.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+                        <span>{tag}</span>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${tag}`}
+                          className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                          onClick={() => removeTag(tag)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                    <input
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
+                          if (!tagInput.trim()) return;
+                          e.preventDefault();
+                          addTagsFromRawInput(tagInput);
+                          return;
+                        }
+
+                        if (e.key === "Backspace" && !tagInput.trim() && tagsList.length) {
+                          e.preventDefault();
+                          removeTag(tagsList[tagsList.length - 1]);
+                        }
+                      }}
+                      onBlur={() => addTagsFromRawInput(tagInput)}
+                      onPaste={(e) => {
+                        const pasted = e.clipboardData.getData("text");
+                        if (!pasted.includes(",") && !pasted.includes("\n")) return;
+                        e.preventDefault();
+                        addTagsFromRawInput(pasted);
+                      }}
+                      placeholder={tagsList.length ? "Add another tag" : "Type a tag and press Enter"}
+                      className="min-w-[180px] flex-1 border-0 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground" aria-live="polite">Add up to {MAX_TAGS} tags. Press Enter, comma, or Tab.</p>
               </div>
             </CardContent>
           </Card>
@@ -670,77 +1232,44 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
               {formData.platform && (
                 <>
-                  <div className="space-y-2">
-                    <Label>Service Group</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {serviceGroups.map((group) => (
-                        <button
-                          key={group.id}
-                          type="button"
-                          onClick={() =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              serviceGroup: group.id,
-                              primaryServiceKey: "",
-                              addonServiceKeys: [],
-                            }))
-                          }
-                          className={`rounded-full border px-3 py-1 text-sm ${
-                            formData.serviceGroup === group.id
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-border text-muted-foreground"
-                          }`}
-                        >
-                          {group.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Primary Service</Label>
-                    <div className="grid gap-2 md:grid-cols-2">
-                      {filteredPrimaryOptions.map((option) => (
-                        <button
-                          key={option.key}
-                          type="button"
-                          onClick={() => onSelectPrimaryService(option.key)}
-                          className={`rounded-lg border p-3 text-left ${
-                            formData.primaryServiceKey === option.key
-                              ? "border-primary bg-primary/10"
-                              : "border-border"
-                          }`}
-                        >
-                          <p className="font-medium">{option.label}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">{option.description}</p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Add-ons (Optional)</Label>
-                    <div className="grid gap-2 md:grid-cols-2">
-                      {serviceOptions
-                        .filter((option) => option.key !== formData.primaryServiceKey)
-                        .map((option) => {
-                          const selected = formData.addonServiceKeys.includes(option.key);
+                  {serviceSections.map((section) => (
+                    <div key={section.label} className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {section.label}
+                      </p>
+                      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                        {section.items.map((option) => {
+                          const isSelected = selectedServiceSet.has(option.key);
                           return (
                             <button
                               key={option.key}
                               type="button"
-                              onClick={() => onToggleAddon(option.key)}
-                              className={`rounded-lg border px-3 py-2 text-left text-sm ${
-                                selected ? "border-primary bg-primary/10 text-primary" : "border-border"
+                              onClick={() => onToggleService(option.key)}
+                              className={`rounded-lg border p-3 text-left transition-colors ${
+                                isSelected
+                                  ? "border-primary bg-primary/10"
+                                  : "border-border hover:border-border/80 hover:bg-muted/40"
                               }`}
                             >
-                              {selected ? "+ " : ""}
-                              {option.label}
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{option.label}</p>
+                                <span
+                                  className={`ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px] ${
+                                    isSelected
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border text-transparent"
+                                  }`}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </span>
+                              </div>
+                              <p className="mt-1 text-xs text-muted-foreground">{option.description}</p>
                             </button>
                           );
                         })}
+                      </div>
                     </div>
-                  </div>
+                  ))}
 
                   <div className="space-y-2">
                     <Label>Service Notes (Optional)</Label>
@@ -750,6 +1279,92 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                       onChange={(e) => updateField("serviceNotes", e.target.value)}
                       placeholder="Example: 2 hooks for approval, Urdu voiceover, include campaign hashtag"
                     />
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 p-3 text-sm">
+                    <p className="text-muted-foreground">
+                      {formData.selectedServiceKeys.length > 0
+                        ? `${formData.selectedServiceKeys.length} selected (ready to add)`
+                        : "Select one or more deliverables for this package"}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      {formData.selectedServiceKeys.length > 0 && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={addSelectedServicesToDeliverables}
+                        >
+                          <Plus className="mr-1 h-4 w-4" /> Add to deliverables
+                        </Button>
+                      )}
+                      {formData.selectedServiceKeys.length > 0 && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setFormData((prev) => ({ ...prev, selectedServiceKeys: [] }))}
+                        >
+                          Clear selection
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 rounded-lg border border-border/60 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">Package Deliverables</p>
+                      <Badge variant="outline">
+                        {formData.deliverableItems.reduce((total, item) => total + item.quantity, 0)} total
+                      </Badge>
+                    </div>
+
+                    {formData.deliverableItems.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        Nothing added yet. Select services above, then click "Add to deliverables".
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {formData.deliverableItems.map((item) => (
+                          <div
+                            key={item.serviceKey}
+                            className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/50 bg-muted/20 p-2"
+                          >
+                            <p className="text-sm font-medium">{item.label}</p>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="outline"
+                                className="h-8 w-8"
+                                onClick={() => updateDeliverableQuantity(item.serviceKey, -1)}
+                              >
+                                -
+                              </Button>
+                              <Badge variant="secondary">Qty {item.quantity}</Badge>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="outline"
+                                className="h-8 w-8"
+                                onClick={() => updateDeliverableQuantity(item.serviceKey, 1)}
+                              >
+                                +
+                              </Button>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => removeDeliverableItem(item.serviceKey)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -1099,7 +1714,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                 </p>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label>Visibility</Label>
                   <Select value={formData.visibility} onValueChange={(value) => updateField("visibility", value as "public" | "private")}>
@@ -1120,6 +1735,14 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                       <SelectItem value="under_review">Submit for Review</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Response Time</Label>
+                  <Input
+                    value={formData.responseTime}
+                    onChange={(e) => updateField("responseTime", e.target.value)}
+                    placeholder="Within 3 hours"
+                  />
                 </div>
               </div>
 
@@ -1148,7 +1771,12 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
             className="flex-1"
             onClick={() => {
               if (!canMoveNext) {
-                toast.error("Please complete required fields in this step.");
+                const missing = getStepMissingFields(currentStep);
+                toast.error(
+                  missing.length
+                    ? `Please complete: ${missing.slice(0, 3).join(", ")}`
+                    : "Please complete required fields in this step."
+                );
                 return;
               }
               setCurrentStep((step) => Math.min(steps.length, step + 1));
