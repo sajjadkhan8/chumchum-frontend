@@ -18,9 +18,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuthStore } from '@/store/auth-store';
-import { cn } from '@/lib/utils';
+import { cn, formatRelativeTime } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { ZingZingLogo } from '@/src/components/ZingZingLogo';
+import { messagesService } from '@/services/messages.service';
+import { ordersService } from '@/services/orders.service';
+import type { Order } from '@/types';
 
 interface NavbarProps {
   showSearch?: boolean;
@@ -28,11 +31,24 @@ interface NavbarProps {
   searchValue?: string;
 }
 
+interface NavNotification {
+  id: string;
+  title: string;
+  description: string;
+  href: string;
+  createdAt: Date;
+}
+
+const getNotificationSeenKey = (userId: string) => `nav-notifications-seen:${userId}`;
+
 export function Navbar({ showSearch = false, onSearchChange, searchValue }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [currentHash, setCurrentHash] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const [notifications, setNotifications] = useState<NavNotification[]>([]);
+  const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>([]);
   const { resolvedTheme, setTheme } = useTheme();
   const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
   const isSignedIn = hasHydrated && isAuthenticated && !!user;
@@ -49,6 +65,107 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted || !user || isAdmin) {
+      setSeenNotificationIds([]);
+      return;
+    }
+
+    try {
+      const raw = localStorage.getItem(getNotificationSeenKey(user.id));
+      if (!raw) {
+        setSeenNotificationIds([]);
+        return;
+      }
+
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed)) {
+        setSeenNotificationIds(parsed.filter((entry): entry is string => typeof entry === 'string'));
+        return;
+      }
+    } catch {
+      // Reset invalid local notification cache silently.
+    }
+
+    setSeenNotificationIds([]);
+  }, [mounted, user, isAdmin]);
+
+  useEffect(() => {
+    if (!isSignedIn || !user || isAdmin) {
+      setUnreadMessageCount(0);
+      setNotifications([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const toNotification = (order: Order): NavNotification => {
+      const baseHref = user.role === 'creator' ? '/creator/orders' : '/brand/orders';
+      const statusLabel = order.status.replace('_', ' ');
+      const participantName = user.role === 'creator' ? order.brand.name : order.creator.name;
+
+      return {
+        id: `order-${order.id}-${order.status}`,
+        title: `${participantName} • ${order.package.title}`,
+        description: `Status update: ${statusLabel}`,
+        href: `${baseHref}?status=${order.status}`,
+        createdAt: order.updatedAt,
+      };
+    };
+
+    const loadNavSignals = async () => {
+      try {
+        const [conversationResult, ordersResult] = await Promise.allSettled([
+          messagesService.getConversations(user.id, user.role),
+          ordersService.getAll(),
+        ]);
+
+        if (cancelled) return;
+
+        if (conversationResult.status === 'fulfilled') {
+          const unread = conversationResult.value.reduce((total, conversation) => total + Math.max(0, conversation.unreadCount || 0), 0);
+          setUnreadMessageCount(unread);
+        } else {
+          setUnreadMessageCount(0);
+        }
+
+        if (ordersResult.status === 'fulfilled') {
+          const myOrders = ordersResult.value.filter((order) =>
+            user.role === 'creator' ? order.creatorId === user.id : order.brandId === user.id
+          );
+          const relevantStatuses = user.role === 'creator'
+            ? new Set(['pending', 'revision', 'review', 'cancelled'])
+            : new Set(['delivered', 'review', 'revision', 'cancelled', 'completed']);
+
+          const nextNotifications = myOrders
+            .filter((order) => relevantStatuses.has(order.status))
+            .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+            .slice(0, 8)
+            .map(toNotification);
+
+          setNotifications(nextNotifications);
+        } else {
+          setNotifications([]);
+        }
+      } catch {
+        if (!cancelled) {
+          setUnreadMessageCount(0);
+          setNotifications([]);
+        }
+      }
+    };
+
+    void loadNavSignals();
+    const intervalId = window.setInterval(() => {
+      void loadNavSignals();
+    }, 60000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [isSignedIn, isAdmin, user, pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -113,6 +230,24 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
       ];
 
   const messagesLink = isSignedIn && !isAdmin ? `/${user.role}/messages` : '/messages';
+  const unseenNotifications = notifications.filter((item) => !seenNotificationIds.includes(item.id));
+  const notificationCount = unseenNotifications.length;
+
+  const persistSeenNotificationIds = (next: string[]) => {
+    if (!mounted || !user) return;
+    setSeenNotificationIds(next);
+    localStorage.setItem(getNotificationSeenKey(user.id), JSON.stringify(next));
+  };
+
+  const markAllNotificationsSeen = () => {
+    const merged = Array.from(new Set([...seenNotificationIds, ...notifications.map((item) => item.id)]));
+    persistSeenNotificationIds(merged);
+  };
+
+  const markNotificationSeen = (notificationId: string) => {
+    if (seenNotificationIds.includes(notificationId)) return;
+    persistSeenNotificationIds([...seenNotificationIds, notificationId]);
+  };
 
   const isLinkActive = (href: string) => {
     const pathOnly = href.split('?')[0];
@@ -190,19 +325,73 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
             <>
               {!isAdmin && (
                 <>
-                  <Button variant="ghost" size="icon" className="relative hidden sm:flex">
-                    <Bell className="h-5 w-5" />
-                    <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs">
-                      3
-                    </Badge>
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="relative hidden sm:flex" aria-label="Open notifications">
+                        <Bell className="h-5 w-5" />
+                        {notificationCount > 0 && (
+                          <Badge className="absolute -right-1 -top-1 h-5 min-w-5 rounded-full px-1 text-xs">
+                            {notificationCount > 99 ? '99+' : notificationCount}
+                          </Badge>
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-[22rem] p-1">
+                      <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+                        <span className="text-sm font-semibold">Notifications</span>
+                        {notificationCount > 0 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              markAllNotificationsSeen();
+                            }}
+                          >
+                            Mark all as seen
+                          </Button>
+                        )}
+                      </div>
+                      <DropdownMenuSeparator />
+                      {notificationCount === 0 ? (
+                        <div className="px-2 py-5 text-center text-sm text-muted-foreground">
+                          You are all caught up.
+                        </div>
+                      ) : (
+                        unseenNotifications.map((item) => (
+                          <DropdownMenuItem asChild key={item.id} className="items-start py-2">
+                            <Link href={item.href} className="flex w-full flex-col gap-1" onClick={() => markNotificationSeen(item.id)}>
+                              <span className="flex items-center justify-between gap-2">
+                                <span className="flex min-w-0 items-center gap-2">
+                                  <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+                                  <span className="line-clamp-1 text-sm font-medium">{item.title}</span>
+                                </span>
+                                <span className="shrink-0 text-[11px] text-muted-foreground">{formatRelativeTime(item.createdAt)}</span>
+                              </span>
+                              <span className="line-clamp-1 text-xs text-muted-foreground">{item.description}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ))
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href={user.role === 'creator' ? '/creator/orders' : '/brand/orders'} className="justify-center text-sm font-medium text-primary">
+                          View all updates
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
                   <Link href={messagesLink}>
                     <Button variant="ghost" size="icon" className="relative hidden sm:flex">
                       <MessageCircle className="h-5 w-5" />
-                      <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs">
-                        2
-                      </Badge>
+                      {unreadMessageCount > 0 && (
+                        <Badge className="absolute -right-1 -top-1 h-5 min-w-5 rounded-full px-1 text-xs">
+                          {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
+                        </Badge>
+                      )}
                     </Button>
                   </Link>
                 </>
