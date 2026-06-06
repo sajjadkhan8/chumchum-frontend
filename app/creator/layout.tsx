@@ -16,6 +16,7 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
     pathname.startsWith('/creator/dashboard') ||
     pathname.startsWith('/creator/orders') ||
     pathname.startsWith('/creator/earnings') ||
+    pathname.startsWith('/creator/payments') ||
     pathname.startsWith('/creator/packages') ||
     pathname.startsWith('/creator/settings') ||
     pathname.startsWith('/creator/messages') ||

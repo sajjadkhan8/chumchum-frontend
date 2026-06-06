@@ -81,14 +81,15 @@ const navGroups: NavGroup[] = [
       { href: '/creator/profile/verification', label: 'Verification', icon: ShieldCheck },
     ],
   },
-  {
-    title: 'Settings',
-    items: [
-      { href: '/creator/earnings', label: 'Payment Methods', icon: CreditCard },
-      { href: '/creator/settings/preferences', label: 'Preferences' },
-      { href: '/creator/settings/notifications', label: 'Notifications', icon: Settings },
-    ],
-  },
+   {
+     title: 'Settings',
+     items: [
+       { href: '/creator/settings', label: 'Account Settings', icon: Settings },
+       { href: '/creator/payments', label: 'Payment Settings', icon: CreditCard },
+       { href: '/creator/settings/preferences', label: 'Preferences' },
+       { href: '/creator/settings/notifications', label: 'Notifications' },
+     ],
+   },
   {
     title: 'Support',
     items: [{ href: '/creator/help', label: 'Help & Support', icon: HelpCircle }],

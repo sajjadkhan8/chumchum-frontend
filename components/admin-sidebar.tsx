@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, FileCheck2, LayoutDashboard, Menu, Scale, Shield, ShoppingBag, Users } from 'lucide-react';
+import { BarChart3, FileCheck2, LayoutDashboard, Menu, Scale, Shield, ShoppingBag, Users, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -14,6 +14,7 @@ const adminNavItems = [
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/verification', label: 'Verification', icon: FileCheck2 },
   { href: '/admin/disputes', label: 'Disputes & Audit', icon: Scale },
+  { href: '/admin/payments', label: 'Payments Audit', icon: Wallet },
 ];
 
 function AdminNav({ compact = false, closeOnNavigate = false }: { compact?: boolean; closeOnNavigate?: boolean }) {

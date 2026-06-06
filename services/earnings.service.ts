@@ -1,6 +1,14 @@
 import { apiClient } from '@/lib/api/client';
 
-export type PayoutMethodType = 'STCPAY' | 'MADA' | 'APPLEPAY' | 'BANK_TRANSFER';
+export type PayoutMethodType =
+  | 'JAZZCASH'
+  | 'EASYPAISA'
+  | 'SADAPAY'
+  | 'NAYAPAY'
+  | 'STCPAY'
+  | 'MADA'
+  | 'APPLEPAY'
+  | 'BANK_TRANSFER';
 
 export interface EarningsSummary {
   totalEarned: number;

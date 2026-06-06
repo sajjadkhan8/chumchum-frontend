@@ -2,7 +2,6 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import {
   User,
   Bell,
@@ -16,7 +15,6 @@ import {
   Plus,
   Save,
   Check,
-  Wallet,
   BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,7 +35,6 @@ import {
 import { getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { creatorsService, type CreatorSocialAccountPayload } from "@/services/creators.service";
-import { paymentsService, type CreatorPayoutPreferences } from "@/services/payments.service";
 import { uploadsService } from "@/services/uploads.service";
 import { usersService } from "@/services/users.service";
 import type { Platform } from "@/types";
@@ -115,14 +112,6 @@ function CreatorSettingsPageContent() {
   const [profile, setProfile] = useState(defaultProfile);
   const [socialAccounts, setSocialAccounts] = useState<EditableSocialAccount[]>([]);
 
-  const [payoutPreferences, setPayoutPreferences] = useState<CreatorPayoutPreferences>({
-    autoWithdrawEnabled: false,
-    payoutSchedule: "manual",
-    minimumPayoutAmount: 5000,
-    accountHolderName: "",
-    ntnNumber: "",
-    cnicLast4: "",
-  });
 
   const [creatorPreferences, setCreatorPreferences] = useState({
     acceptsBarter: true,
@@ -279,32 +268,6 @@ function CreatorSettingsPageContent() {
     }
   };
 
-  const loadPayoutPreferences = useCallback(async () => {
-    const settings = await paymentsService.getCreatorPayoutPreferences();
-    setPayoutPreferences(settings);
-  }, []);
-
-  const handlePayoutPreferencesSave = async () => {
-    if (payoutPreferences.cnicLast4 && !/^\d{4}$/.test(payoutPreferences.cnicLast4)) {
-      toast.error("CNIC last 4 digits must be exactly 4 numbers");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const saved = await paymentsService.updateCreatorPayoutPreferences({
-        ...payoutPreferences,
-        minimumPayoutAmount: Math.max(1000, payoutPreferences.minimumPayoutAmount || 1000),
-      });
-      setPayoutPreferences(saved);
-      toast.success("Payout preferences saved");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not save payout preferences";
-      toast.error(message);
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handlePasswordChange = async () => {
     if (!security.currentPassword || !security.newPassword || !security.confirmPassword) {
@@ -480,7 +443,6 @@ function CreatorSettingsPageContent() {
     const allowedTabs = new Set([
       'profile',
       'social',
-      'payments',
       'preferences',
       'analytics',
       'notifications',
@@ -502,11 +464,7 @@ function CreatorSettingsPageContent() {
       const message = error instanceof Error ? error.message : "Could not load notification preferences";
       toast.error(message);
     });
-    void loadPayoutPreferences().catch((error) => {
-      const message = error instanceof Error ? error.message : "Could not load payout preferences";
-      toast.error(message);
-    });
-  }, [loadCreatorProfile, loadNotificationPreferences, loadPayoutPreferences, user]);
+  }, [loadCreatorProfile, loadNotificationPreferences, user]);
 
   return (
     <div className="container mx-auto max-w-4xl p-4 pb-24 md:p-6 md:pb-6">
@@ -529,10 +487,6 @@ function CreatorSettingsPageContent() {
           <TabsTrigger value="social" className="gap-2">
             <LinkIcon className="h-4 w-4" />
             Social
-          </TabsTrigger>
-          <TabsTrigger value="payments" className="gap-2">
-            <Wallet className="h-4 w-4" />
-            Payments
           </TabsTrigger>
           <TabsTrigger value="preferences" className="gap-2">
             <Check className="h-4 w-4" />
@@ -949,72 +903,6 @@ function CreatorSettingsPageContent() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="payments" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Payout Controls</CardTitle>
-              <CardDescription>Set withdrawal preferences. Manage payout methods from Earnings.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border border-border p-4">
-                <div>
-                  <p className="font-medium">Payout Methods</p>
-                  <p className="text-sm text-muted-foreground">Add, remove, and set defaults from your earnings workspace.</p>
-                </div>
-                <Button asChild>
-                  <Link href="/creator/earnings">Open Earnings</Link>
-                </Button>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Account Holder Name</Label>
-                  <Input
-                    value={payoutPreferences.accountHolderName}
-                    onChange={(e) => setPayoutPreferences((p) => ({ ...p, accountHolderName: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Minimum Withdrawal (PKR)</Label>
-                  <Input
-                    type="number"
-                    min={1000}
-                    value={payoutPreferences.minimumPayoutAmount}
-                    onChange={(e) => setPayoutPreferences((p) => ({ ...p, minimumPayoutAmount: Number(e.target.value) || 1000 }))}
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>NTN (Optional)</Label>
-                  <Input
-                    value={payoutPreferences.ntnNumber}
-                    onChange={(e) => setPayoutPreferences((p) => ({ ...p, ntnNumber: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>CNIC Last 4 Digits</Label>
-                  <Input
-                    maxLength={4}
-                    value={payoutPreferences.cnicLast4}
-                    onChange={(e) => setPayoutPreferences((p) => ({ ...p, cnicLast4: e.target.value.replace(/\D/g, "") }))}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Button onClick={handlePayoutPreferencesSave} disabled={isSaving} className="w-full">
-            {isSaving ? (
-              "Saving..."
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save Payout Controls
-              </>
-            )}
-          </Button>
-        </TabsContent>
 
         <TabsContent value="preferences" className="space-y-6">
           <Card>

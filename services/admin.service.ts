@@ -216,6 +216,26 @@ export interface AdminAuditLogsResponse {
   limit: number;
 }
 
+export interface AdminPaymentAuditLog {
+  id: string;
+  actorId: string;
+  actorName: string;
+  brandId?: string;
+  brandName?: string;
+  action: string;
+  targetType: string;
+  targetId?: string;
+  details?: string;
+  createdAt: string;
+}
+
+export interface AdminPaymentAuditLogsResponse {
+  logs: AdminPaymentAuditLog[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 const normalizeOrderStatus = (value?: string): OrderStatus => {
   const lowered = (value || '').toLowerCase();
   if (
@@ -420,6 +440,18 @@ export const adminService = {
       query: {
         search: filters.search,
         action: filters.action && filters.action !== 'all' ? filters.action : undefined,
+        page: filters.page ?? 0,
+        limit: filters.limit ?? 20,
+      },
+    });
+  },
+
+  async getPaymentAuditLogs(filters: { search?: string; action?: string; brandId?: string; page?: number; limit?: number } = {}): Promise<AdminPaymentAuditLogsResponse> {
+    return apiClient.get<AdminPaymentAuditLogsResponse>('/api/v1/admin/payment-audit-logs', {
+      query: {
+        search: filters.search,
+        action: filters.action && filters.action !== 'all' ? filters.action : undefined,
+        brandId: filters.brandId,
         page: filters.page ?? 0,
         limit: filters.limit ?? 20,
       },

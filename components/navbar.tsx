@@ -85,6 +85,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     { href: '/admin/dashboard', label: 'Dashboard' },
     { href: '/admin/users', label: 'Users' },
     { href: '/admin/orders', label: 'Orders' },
+    { href: '/admin/payments', label: 'Payments Audit' },
     { href: '/admin/verification', label: 'Verification' },
   ];
 
@@ -93,6 +94,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const profileMenu = isAdmin
     ? [
         { href: '/admin/dashboard', label: 'Admin Dashboard', icon: Shield },
+        { href: '/admin/payments', label: 'Payments Audit', icon: Wallet },
         { href: '/admin/users', label: 'User Moderation', icon: User },
       ]
     : isCreator
