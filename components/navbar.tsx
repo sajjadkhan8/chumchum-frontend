@@ -187,7 +187,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     { href: '/creator/packages', label: 'My Packages' },
     { href: '/creator/ambassador-program', label: '👑 Ambassador Program' },
     { href: '/creator/orders', label: 'Orders' },
-    { href: '/creator/earnings', label: 'Earnings Analytics' },
+    { href: '/creator/payments?tab=withdraw', label: 'Payments' },
   ];
 
   const brandNavLinks = [
@@ -218,8 +218,8 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     ? [
         { href: '/creator/profile/public', label: 'My Profile', icon: User },
         { href: '/creator/packages', label: 'My Packages', icon: Package },
-        { href: '/creator/earnings', label: 'Earnings', icon: Wallet },
-        { href: '/creator/settings?tab=profile', label: 'Settings', icon: User },
+        { href: '/creator/payments?tab=withdraw', label: 'Payments', icon: Wallet },
+        { href: '/creator/settings/preferences', label: 'Settings', icon: User },
       ]
     : [
         { href: '/brand/settings?tab=profile', label: 'Company Profile', icon: Building2 },

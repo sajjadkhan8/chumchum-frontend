@@ -1,9 +1,9 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  User,
   Bell,
   Lock,
   Link as LinkIcon,
@@ -15,7 +15,6 @@ import {
   Plus,
   Save,
   Check,
-  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -101,10 +100,14 @@ const buildSocialLinks = (accounts: EditableSocialAccount[]) => {
   };
 };
 
-function CreatorSettingsPageContent() {
+export type CreatorSettingsSection = "profile" | "social" | "settings";
+
+export function CreatorSettingsPageContent({ section = "settings" }: { section?: CreatorSettingsSection }) {
   const searchParams = useSearchParams();
   const { user, logout } = useAuthStore();
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState(
+    section === "profile" ? "profile" : section === "social" ? "social" : "preferences",
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
@@ -119,14 +122,6 @@ function CreatorSettingsPageContent() {
     preferredIndustries: "Fashion, Beauty, Wellness, E-commerce",
     minimumBudget: "25000",
   });
-
-  const analyticsData = {
-    engagementTrend: "+8.4% MoM",
-    topPlatform: "Instagram",
-    monthlyEarnings: "PKR 3,625,000",
-    profileViews: "3,240",
-    packagePerformance: "Top package conversion: 18%",
-  };
 
   const [notifications, setNotifications] = useState({
     newOrders: true,
@@ -437,14 +432,24 @@ function CreatorSettingsPageContent() {
   };
 
   useEffect(() => {
+    if (section === "profile") {
+      setActiveTab("profile");
+      return;
+    }
+
+    if (section === "social") {
+      setActiveTab("social");
+      return;
+    }
+
     const tab = searchParams.get('tab');
-    if (!tab) return;
+    if (!tab) {
+      setActiveTab("preferences");
+      return;
+    }
 
     const allowedTabs = new Set([
-      'profile',
-      'social',
       'preferences',
-      'analytics',
       'notifications',
       'security',
     ]);
@@ -452,7 +457,7 @@ function CreatorSettingsPageContent() {
     if (allowedTabs.has(tab)) {
       setActiveTab(tab);
     }
-  }, [searchParams]);
+  }, [searchParams, section]);
 
   useEffect(() => {
     if (!user || user.role !== "creator") return;
@@ -471,43 +476,37 @@ function CreatorSettingsPageContent() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-foreground md:text-3xl">
-          Settings
+          {section === "profile" ? "Public Profile" : section === "social" ? "Social Accounts" : "Settings"}
         </h1>
         <p className="text-muted-foreground">
-          Manage your profile and account preferences
+          {section === "profile"
+            ? "Manage your creator profile details"
+            : section === "social"
+              ? "Connect and manage your social accounts"
+              : "Manage creator preferences, notifications, and account security"}
         </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6 w-full justify-start gap-1 overflow-x-auto">
-          <TabsTrigger value="profile" className="gap-2">
-            <User className="h-4 w-4" />
-            Profile
-          </TabsTrigger>
-          <TabsTrigger value="social" className="gap-2">
-            <LinkIcon className="h-4 w-4" />
-            Social
-          </TabsTrigger>
-          <TabsTrigger value="preferences" className="gap-2">
-            <Check className="h-4 w-4" />
-            Preferences
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Analytics
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2">
-            <Bell className="h-4 w-4" />
-            Notifications
-          </TabsTrigger>
-          <TabsTrigger value="security" className="gap-2">
-            <Lock className="h-4 w-4" />
-            Security
-          </TabsTrigger>
-        </TabsList>
+        {section === "settings" && (
+          <TabsList className="mb-6 w-full justify-start gap-1 overflow-x-auto">
+            <TabsTrigger value="preferences" className="gap-2">
+              <Check className="h-4 w-4" />
+              Preferences
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="gap-2">
+              <Bell className="h-4 w-4" />
+              Notifications
+            </TabsTrigger>
+            <TabsTrigger value="security" className="gap-2">
+              <Lock className="h-4 w-4" />
+              Security
+            </TabsTrigger>
+          </TabsList>
+        )}
 
         {/* Profile Tab */}
-        <TabsContent value="profile" className="space-y-6">
+        {section === "profile" && <TabsContent value="profile" className="space-y-6">
           {/* Avatar Section */}
           <Card>
             <CardContent className="flex flex-col items-center gap-4 p-6 sm:flex-row">
@@ -787,10 +786,10 @@ function CreatorSettingsPageContent() {
               </>
             )}
           </Button>
-        </TabsContent>
+        </TabsContent>}
 
         {/* Social Tab */}
-        <TabsContent value="social" className="space-y-6">
+        {section === "social" && <TabsContent value="social" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Connected Accounts</CardTitle>
@@ -901,10 +900,10 @@ function CreatorSettingsPageContent() {
               </Button>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent>}
 
 
-        <TabsContent value="preferences" className="space-y-6">
+        {section === "settings" && <TabsContent value="preferences" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Creator Preferences</CardTitle>
@@ -958,41 +957,10 @@ function CreatorSettingsPageContent() {
               </>
             )}
           </Button>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Creator Insights</CardTitle>
-              <CardDescription>Performance snapshot for your profile and packages.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-border p-3">
-                <p className="text-xs text-muted-foreground">Engagement Trend</p>
-                <p className="font-semibold">{analyticsData.engagementTrend}</p>
-              </div>
-              <div className="rounded-lg border border-border p-3">
-                <p className="text-xs text-muted-foreground">Top Performing Platform</p>
-                <p className="font-semibold">{analyticsData.topPlatform}</p>
-              </div>
-              <div className="rounded-lg border border-border p-3">
-                <p className="text-xs text-muted-foreground">Monthly Earnings</p>
-                <p className="font-semibold">{analyticsData.monthlyEarnings}</p>
-              </div>
-              <div className="rounded-lg border border-border p-3">
-                <p className="text-xs text-muted-foreground">Profile Views</p>
-                <p className="font-semibold">{analyticsData.profileViews}</p>
-              </div>
-              <div className="rounded-lg border border-border p-3 sm:col-span-2">
-                <p className="text-xs text-muted-foreground">Package Performance</p>
-                <p className="font-semibold">{analyticsData.packagePerformance}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        </TabsContent>}
 
         {/* Notifications Tab */}
-        <TabsContent value="notifications" className="space-y-6">
+        {section === "settings" && <TabsContent value="notifications" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Email Notifications</CardTitle>
@@ -1066,10 +1034,10 @@ function CreatorSettingsPageContent() {
               </>
             )}
           </Button>
-        </TabsContent>
+        </TabsContent>}
 
         {/* Security Tab */}
-        <TabsContent value="security" className="space-y-6">
+        {section === "settings" && <TabsContent value="security" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Change Password</CardTitle>
@@ -1152,7 +1120,7 @@ function CreatorSettingsPageContent() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent>}
       </Tabs>
     </div>
   );
@@ -1161,7 +1129,7 @@ function CreatorSettingsPageContent() {
 export default function CreatorSettingsPage() {
   return (
     <Suspense fallback={<div className="container mx-auto px-4 py-6" />}>
-      <CreatorSettingsPageContent />
+      <CreatorSettingsPageContent section="settings" />
     </Suspense>
   );
 }

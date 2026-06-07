@@ -1,6 +1,11 @@
-import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
+import { CreatorSettingsPageContent } from '../page';
 
 export default function CreatorPreferencesSettingsPage() {
-  redirect('/creator/settings?tab=preferences');
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-6" />}>
+      <CreatorSettingsPageContent section="settings" />
+    </Suspense>
+  );
 }
 

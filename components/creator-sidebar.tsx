@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   BarChart3,
   BookOpen,
@@ -13,7 +13,6 @@ import {
   LayoutDashboard,
   MessageCircle,
   Package,
-  Settings,
   ShieldCheck,
   Sparkles,
   User,
@@ -63,9 +62,15 @@ const navGroups: NavGroup[] = [
   {
     title: 'Analytics',
     items: [
-      { href: '/creator/earnings', label: 'Earnings Analytics', icon: Wallet },
       { href: '/creator/insights', label: 'Insights', icon: BarChart3 },
       { href: '/creator/performance', label: 'Performance', icon: Gauge },
+    ],
+  },
+  {
+    title: 'Payments',
+    items: [
+      { href: '/creator/earnings', label: 'Earnings Analytics', icon: Wallet },
+      { href: '/creator/payments', label: 'Payments', icon: CreditCard },
     ],
   },
   {
@@ -73,16 +78,12 @@ const navGroups: NavGroup[] = [
     items: [
       { href: '/creator/profile/public', label: 'Public Profile', icon: User },
       { href: '/creator/profile/social', label: 'Social Accounts' },
-      { href: '/creator/profile/verification', label: 'Verification', icon: ShieldCheck },
     ],
   },
    {
      title: 'Settings',
      items: [
-       { href: '/creator/settings', label: 'Account Settings', icon: Settings },
-       { href: '/creator/payments', label: 'Payment Settings', icon: CreditCard },
        { href: '/creator/settings/preferences', label: 'Preferences' },
-       { href: '/creator/settings/notifications', label: 'Notifications' },
      ],
    },
   {
@@ -116,6 +117,7 @@ const getNavGroups = (isActiveAmbassador: boolean): NavGroup[] => {
 
 function CreatorSidebarNav({ compact = false, closeOnNavigate = false, onNavigate }: { compact?: boolean; closeOnNavigate?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const user = useAuthStore((state) => state.user);
   const isActiveAmbassador =
     user?.role === 'creator' &&
@@ -131,7 +133,11 @@ function CreatorSidebarNav({ compact = false, closeOnNavigate = false, onNavigat
           </p>
           <div className="space-y-1">
             {group.items.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const [itemPath, itemQuery = ''] = item.href.split('?');
+              const itemTab = new URLSearchParams(itemQuery).get('tab');
+              const currentTab = searchParams.get('tab') || (itemPath === '/creator/payments' ? 'withdraw' : null);
+              const pathMatches = pathname === itemPath || pathname.startsWith(`${itemPath}/`);
+              const isActive = pathMatches && (!itemTab || itemTab === currentTab);
               const Icon = item.icon || BookOpen;
 
               const linkNode = (

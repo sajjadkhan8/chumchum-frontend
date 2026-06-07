@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, ArrowRight, Users, Building2, CheckCircle, Circle } from 'lucide-react';import { Button } from '@/components/ui/button';
+import { Eye, EyeOff, Loader2, ArrowRight, Users, Building2, CheckCircle, Circle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
@@ -16,7 +17,7 @@ import { validatePassword, type PasswordStrengthResult } from '@/lib/password-va
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signup, isLoading, user, isAuthenticated, hasHydrated } = useAuthStore();
+  const { signup, signupWithGoogle, isLoading, user, isAuthenticated, hasHydrated } = useAuthStore();
   const [step, setStep] = useState<'role' | 'details'>('role');
   const [role, setRole] = useState<UserRole | null>(null);
   const [name, setName] = useState('');
@@ -82,6 +83,19 @@ export default function SignupPage() {
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+      toast.error(message);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    if (!role) return;
+
+    try {
+      await signupWithGoogle(role, name);
+      toast.success('Account created successfully!');
+      router.push(role === 'creator' ? '/creator/dashboard' : '/brand/dashboard');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Google signup failed. Please try again.';
       toast.error(message);
     }
   };
@@ -217,7 +231,23 @@ export default function SignupPage() {
                 Fill in your details to get started
               </p>
 
-              <form onSubmit={handleSignup} className="mt-8 space-y-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-6 w-full rounded-full"
+                onClick={handleGoogleSignup}
+                disabled={isLoading || !role}
+              >
+                Continue with Google
+              </Button>
+
+              <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
+                <div className="h-px flex-1 bg-border" />
+                Or continue with email
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">
                     {role === 'creator' ? 'Full Name' : 'Brand/Company Name'}

@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthStore } from '@/store/auth-store';
 import { toast } from 'sonner';
 import { ZingZingLogo } from '@/src/components/ZingZingLogo';
+import type { UserRole } from '@/types';
 
 const getDashboardPath = (role?: string) => {
   if (role === 'platform_admin') return '/admin/dashboard';
@@ -29,7 +30,7 @@ const getPostLoginPath = (role?: string) => {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, loginWithPhone, requestOtp, isLoading, user, isAuthenticated, hasHydrated } = useAuthStore();
+  const { login, loginWithGoogle, loginWithPhone, requestOtp, isLoading, user, isAuthenticated, hasHydrated } = useAuthStore();
   const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -37,6 +38,7 @@ export default function LoginPage() {
   const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [googleRole, setGoogleRole] = useState<UserRole>('creator');
 
   // Redirect already-authenticated users to their dashboard
   useEffect(() => {
@@ -99,6 +101,18 @@ export default function LoginPage() {
       router.push(getPostLoginPath(user?.role));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Invalid OTP';
+      toast.error(message);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      await loginWithGoogle(googleRole);
+      toast.success('Welcome back!');
+      const nextUser = useAuthStore.getState().user;
+      router.push(getPostLoginPath(nextUser?.role));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Google login failed';
       toast.error(message);
     }
   };
@@ -177,6 +191,37 @@ export default function LoginPage() {
             <p className="mt-2 text-muted-foreground">
               Sign in to your account to continue
             </p>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-6 w-full rounded-full"
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+            >
+              Continue with Google
+            </Button>
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant={googleRole === 'creator' ? 'default' : 'outline'}
+                className="rounded-full"
+                onClick={() => setGoogleRole('creator')}
+                disabled={isLoading}
+              >
+                Creator
+              </Button>
+              <Button
+                type="button"
+                variant={googleRole === 'brand' ? 'default' : 'outline'}
+                className="rounded-full"
+                onClick={() => setGoogleRole('brand')}
+                disabled={isLoading}
+              >
+                Brand
+              </Button>
+            </div>
           </motion.div>
 
           <motion.div

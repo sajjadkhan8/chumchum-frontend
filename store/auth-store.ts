@@ -5,6 +5,7 @@ import { mapUser } from '@/lib/api/mappers';
 import { authService } from '@/services/auth.service';
 import { savedCreatorsService } from '@/services/saved-creators.service';
 import { isValidPakistaniPhone, normalizePakistaniPhone } from '@/lib/phone-utils';
+import { getGoogleIdToken } from '@/lib/google-auth';
 import type { User, UserRole, Creator, Brand } from '@/types';
 
 interface AuthState {
@@ -16,9 +17,11 @@ interface AuthState {
   isLoading: boolean;
   hasHydrated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (role: UserRole) => Promise<void>;
   requestOtp: (phone: string) => Promise<void>;
   loginWithPhone: (phone: string, otp: string) => Promise<void>;
   signup: (email: string, password: string, role: UserRole, name: string) => Promise<void>;
+  signupWithGoogle: (role: UserRole, name?: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: User) => void;
   setCreatorProfile: (profile: Creator) => void;
@@ -48,6 +51,31 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const response = await authService.login(email, password);
+          tokenStorage.set(response.accessToken, response.refreshToken);
+
+          const user = mapUser(response.user);
+          set({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            hasHydrated: true,
+          });
+
+          if (user.role === 'brand') {
+            await get().loadSavedCreators();
+          }
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
+
+      loginWithGoogle: async (role: UserRole) => {
+        set({ isLoading: true });
+        try {
+          const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+          const idToken = await getGoogleIdToken(clientId);
+          const response = await authService.google(idToken, role);
           tokenStorage.set(response.accessToken, response.refreshToken);
 
           const user = mapUser(response.user);
@@ -106,6 +134,31 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const response = await authService.signup(email, password, role, name);
+          tokenStorage.set(response.accessToken, response.refreshToken);
+
+          const user = mapUser(response.user);
+          set({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            hasHydrated: true,
+          });
+
+          if (user.role === 'brand') {
+            await get().loadSavedCreators();
+          }
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
+
+      signupWithGoogle: async (role: UserRole, name?: string) => {
+        set({ isLoading: true });
+        try {
+          const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+          const idToken = await getGoogleIdToken(clientId);
+          const response = await authService.google(idToken, role, name);
           tokenStorage.set(response.accessToken, response.refreshToken);
 
           const user = mapUser(response.user);

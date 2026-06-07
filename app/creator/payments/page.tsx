@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Plus,
   Check,
@@ -42,12 +42,13 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatPrice } from "@/lib/utils";
+import { formatDate, formatPrice } from "@/lib/utils";
 import {
   earningsService,
   type EarningsSummary,
   type PayoutMethod,
   type PayoutMethodType,
+  type WithdrawalRequest,
 } from "@/services/earnings.service";
 import {
   paymentsService,
@@ -111,8 +112,13 @@ const maskAccountDetails = (type: string, details: string) => {
 };
 
 function CreatorPaymentsContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [earnings, setEarnings] = useState<EarningsSummary | null>(null);
   const [payoutMethods, setPayoutMethods] = useState<PaymentMethodUI[]>([]);
+  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [payoutPreferences, setPayoutPreferences] =
     useState<CreatorPayoutPreferences>({
       autoWithdrawEnabled: false,
@@ -134,19 +140,25 @@ function CreatorPaymentsContent() {
   const [newMethodName, setNewMethodName] = useState("");
   const [newMethodDetails, setNewMethodDetails] = useState("");
   const [expandedMethods, setExpandedMethods] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState("withdraw");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawMethodId, setWithdrawMethodId] = useState("");
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
 
   // Load all data
   const loadPaymentsData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [summary, methods, preferences] = await Promise.all([
+      const [summary, methods, preferences, recentWithdrawals] = await Promise.all([
         earningsService.getSummary(),
         earningsService.getPayoutMethods(),
         paymentsService.getCreatorPayoutPreferences(),
+        earningsService.getWithdrawals(0, 6),
       ]);
 
        setEarnings(summary);
        setPayoutPreferences(preferences);
+        setWithdrawals(recentWithdrawals);
 
       const enrichedMethods: PaymentMethodUI[] = methods.map((method) => ({
         ...method,
@@ -167,6 +179,19 @@ function CreatorPaymentsContent() {
   useEffect(() => {
     loadPaymentsData();
   }, [loadPaymentsData]);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    const allowedTabs = new Set(["withdraw", "methods", "schedule"]);
+    setActiveTab(tab && allowedTabs.has(tab) ? tab : "withdraw");
+  }, [searchParams]);
+
+  useEffect(() => {
+    setWithdrawMethodId((current) => {
+      if (current && payoutMethods.some((method) => method.id === current)) return current;
+      return payoutMethods.find((method) => method.isDefault)?.id || payoutMethods[0]?.id || "";
+    });
+  }, [payoutMethods]);
 
   const handleAddMethod = async () => {
     const validation = validatePayoutDetails(newMethodType, newMethodDetails);
@@ -265,6 +290,67 @@ function CreatorPaymentsContent() {
     setExpandedMethods(newExpanded);
   };
 
+  const updateTabInUrl = (nextTab: string) => {
+    setActiveTab(nextTab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextTab === "withdraw") {
+      params.delete("tab");
+    } else {
+      params.set("tab", nextTab);
+    }
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
+
+  const applyQuickAmount = (ratio: number) => {
+    const available = earnings?.availableBalance || 0;
+    if (available <= 0) {
+      setWithdrawAmount("");
+      return;
+    }
+    const amount = Math.floor(available * ratio);
+    setWithdrawAmount(String(Math.max(1000, amount)));
+  };
+
+  const handleRequestWithdrawal = async () => {
+    const available = earnings?.availableBalance || 0;
+    const amount = Number(withdrawAmount);
+
+    if (!withdrawMethodId) {
+      toast.error("Add and select a payout method first");
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error("Enter a valid withdrawal amount");
+      return;
+    }
+    if (amount < 1000) {
+      toast.error(`Minimum withdrawal is ${formatPrice(1000)}`);
+      return;
+    }
+    if (amount > available) {
+      toast.error("Amount exceeds available balance");
+      return;
+    }
+
+    setIsWithdrawing(true);
+    try {
+      await earningsService.requestWithdrawal({
+        amount,
+        payoutMethodId: withdrawMethodId,
+      });
+      toast.success("Withdrawal request submitted");
+      setWithdrawAmount("");
+      await loadPaymentsData();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to request withdrawal";
+      toast.error(message);
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto max-w-4xl p-4">
@@ -280,67 +366,176 @@ function CreatorPaymentsContent() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-foreground md:text-3xl">
-          Payment Settings
+          Payments
         </h1>
         <p className="text-muted-foreground">
-          Manage your payout methods, schedule, and compliance controls
+          Manage withdrawals, payout methods, schedule, and compliance controls
         </p>
       </div>
 
-      <Card className="mb-6 border-primary/20 bg-primary/5">
-        <CardContent className="flex flex-col gap-3 p-4 text-sm md:flex-row md:items-center md:justify-between">
-          <p className="text-muted-foreground">
-            Need trends, totals, and payout history? Use Earnings Analytics for reporting insights.
-          </p>
-          <Button variant="outline" asChild>
-            <Link href="/creator/earnings">Open Earnings Analytics</Link>
-          </Button>
-        </CardContent>
-      </Card>
 
       {/* Earnings Overview */}
       {earnings && (
         <Card className="mb-6 bg-gradient-to-r from-primary/5 to-primary/10">
           <CardHeader>
-            <CardTitle className="text-base">Current Payout Readiness</CardTitle>
+            <CardTitle className="text-base">Withdrawal Console</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-lg bg-background/50 p-4">
+          <CardContent className="space-y-3 pt-0">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-lg bg-background/50 p-3">
                 <p className="text-sm text-muted-foreground">Available to Withdraw</p>
                 <p className="mt-1 text-2xl font-semibold text-green-600">{formatPrice(earnings.availableBalance)}</p>
               </div>
-              <div className="rounded-lg bg-background/50 p-4">
+              <div className="rounded-lg bg-background/50 p-3">
                 <p className="text-sm text-muted-foreground">Pending Clearance</p>
                 <p className="mt-1 text-2xl font-semibold text-amber-600">{formatPrice(earnings.pendingBalance)}</p>
               </div>
-              <div className="rounded-lg bg-background/50 p-4">
+              <div className="rounded-lg bg-background/50 p-3">
                 <p className="text-sm text-muted-foreground">Suggested Next Step</p>
                 <p className="mt-1 text-sm font-medium">Keep at least one verified payout method set as default.</p>
               </div>
             </div>
-            <div className="mt-4 flex gap-2 rounded-lg bg-blue-50 p-3 text-sm text-blue-900 dark:bg-blue-950 dark:text-blue-100">
-              <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
-              <p>Use this page for payout setup and controls. Use Earnings Analytics for reporting and history.</p>
-            </div>
-            {earnings.availableBalance > 0 && (
-              <Button className="mt-4 w-full" size="lg" asChild>
-                <Link href="/creator/earnings">
-                  <ArrowUp className="mr-2 h-4 w-4" />
-                  Withdraw from Earnings Analytics
-                </Link>
-              </Button>
-            )}
+            {/* Top-level withdraw CTA is intentionally removed; withdraw actions live in the Withdraw tab. */}
           </CardContent>
         </Card>
       )}
 
       {/* Tabs */}
-      <Tabs defaultValue="methods" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 gap-1">
+      <Tabs value={activeTab} onValueChange={updateTabInUrl} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 gap-1">
+          <TabsTrigger value="withdraw">Withdraw</TabsTrigger>
           <TabsTrigger value="methods">Payout Methods</TabsTrigger>
           <TabsTrigger value="schedule">Schedule & Preferences</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="withdraw" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Withdrawal Console</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-lg border bg-muted/30 p-4">
+                  <p className="text-sm text-muted-foreground">Available Balance</p>
+                  <p className="mt-1 text-xl font-semibold text-green-600">
+                    {formatPrice(earnings?.availableBalance || 0)}
+                  </p>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-4">
+                  <p className="text-sm text-muted-foreground">Minimum Withdrawal</p>
+                  <p className="mt-1 text-xl font-semibold">{formatPrice(1000)}</p>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-4">
+                  <p className="text-sm text-muted-foreground">Estimated Arrival</p>
+                  <p className="mt-1 text-sm font-medium">Wallet: near-instant · Bank: 1-3 business days</p>
+                </div>
+              </div>
+
+              {payoutMethods.length === 0 ? (
+                <div className="rounded-lg border border-dashed p-5 text-center">
+                  <p className="font-medium">Add a payout method to withdraw funds</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Connect JazzCash, Easypaisa, SadaPay, NayaPay, or a bank account first.
+                  </p>
+                  <Button className="mt-4" onClick={() => updateTabInUrl("methods") }>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Payout Method
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="space-y-4 rounded-lg border p-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="withdraw-amount">Amount (PKR)</Label>
+                      <Input
+                        id="withdraw-amount"
+                        type="number"
+                        min="1000"
+                        placeholder="Enter amount"
+                        value={withdrawAmount}
+                        onChange={(event) => setWithdrawAmount(event.target.value)}
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="button" variant="outline" size="sm" onClick={() => applyQuickAmount(0.25)}>25%</Button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => applyQuickAmount(0.5)}>50%</Button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => applyQuickAmount(1)}>100%</Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Payout Method</Label>
+                      <Select value={withdrawMethodId} onValueChange={setWithdrawMethodId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select payout method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {payoutMethods.map((method) => (
+                            <SelectItem key={method.id} value={method.id}>
+                              {method.displayName} ({maskAccountDetails(method.type, method.accountDetails)})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 rounded-lg border bg-muted/20 p-4">
+                    <p className="text-sm font-medium">Review</p>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Requested amount</span>
+                      <span className="font-medium">{formatPrice(Number(withdrawAmount) || 0)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Destination</span>
+                      <span className="font-medium">
+                        {payoutMethods.find((method) => method.id === withdrawMethodId)?.displayName || "Select method"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Available after request</span>
+                      <span className="font-medium">
+                        {formatPrice(Math.max(0, (earnings?.availableBalance || 0) - (Number(withdrawAmount) || 0)))}
+                      </span>
+                    </div>
+                    <Button className="mt-2 w-full" onClick={handleRequestWithdrawal} disabled={isWithdrawing || (earnings?.availableBalance || 0) <= 0}>
+                      <ArrowUp className="mr-2 h-4 w-4" />
+                      {isWithdrawing ? "Submitting..." : "Request Withdrawal"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Withdrawals</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {withdrawals.length === 0 ? (
+                <div className="rounded-lg border border-dashed p-5 text-center text-sm text-muted-foreground">
+                  No withdrawals requested yet.
+                </div>
+              ) : (
+                withdrawals.map((withdrawal) => {
+                  const method = payoutMethods.find((item) => item.id === withdrawal.payoutMethodId);
+                  return (
+                    <div key={withdrawal.id} className="flex items-center justify-between rounded-lg border p-3">
+                      <div>
+                        <p className="font-medium">{method?.displayName || "Payout method"}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(new Date(withdrawal.createdAt))}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{formatPrice(withdrawal.amount)}</p>
+                        <Badge variant="secondary" className="capitalize">{withdrawal.status}</Badge>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Payout Methods Tab */}
         <TabsContent value="methods" className="space-y-4">

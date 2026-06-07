@@ -8,6 +8,7 @@ interface AuthTokenResponse {
   user: {
     id: string;
     email?: string;
+    emailVerified?: boolean;
     phone?: string;
     role?: string;
     name?: string;
@@ -48,6 +49,18 @@ export const authService = {
     );
   },
 
+  async google(idToken: string, role: UserRole, name?: string): Promise<AuthTokenResponse> {
+    return apiClient.post<AuthTokenResponse>(
+      '/api/v1/auth/google',
+      {
+        idToken,
+        role: role.toUpperCase(),
+        name,
+      },
+      { auth: false },
+    );
+  },
+
   async forgotPassword(email: string): Promise<ForgotPasswordResponse> {
     return apiClient.post<ForgotPasswordResponse>('/api/v1/auth/forgot-password', { email }, { auth: false });
   },
@@ -61,7 +74,7 @@ export const authService = {
   },
 
   async me(): Promise<User> {
-    const response = await apiClient.get<{ id: string; email?: string; phone?: string; role?: string; name?: string; avatarUrl?: string; creatorProgramStatus?: User['creatorProgramStatus']; active?: boolean; createdAt?: string }>('/api/v1/users/me');
+    const response = await apiClient.get<{ id: string; email?: string; emailVerified?: boolean; phone?: string; role?: string; name?: string; avatarUrl?: string; creatorProgramStatus?: User['creatorProgramStatus']; active?: boolean; createdAt?: string }>('/api/v1/users/me');
     return mapUser(response);
   },
 };

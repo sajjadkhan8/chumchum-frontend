@@ -31,17 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { StatsCard } from "@/components/stats-card";
 import { formatDate, formatPrice } from "@/lib/utils";
 import {
@@ -109,16 +98,8 @@ export default function CreatorEarningsPage() {
   const [payoutMethods, setPayoutMethods] = useState<PayoutMethod[]>([]);
 
   const [timeRange, setTimeRange] = useState("30");
-  const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [selectedMethod, setSelectedMethod] = useState("");
-
-  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
 
   const loadEarnings = async () => {
-    setIsLoading(true);
     try {
       const [summaryResponse, transactionsResponse, payoutResponse, withdrawalsResponse] =
         await Promise.all([
@@ -132,14 +113,9 @@ export default function CreatorEarningsPage() {
       setTransactions(transactionsResponse);
       setPayoutMethods(payoutResponse);
       setWithdrawals(withdrawalsResponse);
-      setSelectedMethod(
-        (current) => current || payoutResponse.find((method) => method.isDefault)?.id || payoutResponse[0]?.id || "",
-      );
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load earnings";
       toast.error(message);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -189,41 +165,6 @@ export default function CreatorEarningsPage() {
   }, [transactions]);
 
   const monthlyChange = previousMonth > 0 ? ((thisMonth - previousMonth) / previousMonth) * 100 : 0;
-
-  const handleWithdrawal = async () => {
-    const amount = Number(withdrawAmount);
-
-    if (!selectedMethod) {
-      toast.error("Add a payout method before requesting a withdrawal");
-      return;
-    }
-    if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error("Enter a valid withdrawal amount");
-      return;
-    }
-    if (amount < 1000) {
-      toast.error(`Minimum withdrawal is ${formatPrice(1000)}`);
-      return;
-    }
-    if (amount > summary.availableBalance) {
-      toast.error("Amount exceeds available balance");
-      return;
-    }
-
-    setIsSubmittingWithdrawal(true);
-    try {
-      await earningsService.requestWithdrawal({ payoutMethodId: selectedMethod, amount });
-      setWithdrawAmount("");
-      setWithdrawDialogOpen(false);
-      toast.success("Withdrawal request submitted");
-      await loadEarnings();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to request withdrawal";
-      toast.error(message);
-    } finally {
-      setIsSubmittingWithdrawal(false);
-    }
-  };
 
   const renderActivities = (items: Activity[]) => (
     <div className="space-y-3">
@@ -295,7 +236,7 @@ export default function CreatorEarningsPage() {
             Export
           </Button>
           <Button variant="outline" asChild>
-            <Link href="/creator/payments">Manage Payout Settings</Link>
+            <Link href="/creator/payments">Open Payments Hub</Link>
           </Button>
         </div>
       </div>
@@ -306,60 +247,6 @@ export default function CreatorEarningsPage() {
           title="Available Balance"
           value={formatPrice(summary.availableBalance)}
           icon={Wallet}
-          action={
-            <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="mt-2 w-full" disabled={summary.availableBalance <= 0 || isLoading}>
-                  Withdraw
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Withdraw Funds</DialogTitle>
-                  <DialogDescription>
-                    Transfers are processed within 1-3 business days for bank routes and near-instant for wallets.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="withdraw-amount">Amount (PKR)</Label>
-                    <Input
-                      id="withdraw-amount"
-                      type="number"
-                      min="1000"
-                      placeholder="Enter amount"
-                      value={withdrawAmount}
-                      onChange={(event) => setWithdrawAmount(event.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">Available: {formatPrice(summary.availableBalance)}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Payout Method</Label>
-                    <Select value={selectedMethod} onValueChange={setSelectedMethod}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose payout method" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {payoutMethods.map((method) => (
-                          <SelectItem key={method.id} value={method.id}>
-                            {method.name} ({method.accountDetails})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setWithdrawDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleWithdrawal} disabled={isSubmittingWithdrawal}>
-                    {isSubmittingWithdrawal ? "Submitting..." : "Submit Withdrawal"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          }
         />
         <StatsCard title="Pending Balance" value={formatPrice(summary.pendingBalance)} icon={Clock} subtitle="In escrow or pending release" />
         <StatsCard
@@ -374,7 +261,7 @@ export default function CreatorEarningsPage() {
       <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
         Configure payout methods, schedule, and compliance controls from
         <Link href="/creator/payments" className="ml-1 font-medium text-primary underline-offset-4 hover:underline">
-          Payment Settings
+          Payments
         </Link>
         .
       </div>

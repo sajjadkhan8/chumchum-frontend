@@ -4,6 +4,7 @@ export type UserRole = 'creator' | 'brand' | 'platform_admin';
 export interface User {
   id: string;
   email: string;
+  emailVerified?: boolean;
   phone?: string;
   role: UserRole;
   name: string;

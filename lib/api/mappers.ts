@@ -50,6 +50,7 @@ const normalizeRole = (value?: string | null): UserRole => {
 interface BackendUser {
   id: string;
   email?: string;
+  emailVerified?: boolean;
   phone?: string;
   role?: string;
   name?: string;
@@ -62,6 +63,7 @@ interface BackendUser {
 export const mapUser = (input: BackendUser): User => ({
   id: input.id,
   email: input.email || '',
+  emailVerified: input.emailVerified,
   phone: input.phone,
   role: normalizeRole(input.role),
   name: input.name || 'User',
