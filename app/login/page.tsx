@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Mail, Phone, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
+import { Mail, Phone, Eye, EyeOff, Loader2, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,6 +39,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [googleRole, setGoogleRole] = useState<UserRole>('creator');
+  const [showDemoAccounts, setShowDemoAccounts] = useState(false);
 
   // Redirect already-authenticated users to their dashboard
   useEffect(() => {
@@ -192,17 +193,7 @@ export default function LoginPage() {
               Sign in to your account to continue
             </p>
 
-            <Button
-              type="button"
-              variant="outline"
-              className="mt-6 w-full rounded-full"
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-            >
-              Continue with Google
-            </Button>
-
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-2">
               <Button
                 type="button"
                 variant={googleRole === 'creator' ? 'default' : 'outline'}
@@ -391,6 +382,29 @@ export default function LoginPage() {
                 Sign up
               </Link>
             </p>
+
+            <div className="mt-6">
+              <div className="mb-3 flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="h-px flex-1 bg-border" />
+                <span>or continue with</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full rounded-full"
+                onClick={handleGoogleLogin}
+                disabled={isLoading}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="mr-2 h-4 w-4">
+                  <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.2-.8 2.2-1.7 2.9l2.8 2.2c1.7-1.5 2.6-3.8 2.6-6.5 0-.6-.1-1.2-.2-1.8H12z"/>
+                  <path fill="#34A853" d="M12 21c2.4 0 4.4-.8 5.8-2.1l-2.8-2.2c-.8.5-1.8.8-3 .8-2.3 0-4.2-1.5-4.8-3.6l-2.9 2.2C5.7 18.9 8.6 21 12 21z"/>
+                  <path fill="#4A90E2" d="M7.2 13.9c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7l-2.9-2.2C3.8 9.2 3.5 10.2 3.5 11.2s.3 2 .8 2.9l2.9-2.2z"/>
+                  <path fill="#FBBC05" d="M12 6.9c1.3 0 2.4.4 3.3 1.3l2.5-2.5C16.4 4.4 14.4 3.5 12 3.5 8.6 3.5 5.7 5.6 4.3 8.3l2.9 2.2c.6-2.1 2.5-3.6 4.8-3.6z"/>
+                </svg>
+                Continue with Google
+              </Button>
+            </div>
           </motion.div>
 
           {/* Demo accounts info */}
@@ -400,39 +414,56 @@ export default function LoginPage() {
             transition={{ delay: 0.3 }}
             className="mt-8 rounded-xl border border-border bg-muted/50 p-4"
           >
-            <p className="text-xs font-medium text-muted-foreground">Demo Accounts:</p>
-            <div className="mt-2 space-y-2">
-              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-background p-2.5">
-                <div className="space-y-0.5">
-                  <p className="text-xs font-medium text-foreground">Creator (On Ambassador Path)</p>
-                  <p className="text-xs text-muted-foreground font-mono">creator@test.com</p>
-                </div>
-                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('creator@test.com')}>
-                  Use
-                </Button>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 p-2.5">
-                <div className="space-y-0.5">
-                  <p className="text-xs font-medium text-foreground">Ambassador (Active)</p>
-                  <p className="text-xs text-muted-foreground font-mono">ambassador@test.com</p>
-                </div>
-                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary" onClick={() => applyDemoCredentials('ambassador@test.com')}>
-                  Use
-                </Button>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-background p-2.5">
-                <div className="space-y-0.5">
-                  <p className="text-xs font-medium text-foreground">Brand</p>
-                  <p className="text-xs text-muted-foreground font-mono">brand@test.com</p>
-                </div>
-                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('brand@test.com')}>
-                  Use
-                </Button>
-              </div>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-medium text-muted-foreground">Demo Accounts</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setShowDemoAccounts((current) => !current)}
+                aria-expanded={showDemoAccounts}
+              >
+                {showDemoAccounts ? 'Hide' : 'Show'}
+                {showDemoAccounts ? <ChevronUp className="ml-1 h-3.5 w-3.5" /> : <ChevronDown className="ml-1 h-3.5 w-3.5" />}
+              </Button>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Password: <span className="font-mono">any password</span>
-            </p>
+            {showDemoAccounts && (
+              <>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center justify-between rounded-lg border border-border/60 bg-background p-2.5">
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-medium text-foreground">Creator (On Ambassador Path)</p>
+                      <p className="text-xs text-muted-foreground font-mono">creator@test.com</p>
+                    </div>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('creator@test.com')}>
+                      Use
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 p-2.5">
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-medium text-foreground">Ambassador (Active)</p>
+                      <p className="text-xs text-muted-foreground font-mono">ambassador@test.com</p>
+                    </div>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary" onClick={() => applyDemoCredentials('ambassador@test.com')}>
+                      Use
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-border/60 bg-background p-2.5">
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-medium text-foreground">Brand</p>
+                      <p className="text-xs text-muted-foreground font-mono">brand@test.com</p>
+                    </div>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('brand@test.com')}>
+                      Use
+                    </Button>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Password: <span className="font-mono">any password</span>
+                </p>
+              </>
+            )}
           </motion.div>
         </div>
       </div>
