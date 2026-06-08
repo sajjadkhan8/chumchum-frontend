@@ -442,19 +442,9 @@ function BrandSettingsPageContent() {
                     disabled={isUploadingLogo}
                     onChange={(event) => void uploadLogo(event.target.files?.[0])}
                   />
-	                </div>
-                  <Button onClick={handleBillingSave} disabled={isSaving} className="w-full">
-                    {isSaving ? (
-                      "Saving..."
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Billing Settings
-                      </>
-                    )}
-                  </Button>
-	              </CardContent>
-	            </Card>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Company Info */}
             <Card>

@@ -18,6 +18,7 @@ import {
   User,
   Wallet,
   Menu,
+  Megaphone,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,6 +48,13 @@ const navGroups: NavGroup[] = [
     items: [
       { href: '/creator/packages', label: 'All Packages', icon: Layers },
       { href: '/creator/packages/new', label: 'Create Package', icon: Package },
+    ],
+  },
+  {
+    title: 'Offers',
+    items: [
+      { href: '/creator/offers', label: 'Discover Offers', icon: Megaphone },
+      { href: '/creator/offers/reactions', label: 'My Reactions' },
     ],
   },
   {

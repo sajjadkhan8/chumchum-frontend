@@ -289,7 +289,7 @@ export default function BrandDashboardPage() {
                 className="h-auto min-h-20 flex-col py-4"
                 asChild
               >
-                <Link href="/brand/saved">
+                <Link href="/brand/explore?view=saved">
                   <Star className="mb-2 h-5 w-5" />
                   <span className="text-xs">Saved</span>
                 </Link>
@@ -312,7 +312,7 @@ export default function BrandDashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Saved Creators</CardTitle>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/brand/saved">View All</Link>
+                <Link href="/brand/explore?view=saved">View All</Link>
               </Button>
             </CardHeader>
             <CardContent>

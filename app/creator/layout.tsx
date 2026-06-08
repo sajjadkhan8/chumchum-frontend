@@ -14,6 +14,7 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
 
   const isProtectedCreatorRoute =
     pathname.startsWith('/creator/dashboard') ||
+    pathname.startsWith('/creator/offers') ||
     pathname.startsWith('/creator/orders') ||
     pathname.startsWith('/creator/earnings') ||
     pathname.startsWith('/creator/payments') ||

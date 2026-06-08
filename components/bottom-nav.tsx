@@ -27,7 +27,7 @@ export function BottomNav() {
 
   const creatorNavItems: NavItem[] = [
     { href: '/creator/dashboard', icon: Home, label: 'Home' },
-    { href: '/creator/packages', icon: Search, label: 'Explore' },
+    { href: '/creator/offers', icon: Search, label: 'Offers' },
     { href: '/creator/messages', icon: MessageCircle, label: 'Messages' },
     { href: '/creator/orders', icon: ShoppingBag, label: 'Orders' },
     { href: '/creator/settings', icon: User, label: 'Profile' },
@@ -35,7 +35,7 @@ export function BottomNav() {
 
   const brandNavItems: NavItem[] = [
     { href: '/brand/dashboard', icon: Home, label: 'Home' },
-    { href: '/brand/explore', icon: Search, label: 'Explore' },
+    { href: '/brand/offers', icon: Search, label: 'Offers' },
     { href: '/brand/orders', icon: ShoppingBag, label: 'Orders' },
     { href: '/brand/messages', icon: MessageCircle, label: 'Messages' },
     { href: '/brand/settings', icon: User, label: 'Profile' },

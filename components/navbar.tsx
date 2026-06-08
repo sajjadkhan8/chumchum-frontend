@@ -23,6 +23,7 @@ import { useTheme } from 'next-themes';
 import { ZingZingLogo } from '@/src/components/ZingZingLogo';
 import { messagesService } from '@/services/messages.service';
 import { ordersService } from '@/services/orders.service';
+import { notificationsService } from '@/services/notifications.service';
 import type { Order } from '@/types';
 
 interface NavbarProps {
@@ -49,6 +50,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [notifications, setNotifications] = useState<NavNotification[]>([]);
   const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>([]);
+  const [offerNotifCount, setOfferNotifCount] = useState(0);
   const { resolvedTheme, setTheme } = useTheme();
   const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
   const isSignedIn = hasHydrated && isAuthenticated && !!user;
@@ -95,6 +97,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     if (!isSignedIn || !user || isAdmin) {
       setUnreadMessageCount(0);
       setNotifications([]);
+      setOfferNotifCount(0);
       return;
     }
 
@@ -116,9 +119,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
 
     const loadNavSignals = async () => {
       try {
-        const [conversationResult, ordersResult] = await Promise.allSettled([
+        const [conversationResult, ordersResult, offerNotifResult] = await Promise.allSettled([
           messagesService.getConversations(user.id, user.role as 'creator' | 'brand'),
           ordersService.getAll(),
+          notificationsService.getUnreadCount(),
         ]);
 
         if (cancelled) return;
@@ -128,6 +132,12 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
           setUnreadMessageCount(unread);
         } else {
           setUnreadMessageCount(0);
+        }
+
+        if (offerNotifResult.status === 'fulfilled') {
+          setOfferNotifCount(offerNotifResult.value);
+        } else {
+          setOfferNotifCount(0);
         }
 
         if (ordersResult.status === 'fulfilled') {
@@ -152,6 +162,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
         if (!cancelled) {
           setUnreadMessageCount(0);
           setNotifications([]);
+          setOfferNotifCount(0);
         }
       }
     };
@@ -184,6 +195,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
 
   const creatorNavLinks = [
     { href: '/creator/dashboard', label: 'Dashboard' },
+    { href: '/creator/offers', label: 'Offers' },
     { href: '/creator/packages', label: 'My Packages' },
     { href: '/creator/ambassador-program', label: '👑 Ambassador Program' },
     { href: '/creator/orders', label: 'Orders' },
@@ -192,11 +204,11 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
 
   const brandNavLinks = [
     { href: '/brand/dashboard', label: 'Dashboard' },
+    { href: '/brand/offers', label: 'Offers' },
     { href: '/brand/ambassadors', label: 'Platform Ambassadors' },
-    { href: '/brand/explore', label: 'All Creators' },
+    { href: '/brand/explore', label: 'Creators' },
     { href: '/brand/orders', label: 'Orders' },
     { href: '/brand/payments', label: 'Payments' },
-    { href: '/brand/saved', label: 'Saved Creators' },
   ];
   const adminNavLinks = [
     { href: '/admin/dashboard', label: 'Dashboard' },
@@ -217,21 +229,23 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     : isCreator
     ? [
         { href: '/creator/profile/public', label: 'My Profile', icon: User },
+        { href: '/creator/offers', label: 'Offers', icon: BriefcaseBusiness },
         { href: '/creator/packages', label: 'My Packages', icon: Package },
         { href: '/creator/payments?tab=withdraw', label: 'Payments', icon: Wallet },
         { href: '/creator/settings/preferences', label: 'Settings', icon: User },
       ]
     : [
         { href: '/brand/settings?tab=profile', label: 'Company Profile', icon: Building2 },
+        { href: '/brand/offers', label: 'Offers', icon: BriefcaseBusiness },
         { href: '/brand/payments', label: 'Payments', icon: Wallet },
-        { href: '/brand/saved', label: 'Saved Creators', icon: Bookmark },
+        { href: '/brand/explore?view=saved', label: 'Saved Creators', icon: Bookmark },
         { href: '/brand/orders', label: 'Orders', icon: BriefcaseBusiness },
         { href: '/brand/settings?tab=notifications', label: 'Settings', icon: User },
       ];
 
   const messagesLink = isSignedIn && !isAdmin ? `/${user.role}/messages` : '/messages';
   const unseenNotifications = notifications.filter((item) => !seenNotificationIds.includes(item.id));
-  const notificationCount = unseenNotifications.length;
+  const notificationCount = unseenNotifications.length + offerNotifCount;
 
   const persistSeenNotificationIds = (next: string[]) => {
     if (!mounted || !user) return;
@@ -377,8 +391,8 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                       )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link href={user.role === 'creator' ? '/creator/orders' : '/brand/orders'} className="justify-center text-sm font-medium text-primary">
-                          View all updates
+                        <Link href={user.role === 'creator' ? '/creator/notifications' : '/brand/notifications'} className="justify-center text-sm font-medium text-primary">
+                          View all notifications
                         </Link>
                       </DropdownMenuItem>
                     </DropdownMenuContent>

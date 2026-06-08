@@ -206,6 +206,55 @@ export interface Brand {
   activeOrders: number;
 }
 
+export type BrandOfferStatus = 'draft' | 'published' | 'paused' | 'closed' | 'archived';
+export type BrandOfferReactionType = 'interested' | 'proposal' | 'question' | 'decline';
+export type BrandOfferReactionStatus = 'submitted' | 'shortlisted' | 'in_review' | 'accepted' | 'rejected' | 'withdrawn';
+
+export interface BrandOffer {
+  id: string;
+  brandId: string;
+  brandName: string;
+  title: string;
+  brief: string;
+  offerType: string;
+  budgetMin: number;
+  budgetMax: number;
+  currency: string;
+  deliverables?: string;
+  requirements?: string;
+  deadlineDate?: string;
+  targetCity?: string;
+  targetLanguage?: string;
+  minFollowers?: number;
+  minEngagementRate?: number;
+  status: BrandOfferStatus;
+  publishedAt?: Date;
+  closedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  reactionCount: number;
+}
+
+export interface BrandOfferReaction {
+  id: string;
+  offerId: string;
+  offerTitle?: string;
+  brandName?: string;
+  creatorId: string;
+  creatorName: string;
+  creatorAvatar?: string;
+  reactionType: BrandOfferReactionType;
+  status: BrandOfferReactionStatus;
+  message?: string;
+  proposedPrice?: number;
+  proposedCurrency?: string;
+  proposedDeliveryDays?: number;
+  brandNote?: string;
+  creatorNote?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Message Types
 export interface Message {
   id: string;
