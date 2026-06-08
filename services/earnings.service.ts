@@ -32,6 +32,7 @@ export interface PayoutMethod {
   type: Lowercase<PayoutMethodType> | PayoutMethodType | string;
   name: string;
   accountDetails: string;
+  bankName?: string | null;
   isDefault: boolean;
   createdAt: string;
 }
@@ -63,6 +64,7 @@ export interface CreatePayoutMethodRequest {
   type: PayoutMethodType;
   name: string;
   accountDetails: string;
+  bankName?: string;
   isDefault?: boolean;
 }
 
@@ -92,6 +94,7 @@ export const earningsService = {
       type: payload.type,
       name: payload.name,
       accountDetails: payload.accountDetails,
+      bankName: payload.bankName,
       isDefault: Boolean(payload.isDefault),
     });
   },

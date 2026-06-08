@@ -1,4 +1,5 @@
 import { ApiError, apiClient } from '@/lib/api/client';
+import { useAuthStore } from '@/store/auth-store';
 
 export type CreatorPayoutSchedule = 'weekly' | 'biweekly' | 'monthly' | 'manual';
 
@@ -9,6 +10,8 @@ export interface CreatorPayoutPreferences {
   accountHolderName: string;
   ntnNumber: string;
   cnicLast4: string;
+  earningsNotificationsEnabled: boolean;
+  weeklyDigestEnabled: boolean;
 }
 
 export type BrandPaymentMethodType =
@@ -77,6 +80,8 @@ const defaultCreatorPreferences: CreatorPayoutPreferences = {
   accountHolderName: '',
   ntnNumber: '',
   cnicLast4: '',
+  earningsNotificationsEnabled: true,
+  weeklyDigestEnabled: false,
 };
 
 const localBrandSeed: BrandPaymentsHub = {
@@ -176,6 +181,13 @@ const saveLocalBrandPayments = (payload: BrandPaymentsHub) => {
 const shouldUseBrandFallback = (error: unknown) =>
   error instanceof ApiError && [400, 403, 404, 405, 501].includes(error.status);
 
+const getCurrentBrandId = (): string | undefined => {
+  const { user, brandProfile } = useAuthStore.getState();
+  if (brandProfile?.id) return brandProfile.id;
+  if (user?.role === 'brand') return user.id;
+  return undefined;
+};
+
 export interface CreateBrandPaymentMethodInput {
   type: BrandPaymentMethodType;
   label: string;
@@ -219,13 +231,16 @@ export const paymentsService = {
   },
 
   async getBrandPaymentsHub(): Promise<BrandPaymentsHub> {
+    const brandId = getCurrentBrandId();
+    const query = brandId ? { brandId } : undefined;
+
     try {
       const [summary, methods, invoices, disbursements, controls] = await Promise.all([
-        apiClient.get<BrandPaymentSummary>('/api/v1/brands/me/payments/summary'),
+        apiClient.get<BrandPaymentSummary>('/api/v1/brands/me/payments/summary', { query }),
         apiClient.get<BrandPaymentMethod[]>('/api/v1/brands/me/payments/methods'),
         apiClient.get<BrandInvoice[]>('/api/v1/brands/me/payments/invoices'),
         apiClient.get<BrandDisbursement[]>('/api/v1/brands/me/payments/disbursements'),
-        apiClient.get<BrandPayoutControls>('/api/v1/brands/me/payments/controls'),
+        apiClient.get<BrandPayoutControls>('/api/v1/brands/me/payments/controls', { query }),
       ]);
 
       return { summary, methods, invoices, disbursements, controls };
@@ -297,8 +312,11 @@ export const paymentsService = {
   },
 
   async updateBrandPayoutControls(payload: BrandPayoutControls): Promise<BrandPayoutControls> {
+    const brandId = getCurrentBrandId();
+    const query = brandId ? { brandId } : undefined;
+
     try {
-      return await apiClient.patch<BrandPayoutControls>('/api/v1/brands/me/payments/controls', payload);
+      return await apiClient.patch<BrandPayoutControls>('/api/v1/brands/me/payments/controls', payload, { query });
     } catch (error) {
       if (!shouldUseBrandFallback(error)) throw error;
       const state = loadLocalBrandPayments();

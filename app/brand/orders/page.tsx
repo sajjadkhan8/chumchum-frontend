@@ -509,7 +509,7 @@ export default function BrandOrdersPage() {
 
                         <div className="mt-4 flex gap-2">
                           <Button variant="outline" className="flex-1" asChild>
-                            <Link href={`/messages?creator=${order.creatorId}`}>
+                            <Link href={`/brand/messages?creator=${order.creatorId}`}>
                               <MessageCircle className="mr-2 h-4 w-4" />
                               Message
                             </Link>

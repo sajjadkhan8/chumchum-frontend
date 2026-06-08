@@ -194,7 +194,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     { href: '/brand/dashboard', label: 'Dashboard' },
     { href: '/brand/ambassadors', label: 'Platform Ambassadors' },
     { href: '/brand/explore', label: 'All Creators' },
-    { href: '/brand/orders', label: 'Campaigns' },
+    { href: '/brand/orders', label: 'Orders' },
     { href: '/brand/payments', label: 'Payments' },
     { href: '/brand/saved', label: 'Saved Creators' },
   ];
@@ -225,7 +225,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
         { href: '/brand/settings?tab=profile', label: 'Company Profile', icon: Building2 },
         { href: '/brand/payments', label: 'Payments', icon: Wallet },
         { href: '/brand/saved', label: 'Saved Creators', icon: Bookmark },
-        { href: '/brand/orders', label: 'Campaigns', icon: BriefcaseBusiness },
+        { href: '/brand/orders', label: 'Orders', icon: BriefcaseBusiness },
         { href: '/brand/settings?tab=notifications', label: 'Settings', icon: User },
       ];
 

@@ -121,7 +121,7 @@ export default function CreatorProfilePage({
 
   const isSaved = savedCreators.includes(creator.id);
   const canHireCreator = !user || user.role === 'brand';
-  const creatorMessagePath = `/messages?creator=${creator.id}`;
+  const creatorMessagePath = `/brand/messages?creator=${creator.id}`;
   const creatorMessageHref = user
     ? creatorMessagePath
     : `/login?next=${encodeURIComponent(creatorMessagePath)}`;

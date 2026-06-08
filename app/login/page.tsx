@@ -40,6 +40,7 @@ export default function LoginPage() {
   const [otpSent, setOtpSent] = useState(false);
   const [googleRole, setGoogleRole] = useState<UserRole>('creator');
   const [showDemoAccounts, setShowDemoAccounts] = useState(false);
+  const [activeDemoEmail, setActiveDemoEmail] = useState('');
 
   // Redirect already-authenticated users to their dashboard
   useEffect(() => {
@@ -56,9 +57,15 @@ export default function LoginPage() {
   }
 
   const applyDemoCredentials = (demoEmail: string) => {
+    // Always route demo users to the email form and clear phone-login leftovers.
     setAuthMethod('email');
+    setPhone('');
+    setOtp('');
+    setOtpSent(false);
     setEmail(demoEmail);
-    setPassword('demo12345');
+    setPassword('password');
+    setActiveDemoEmail(demoEmail);
+    toast.success('Demo credentials applied');
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -192,27 +199,6 @@ export default function LoginPage() {
             <p className="mt-2 text-muted-foreground">
               Sign in to your account to continue
             </p>
-
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                variant={googleRole === 'creator' ? 'default' : 'outline'}
-                className="rounded-full"
-                onClick={() => setGoogleRole('creator')}
-                disabled={isLoading}
-              >
-                Creator
-              </Button>
-              <Button
-                type="button"
-                variant={googleRole === 'brand' ? 'default' : 'outline'}
-                className="rounded-full"
-                onClick={() => setGoogleRole('brand')}
-                disabled={isLoading}
-              >
-                Brand
-              </Button>
-            </div>
           </motion.div>
 
           <motion.div
@@ -389,6 +375,29 @@ export default function LoginPage() {
                 <span>or continue with</span>
                 <div className="h-px flex-1 bg-border" />
               </div>
+              <div className="mb-3 space-y-2">
+                <p className="text-xs text-muted-foreground">Continue with Google as:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant={googleRole === 'creator' ? 'default' : 'outline'}
+                    className="rounded-full"
+                    onClick={() => setGoogleRole('creator')}
+                    disabled={isLoading}
+                  >
+                    Creator
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={googleRole === 'brand' ? 'default' : 'outline'}
+                    className="rounded-full"
+                    onClick={() => setGoogleRole('brand')}
+                    disabled={isLoading}
+                  >
+                    Brand
+                  </Button>
+                </div>
+              </div>
               <Button
                 type="button"
                 variant="outline"
@@ -431,36 +440,57 @@ export default function LoginPage() {
             {showDemoAccounts && (
               <>
                 <div className="mt-2 space-y-2">
-                  <div className="flex items-center justify-between rounded-lg border border-border/60 bg-background p-2.5">
+                  <div className={`flex items-center justify-between rounded-lg border p-2.5 ${activeDemoEmail === 'ali.rehmani@chumchum.pk' ? 'border-primary/30 bg-primary/5' : 'border-border/60 bg-background'}`}>
                     <div className="space-y-0.5">
-                      <p className="text-xs font-medium text-foreground">Creator (On Ambassador Path)</p>
-                      <p className="text-xs text-muted-foreground font-mono">creator@test.com</p>
+                      <p className="text-xs font-medium text-foreground">
+                        Creator (On Ambassador Path)
+                        {activeDemoEmail === 'ali.rehmani@chumchum.pk' && <span className="ml-2 text-primary">Active</span>}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-mono">ali.rehmani@chumchum.pk</p>
                     </div>
-                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('creator@test.com')}>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('ali.rehmani@chumchum.pk')}>
                       Use
                     </Button>
                   </div>
-                  <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 p-2.5">
+                  <div className={`flex items-center justify-between rounded-lg border p-2.5 ${activeDemoEmail === 'ambassador@test.com' ? 'border-primary/30 bg-primary/5' : 'border-border/60 bg-background'}`}>
                     <div className="space-y-0.5">
-                      <p className="text-xs font-medium text-foreground">Ambassador (Active)</p>
+                      <p className="text-xs font-medium text-foreground">
+                        Ambassador
+                        {activeDemoEmail === 'ambassador@test.com' && <span className="ml-2 text-primary">Active</span>}
+                      </p>
                       <p className="text-xs text-muted-foreground font-mono">ambassador@test.com</p>
                     </div>
-                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary" onClick={() => applyDemoCredentials('ambassador@test.com')}>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('ambassador@test.com')}>
                       Use
                     </Button>
                   </div>
-                  <div className="flex items-center justify-between rounded-lg border border-border/60 bg-background p-2.5">
+                  <div className={`flex items-center justify-between rounded-lg border p-2.5 ${activeDemoEmail === 'influencer@foodpanda.pk' ? 'border-primary/30 bg-primary/5' : 'border-border/60 bg-background'}`}>
                     <div className="space-y-0.5">
-                      <p className="text-xs font-medium text-foreground">Brand</p>
-                      <p className="text-xs text-muted-foreground font-mono">brand@test.com</p>
+                      <p className="text-xs font-medium text-foreground">
+                        Brand
+                        {activeDemoEmail === 'influencer@foodpanda.pk' && <span className="ml-2 text-primary">Active</span>}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-mono">influencer@foodpanda.pk</p>
                     </div>
-                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('brand@test.com')}>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('influencer@foodpanda.pk')}>
+                      Use
+                    </Button>
+                  </div>
+                  <div className={`flex items-center justify-between rounded-lg border p-2.5 ${activeDemoEmail === 'ops@chumchum.pk' ? 'border-primary/30 bg-primary/5' : 'border-border/60 bg-background'}`}>
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-medium text-foreground">
+                        Admin
+                        {activeDemoEmail === 'ops@chumchum.pk' && <span className="ml-2 text-primary">Active</span>}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-mono">ops@chumchum.pk</p>
+                    </div>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('ops@chumchum.pk')}>
                       Use
                     </Button>
                   </div>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Password: <span className="font-mono">any password</span>
+                  Password: <span className="font-mono">password</span>
                 </p>
               </>
             )}
