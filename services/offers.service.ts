@@ -18,12 +18,22 @@ interface BackendBrandOffer {
   budgetMax: number;
   currency?: string;
   deliverables?: string;
+  contentFormats?: string;
+  targetPlatforms?: string;
+  categories?: string;
+  niches?: string;
+  tags?: string;
   requirements?: string;
+  referenceUrls?: string;
+  coverImageUrl?: string;
   deadlineDate?: string;
   targetCity?: string;
   targetLanguage?: string;
   minFollowers?: number;
   minEngagementRate?: number;
+  preferredDeliveryDays?: number;
+  slots?: number;
+  visibility?: 'public' | 'private';
   status: string;
   publishedAt?: string;
   closedAt?: string;
@@ -87,12 +97,22 @@ const mapOffer = (input: BackendBrandOffer): BrandOffer => ({
   budgetMax: input.budgetMax,
   currency: input.currency || 'PKR',
   deliverables: input.deliverables,
+  contentFormats: input.contentFormats,
+  targetPlatforms: input.targetPlatforms,
+  categories: input.categories,
+  niches: input.niches,
+  tags: input.tags,
   requirements: input.requirements,
+  referenceUrls: input.referenceUrls,
+  coverImageUrl: input.coverImageUrl,
   deadlineDate: input.deadlineDate,
   targetCity: input.targetCity,
   targetLanguage: input.targetLanguage,
   minFollowers: input.minFollowers,
   minEngagementRate: input.minEngagementRate,
+  preferredDeliveryDays: input.preferredDeliveryDays,
+  slots: input.slots,
+  visibility: input.visibility || 'public',
   status: normalizeOfferStatus(input.status),
   publishedAt: toDate(input.publishedAt),
   closedAt: toDate(input.closedAt),
@@ -130,12 +150,22 @@ export const offersService = {
     budgetMax: number;
     currency?: string;
     deliverables?: string;
+    contentFormats?: string;
+    targetPlatforms?: string;
+    categories?: string;
+    niches?: string;
+    tags?: string;
     requirements?: string;
+    referenceUrls?: string;
+    coverImageUrl?: string;
     deadlineDate?: string;
     targetCity?: string;
     targetLanguage?: string;
     minFollowers?: number;
     minEngagementRate?: number;
+    preferredDeliveryDays?: number;
+    slots?: number;
+    visibility?: 'public' | 'private';
   }): Promise<BrandOffer> {
     const response = await apiClient.post<BackendBrandOffer>('/api/v1/brand/offers', payload);
     return mapOffer(response);
@@ -149,12 +179,22 @@ export const offersService = {
     budgetMax: number;
     currency: string;
     deliverables: string;
+    contentFormats: string;
+    targetPlatforms: string;
+    categories: string;
+    niches: string;
+    tags: string;
     requirements: string;
+    referenceUrls: string;
+    coverImageUrl: string;
     deadlineDate: string;
     targetCity: string;
     targetLanguage: string;
     minFollowers: number;
     minEngagementRate: number;
+    preferredDeliveryDays: number;
+    slots: number;
+    visibility: 'public' | 'private';
   }>): Promise<BrandOffer> {
     const response = await apiClient.patch<BackendBrandOffer>(`/api/v1/brand/offers/${offerId}`, payload);
     return mapOffer(response);
@@ -180,9 +220,26 @@ export const offersService = {
     return mapOffer(response);
   },
 
-  async getOfferReactions(offerId: string): Promise<BrandOfferReaction[]> {
-    const response = await apiClient.get<BackendOfferReaction[]>(`/api/v1/brand/offers/${offerId}/reactions`);
-    return (Array.isArray(response) ? response : []).map(mapReaction);
+  async getOfferReactions(offerId: string, filters?: {
+    status?: string;
+    reactionType?: string;
+    page?: number;
+    size?: number;
+  }): Promise<{ content: BrandOfferReaction[]; totalElements: number; totalPages: number; last: boolean }> {
+    const response = await apiClient.get<{ content: BackendOfferReaction[]; totalElements: number; totalPages: number; last: boolean }>(`/api/v1/brand/offers/${offerId}/reactions`, {
+      query: {
+        status: filters?.status,
+        reactionType: filters?.reactionType,
+        page: filters?.page ?? 0,
+        size: filters?.size ?? 20,
+      },
+    });
+    return {
+      content: (response.content || []).map(mapReaction),
+      totalElements: response.totalElements || 0,
+      totalPages: response.totalPages || 1,
+      last: response.last ?? true,
+    };
   },
 
   async actionReaction(offerId: string, reactionId: string, action: 'SHORTLIST' | 'REVIEW' | 'ACCEPT' | 'REJECT', brandNote?: string): Promise<BrandOfferReaction> {
@@ -193,15 +250,36 @@ export const offersService = {
     return mapReaction(response);
   },
 
-  async getCreatorOfferFeed(filters?: { search?: string; city?: string; offerType?: string }): Promise<BrandOffer[]> {
-    const response = await apiClient.get<BackendBrandOffer[]>('/api/v1/creator/offers', {
+  async getCreatorOfferFeed(filters?: {
+    search?: string;
+    city?: string;
+    offerType?: string;
+    platform?: string;
+    budgetMin?: number;
+    budgetMax?: number;
+    myFollowers?: number;
+    page?: number;
+    size?: number;
+  }): Promise<{ content: BrandOffer[]; totalElements: number; totalPages: number; last: boolean }> {
+    const response = await apiClient.get<{ content: BackendBrandOffer[]; totalElements: number; totalPages: number; last: boolean }>('/api/v1/creator/offers', {
       query: {
         search: filters?.search,
         city: filters?.city,
         offerType: filters?.offerType,
+        platform: filters?.platform,
+        budgetMin: filters?.budgetMin,
+        budgetMax: filters?.budgetMax,
+        myFollowers: filters?.myFollowers,
+        page: filters?.page ?? 0,
+        size: filters?.size ?? 20,
       },
     });
-    return (Array.isArray(response) ? response : []).map(mapOffer);
+    return {
+      content: (response.content || []).map(mapOffer),
+      totalElements: response.totalElements || 0,
+      totalPages: response.totalPages || 1,
+      last: response.last ?? true,
+    };
   },
 
   async getCreatorOffer(offerId: string): Promise<BrandOffer> {

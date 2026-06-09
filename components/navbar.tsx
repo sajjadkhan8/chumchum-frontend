@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Menu, Bell, MessageCircle, User, LogOut, Package, Wallet, Bookmark, Building2, BriefcaseBusiness, Moon, Sun, Shield } from 'lucide-react';
+import { Search, Menu, Bell, MessageCircle, User, LogOut, Package, Bookmark, Building2, Moon, Sun, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -223,23 +223,17 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const profileMenu = isAdmin
     ? [
         { href: '/admin/dashboard', label: 'Admin Dashboard', icon: Shield },
-        { href: '/admin/payments', label: 'Payments Audit', icon: Wallet },
         { href: '/admin/users', label: 'User Moderation', icon: User },
       ]
     : isCreator
     ? [
         { href: '/creator/profile/public', label: 'My Profile', icon: User },
-        { href: '/creator/offers', label: 'Offers', icon: BriefcaseBusiness },
         { href: '/creator/packages', label: 'My Packages', icon: Package },
-        { href: '/creator/payments?tab=withdraw', label: 'Payments', icon: Wallet },
         { href: '/creator/settings/preferences', label: 'Settings', icon: User },
       ]
     : [
         { href: '/brand/settings?tab=profile', label: 'Company Profile', icon: Building2 },
-        { href: '/brand/offers', label: 'Offers', icon: BriefcaseBusiness },
-        { href: '/brand/payments', label: 'Payments', icon: Wallet },
         { href: '/brand/explore?view=saved', label: 'Saved Creators', icon: Bookmark },
-        { href: '/brand/orders', label: 'Orders', icon: BriefcaseBusiness },
         { href: '/brand/settings?tab=notifications', label: 'Settings', icon: User },
       ];
 

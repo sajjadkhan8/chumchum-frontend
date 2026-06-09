@@ -129,9 +129,13 @@ export default function BrandOfferDetailPage() {
           <CardContent className="space-y-3 text-sm">
             <p>{offer.brief}</p>
             <p><span className="font-medium">Budget:</span> {formatPrice(offer.budgetMin)} – {formatPrice(offer.budgetMax)} {offer.currency}</p>
+            {offer.targetPlatforms ? <p><span className="font-medium">Platforms:</span> {offer.targetPlatforms}</p> : null}
+            {offer.contentFormats ? <p><span className="font-medium">Formats:</span> {offer.contentFormats}</p> : null}
             {offer.deadlineDate ? <p><span className="font-medium">Deadline:</span> {offer.deadlineDate}</p> : null}
             {offer.deliverables ? <p><span className="font-medium">Deliverables:</span> {offer.deliverables}</p> : null}
             {offer.requirements ? <p><span className="font-medium">Requirements:</span> {offer.requirements}</p> : null}
+            {offer.tags ? <p><span className="font-medium">Tags:</span> {offer.tags}</p> : null}
+            {offer.referenceUrls ? <p><span className="font-medium">References:</span> {offer.referenceUrls}</p> : null}
             {offer.minFollowers ? <p><span className="font-medium">Min followers:</span> {offer.minFollowers.toLocaleString()}</p> : null}
             <p><span className="font-medium">Target:</span> {offer.targetCity || 'Any city'} • {offer.targetLanguage || 'Any language'}</p>
           </CardContent>

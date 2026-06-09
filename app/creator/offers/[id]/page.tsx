@@ -39,6 +39,8 @@ export default function CreatorOfferDetailPage() {
         <CardContent className="space-y-3 text-sm">
           <p>{offer.brief}</p>
           <p><span className="font-medium">Budget:</span> {formatPrice(offer.budgetMin)} - {formatPrice(offer.budgetMax)} {offer.currency}</p>
+          {offer.targetPlatforms ? <p><span className="font-medium">Platforms:</span> {offer.targetPlatforms}</p> : null}
+          {offer.contentFormats ? <p><span className="font-medium">Formats:</span> {offer.contentFormats}</p> : null}
           {offer.deliverables ? <p><span className="font-medium">Deliverables:</span> {offer.deliverables}</p> : null}
           {offer.requirements ? <p><span className="font-medium">Requirements:</span> {offer.requirements}</p> : null}
           <p><span className="font-medium">Target:</span> {offer.targetCity || 'Any city'} • {offer.targetLanguage || 'Any language'}</p>

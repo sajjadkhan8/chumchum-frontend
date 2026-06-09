@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 
 const OFFER_TYPES = ['UGC', 'POST', 'REEL', 'STORY', 'BUNDLE', 'Custom'];
 const CITIES = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'];
+const PLATFORMS = ['instagram', 'youtube', 'tiktok', 'facebook', 'snapchat'];
 
 export default function CreatorOffersPage() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function CreatorOffersPage() {
   const [search, setSearch] = useState('');
   const [city, setCity] = useState('');
   const [offerType, setOfferType] = useState('');
+  const [platform, setPlatform] = useState('');
   const [budgetMin, setBudgetMin] = useState('');
   const [budgetMax, setBudgetMax] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -50,35 +52,43 @@ export default function CreatorOffersPage() {
   const loadOffers = useCallback(async (nextPage = 0, append = false) => {
     setIsLoading(true);
     try {
-      const result = await offersService.getCreatorOfferFeed({
+      const feedFilters: any = {
         search: search.trim() || undefined,
         city: city || undefined,
         offerType: offerType || undefined,
+        platform: platform || undefined,
         budgetMin: budgetMin ? Number(budgetMin) : undefined,
         budgetMax: budgetMax ? Number(budgetMax) : undefined,
         page: nextPage,
         size: 20,
-      });
-      setOffers(append ? (prev) => [...prev, ...result.content] : result.content);
-      setTotalPages(result.totalPages);
-      setTotalElements(result.totalElements);
+      };
+
+      const result = await offersService.getCreatorOfferFeed(feedFilters);
+      const normalized = Array.isArray(result)
+        ? { content: result, totalElements: result.length, totalPages: 1, last: true }
+        : result;
+
+      setOffers(append ? (prev) => [...prev, ...normalized.content] : normalized.content);
+      setTotalPages(normalized.totalPages);
+      setTotalElements(normalized.totalElements);
       setPage(nextPage);
     } catch {
       toast.error('Failed to load offers');
     } finally {
       setIsLoading(false);
     }
-  }, [search, city, offerType, budgetMin, budgetMax]);
+  }, [search, city, offerType, platform, budgetMin, budgetMax]);
 
   useEffect(() => {
     void loadOffers(0);
   }, [loadOffers]);
 
-  const activeFilterCount = [city, offerType, budgetMin, budgetMax].filter(Boolean).length;
+  const activeFilterCount = [city, offerType, platform, budgetMin, budgetMax].filter(Boolean).length;
 
   const clearFilters = () => {
     setCity('');
     setOfferType('');
+    setPlatform('');
     setBudgetMin('');
     setBudgetMax('');
   };
@@ -155,7 +165,7 @@ export default function CreatorOffersPage() {
       {showFilters && (
         <Card className="mb-4">
           <CardContent className="pt-4">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               <div className="space-y-1">
                 <Label className="text-xs">City</Label>
                 <Select value={city} onValueChange={setCity}>
@@ -173,6 +183,16 @@ export default function CreatorOffersPage() {
                   <SelectContent>
                     <SelectItem value="">Any type</SelectItem>
                     {OFFER_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Platform</Label>
+                <Select value={platform} onValueChange={setPlatform}>
+                  <SelectTrigger><SelectValue placeholder="Any platform" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Any platform</SelectItem>
+                    {PLATFORMS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -217,6 +237,8 @@ export default function CreatorOffersPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="line-clamp-2 text-sm text-muted-foreground">{offer.brief}</p>
+                  {offer.targetPlatforms ? <p className="text-xs text-muted-foreground">Platforms: {offer.targetPlatforms}</p> : null}
+                  {offer.contentFormats ? <p className="text-xs text-muted-foreground">Formats: {offer.contentFormats}</p> : null}
                   <p className="text-sm font-medium text-primary">
                     {formatPrice(offer.budgetMin)} – {formatPrice(offer.budgetMax)} {offer.currency}
                   </p>

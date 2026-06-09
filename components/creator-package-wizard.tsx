@@ -262,7 +262,6 @@ interface WizardFormData {
   category: string;
   platform: string;
   niche: string;
-  shortDescription: string;
   fullDescription: string;
   tags: string;
   responseTime: string;
@@ -290,7 +289,6 @@ const defaultForm: WizardFormData = {
   category: "",
   platform: "",
   niche: "",
-  shortDescription: "",
   fullDescription: "",
   tags: "",
   responseTime: "Within 3 hours",
@@ -357,7 +355,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       category: initialPackage.category,
       platform: initialPackage.platform,
       niche: initialPackage.category,
-      shortDescription: initialPackage.shortDescription,
       fullDescription: initialPackage.fullDescription,
       tags: initialPackage.tags.join(", "),
       responseTime: initialPackage.responseTime,
@@ -524,7 +521,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     try {
       const draft = JSON.parse(raw) as {
         currentStep: number;
-        formData: WizardFormData;
+        formData: Partial<WizardFormData>;
         tiers?: PackageTier[];
       };
 
@@ -931,9 +928,9 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       id: mode === "edit" && initialPackage ? initialPackage.id : `cp-${Date.now()}`,
       creatorId: initialPackage?.creatorId || "1",
       title: formData.title,
-      shortDescription: formData.shortDescription || formData.title,
-      description: formData.shortDescription || formData.fullDescription,
-      fullDescription: formData.fullDescription || formData.shortDescription,
+      shortDescription: formData.fullDescription || formData.title,
+      description: formData.fullDescription || formData.title,
+      fullDescription: formData.fullDescription,
       category: formData.category,
       deliverables: resolvedDeliverables,
       deliveryDays: Number(formData.deliveryDays || 0),
@@ -1098,66 +1095,41 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
             <CardHeader>
               <CardTitle>Step 1 - Basic Info</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 p-4 sm:p-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
+            <CardContent className="space-y-5 p-4 sm:p-6">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
                   <Label>Title</Label>
-                  <Input value={formData.title} onChange={(e) => updateField("title", e.target.value)} placeholder="Ramzan Food Reel Bundle" />
+                  <span className="text-xs text-muted-foreground">{formData.title.length}/100</span>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Category</Label>
-                    <span className="text-xs text-muted-foreground">{categoriesList.length}/{MAX_CATEGORIES}</span>
-                  </div>
-                  <div className="rounded-lg border border-border/70 bg-background px-3 py-2 focus-within:border-primary/70 focus-within:ring-1 focus-within:ring-primary/30">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {categoriesList.map((category) => (
-                        <Badge key={category} variant="secondary" className="gap-1 pr-1">
-                          <span>{category}</span>
-                          <button
-                            type="button"
-                            aria-label={`Remove ${category}`}
-                            className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
-                            onClick={() => removeCategory(category)}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                      <input
-                        value={categoryInput}
-                        onChange={(e) => setCategoryInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
-                            if (!categoryInput.trim()) return;
-                            e.preventDefault();
-                            addCategoriesFromRawInput(categoryInput);
-                            return;
-                          }
+                <Input
+                  maxLength={100}
+                  value={formData.title}
+                  onChange={(e) => updateField("title", e.target.value)}
+                  placeholder="Ramzan Food Reel Bundle"
+                />
+              </div>
 
-                          if (e.key === "Backspace" && !categoryInput.trim() && categoriesList.length) {
-                            e.preventDefault();
-                            removeCategory(categoriesList[categoriesList.length - 1]);
-                          }
-                        }}
-                        onBlur={() => addCategoriesFromRawInput(categoryInput)}
-                        onPaste={(e) => {
-                          const pasted = e.clipboardData.getData("text");
-                          if (!pasted.includes(",") && !pasted.includes("\n")) return;
-                          e.preventDefault();
-                          addCategoriesFromRawInput(pasted);
-                        }}
-                        placeholder={categoriesList.length ? "Add another category" : "Type category and press Enter"}
-                        className="min-w-[180px] flex-1 border-0 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground"
-                      />
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground" aria-live="polite">Add up to {MAX_CATEGORIES} categories. Press Enter, comma, or Tab.</p>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label>Description</Label>
+                  <span className="text-xs text-muted-foreground">{formData.fullDescription.length} chars</span>
                 </div>
+                <Textarea
+                  rows={4}
+                  value={formData.fullDescription}
+                  onChange={(e) => updateField("fullDescription", e.target.value)}
+                  placeholder="Add complete package details and collaboration scope"
+                />
               </div>
 
               <div className="space-y-2">
-                <Label>Platform</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Platform</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {formData.platform ? "1/1 selected" : "0/1 selected"}
+                  </span>
+                </div>
+
                 {isLoadingPlatformOptions && (
                   <p className="rounded-lg border border-border/60 p-3 text-sm text-muted-foreground">
                     Loading connected platforms...
@@ -1208,6 +1180,8 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                   })}
                 </div>
 
+                <p className="text-xs text-muted-foreground">Only connected accounts are selectable.</p>
+
                 <div className="rounded-lg border border-dashed border-border/70 p-3 text-sm">
                   <p className="text-muted-foreground">
                     Connected accounts: {connectedPlatforms.length}/{platforms.length}. Connect more platforms to unlock package creation for them.
@@ -1218,117 +1192,161 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Niche</Label>
-                  <span className="text-xs text-muted-foreground">{nichesList.length}/{MAX_NICHES}</span>
-                </div>
-                <div className="rounded-lg border border-border/70 bg-background px-3 py-2 focus-within:border-primary/70 focus-within:ring-1 focus-within:ring-primary/30">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {nichesList.map((niche) => (
-                      <Badge key={niche} variant="secondary" className="gap-1 pr-1">
-                        <span>{niche}</span>
-                        <button
-                          type="button"
-                          aria-label={`Remove ${niche}`}
-                          className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
-                          onClick={() => removeNiche(niche)}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                    <input
-                      value={nicheInput}
-                      onChange={(e) => setNicheInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
-                          if (!nicheInput.trim()) return;
-                          e.preventDefault();
-                          addNichesFromRawInput(nicheInput);
-                          return;
-                        }
-
-                        if (e.key === "Backspace" && !nicheInput.trim() && nichesList.length) {
-                          e.preventDefault();
-                          removeNiche(nichesList[nichesList.length - 1]);
-                        }
-                      }}
-                      onBlur={() => addNichesFromRawInput(nicheInput)}
-                      onPaste={(e) => {
-                        const pasted = e.clipboardData.getData("text");
-                        if (!pasted.includes(",") && !pasted.includes("\n")) return;
-                        e.preventDefault();
-                        addNichesFromRawInput(pasted);
-                      }}
-                      placeholder={nichesList.length ? "Add another niche" : "Type niche and press Enter"}
-                      className="min-w-[180px] flex-1 border-0 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground"
-                    />
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Category</Label>
+                    <span className="text-xs text-muted-foreground">{categoriesList.length}/{MAX_CATEGORIES}</span>
                   </div>
-                </div>
-                <p className="text-xs text-muted-foreground" aria-live="polite">Add up to {MAX_NICHES} niches. Press Enter, comma, or Tab.</p>
-              </div>
+                  <div className="rounded-lg border border-border/70 bg-background px-3 py-2 focus-within:border-primary/70 focus-within:ring-1 focus-within:ring-primary/30">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {categoriesList.map((category) => (
+                        <Badge key={category} variant="secondary" className="gap-1 pr-1">
+                          <span>{category}</span>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${category}`}
+                            className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                            onClick={() => removeCategory(category)}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                      <input
+                        value={categoryInput}
+                        onChange={(e) => setCategoryInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
+                            if (!categoryInput.trim()) return;
+                            e.preventDefault();
+                            addCategoriesFromRawInput(categoryInput);
+                            return;
+                          }
 
-              <div className="space-y-2">
-                <Label>Short Description</Label>
-                <Input value={formData.shortDescription} onChange={(e) => updateField("shortDescription", e.target.value)} placeholder="One-line offer summary for listing cards" />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Full Description</Label>
-                <Textarea rows={4} value={formData.fullDescription} onChange={(e) => updateField("fullDescription", e.target.value)} placeholder="Add complete package details and collaboration scope" />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Tags</Label>
-                  <span className="text-xs text-muted-foreground">{tagsList.length}/{MAX_TAGS}</span>
-                </div>
-                <div className="rounded-lg border border-border/70 bg-background px-3 py-2 focus-within:border-primary/70 focus-within:ring-1 focus-within:ring-primary/30">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {tagsList.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="gap-1 pr-1">
-                        <span>{tag}</span>
-                        <button
-                          type="button"
-                          aria-label={`Remove ${tag}`}
-                          className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
-                          onClick={() => removeTag(tag)}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                    <input
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
-                          if (!tagInput.trim()) return;
+                          if (e.key === "Backspace" && !categoryInput.trim() && categoriesList.length) {
+                            e.preventDefault();
+                            removeCategory(categoriesList[categoriesList.length - 1]);
+                          }
+                        }}
+                        onBlur={() => addCategoriesFromRawInput(categoryInput)}
+                        onPaste={(e) => {
+                          const pasted = e.clipboardData.getData("text");
+                          if (!pasted.includes(",") && !pasted.includes("\n")) return;
                           e.preventDefault();
-                          addTagsFromRawInput(tagInput);
-                          return;
-                        }
-
-                        if (e.key === "Backspace" && !tagInput.trim() && tagsList.length) {
-                          e.preventDefault();
-                          removeTag(tagsList[tagsList.length - 1]);
-                        }
-                      }}
-                      onBlur={() => addTagsFromRawInput(tagInput)}
-                      onPaste={(e) => {
-                        const pasted = e.clipboardData.getData("text");
-                        if (!pasted.includes(",") && !pasted.includes("\n")) return;
-                        e.preventDefault();
-                        addTagsFromRawInput(pasted);
-                      }}
-                      placeholder={tagsList.length ? "Add another tag" : "Type a tag and press Enter"}
-                      className="min-w-[180px] flex-1 border-0 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground"
-                    />
+                          addCategoriesFromRawInput(pasted);
+                        }}
+                        placeholder={categoriesList.length ? "Add another category" : "Type category and press Enter"}
+                        className="min-w-[120px] flex-1 border-0 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground"
+                      />
+                    </div>
                   </div>
+                  <p className="text-xs text-muted-foreground" aria-live="polite">Add up to {MAX_CATEGORIES}. Enter, comma, or Tab.</p>
                 </div>
-                <p className="text-xs text-muted-foreground" aria-live="polite">Add up to {MAX_TAGS} tags. Press Enter, comma, or Tab.</p>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Niche</Label>
+                    <span className="text-xs text-muted-foreground">{nichesList.length}/{MAX_NICHES}</span>
+                  </div>
+                  <div className="rounded-lg border border-border/70 bg-background px-3 py-2 focus-within:border-primary/70 focus-within:ring-1 focus-within:ring-primary/30">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {nichesList.map((niche) => (
+                        <Badge key={niche} variant="secondary" className="gap-1 pr-1">
+                          <span>{niche}</span>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${niche}`}
+                            className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                            onClick={() => removeNiche(niche)}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                      <input
+                        value={nicheInput}
+                        onChange={(e) => setNicheInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
+                            if (!nicheInput.trim()) return;
+                            e.preventDefault();
+                            addNichesFromRawInput(nicheInput);
+                            return;
+                          }
+
+                          if (e.key === "Backspace" && !nicheInput.trim() && nichesList.length) {
+                            e.preventDefault();
+                            removeNiche(nichesList[nichesList.length - 1]);
+                          }
+                        }}
+                        onBlur={() => addNichesFromRawInput(nicheInput)}
+                        onPaste={(e) => {
+                          const pasted = e.clipboardData.getData("text");
+                          if (!pasted.includes(",") && !pasted.includes("\n")) return;
+                          e.preventDefault();
+                          addNichesFromRawInput(pasted);
+                        }}
+                        placeholder={nichesList.length ? "Add another niche" : "Type niche and press Enter"}
+                        className="min-w-[120px] flex-1 border-0 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground" aria-live="polite">Add up to {MAX_NICHES}. Enter, comma, or Tab.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Tags</Label>
+                    <span className="text-xs text-muted-foreground">{tagsList.length}/{MAX_TAGS}</span>
+                  </div>
+                  <div className="rounded-lg border border-border/70 bg-background px-3 py-2 focus-within:border-primary/70 focus-within:ring-1 focus-within:ring-primary/30">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {tagsList.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+                          <span>{tag}</span>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${tag}`}
+                            className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                            onClick={() => removeTag(tag)}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                      <input
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
+                            if (!tagInput.trim()) return;
+                            e.preventDefault();
+                            addTagsFromRawInput(tagInput);
+                            return;
+                          }
+
+                          if (e.key === "Backspace" && !tagInput.trim() && tagsList.length) {
+                            e.preventDefault();
+                            removeTag(tagsList[tagsList.length - 1]);
+                          }
+                        }}
+                        onBlur={() => addTagsFromRawInput(tagInput)}
+                        onPaste={(e) => {
+                          const pasted = e.clipboardData.getData("text");
+                          if (!pasted.includes(",") && !pasted.includes("\n")) return;
+                          e.preventDefault();
+                          addTagsFromRawInput(pasted);
+                        }}
+                        placeholder={tagsList.length ? "Add another tag" : "Type a tag and press Enter"}
+                        className="min-w-[120px] flex-1 border-0 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground" aria-live="polite">Add up to {MAX_TAGS}. Enter, comma, or Tab.</p>
+                </div>
               </div>
+
             </CardContent>
           </Card>
         )}
@@ -1815,7 +1833,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
             <CardContent className="space-y-4 p-4 sm:p-6">
               <div className="rounded-lg border border-border/60 p-4">
                 <p className="font-semibold">{formData.title || "Untitled Package"}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{formData.shortDescription || "No short description yet"}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{formData.fullDescription || "No description yet"}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <Badge variant="outline" className="capitalize">{formData.platform || "platform"}</Badge>
                   <Badge variant="outline" className="capitalize">{formData.dealType}</Badge>
