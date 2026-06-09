@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { CAMPAIGN_GOAL_OPTIONS } from '@/lib/offer-campaign-goals';
 import { offersService } from '@/services/offers.service';
 import type { BrandOffer, BrandOfferReactionType } from '@/types';
 import { formatPrice, formatRelativeTime } from '@/lib/utils';
@@ -29,6 +30,7 @@ export default function CreatorOffersPage() {
   const [city, setCity] = useState('');
   const [offerType, setOfferType] = useState('');
   const [platform, setPlatform] = useState('');
+  const [campaignGoal, setCampaignGoal] = useState('');
   const [budgetMin, setBudgetMin] = useState('');
   const [budgetMax, setBudgetMax] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -57,6 +59,7 @@ export default function CreatorOffersPage() {
         city: city || undefined,
         offerType: offerType || undefined,
         platform: platform || undefined,
+        campaignGoal: campaignGoal || undefined,
         budgetMin: budgetMin ? Number(budgetMin) : undefined,
         budgetMax: budgetMax ? Number(budgetMax) : undefined,
         page: nextPage,
@@ -77,18 +80,33 @@ export default function CreatorOffersPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [search, city, offerType, platform, budgetMin, budgetMax]);
+  }, [search, city, offerType, platform, campaignGoal, budgetMin, budgetMax]);
 
   useEffect(() => {
     void loadOffers(0);
   }, [loadOffers]);
 
-  const activeFilterCount = [city, offerType, platform, budgetMin, budgetMax].filter(Boolean).length;
+  const activeFilterCount = [city, offerType, platform, campaignGoal, budgetMin, budgetMax].filter(Boolean).length;
+
+  const activeFilterChips = useMemo(() => {
+    const chips: Array<{ key: string; label: string; value: string; onClear: () => void }> = [];
+
+    if (search.trim()) chips.push({ key: 'search', label: 'Search', value: search.trim(), onClear: () => setSearch('') });
+    if (city) chips.push({ key: 'city', label: 'City', value: city, onClear: () => setCity('') });
+    if (offerType) chips.push({ key: 'offerType', label: 'Offer type', value: offerType, onClear: () => setOfferType('') });
+    if (platform) chips.push({ key: 'platform', label: 'Platform', value: platform, onClear: () => setPlatform('') });
+    if (campaignGoal) chips.push({ key: 'campaignGoal', label: 'Goal', value: campaignGoal, onClear: () => setCampaignGoal('') });
+    if (budgetMin) chips.push({ key: 'budgetMin', label: 'Min budget', value: `PKR ${budgetMin}`, onClear: () => setBudgetMin('') });
+    if (budgetMax) chips.push({ key: 'budgetMax', label: 'Max budget', value: `PKR ${budgetMax}`, onClear: () => setBudgetMax('') });
+
+    return chips;
+  }, [budgetMax, budgetMin, campaignGoal, city, offerType, platform, search]);
 
   const clearFilters = () => {
     setCity('');
     setOfferType('');
     setPlatform('');
+    setCampaignGoal('');
     setBudgetMin('');
     setBudgetMax('');
   };
@@ -162,10 +180,35 @@ export default function CreatorOffersPage() {
         </Button>
       </div>
 
+      {activeFilterChips.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          {activeFilterChips.map((chip) => (
+            <Badge key={chip.key} variant="secondary" className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium">
+              <span className="text-muted-foreground">{chip.label}:</span>
+              <span>{chip.value}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  chip.onClear();
+                  void loadOffers(0);
+                }}
+                className="ml-1 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                aria-label={`Clear ${chip.label} filter`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+          <Button size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={() => { clearFilters(); void loadOffers(0); }}>
+            Clear all
+          </Button>
+        </div>
+      )}
+
       {showFilters && (
         <Card className="mb-4">
           <CardContent className="pt-4">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
               <div className="space-y-1">
                 <Label className="text-xs">City</Label>
                 <Select value={city} onValueChange={setCity}>
@@ -193,6 +236,16 @@ export default function CreatorOffersPage() {
                   <SelectContent>
                     <SelectItem value="">Any platform</SelectItem>
                     {PLATFORMS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Campaign goal</Label>
+                <Select value={campaignGoal || '__all__'} onValueChange={(value) => setCampaignGoal(value === '__all__' ? '' : value)}>
+                  <SelectTrigger><SelectValue placeholder="Any goal" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Any goal</SelectItem>
+                    {CAMPAIGN_GOAL_OPTIONS.map((goal) => <SelectItem key={goal} value={goal}>{goal}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -237,6 +290,7 @@ export default function CreatorOffersPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="line-clamp-2 text-sm text-muted-foreground">{offer.brief}</p>
+                  {offer.campaignGoal ? <p className="text-xs text-muted-foreground">Goal: {offer.campaignGoal}</p> : null}
                   {offer.targetPlatforms ? <p className="text-xs text-muted-foreground">Platforms: {offer.targetPlatforms}</p> : null}
                   {offer.contentFormats ? <p className="text-xs text-muted-foreground">Formats: {offer.contentFormats}</p> : null}
                   <p className="text-sm font-medium text-primary">

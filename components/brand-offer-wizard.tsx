@@ -12,15 +12,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { CAMPAIGN_GOAL_SECTIONS } from '@/lib/offer-campaign-goals';
 import { offersService } from '@/services/offers.service';
 import { uploadsService } from '@/services/uploads.service';
 import { toast } from 'sonner';
 
 const DRAFT_KEY = 'brand-offer-wizard-draft-v1';
-const steps = ['Basics', 'Platforms & Deliverables', 'Budget & Targeting', 'References', 'Publish'];
+const steps = ['Basics', 'Deliverables', 'Budget & Targeting', 'References', 'Publish'];
 
 const platformOptions = ['instagram', 'youtube', 'tiktok', 'facebook', 'snapchat'] as const;
-const formatOptions = ['short_video', 'long_video', 'story', 'live_stream', 'photo_post', 'carousel', 'custom'] as const;
 const platformMeta: Record<(typeof platformOptions)[number], { label: string; icon: ComponentType<{ className?: string }> }> = {
   instagram: { label: 'Instagram', icon: Instagram },
   youtube: { label: 'YouTube', icon: Youtube },
@@ -29,12 +29,175 @@ const platformMeta: Record<(typeof platformOptions)[number], { label: string; ic
   snapchat: { label: 'Snapchat', icon: Camera },
 };
 
-const serviceCatalog: Record<string, string[]> = {
-  instagram: ['Reel (15s)', 'Reel (30-60s)', 'Story Sequence (3-5)', 'Feed Photo', 'Carousel (3-5 slides)', 'Collab Post'],
-  youtube: ['Dedicated Video', 'Sponsored Segment (30s)', 'Sponsored Segment (60s)', 'YouTube Short', 'Live Mention'],
-  tiktok: ['TikTok Video (15s)', 'TikTok Video (30-60s)', 'Duet', 'Stitch', 'TikTok Live'],
-  facebook: ['Facebook Reel', 'In-Feed Video', 'Photo Post', 'Story Sequence', 'Facebook Live'],
-  snapchat: ['Snap Story (1)', 'Snap Story (3-5)', 'Spotlight Video', 'AR Lens Feature'],
+interface ServiceOption {
+  key: string;
+  label: string;
+  description: string;
+}
+
+interface ServiceSection {
+  label: string;
+  items: ServiceOption[];
+}
+
+const serviceCatalogByPlatform: Record<SupportedPlatform, ServiceSection[]> = {
+  instagram: [
+    {
+      label: 'Short-form video',
+      items: [
+        { key: 'ig_reel_15', label: 'Reel (15s)', description: 'Quick hook-first reel ideal for launches, drops, and offers.' },
+        { key: 'ig_reel_30', label: 'Reel (30s)', description: 'Standard branded reel with product context and CTA.' },
+        { key: 'ig_reel_60', label: 'Reel (60s)', description: 'Longer storytelling reel for benefits, demos, or testimonials.' },
+      ],
+    },
+    {
+      label: 'Stories',
+      items: [
+        { key: 'ig_story_1', label: 'Story Frame (1)', description: 'Single Instagram story frame with swipe cue or link CTA.' },
+        { key: 'ig_story_3', label: 'Story Sequence (3)', description: 'Three-story sequence for awareness, proof, and CTA.' },
+        { key: 'ig_story_5', label: 'Story Sequence (5)', description: 'Five-frame deeper campaign flow for launches and promos.' },
+      ],
+    },
+    {
+      label: 'Feed posts',
+      items: [
+        { key: 'ig_photo_single', label: 'Single Photo Post', description: 'Static feed post for product, lookbook, or campaign image.' },
+        { key: 'ig_carousel_3_5', label: 'Carousel (3-5 slides)', description: 'Multi-slide post for features, before/after, or education.' },
+      ],
+    },
+    {
+      label: 'Live & collab',
+      items: [
+        { key: 'ig_live', label: 'Instagram Live', description: 'Live walkthrough, Q&A, launch, or creator-hosted session.' },
+        { key: 'ig_collab_post', label: 'Collab Post', description: 'Joint feed post published as a collaboration with the brand.' },
+      ],
+    },
+  ],
+  youtube: [
+    {
+      label: 'Long-form video',
+      items: [
+        { key: 'yt_dedicated_video', label: 'Dedicated Video', description: 'Standalone YouTube video fully centered on your campaign.' },
+        { key: 'yt_segment_30', label: 'Sponsored Segment (30s)', description: 'Short integration within a creator\'s long-form content.' },
+        { key: 'yt_segment_60', label: 'Sponsored Segment (60s)', description: 'Longer integration for product story and stronger CTA.' },
+      ],
+    },
+    {
+      label: 'Shorts',
+      items: [
+        { key: 'yt_short_15', label: 'YouTube Short (15s)', description: 'Fast vertical short for awareness and launch moments.' },
+        { key: 'yt_short_60', label: 'YouTube Short (60s)', description: 'Extended short for tutorials, demos, or offer explanation.' },
+      ],
+    },
+    {
+      label: 'Live',
+      items: [
+        { key: 'yt_live_mention', label: 'Live Stream Mention', description: 'Brand mention during a creator\'s live session.' },
+        { key: 'yt_live_unboxing', label: 'Live Unboxing', description: 'Real-time unboxing or demo during a live stream.' },
+      ],
+    },
+    {
+      label: 'Community & extras',
+      items: [
+        { key: 'yt_pinned_comment', label: 'Pinned Comment', description: 'Campaign link or CTA pinned in the comments section.' },
+        { key: 'yt_description_link', label: 'Description Link', description: 'Brand URL added to the video description.' },
+      ],
+    },
+  ],
+  tiktok: [
+    {
+      label: 'Video content',
+      items: [
+        { key: 'tt_video_15', label: 'TikTok Video (15s)', description: 'Short trend-friendly TikTok video with product placement.' },
+        { key: 'tt_video_30', label: 'TikTok Video (30s)', description: 'Standard branded TikTok with clearer narrative and CTA.' },
+        { key: 'tt_video_60', label: 'TikTok Video (60s)', description: 'Storytelling or tutorial-led TikTok with more detail.' },
+      ],
+    },
+    {
+      label: 'Live & interactive',
+      items: [
+        { key: 'tt_live', label: 'TikTok Live', description: 'Live mention, review, demo, or shopping-led format.' },
+        { key: 'tt_promo_code', label: 'Promo Code Drop', description: 'Special discount or code reveal tied to campaign urgency.' },
+      ],
+    },
+    {
+      label: 'Duet & stitch',
+      items: [
+        { key: 'tt_duet', label: 'Duet Video', description: 'Creator duet format reacting to or extending brand content.' },
+        { key: 'tt_stitch', label: 'Stitch Video', description: 'Brand clip stitched into creator commentary or demonstration.' },
+      ],
+    },
+    {
+      label: 'Shop & links',
+      items: [
+        { key: 'tt_shop_tag', label: 'TikTok Shop Tag', description: 'Product tagging for commerce-ready TikTok campaigns.' },
+        { key: 'tt_bio_link', label: 'Bio Link Feature', description: 'Brand link placement in creator bio for conversion support.' },
+      ],
+    },
+  ],
+  facebook: [
+    {
+      label: 'Video',
+      items: [
+        { key: 'fb_reel', label: 'Facebook Reel', description: 'Short-form reel tailored for Facebook discovery and feeds.' },
+        { key: 'fb_feed_video', label: 'In-Feed Video', description: 'Standard Facebook feed video with caption and CTA.' },
+        { key: 'fb_long_video', label: 'Long-Form Video', description: 'Longer educational or storytelling video over 3 minutes.' },
+      ],
+    },
+    {
+      label: 'Feed posts',
+      items: [
+        { key: 'fb_photo', label: 'Photo Post', description: 'Static image post for visual campaigns or product focus.' },
+        { key: 'fb_album', label: 'Album Post', description: 'Multi-photo Facebook post for campaigns needing more frames.' },
+      ],
+    },
+    {
+      label: 'Stories',
+      items: [
+        { key: 'fb_story', label: 'Facebook Story', description: 'Single story placement with quick campaign CTA.' },
+        { key: 'fb_story_3', label: 'Story Sequence (3)', description: 'Three-story sequence for launch, proof, and conversion.' },
+      ],
+    },
+    {
+      label: 'Live & groups',
+      items: [
+        { key: 'fb_live', label: 'Facebook Live', description: 'Creator-hosted live coverage, promo, or walkthrough.' },
+        { key: 'fb_group_post', label: 'Group Post', description: 'Campaign placement inside a relevant niche group.' },
+      ],
+    },
+  ],
+  snapchat: [
+    {
+      label: 'Snaps & stories',
+      items: [
+        { key: 'sc_snap_photo', label: 'Snap (Photo)', description: 'Direct photo snap highlighting brand or product moment.' },
+        { key: 'sc_snap_video', label: 'Snap (Video, 10s)', description: 'Short video snap for quick attention and CTA.' },
+        { key: 'sc_story_1', label: 'Story Frame (1)', description: 'Single Snapchat story frame with campaign mention.' },
+        { key: 'sc_story_3_5', label: 'Story Sequence (3-5)', description: 'Multi-snap story arc for product or event storytelling.' },
+      ],
+    },
+    {
+      label: 'Spotlight',
+      items: [
+        { key: 'sc_spotlight_15', label: 'Spotlight Video (15s)', description: 'Short Spotlight video designed for rapid reach.' },
+        { key: 'sc_spotlight_60', label: 'Spotlight Video (60s)', description: 'Longer Spotlight format for richer product context.' },
+      ],
+    },
+    {
+      label: 'Lens & AR',
+      items: [
+        { key: 'sc_custom_lens', label: 'Custom Lens Feature', description: 'Creator content featuring or promoting a branded lens.' },
+        { key: 'sc_geofilter', label: 'Geofilter Promo', description: 'Location-based branded filter campaign activation.' },
+      ],
+    },
+    {
+      label: 'Map & links',
+      items: [
+        { key: 'sc_map_checkin', label: 'Snap Map Check-in', description: 'Location story or venue-based creator check-in.' },
+        { key: 'sc_swipe_up', label: 'Swipe-Up Link', description: 'Direct swipe-up CTA to a brand page or landing destination.' },
+      ],
+    },
+  ],
 };
 
 type Visibility = 'public' | 'private';
@@ -49,6 +212,7 @@ interface OfferForm {
   title: string;
   brief: string;
   offerType: string;
+  campaignGoal: string;
   targetPlatforms: string[];
   contentFormats: string[];
   selectedServiceKeys: string[];
@@ -76,6 +240,7 @@ const defaultForm: OfferForm = {
   title: '',
   brief: '',
   offerType: '',
+  campaignGoal: '',
   targetPlatforms: [],
   contentFormats: [],
   selectedServiceKeys: [],
@@ -115,7 +280,11 @@ const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
     categories: Array.isArray(pf.categories) ? pf.categories : defaultForm.categories,
     niches: Array.isArray(pf.niches) ? pf.niches : defaultForm.niches,
     tags: Array.isArray(pf.tags) ? pf.tags : defaultForm.tags,
-    targetPlatforms: Array.isArray(pf.targetPlatforms) ? pf.targetPlatforms : defaultForm.targetPlatforms,
+    targetPlatforms: isSupportedPlatform(pf.offerType)
+      ? [pf.offerType]
+      : Array.isArray(pf.targetPlatforms)
+        ? pf.targetPlatforms
+        : defaultForm.targetPlatforms,
     contentFormats: Array.isArray(pf.contentFormats) ? pf.contentFormats : defaultForm.contentFormats,
     referenceUrls: Array.isArray(pf.referenceUrls) ? pf.referenceUrls : defaultForm.referenceUrls,
     deliverableItems: Array.isArray(pf.deliverableItems) ? pf.deliverableItems : defaultForm.deliverableItems,
@@ -219,6 +388,7 @@ export function BrandOfferWizard() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [hasSavedDraft, setHasSavedDraft] = useState(false);
+  const prevOfferTypeRef = useRef<string>('');
   const [form, setForm] = useState<OfferForm>(() => {
     if (typeof window === 'undefined') return defaultForm;
     const raw = window.localStorage.getItem(DRAFT_KEY);
@@ -233,16 +403,35 @@ export function BrandOfferWizard() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const activeServicePool = useMemo(() => {
-    return form.targetPlatforms.flatMap((platform) =>
-      (serviceCatalog[platform] || []).map((label) => ({
-        key: `${platform}::${label}`,
-        label,
-      }))
-    );
-  }, [form.targetPlatforms]);
+  const serviceSections = useMemo(
+    () => {
+      // Only use the primary platform from Basics tab
+      const platforms = form.offerType && isSupportedPlatform(form.offerType) ? [form.offerType] : [];
+      return platforms.map((platform) => ({
+        platform,
+        platformLabel: platformMeta[platform].label,
+        sections: serviceCatalogByPlatform[platform] || [],
+      }));
+    },
+    [form.offerType]
+  );
 
-  const serviceMap = useMemo(() => new Map(activeServicePool.map((entry) => [entry.key, entry.label])), [activeServicePool]);
+  const serviceOptions = useMemo(
+    () => serviceSections.flatMap((entry) =>
+      entry.sections.flatMap((section) =>
+        section.items.map((option) => ({
+          ...option,
+          key: `${entry.platform}::${option.key}`,
+          label: `${entry.platformLabel} — ${option.label}`,
+        }))
+      )
+    ),
+    [serviceSections]
+  );
+
+  const selectedServiceSet = useMemo(() => new Set(form.selectedServiceKeys), [form.selectedServiceKeys]);
+
+  const serviceMap = useMemo(() => new Map(serviceOptions.map((entry) => [entry.key, entry.label])), [serviceOptions]);
 
   const persistDraft = (nextForm: OfferForm, nextStep = step) => {
     if (typeof window === 'undefined') return;
@@ -263,13 +452,12 @@ export function BrandOfferWizard() {
       const missing: string[] = [];
       if (!form.title.trim()) missing.push('Title');
       if (!form.brief.trim()) missing.push('Brief');
+      if (!form.campaignGoal.trim()) missing.push('Campaign goal');
       if (!form.offerType.trim()) missing.push('Primary platform');
       return missing;
     }
     if (targetStep === 2) {
       const missing: string[] = [];
-      if (!form.targetPlatforms.length) missing.push('At least one platform');
-      if (!form.contentFormats.length) missing.push('At least one content format');
       if (!form.deliverableItems.length) missing.push('At least one deliverable');
       return missing;
     }
@@ -298,30 +486,46 @@ export function BrandOfferWizard() {
     if (step > maxUnlockedStep) setStep(maxUnlockedStep);
   }, [maxUnlockedStep, step]);
 
+  // Clear incompatible deliverables when primary platform changes
+  useEffect(() => {
+    const platformChanged = prevOfferTypeRef.current !== form.offerType;
+    prevOfferTypeRef.current = form.offerType;
+
+    if (!platformChanged) return;
+
+    if (!form.offerType) {
+      if (form.targetPlatforms.length > 0 || form.selectedServiceKeys.length > 0 || form.deliverableItems.length > 0) {
+        updateForm({ targetPlatforms: [], selectedServiceKeys: [], deliverableItems: [] });
+      }
+      return;
+    }
+
+    const currentPlatformPrefix = `${form.offerType}::`;
+    const validSelectedKeys = form.selectedServiceKeys.filter((key) =>
+      key.startsWith(currentPlatformPrefix)
+    );
+    const validDeliverables = form.deliverableItems.filter((item) =>
+      item.id.startsWith(currentPlatformPrefix)
+    );
+
+    if (
+      form.targetPlatforms[0] !== form.offerType ||
+      form.targetPlatforms.length !== 1 ||
+      validSelectedKeys.length !== form.selectedServiceKeys.length ||
+      validDeliverables.length !== form.deliverableItems.length
+    ) {
+      updateForm({
+        targetPlatforms: [form.offerType],
+        selectedServiceKeys: validSelectedKeys,
+        deliverableItems: validDeliverables,
+      });
+    }
+  }, [form.deliverableItems, form.offerType, form.selectedServiceKeys, form.targetPlatforms]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     setHasSavedDraft(Boolean(window.localStorage.getItem(DRAFT_KEY)));
   }, []);
-
-  const toggleChoice = (field: 'targetPlatforms' | 'contentFormats', value: string) => {
-    if (field === 'targetPlatforms') {
-      const nextTargetPlatforms = form.targetPlatforms.includes(value)
-        ? form.targetPlatforms.filter((it) => it !== value)
-        : [...form.targetPlatforms, value];
-
-      updateForm({
-        targetPlatforms: nextTargetPlatforms,
-        offerType: nextTargetPlatforms.includes(form.offerType) ? form.offerType : '',
-      });
-      return;
-    }
-
-    updateForm({
-      contentFormats: form.contentFormats.includes(value)
-        ? form.contentFormats.filter((it) => it !== value)
-        : [...form.contentFormats, value],
-    });
-  };
 
   const toggleServiceSelection = (serviceKey: string) => {
     const exists = form.selectedServiceKeys.includes(serviceKey);
@@ -391,15 +595,23 @@ export function BrandOfferWizard() {
   const submit = async (publish = false) => {
     setIsSaving(true);
     try {
+      // Auto-derive platforms from selected deliverables
+      const autoPlatforms = [
+        ...new Set(
+          form.deliverableItems.map((item) => item.id.split('::')[0])
+        ),
+      ];
+
       const created = await offersService.createOffer({
         title: form.title.trim(),
         brief: form.brief.trim(),
         offerType: form.offerType.trim(),
+        campaignGoal: form.campaignGoal.trim(),
         budgetMin: Number(form.budgetMin),
         budgetMax: Number(form.budgetMax),
         deliverables: buildDeliverablesText(),
-        contentFormats: form.contentFormats.join(', '),
-        targetPlatforms: form.targetPlatforms.join(', '),
+        contentFormats: form.contentFormats.length > 0 ? form.contentFormats.join(', ') : undefined,
+        targetPlatforms: autoPlatforms.join(', '),
         categories: form.categories.join(', '),
         niches: form.niches.join(', '),
         tags: form.tags.join(', '),
@@ -558,6 +770,36 @@ export function BrandOfferWizard() {
               />
               <p className="text-xs text-muted-foreground">Aim for 80–300 characters to give creators enough context.</p>
             </div>
+            <div className="space-y-3">
+              <SectionRow label="Campaign goal *" count={form.campaignGoal ? 1 : 0} max={1} hint="selected" />
+              <div className="grid gap-3 xl:grid-cols-2">
+                {CAMPAIGN_GOAL_SECTIONS.map((section) => (
+                  <div key={section.label} className="rounded-xl border border-border/70 bg-muted/20 p-3">
+                    <p className="mb-3 text-sm font-semibold">{section.label}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {section.options.map((goal) => {
+                        const isSelected = form.campaignGoal === goal;
+                        return (
+                          <button
+                            key={goal}
+                            type="button"
+                            onClick={() => updateForm({ campaignGoal: goal })}
+                            className={`rounded-full border px-3 py-1.5 text-left text-xs font-medium transition-colors sm:text-sm ${
+                              isSelected
+                                ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                                : 'border-border bg-background hover:border-primary/40 hover:bg-primary/5'
+                            }`}
+                          >
+                            {goal}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">Choose the main business outcome you want this creator campaign to optimize for.</p>
+            </div>
             <div className="space-y-2">
               <SectionRow label="Primary platform *" count={form.offerType ? 1 : 0} max={1} hint="selected" />
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
@@ -569,9 +811,7 @@ export function BrandOfferWizard() {
                       type="button"
                       onClick={() => updateForm({
                         offerType: platform,
-                        targetPlatforms: form.targetPlatforms.includes(platform)
-                          ? form.targetPlatforms
-                          : [...form.targetPlatforms, platform],
+                        targetPlatforms: [platform],
                       })}
                       className={`inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded-lg border px-3 py-2 text-sm transition-colors ${
                         form.offerType === platform
@@ -584,9 +824,9 @@ export function BrandOfferWizard() {
                     </button>
                   );
                 })}
-              </div>
-              <p className="text-xs text-muted-foreground">Selecting a primary platform also preselects it in Step 2.</p>
-            </div>
+               </div>
+               <p className="text-xs text-muted-foreground">Your primary platform selection will determine available deliverable options in Step 2 (Deliverables).</p>
+             </div>
             <div className="rounded-lg border p-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
@@ -639,110 +879,174 @@ export function BrandOfferWizard() {
         </Card>
       )}
 
-      {step === 2 && (
-        <Card>
-          <CardHeader><CardTitle>Step 2 — Platforms & Deliverables</CardTitle></CardHeader>
-          <CardContent className="space-y-5">
-            <div className="space-y-2">
-              <SectionRow
-                label="Target platforms *"
-                count={form.targetPlatforms.length}
-                max={platformOptions.length}
-                hint="selected"
-              />
-              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-                {platformOptions.map((platform) => {
-                  const { icon: Icon, label } = platformMeta[platform];
-                  return (
-                    <Button
-                      key={platform}
-                      type="button"
-                      size="sm"
-                      variant={form.targetPlatforms.includes(platform) ? 'default' : 'outline'}
-                      className="gap-2 whitespace-nowrap"
-                      onClick={() => toggleChoice('targetPlatforms', platform)}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {label}
-                    </Button>
-                  );
-                })}
-              </div>
-              <p className="text-xs text-muted-foreground">Select every platform where content should be published.</p>
-            </div>
-            <div className="space-y-2">
-              <SectionRow
-                label="Content formats *"
-                count={form.contentFormats.length}
-                max={formatOptions.length}
-                hint="selected"
-              />
-              <div className="flex flex-wrap gap-2">
-                {formatOptions.map((format) => (
-                  <Button key={format} type="button" size="sm" variant={form.contentFormats.includes(format) ? 'default' : 'outline'} onClick={() => toggleChoice('contentFormats', format)}>
-                    {format.replace('_', ' ')}
-                  </Button>
+       {step === 2 && (
+         <Card>
+           <CardHeader><CardTitle>Step 2 — Deliverables</CardTitle></CardHeader>
+           <CardContent className="space-y-4 p-4 sm:p-6">
+             {serviceSections.length === 0 ? (
+               <p className="rounded-lg border border-border/60 p-3 text-sm text-muted-foreground">
+                 Please select a primary platform in Step 1 (Basics) to see available deliverable options here.
+               </p>
+            ) : (
+              <>
+                {serviceSections.map((platformEntry) => (
+                  <div key={platformEntry.platform} className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const Icon = platformMeta[platformEntry.platform].icon;
+                        return <Icon className="h-4 w-4 text-muted-foreground" />;
+                      })()}
+                      <p className="text-sm font-semibold">{platformEntry.platformLabel} deliverables</p>
+                    </div>
+
+                    {platformEntry.sections.map((section) => (
+                      <div key={`${platformEntry.platform}-${section.label}`} className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {section.label}
+                        </p>
+                        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                          {section.items.map((option) => {
+                            const serviceKey = `${platformEntry.platform}::${option.key}`;
+                            const isSelected = selectedServiceSet.has(serviceKey);
+
+                            return (
+                              <button
+                                key={serviceKey}
+                                type="button"
+                                onClick={() => toggleServiceSelection(serviceKey)}
+                                className={`rounded-lg border p-3 text-left transition-colors ${
+                                  isSelected
+                                    ? 'border-primary bg-primary/10'
+                                    : 'border-border hover:border-border/80 hover:bg-muted/40'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium">{option.label}</p>
+                                  <span
+                                    className={`ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px] ${
+                                      isSelected
+                                        ? 'border-primary bg-primary text-primary-foreground'
+                                        : 'border-border text-transparent'
+                                    }`}
+                                  >
+                                    <Check className="h-3 w-3" />
+                                  </span>
+                                </div>
+                                <p className="mt-1 text-xs text-muted-foreground">{option.description}</p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+
+                <div className="space-y-2">
+                  <Label>Deliverable notes (Optional)</Label>
+                  <Textarea
+                    rows={3}
+                    value={form.deliverableNotes}
+                    onChange={(e) => updateForm({ deliverableNotes: e.target.value })}
+                    placeholder="Example: 2 hooks for approval, Urdu voiceover, mandatory CTA, coupon mention"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 p-3 text-sm">
+                  <p className="text-muted-foreground">
+                    {form.selectedServiceKeys.length > 0
+                      ? `${form.selectedServiceKeys.length} selected (ready to add)`
+                      : 'Select one or more deliverables for this offer'}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {form.selectedServiceKeys.length > 0 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={addSelectedServices}
+                      >
+                        <Plus className="mr-1 h-4 w-4" /> Add to deliverables
+                      </Button>
+                    )}
+                    {form.selectedServiceKeys.length > 0 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => updateForm({ selectedServiceKeys: [] })}
+                      >
+                        Clear selection
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2 rounded-lg border border-border/60 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium">Offer Deliverables</p>
+                    <Badge variant="outline">
+                      {form.deliverableItems.reduce((total, item) => total + item.quantity, 0)} total
+                    </Badge>
+                  </div>
+
+                  {form.deliverableItems.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Nothing added yet. Select deliverables above, then click &quot;Add to deliverables&quot;.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {form.deliverableItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/50 bg-muted/20 p-2"
+                        >
+                          <p className="text-sm font-medium">{item.label}</p>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.id, -1)}
+                            >
+                              -
+                            </Button>
+                            <Badge variant="secondary">Qty {item.quantity}</Badge>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.id, 1)}
+                            >
+                              +
+                            </Button>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8"
+                              onClick={() => removeDeliverable(item.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            <div className="space-y-2 rounded-lg border border-border/60 p-3">
+              <p className="text-sm font-medium">Deliverables preview (auto-generated)</p>
+              <div className="space-y-1 text-sm text-muted-foreground">
+                {(buildDeliverablesText() || 'No deliverables added yet.').split('\n').filter(Boolean).map((item, index) => (
+                  <p key={`${item}-${index}`}>- {item}</p>
                 ))}
               </div>
-            </div>
-
-            <div className="space-y-2 rounded-lg border p-3">
-              <SectionRow label="Deliverable library" hint="— pick and add to your list" />
-              {activeServicePool.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Choose platforms first to unlock deliverable options.</p>
-              ) : (
-                <div className="grid gap-2 md:grid-cols-2">
-                  {activeServicePool.map((service) => (
-                    <button
-                      key={service.key}
-                      type="button"
-                      onClick={() => toggleServiceSelection(service.key)}
-                      className={`rounded-md border p-2 text-left text-sm transition-colors ${form.selectedServiceKeys.includes(service.key) ? 'border-primary bg-primary/10 font-medium text-primary' : 'border-border hover:border-primary/50'}`}
-                    >
-                      {service.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div className="pt-2">
-                <Button type="button" size="sm" variant="outline" onClick={addSelectedServices}>
-                  <Plus className="mr-1 h-3 w-3" />
-                  Add {form.selectedServiceKeys.length > 0 ? `${form.selectedServiceKeys.length} selected` : 'selected'} deliverables
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2 rounded-lg border p-3">
-              <SectionRow
-                label="Selected deliverables *"
-                count={form.deliverableItems.length}
-                hint={form.deliverableItems.length > 0 ? `· ${form.deliverableItems.reduce((t, i) => t + i.quantity, 0)} total units` : undefined}
-              />
-              {form.deliverableItems.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No deliverables added yet.</p>
-              ) : (
-                form.deliverableItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
-                    <div>
-                      <p className="text-sm font-medium">{item.label}</p>
-                      <p className="text-xs text-muted-foreground">Quantity: {item.quantity}</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button type="button" size="icon" variant="outline" className="h-7 w-7" onClick={() => updateQuantity(item.id, -1)}>-</Button>
-                      <Button type="button" size="icon" variant="outline" className="h-7 w-7" onClick={() => updateQuantity(item.id, 1)}>+</Button>
-                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeDeliverable(item.id)}><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label>Deliverable notes</Label>
-                <span className="text-xs text-muted-foreground">{form.deliverableNotes.length} chars</span>
-              </div>
-              <Textarea rows={3} value={form.deliverableNotes} onChange={(e) => updateForm({ deliverableNotes: e.target.value })} placeholder="Script tone, CTA, brand mentions, shot style..." />
             </div>
           </CardContent>
         </Card>
@@ -887,6 +1191,7 @@ export function BrandOfferWizard() {
               <div className="rounded-lg border p-3 space-y-1">
                 <p className="font-medium text-xs text-muted-foreground uppercase tracking-wide">Offer details</p>
                 <p>Primary platform: <span className="font-medium capitalize">{form.offerType || 'Not selected'}</span></p>
+                <p>Campaign goal: <span className="font-medium">{form.campaignGoal || 'Not selected'}</span></p>
                 <p>Visibility: <span className="font-medium capitalize">{form.visibility}</span></p>
                 {form.slots && <p>Slots: <span className="font-medium">{form.slots}</span></p>}
                 {form.deadlineDate && <p>Deadline: <span className="font-medium">{form.deadlineDate}</span></p>}

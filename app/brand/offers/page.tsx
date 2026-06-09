@@ -108,6 +108,7 @@ export default function BrandOffersPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="line-clamp-2 text-sm text-muted-foreground">{offer.brief}</p>
+                  {offer.campaignGoal ? <p className="text-xs text-muted-foreground">Goal: {offer.campaignGoal}</p> : null}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                     <span className="font-medium text-primary">
                       {formatPrice(offer.budgetMin)} – {formatPrice(offer.budgetMax)} {offer.currency}

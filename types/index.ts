@@ -223,6 +223,7 @@ export interface BrandOffer {
   deliverables?: string;
   contentFormats?: string;
   targetPlatforms?: string;
+  campaignGoal?: string;
   categories?: string;
   niches?: string;
   tags?: string;

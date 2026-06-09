@@ -20,6 +20,7 @@ interface BackendBrandOffer {
   deliverables?: string;
   contentFormats?: string;
   targetPlatforms?: string;
+  campaignGoal?: string;
   categories?: string;
   niches?: string;
   tags?: string;
@@ -99,6 +100,7 @@ const mapOffer = (input: BackendBrandOffer): BrandOffer => ({
   deliverables: input.deliverables,
   contentFormats: input.contentFormats,
   targetPlatforms: input.targetPlatforms,
+  campaignGoal: input.campaignGoal,
   categories: input.categories,
   niches: input.niches,
   tags: input.tags,
@@ -152,6 +154,7 @@ export const offersService = {
     deliverables?: string;
     contentFormats?: string;
     targetPlatforms?: string;
+    campaignGoal?: string;
     categories?: string;
     niches?: string;
     tags?: string;
@@ -181,6 +184,7 @@ export const offersService = {
     deliverables: string;
     contentFormats: string;
     targetPlatforms: string;
+    campaignGoal: string;
     categories: string;
     niches: string;
     tags: string;
@@ -255,6 +259,7 @@ export const offersService = {
     city?: string;
     offerType?: string;
     platform?: string;
+    campaignGoal?: string;
     budgetMin?: number;
     budgetMax?: number;
     myFollowers?: number;
@@ -267,6 +272,7 @@ export const offersService = {
         city: filters?.city,
         offerType: filters?.offerType,
         platform: filters?.platform,
+        campaignGoal: filters?.campaignGoal,
         budgetMin: filters?.budgetMin,
         budgetMax: filters?.budgetMax,
         myFollowers: filters?.myFollowers,
