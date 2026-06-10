@@ -22,6 +22,9 @@ import { toast } from 'sonner';
 const OFFER_TYPES = ['UGC', 'POST', 'REEL', 'STORY', 'BUNDLE', 'Custom'];
 const CITIES = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'];
 const PLATFORMS = ['instagram', 'youtube', 'tiktok', 'facebook', 'snapchat'];
+const ANY_CITY_VALUE = '__any_city__';
+const ANY_TYPE_VALUE = '__any_type__';
+const ANY_PLATFORM_VALUE = '__any_platform__';
 
 const referencesScore = (offer: BrandOffer) => {
   const checks = [
@@ -225,30 +228,30 @@ export default function CreatorOffersPage() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
               <div className="space-y-1">
                 <Label className="text-xs">City</Label>
-                <Select value={city} onValueChange={setCity}>
+                <Select value={city || ANY_CITY_VALUE} onValueChange={(value) => setCity(value === ANY_CITY_VALUE ? '' : value)}>
                   <SelectTrigger><SelectValue placeholder="Any city" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any city</SelectItem>
+                    <SelectItem value={ANY_CITY_VALUE}>Any city</SelectItem>
                     {CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Offer type</Label>
-                <Select value={offerType} onValueChange={setOfferType}>
+                <Select value={offerType || ANY_TYPE_VALUE} onValueChange={(value) => setOfferType(value === ANY_TYPE_VALUE ? '' : value)}>
                   <SelectTrigger><SelectValue placeholder="Any type" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any type</SelectItem>
+                    <SelectItem value={ANY_TYPE_VALUE}>Any type</SelectItem>
                     {OFFER_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Platform</Label>
-                <Select value={platform} onValueChange={setPlatform}>
+                <Select value={platform || ANY_PLATFORM_VALUE} onValueChange={(value) => setPlatform(value === ANY_PLATFORM_VALUE ? '' : value)}>
                   <SelectTrigger><SelectValue placeholder="Any platform" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any platform</SelectItem>
+                    <SelectItem value={ANY_PLATFORM_VALUE}>Any platform</SelectItem>
                     {PLATFORMS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                   </SelectContent>
                 </Select>

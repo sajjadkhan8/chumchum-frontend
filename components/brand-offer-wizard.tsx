@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { CAMPAIGN_GOAL_SECTIONS, getCampaignGoalDescription } from '@/lib/offer-campaign-goals';
+import { pakistanCities, pakistanLanguages } from '@/lib/localization';
 import { offersService } from '@/services/offers.service';
 import { uploadsService } from '@/services/uploads.service';
 import type { BrandOffer } from '@/types';
@@ -21,6 +22,7 @@ import { toast } from 'sonner';
 
 const DRAFT_KEY = 'brand-offer-wizard-draft-v1';
 const steps = ['Basics', 'Deliverables', 'Budget & Payment', 'Control', 'References & Legal', 'Publish'];
+const MAX_APPLICANTS = 20;
 
 const platformOptions = ['instagram', 'youtube', 'tiktok', 'facebook', 'snapchat'] as const;
 const platformMeta: Record<(typeof platformOptions)[number], { label: string; icon: ComponentType<{ className?: string }> }> = {
@@ -293,11 +295,11 @@ const defaultForm: OfferForm = {
    followerRange: '',
    creatorGenderPreference: 'any',
    minAge: '',
-   maxAge: '',
-   applicationType: 'open',
-   maxApplicants: '50',
-   proposalRequired: false,
-   portfolioRequired: false,
+    maxAge: '',
+    applicationType: 'open',
+    maxApplicants: '20',
+    proposalRequired: false,
+    portfolioRequired: false,
    customScreeningQuestions: [],
    contentSubmissionDeadline: '',
    goLiveDate: '',
@@ -308,6 +310,14 @@ type SupportedPlatform = (typeof platformOptions)[number];
 
 const isSupportedPlatform = (value: unknown): value is SupportedPlatform =>
   typeof value === 'string' && platformOptions.includes(value as SupportedPlatform);
+
+const normalizeMaxApplicantsInput = (value: string | undefined): string => {
+  const trimmed = value?.trim() ?? '';
+  if (!trimmed) return '';
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) return '';
+  return String(Math.min(MAX_APPLICANTS, Math.max(1, Math.trunc(parsed))));
+};
 
 const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
    const pf = rawForm ?? {};
@@ -330,11 +340,14 @@ const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
        : Array.isArray(pf.targetPlatforms)
          ? pf.targetPlatforms
          : defaultForm.targetPlatforms,
-     contentFormats: Array.isArray(pf.contentFormats) ? pf.contentFormats : defaultForm.contentFormats,
-     referenceUrls: Array.isArray(pf.referenceUrls) ? pf.referenceUrls : defaultForm.referenceUrls,
-     deliverableItems: Array.isArray(pf.deliverableItems) ? pf.deliverableItems : defaultForm.deliverableItems,
-     selectedServiceKeys: Array.isArray(pf.selectedServiceKeys) ? pf.selectedServiceKeys : defaultForm.selectedServiceKeys,
-   };
+      contentFormats: Array.isArray(pf.contentFormats) ? pf.contentFormats : defaultForm.contentFormats,
+      referenceUrls: Array.isArray(pf.referenceUrls) ? pf.referenceUrls : defaultForm.referenceUrls,
+      deliverableItems: Array.isArray(pf.deliverableItems) ? pf.deliverableItems : defaultForm.deliverableItems,
+      selectedServiceKeys: Array.isArray(pf.selectedServiceKeys) ? pf.selectedServiceKeys : defaultForm.selectedServiceKeys,
+      maxApplicants: pf.maxApplicants === undefined
+        ? defaultForm.maxApplicants
+        : normalizeMaxApplicantsInput(pf.maxApplicants),
+    };
   };
 
   const splitCsv = (value?: string) =>
@@ -398,7 +411,7 @@ const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
       minAge: offer.minAge != null ? String(offer.minAge) : '',
       maxAge: offer.maxAge != null ? String(offer.maxAge) : '',
       applicationType: offer.applicationType || 'open',
-      maxApplicants: offer.maxApplicants != null ? String(offer.maxApplicants) : '',
+      maxApplicants: offer.maxApplicants != null ? String(Math.min(MAX_APPLICANTS, Math.max(1, offer.maxApplicants))) : '',
       proposalRequired: Boolean(offer.proposalRequired),
       portfolioRequired: Boolean(offer.portfolioRequired),
       customScreeningQuestions: splitLines(offer.customScreeningQuestions),
@@ -818,8 +831,8 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
          expectedOutcomes: form.expectedOutcomes.trim() || undefined,
          coverImageUrl: form.coverImageUrl || undefined,
          deadlineDate: form.deadlineDate || undefined,
-         targetCity: form.targetCity || undefined,
-         targetLanguage: form.targetLanguage || undefined,
+          targetCity: form.targetCity.trim() || undefined,
+          targetLanguage: form.targetLanguage.trim() || undefined,
          visibility: form.visibility,
          creatorType: form.creatorType || undefined,
          followerRange: form.followerRange || undefined,
@@ -827,7 +840,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
          minAge: form.minAge ? Number(form.minAge) : undefined,
          maxAge: form.maxAge ? Number(form.maxAge) : undefined,
          applicationType: form.applicationType || 'open',
-         maxApplicants: form.maxApplicants ? Number(form.maxApplicants) : undefined,
+          maxApplicants: form.maxApplicants ? Math.min(MAX_APPLICANTS, Number(form.maxApplicants)) : undefined,
          proposalRequired: form.proposalRequired,
          portfolioRequired: form.portfolioRequired,
          customScreeningQuestions: form.customScreeningQuestions.length > 0 ? form.customScreeningQuestions.join('\n') : undefined,
@@ -1541,17 +1554,35 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                    </div>
                  </div>
 
-                 <div className="grid gap-4 sm:grid-cols-2">
-                   <div className="space-y-1.5">
-                     <Label>Target city (optional)</Label>
-                     <Input value={form.targetCity} onChange={(e) => updateForm({ targetCity: e.target.value })} placeholder="Karachi" />
-                     <p className="text-xs text-muted-foreground">Leave blank for nationwide targeting.</p>
-                   </div>
-                   <div className="space-y-1.5">
-                     <Label>Target language (optional)</Label>
-                     <Input value={form.targetLanguage} onChange={(e) => updateForm({ targetLanguage: e.target.value })} placeholder="Urdu" />
-                   </div>
-                 </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label>Target city (optional)</Label>
+                      <select
+                        value={form.targetCity}
+                        onChange={(e) => updateForm({ targetCity: e.target.value })}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">— Nationwide (any city)</option>
+                        {pakistanCities.map((city) => (
+                          <option key={city} value={city}>{city}</option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-muted-foreground">Leave blank for nationwide targeting.</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Target language (optional)</Label>
+                      <select
+                        value={form.targetLanguage}
+                        onChange={(e) => updateForm({ targetLanguage: e.target.value })}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">— Any language</option>
+                        {pakistanLanguages.map((language) => (
+                          <option key={language} value={language}>{language}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                </div>
              </div>
 
@@ -1587,17 +1618,27 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                  </div>
 
                  {/* Max Applicants & Toggles */}
-                 <div className="space-y-2">
-                   <Label>Maximum applicants (optional)</Label>
-                   <Input
-                     type="number"
-                     min={1}
-                     value={form.maxApplicants}
-                     onChange={(e) => updateForm({ maxApplicants: e.target.value })}
-                     placeholder="e.g. 50"
-                   />
-                   <p className="text-xs text-muted-foreground">Leave empty for no cap. Set to limit application spam.</p>
-                 </div>
+                  <div className="space-y-2">
+                    <Label>Maximum applicants (optional)</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={MAX_APPLICANTS}
+                      value={form.maxApplicants}
+                      onChange={(e) => {
+                        const nextValue = e.target.value;
+                        if (!nextValue) {
+                          updateForm({ maxApplicants: '' });
+                          return;
+                        }
+                        const parsed = Number(nextValue);
+                        if (!Number.isFinite(parsed)) return;
+                        updateForm({ maxApplicants: String(Math.min(MAX_APPLICANTS, Math.max(1, parsed))) });
+                      }}
+                      placeholder="e.g. 20"
+                    />
+                    <p className="text-xs text-muted-foreground">Leave empty for no cap. Maximum allowed is {MAX_APPLICANTS}.</p>
+                  </div>
 
                  <div className="grid gap-3 sm:grid-cols-2">
                    <div className="rounded-lg border p-3 flex items-center justify-between">
@@ -1989,4 +2030,3 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
     </div>
   );
 }
-

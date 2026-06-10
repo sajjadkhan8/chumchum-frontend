@@ -27,6 +27,9 @@ const statusActions: Partial<Record<BrandOfferStatus, Array<{ label: string; nex
   closed: [{ label: 'Archive', next: 'ARCHIVED' }],
 };
 
+const ALL_STATUSES_VALUE = '__all_statuses__';
+const ALL_TYPES_VALUE = '__all_types__';
+
 export default function BrandOfferDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -172,19 +175,19 @@ export default function BrandOfferDetailPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle>Creator Reactions</CardTitle>
             <div className="flex flex-wrap items-center gap-2">
-              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
+              <Select value={statusFilter || ALL_STATUSES_VALUE} onValueChange={(v) => setStatusFilter(v === ALL_STATUSES_VALUE ? '' : v)}>
                 <SelectTrigger className="h-8 w-36 text-xs"><SelectValue placeholder="All statuses" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All statuses</SelectItem>
+                  <SelectItem value={ALL_STATUSES_VALUE}>All statuses</SelectItem>
                   {['SUBMITTED', 'SHORTLISTED', 'IN_REVIEW', 'ACCEPTED', 'REJECTED', 'WITHDRAWN'].map((s) => (
                     <SelectItem key={s} value={s}>{s.replace('_', ' ')}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v)}>
+              <Select value={typeFilter || ALL_TYPES_VALUE} onValueChange={(v) => setTypeFilter(v === ALL_TYPES_VALUE ? '' : v)}>
                 <SelectTrigger className="h-8 w-32 text-xs"><SelectValue placeholder="All types" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All types</SelectItem>
+                  <SelectItem value={ALL_TYPES_VALUE}>All types</SelectItem>
                   {['INTERESTED', 'PROPOSAL', 'QUESTION', 'DECLINE'].map((t) => (
                     <SelectItem key={t} value={t}>{t}</SelectItem>
                   ))}

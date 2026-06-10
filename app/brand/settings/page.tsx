@@ -383,7 +383,7 @@ function BrandSettingsPageContent() {
           <TabsList className="mb-6 w-full justify-start gap-1 overflow-x-auto">
             <TabsTrigger value="profile" className="gap-2">
               <Building2 className="h-4 w-4" />
-              Company
+              Company Profile
             </TabsTrigger>
             <TabsTrigger value="billing" className="gap-2">
               <CreditCard className="h-4 w-4" />
