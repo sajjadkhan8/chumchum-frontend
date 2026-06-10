@@ -623,29 +623,6 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
 
   const canContinue = getMissingFields(step).length === 0;
 
-  const referenceCompletenessChecks = useMemo(
-    () => [
-      { label: 'Key message', done: Boolean(form.keyMessage.trim()) },
-      { label: 'Do\'s and don\'ts', done: Boolean(form.dosAndDonts.trim()) },
-      { label: 'Hashtags & mentions', done: Boolean(form.hashtagsMentions.trim()) },
-      { label: 'At least 1 reference link', done: form.referenceUrls.some((url) => Boolean(url.trim())) },
-      { label: 'Usage rights', done: Boolean(form.usageRights.trim()) },
-      { label: 'Terms & conditions', done: Boolean(form.termsAndConditions.trim()) },
-      { label: 'Expected outcomes', done: Boolean(form.expectedOutcomes.trim()) },
-    ],
-    [
-      form.dosAndDonts,
-      form.expectedOutcomes,
-      form.hashtagsMentions,
-      form.keyMessage,
-      form.referenceUrls,
-      form.termsAndConditions,
-      form.usageRights,
-    ]
-  );
-
-  const referenceCompletenessScore = referenceCompletenessChecks.filter((entry) => entry.done).length;
-
   const maxUnlockedStep = (() => {
     let unlocked = 1;
     for (let idx = 1; idx < steps.length; idx += 1) {
@@ -805,12 +782,6 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
    const submit = async (publish = false) => {
      setIsSaving(true);
      try {
-       if (publish && referenceCompletenessScore < 4) {
-         setStep(5);
-         toast.error('Please complete more References details before publishing (minimum 4 of 7 checks).');
-         return;
-       }
-
        // Auto-derive platforms from selected deliverables
        const autoPlatforms = [
          ...Array.from(new Set(form.deliverableItems.map((item) => item.id.split('::')[0])))
@@ -1758,24 +1729,6 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
          <Card>
            <CardHeader><CardTitle>Step 5 — References</CardTitle></CardHeader>
           <CardContent className="space-y-5">
-                <div className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold">References quality score</p>
-                    <Badge variant={referenceCompletenessScore >= 5 ? 'default' : 'secondary'}>
-                      {referenceCompletenessScore}/{referenceCompletenessChecks.length}
-                    </Badge>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {referenceCompletenessChecks.map((item) => (
-                      <Badge key={item.label} variant={item.done ? 'default' : 'outline'}>
-                        {item.done ? '✓' : '○'} {item.label}
-                      </Badge>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Higher quality references improve creator submissions and reduce revisions.
-                  </p>
-                </div>
 
               <div className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-4">
                 <p className="text-sm font-semibold">Messaging & brand guidelines</p>
