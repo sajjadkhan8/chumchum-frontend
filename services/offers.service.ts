@@ -37,6 +37,9 @@ interface BackendBrandOffer {
    expectedOutcomes?: string;
    coverImageUrl?: string;
    deadlineDate?: string;
+   locationTargetingMode?: 'nationwide' | 'region' | 'cities' | 'remote_only';
+   targetCities?: string;
+   targetRegion?: string;
    targetCity?: string;
    targetLanguage?: string;
    visibility?: 'public' | 'private';
@@ -135,6 +138,9 @@ const mapOffer = (input: BackendBrandOffer): BrandOffer => ({
    expectedOutcomes: input.expectedOutcomes,
    coverImageUrl: input.coverImageUrl,
    deadlineDate: input.deadlineDate,
+   locationTargetingMode: input.locationTargetingMode,
+   targetCities: input.targetCities,
+   targetRegion: input.targetRegion,
    targetCity: input.targetCity,
    targetLanguage: input.targetLanguage,
    visibility: input.visibility || 'public',
@@ -207,6 +213,9 @@ export const offersService = {
      expectedOutcomes?: string;
      coverImageUrl?: string;
      deadlineDate?: string;
+     locationTargetingMode?: 'nationwide' | 'region' | 'cities' | 'remote_only';
+     targetCities?: string;
+     targetRegion?: string;
      targetCity?: string;
      targetLanguage?: string;
      visibility?: 'public' | 'private';
@@ -255,6 +264,9 @@ export const offersService = {
      expectedOutcomes: string;
      coverImageUrl: string;
      deadlineDate: string;
+     locationTargetingMode: 'nationwide' | 'region' | 'cities' | 'remote_only';
+     targetCities: string;
+     targetRegion: string;
      targetCity: string;
      targetLanguage: string;
      visibility: 'public' | 'private';

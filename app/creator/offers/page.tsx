@@ -39,6 +39,13 @@ const referencesScore = (offer: BrandOffer) => {
   return checks.filter((value) => Boolean(value && value.trim().length > 0)).length;
 };
 
+const locationLabel = (offer: BrandOffer) => {
+  if (offer.locationTargetingMode === 'remote_only') return 'Remote / Online only';
+  if (offer.locationTargetingMode === 'region') return offer.targetRegion || offer.targetCity || 'Region';
+  if (offer.locationTargetingMode === 'cities') return offer.targetCities || offer.targetCity || 'Selected cities';
+  return offer.targetCity || 'Nationwide';
+};
+
 export default function CreatorOffersPage() {
   const router = useRouter();
 
@@ -302,7 +309,7 @@ export default function CreatorOffersPage() {
                       <CardTitle className="text-lg">{offer.title}</CardTitle>
                       <p className="text-sm text-muted-foreground">{offer.brandName} • {offer.offerType}</p>
                     </div>
-                    <Badge>{offer.targetCity || 'Open'}</Badge>
+                    <Badge>{locationLabel(offer)}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">

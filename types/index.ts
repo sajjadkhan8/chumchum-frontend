@@ -240,6 +240,9 @@ export interface BrandOffer {
    expectedOutcomes?: string;
    coverImageUrl?: string;
    deadlineDate?: string;
+   locationTargetingMode?: 'nationwide' | 'region' | 'cities' | 'remote_only';
+   targetCities?: string;
+   targetRegion?: string;
    targetCity?: string;
    targetLanguage?: string;
    visibility?: 'public' | 'private';

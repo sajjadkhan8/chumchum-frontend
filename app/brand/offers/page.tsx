@@ -41,6 +41,13 @@ const referencesScore = (offer: BrandOffer) => {
   return checks.filter((value) => Boolean(value && value.trim().length > 0)).length;
 };
 
+const locationLabel = (offer: BrandOffer) => {
+  if (offer.locationTargetingMode === 'remote_only') return 'Remote / Online only';
+  if (offer.locationTargetingMode === 'region') return offer.targetRegion || offer.targetCity || 'Region';
+  if (offer.locationTargetingMode === 'cities') return offer.targetCities || offer.targetCity || 'Selected cities';
+  return 'Nationwide';
+};
+
 export default function BrandOffersPage() {
   const [offers, setOffers] = useState<BrandOffer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -115,7 +122,7 @@ export default function BrandOffersPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <CardTitle className="text-lg">{offer.title}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{offer.offerType} • {offer.targetCity || 'Pakistan-wide'}</p>
+                      <p className="text-sm text-muted-foreground">{offer.offerType} • {locationLabel(offer)}</p>
                     </div>
                     <Badge className={statusClass(offer.status)}>{offer.status.replace('_', ' ')}</Badge>
                   </div>

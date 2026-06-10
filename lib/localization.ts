@@ -35,6 +35,43 @@ export const pakistanCities = [
   'Wah Cantt',
 ] as const;
 
+export const pakistanRegions = [
+  'Punjab',
+  'Sindh',
+  'Khyber Pakhtunkhwa',
+  'Balochistan',
+  'Islamabad Capital Territory',
+  'Azad Jammu and Kashmir',
+  'Gilgit-Baltistan',
+] as const;
+
+export const cityToRegionMap: Partial<Record<(typeof pakistanCities)[number], (typeof pakistanRegions)[number]>> = {
+  Karachi: 'Sindh',
+  Hyderabad: 'Sindh',
+  Sukkur: 'Sindh',
+  Larkana: 'Sindh',
+  Lahore: 'Punjab',
+  Rawalpindi: 'Punjab',
+  Faisalabad: 'Punjab',
+  Multan: 'Punjab',
+  Gujranwala: 'Punjab',
+  Sialkot: 'Punjab',
+  Sargodha: 'Punjab',
+  Bahawalpur: 'Punjab',
+  Gujrat: 'Punjab',
+  Kasur: 'Punjab',
+  'Rahim Yar Khan': 'Punjab',
+  Sahiwal: 'Punjab',
+  Okara: 'Punjab',
+  'Wah Cantt': 'Punjab',
+  Islamabad: 'Islamabad Capital Territory',
+  Peshawar: 'Khyber Pakhtunkhwa',
+  Mardan: 'Khyber Pakhtunkhwa',
+  Abbottabad: 'Khyber Pakhtunkhwa',
+  Swat: 'Khyber Pakhtunkhwa',
+  Quetta: 'Balochistan',
+};
+
 export const pakistanLanguages = [
   'Urdu',
   'Punjabi',

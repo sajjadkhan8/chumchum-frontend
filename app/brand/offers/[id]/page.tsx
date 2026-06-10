@@ -30,6 +30,13 @@ const statusActions: Partial<Record<BrandOfferStatus, Array<{ label: string; nex
 const ALL_STATUSES_VALUE = '__all_statuses__';
 const ALL_TYPES_VALUE = '__all_types__';
 
+const locationLabel = (offer: BrandOffer) => {
+  if (offer.locationTargetingMode === 'remote_only') return 'Remote / Online only';
+  if (offer.locationTargetingMode === 'region') return offer.targetRegion || offer.targetCity || 'Region';
+  if (offer.locationTargetingMode === 'cities') return offer.targetCities || offer.targetCity || 'Selected cities';
+  return offer.targetCity || 'Nationwide';
+};
+
 export default function BrandOfferDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -153,7 +160,7 @@ export default function BrandOfferDetailPage() {
             {offer.usageRights ? <p><span className="font-medium">Usage rights:</span> {offer.usageRights}</p> : null}
             {offer.termsAndConditions ? <p><span className="font-medium">Terms & conditions:</span> {offer.termsAndConditions}</p> : null}
             {offer.expectedOutcomes ? <p><span className="font-medium">Expected outcomes:</span> {offer.expectedOutcomes}</p> : null}
-            <p><span className="font-medium">Target:</span> {offer.targetCity || 'Any city'} • {offer.targetLanguage || 'Any language'}</p>
+            <p><span className="font-medium">Target:</span> {locationLabel(offer)} • {offer.targetLanguage || 'Any language'}</p>
           </CardContent>
         </Card>
         <Card>

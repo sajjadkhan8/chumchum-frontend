@@ -9,6 +9,17 @@ import { offersService } from '@/services/offers.service';
 import type { BrandOffer } from '@/types';
 import { formatPrice } from '@/lib/utils';
 
+const locationLabel = (offer: BrandOffer) => {
+  const locationMode = offer.locationTargetingMode;
+  const targetRegion = offer.targetRegion;
+  const targetCities = offer.targetCities;
+
+  if (locationMode === 'remote_only') return 'Remote / Online only';
+  if (locationMode === 'region') return targetRegion || offer.targetCity || 'Region';
+  if (locationMode === 'cities') return targetCities || offer.targetCity || 'Selected cities';
+  return offer.targetCity || 'Nationwide';
+};
+
 export default function CreatorOfferDetailPage() {
   const params = useParams<{ id: string }>();
   const [offer, setOffer] = useState<BrandOffer | null>(null);
@@ -56,11 +67,10 @@ export default function CreatorOfferDetailPage() {
           {offer.usageRights ? <p><span className="font-medium">Usage rights:</span> {offer.usageRights}</p> : null}
           {offer.termsAndConditions ? <p><span className="font-medium">Terms & conditions:</span> {offer.termsAndConditions}</p> : null}
           {offer.expectedOutcomes ? <p><span className="font-medium">Expected outcomes:</span> {offer.expectedOutcomes}</p> : null}
-          <p><span className="font-medium">Target:</span> {offer.targetCity || 'Any city'} • {offer.targetLanguage || 'Any language'}</p>
+          <p><span className="font-medium">Target:</span> {locationLabel(offer)} • {offer.targetLanguage || 'Any language'}</p>
           <p><span className="font-medium">Deadline:</span> {offer.deadlineDate || 'Open'}</p>
         </CardContent>
       </Card>
     </div>
   );
 }
-

@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { CAMPAIGN_GOAL_SECTIONS, getCampaignGoalDescription } from '@/lib/offer-campaign-goals';
-import { pakistanCities, pakistanLanguages } from '@/lib/localization';
+import { pakistanCities, pakistanLanguages, pakistanRegions } from '@/lib/localization';
 import { offersService } from '@/services/offers.service';
 import { uploadsService } from '@/services/uploads.service';
 import type { BrandOffer } from '@/types';
@@ -23,6 +23,28 @@ import { toast } from 'sonner';
 const DRAFT_KEY = 'brand-offer-wizard-draft-v1';
 const steps = ['Basics', 'Deliverables', 'Budget & Payment', 'Control', 'References & Legal', 'Publish'];
 const MAX_APPLICANTS = 20;
+const LOCATION_SCOPE_OPTIONS = [
+  {
+    value: 'nationwide',
+    label: 'Nationwide',
+    description: 'Open to creators across Pakistan',
+  },
+  {
+    value: 'region',
+    label: 'Region / Province',
+    description: 'Target a specific province or territory',
+  },
+  {
+    value: 'cities',
+    label: 'Specific cities',
+    description: 'Pick one or more exact cities',
+  },
+  {
+    value: 'remote_only',
+    label: 'Remote / Online only',
+    description: 'No city dependency, digital-first campaign',
+  },
+] as const;
 
 const platformOptions = ['instagram', 'youtube', 'tiktok', 'facebook', 'snapchat'] as const;
 const platformMeta: Record<(typeof platformOptions)[number], { label: string; icon: ComponentType<{ className?: string }> }> = {
@@ -230,6 +252,9 @@ interface OfferForm {
    barterEstimatedValue: string;
    travelCostsCovered: boolean;
    deadlineDate: string;
+   locationTargetingMode: 'nationwide' | 'region' | 'cities' | 'remote_only';
+   targetCities: string[];
+   targetRegion: string;
    targetCity: string;
    targetLanguage: string;
    categories: string[];
@@ -277,6 +302,9 @@ const defaultForm: OfferForm = {
    barterEstimatedValue: '',
    travelCostsCovered: false,
    deadlineDate: '',
+   locationTargetingMode: 'nationwide',
+   targetCities: [],
+   targetRegion: '',
    targetCity: '',
    targetLanguage: '',
    categories: [],
@@ -319,31 +347,67 @@ const normalizeMaxApplicantsInput = (value: string | undefined): string => {
   return String(Math.min(MAX_APPLICANTS, Math.max(1, Math.trunc(parsed))));
 };
 
+const normalizeLocationTargetingMode = (value?: string): OfferForm['locationTargetingMode'] => {
+  if (value === 'region' || value === 'cities' || value === 'remote_only') return value;
+  return 'nationwide';
+};
+
+const splitDelimited = (value?: string) =>
+  (value || '')
+    .split(/[\n,]/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+const normalizeCityList = (cities: string[]) => Array.from(new Set(cities.map((entry) => entry.trim()).filter(Boolean)));
+
+const buildLegacyTargetCity = (mode: OfferForm['locationTargetingMode'], cities: string[], region: string) => {
+  if (mode === 'remote_only') return 'Remote / Online Only';
+  if (mode === 'region') return region || 'Region-based';
+  if (mode === 'cities') {
+    if (cities.length === 0) return '';
+    if (cities.length === 1) return cities[0];
+    return `${cities.length} cities`;
+  }
+  return 'Nationwide';
+};
+
+const formatLocationSummary = (mode: OfferForm['locationTargetingMode'], cities: string[], region: string) => {
+  if (mode === 'remote_only') return 'Remote / Online only';
+  if (mode === 'region') return region ? `Region: ${region}` : 'Region';
+  if (mode === 'cities') return cities.length > 0 ? `Cities: ${cities.join(', ')}` : 'Cities';
+  return 'Nationwide';
+};
+
 const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
-   const pf = rawForm ?? {};
-   return {
-     ...defaultForm,
-     ...pf,
-     offerType: isSupportedPlatform(pf.offerType) ? pf.offerType : defaultForm.offerType,
-     visibility: pf.visibility === 'private' ? 'private' : 'public',
-     budgetType: pf.budgetType ?? defaultForm.budgetType,
-     paymentStructure: pf.paymentStructure ?? defaultForm.paymentStructure,
-     travelCostsCovered: typeof pf.travelCostsCovered === 'boolean' ? pf.travelCostsCovered : defaultForm.travelCostsCovered,
-     proposalRequired: typeof pf.proposalRequired === 'boolean' ? pf.proposalRequired : defaultForm.proposalRequired,
-     portfolioRequired: typeof pf.portfolioRequired === 'boolean' ? pf.portfolioRequired : defaultForm.portfolioRequired,
-     // Guarantee every array field is always an array regardless of stale/corrupt localStorage data.
-     categories: Array.isArray(pf.categories) ? pf.categories : defaultForm.categories,
-     niches: Array.isArray(pf.niches) ? pf.niches : defaultForm.niches,
-     customScreeningQuestions: Array.isArray(pf.customScreeningQuestions) ? pf.customScreeningQuestions : defaultForm.customScreeningQuestions,
-     targetPlatforms: isSupportedPlatform(pf.offerType)
-       ? [pf.offerType]
-       : Array.isArray(pf.targetPlatforms)
-         ? pf.targetPlatforms
-         : defaultForm.targetPlatforms,
+    const pf = rawForm ?? {};
+    return {
+      ...defaultForm,
+      ...pf,
+      offerType: isSupportedPlatform(pf.offerType) ? pf.offerType : defaultForm.offerType,
+      visibility: pf.visibility === 'private' ? 'private' : 'public',
+      budgetType: pf.budgetType ?? defaultForm.budgetType,
+      paymentStructure: pf.paymentStructure ?? defaultForm.paymentStructure,
+      travelCostsCovered: typeof pf.travelCostsCovered === 'boolean' ? pf.travelCostsCovered : defaultForm.travelCostsCovered,
+      proposalRequired: typeof pf.proposalRequired === 'boolean' ? pf.proposalRequired : defaultForm.proposalRequired,
+      portfolioRequired: typeof pf.portfolioRequired === 'boolean' ? pf.portfolioRequired : defaultForm.portfolioRequired,
+      // Guarantee every array field is always an array regardless of stale/corrupt localStorage data.
+      categories: Array.isArray(pf.categories) ? pf.categories : defaultForm.categories,
+      niches: Array.isArray(pf.niches) ? pf.niches : defaultForm.niches,
+      customScreeningQuestions: Array.isArray(pf.customScreeningQuestions) ? pf.customScreeningQuestions : defaultForm.customScreeningQuestions,
+      targetPlatforms: isSupportedPlatform(pf.offerType)
+        ? [pf.offerType]
+        : Array.isArray(pf.targetPlatforms)
+          ? pf.targetPlatforms
+          : defaultForm.targetPlatforms,
       contentFormats: Array.isArray(pf.contentFormats) ? pf.contentFormats : defaultForm.contentFormats,
       referenceUrls: Array.isArray(pf.referenceUrls) ? pf.referenceUrls : defaultForm.referenceUrls,
       deliverableItems: Array.isArray(pf.deliverableItems) ? pf.deliverableItems : defaultForm.deliverableItems,
       selectedServiceKeys: Array.isArray(pf.selectedServiceKeys) ? pf.selectedServiceKeys : defaultForm.selectedServiceKeys,
+        locationTargetingMode: normalizeLocationTargetingMode(pf.locationTargetingMode),
+        targetCities: Array.isArray(pf.targetCities)
+          ? normalizeCityList(pf.targetCities)
+          : normalizeCityList(splitDelimited((pf as { targetCities?: string }).targetCities)),
+        targetRegion: typeof pf.targetRegion === 'string' ? pf.targetRegion.trim() : '',
       maxApplicants: pf.maxApplicants === undefined
         ? defaultForm.maxApplicants
         : normalizeMaxApplicantsInput(pf.maxApplicants),
@@ -398,6 +462,15 @@ const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
       barterEstimatedValue: offer.barterEstimatedValue != null ? String(offer.barterEstimatedValue) : '',
       travelCostsCovered: Boolean(offer.travelCostsCovered),
       deadlineDate: offer.deadlineDate || '',
+      locationTargetingMode: offer.locationTargetingMode
+        ? normalizeLocationTargetingMode(offer.locationTargetingMode)
+        : offer.targetCity
+          ? 'cities'
+          : 'nationwide',
+      targetCities: offer.targetCities
+        ? normalizeCityList(splitDelimited(offer.targetCities))
+        : (offer.locationTargetingMode === 'cities' && offer.targetCity ? [offer.targetCity] : []),
+      targetRegion: offer.targetRegion || '',
       targetCity: offer.targetCity || '',
       targetLanguage: offer.targetLanguage || '',
       categories: splitCsv(offer.categories),
@@ -593,7 +666,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
 
   const updateForm = useCallback((patch: Partial<OfferForm>) => {
     setForm((prev) => {
-      const next = { ...prev, ...patch };
+      const next = normalizeDraftForm({ ...prev, ...patch });
       persistDraft(next);
       return next;
     });
@@ -627,8 +700,11 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
      }
      if (targetStep === 4) {
        const missing: string[] = [];
+       const normalizedTargetRegion = (form.targetRegion ?? '').trim();
        if (!form.creatorType.trim()) missing.push('Creator type');
        if (!form.applicationType.trim()) missing.push('Application type');
+       if (form.locationTargetingMode === 'region' && !normalizedTargetRegion) missing.push('Target region');
+       if (form.locationTargetingMode === 'cities' && form.targetCities.length === 0) missing.push('At least one target city');
        return missing;
      }
      return [];
@@ -804,6 +880,10 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
          ? autoPlatforms
          : splitCsv(form.targetPlatforms.join(', ')).filter((entry) => isSupportedPlatform(entry));
        const isBarterOnly = form.budgetType === 'barter_only';
+       const normalizedTargetCities = normalizeCityList(form.targetCities);
+       const normalizedTargetRegion = (form.targetRegion ?? '').trim();
+       const locationMode = form.locationTargetingMode;
+       const legacyTargetCity = buildLegacyTargetCity(locationMode, normalizedTargetCities, normalizedTargetRegion);
 
        const payload = {
          title: form.title.trim(),
@@ -831,7 +911,10 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
          expectedOutcomes: form.expectedOutcomes.trim() || undefined,
          coverImageUrl: form.coverImageUrl || undefined,
          deadlineDate: form.deadlineDate || undefined,
-          targetCity: form.targetCity.trim() || undefined,
+         locationTargetingMode: locationMode,
+         targetCities: locationMode === 'cities' && normalizedTargetCities.length > 0 ? normalizedTargetCities.join(', ') : undefined,
+         targetRegion: locationMode === 'region' && normalizedTargetRegion ? normalizedTargetRegion : undefined,
+          targetCity: legacyTargetCity || undefined,
           targetLanguage: form.targetLanguage.trim() || undefined,
          visibility: form.visibility,
          creatorType: form.creatorType || undefined,
@@ -1554,34 +1637,103 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                    </div>
                  </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label>Target city (optional)</Label>
-                      <select
-                        value={form.targetCity}
-                        onChange={(e) => updateForm({ targetCity: e.target.value })}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <option value="">— Nationwide (any city)</option>
-                        {pakistanCities.map((city) => (
-                          <option key={city} value={city}>{city}</option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-muted-foreground">Leave blank for nationwide targeting.</p>
+                  <div className="space-y-3 rounded-xl border border-border/70 bg-background p-3">
+                    <div className="space-y-1">
+                      <Label>Location scope</Label>
+                      <p className="text-xs text-muted-foreground">Choose how creators are geographically targeted for this campaign.</p>
                     </div>
-                    <div className="space-y-1.5">
-                      <Label>Target language (optional)</Label>
-                      <select
-                        value={form.targetLanguage}
-                        onChange={(e) => updateForm({ targetLanguage: e.target.value })}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <option value="">— Any language</option>
-                        {pakistanLanguages.map((language) => (
-                          <option key={language} value={language}>{language}</option>
-                        ))}
-                      </select>
+
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {LOCATION_SCOPE_OPTIONS.map((option) => {
+                        const isActive = form.locationTargetingMode === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => updateForm({ locationTargetingMode: option.value })}
+                            className={`rounded-lg border p-3 text-left transition-colors ${
+                              isActive
+                                ? 'border-primary bg-primary/10'
+                                : 'border-border hover:border-primary/40 hover:bg-muted/40'
+                            }`}
+                          >
+                            <p className="text-sm font-medium">{option.label}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{option.description}</p>
+                          </button>
+                        );
+                      })}
                     </div>
+
+                    {form.locationTargetingMode === 'region' && (
+                      <div className="space-y-2">
+                        <Label>Pick a region / province</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {pakistanRegions.map((region) => (
+                            <button
+                              key={region}
+                              type="button"
+                              onClick={() => updateForm({ targetRegion: region })}
+                              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                                form.targetRegion === region
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-border bg-background hover:border-primary/40'
+                              }`}
+                            >
+                              {region}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {form.locationTargetingMode === 'cities' && (
+                      <div className="space-y-2">
+                        <SectionRow label="Target cities" count={form.targetCities.length} max={10} hint="selected" />
+                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                          {pakistanCities.map((city) => {
+                            const isSelected = form.targetCities.includes(city);
+                            return (
+                              <button
+                                key={city}
+                                type="button"
+                                onClick={() => {
+                                  const nextCities = isSelected
+                                    ? form.targetCities.filter((entry) => entry !== city)
+                                    : normalizeCityList([...form.targetCities, city]).slice(0, 10);
+                                  updateForm({ targetCities: nextCities });
+                                }}
+                                className={`rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                                  isSelected
+                                    ? 'border-primary bg-primary/10 text-primary'
+                                    : 'border-border bg-background hover:border-primary/40'
+                                }`}
+                              >
+                                {city}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {form.targetCities.length >= 10 && <p className="text-xs text-muted-foreground">Maximum 10 cities can be selected.</p>}
+                      </div>
+                    )}
+
+                    <div className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                      Location summary: <span className="font-medium text-foreground">{formatLocationSummary(form.locationTargetingMode, form.targetCities, form.targetRegion)}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Target language (optional)</Label>
+                    <select
+                      value={form.targetLanguage}
+                      onChange={(e) => updateForm({ targetLanguage: e.target.value })}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">— Any language</option>
+                      {pakistanLanguages.map((language) => (
+                        <option key={language} value={language}>{language}</option>
+                      ))}
+                    </select>
                   </div>
                </div>
              </div>
@@ -1935,7 +2087,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                   <p>Barter value: <span className="font-medium">PKR {Number(form.barterEstimatedValue).toLocaleString()}</span></p>
                 )}
                 <p>Travel costs: <span className="font-medium">{form.travelCostsCovered ? 'Covered by brand' : 'Not covered'}</span></p>
-                {form.targetCity && <p>City: <span className="font-medium">{form.targetCity}</span></p>}
+                <p>Location: <span className="font-medium">{formatLocationSummary(form.locationTargetingMode, form.targetCities, form.targetRegion)}</span></p>
               </div>
             </div>
             <div className="space-y-1">
