@@ -8,40 +8,58 @@ import type {
 } from '@/types';
 
 interface BackendBrandOffer {
-  id: string;
-  brandId: string;
-  brandName?: string;
-  title: string;
-  brief: string;
-  offerType: string;
-  budgetMin: number;
-  budgetMax: number;
-  currency?: string;
-  deliverables?: string;
-  contentFormats?: string;
-  targetPlatforms?: string;
-  campaignGoal?: string;
-  categories?: string;
-  niches?: string;
-  tags?: string;
-  requirements?: string;
-  referenceUrls?: string;
-  coverImageUrl?: string;
-  deadlineDate?: string;
-  targetCity?: string;
-  targetLanguage?: string;
-  minFollowers?: number;
-  minEngagementRate?: number;
-  preferredDeliveryDays?: number;
-  slots?: number;
-  visibility?: 'public' | 'private';
-  status: string;
-  publishedAt?: string;
-  closedAt?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  reactionCount?: number;
-}
+   id: string;
+   brandId: string;
+   brandName?: string;
+   title: string;
+   brief: string;
+   offerType: string;
+   budgetMin: number;
+   budgetMax: number;
+   currency?: string;
+   budgetType?: string;
+   paymentStructure?: string;
+   barterProductDesc?: string;
+   barterEstimatedValue?: number;
+   travelCostsCovered?: boolean;
+   deliverables?: string;
+   contentFormats?: string;
+   targetPlatforms?: string;
+   campaignGoal?: string;
+   categories?: string;
+   niches?: string;
+   referenceUrls?: string;
+   keyMessage?: string;
+   dosAndDonts?: string;
+   hashtagsMentions?: string;
+   usageRights?: string;
+   termsAndConditions?: string;
+   expectedOutcomes?: string;
+   coverImageUrl?: string;
+   deadlineDate?: string;
+   targetCity?: string;
+   targetLanguage?: string;
+   visibility?: 'public' | 'private';
+   creatorType?: string;
+   followerRange?: string;
+   creatorGenderPreference?: string;
+   minAge?: number;
+   maxAge?: number;
+   applicationType?: string;
+   maxApplicants?: number;
+   proposalRequired?: boolean;
+   portfolioRequired?: boolean;
+   customScreeningQuestions?: string;
+   contentSubmissionDeadline?: string;
+   goLiveDate?: string;
+   campaignDuration?: number;
+   status: string;
+   publishedAt?: string;
+   closedAt?: string;
+   createdAt?: string;
+   updatedAt?: string;
+   reactionCount?: number;
+ }
 
 interface BackendOfferReaction {
   id: string;
@@ -88,40 +106,58 @@ const normalizeReactionStatus = (value?: string): BrandOfferReactionStatus => {
 };
 
 const mapOffer = (input: BackendBrandOffer): BrandOffer => ({
-  id: input.id,
-  brandId: input.brandId,
-  brandName: input.brandName || 'Brand',
-  title: input.title,
-  brief: input.brief,
-  offerType: input.offerType,
-  budgetMin: input.budgetMin,
-  budgetMax: input.budgetMax,
-  currency: input.currency || 'PKR',
-  deliverables: input.deliverables,
-  contentFormats: input.contentFormats,
-  targetPlatforms: input.targetPlatforms,
-  campaignGoal: input.campaignGoal,
-  categories: input.categories,
-  niches: input.niches,
-  tags: input.tags,
-  requirements: input.requirements,
-  referenceUrls: input.referenceUrls,
-  coverImageUrl: input.coverImageUrl,
-  deadlineDate: input.deadlineDate,
-  targetCity: input.targetCity,
-  targetLanguage: input.targetLanguage,
-  minFollowers: input.minFollowers,
-  minEngagementRate: input.minEngagementRate,
-  preferredDeliveryDays: input.preferredDeliveryDays,
-  slots: input.slots,
-  visibility: input.visibility || 'public',
-  status: normalizeOfferStatus(input.status),
-  publishedAt: toDate(input.publishedAt),
-  closedAt: toDate(input.closedAt),
-  createdAt: toDate(input.createdAt) || new Date(),
-  updatedAt: toDate(input.updatedAt) || new Date(),
-  reactionCount: input.reactionCount || 0,
-});
+   id: input.id,
+   brandId: input.brandId,
+   brandName: input.brandName || 'Brand',
+   title: input.title,
+   brief: input.brief,
+   offerType: input.offerType,
+   budgetMin: input.budgetMin,
+   budgetMax: input.budgetMax,
+   currency: input.currency || 'PKR',
+   budgetType: input.budgetType,
+   paymentStructure: input.paymentStructure,
+   barterProductDesc: input.barterProductDesc,
+   barterEstimatedValue: input.barterEstimatedValue,
+   travelCostsCovered: input.travelCostsCovered,
+   deliverables: input.deliverables,
+   contentFormats: input.contentFormats,
+   targetPlatforms: input.targetPlatforms,
+   campaignGoal: input.campaignGoal,
+   categories: input.categories,
+   niches: input.niches,
+   referenceUrls: input.referenceUrls,
+   keyMessage: input.keyMessage,
+   dosAndDonts: input.dosAndDonts,
+   hashtagsMentions: input.hashtagsMentions,
+   usageRights: input.usageRights,
+   termsAndConditions: input.termsAndConditions,
+   expectedOutcomes: input.expectedOutcomes,
+   coverImageUrl: input.coverImageUrl,
+   deadlineDate: input.deadlineDate,
+   targetCity: input.targetCity,
+   targetLanguage: input.targetLanguage,
+   visibility: input.visibility || 'public',
+   creatorType: input.creatorType,
+   followerRange: input.followerRange,
+   creatorGenderPreference: input.creatorGenderPreference,
+   minAge: input.minAge,
+   maxAge: input.maxAge,
+   applicationType: input.applicationType,
+   maxApplicants: input.maxApplicants,
+   proposalRequired: input.proposalRequired,
+   portfolioRequired: input.portfolioRequired,
+   customScreeningQuestions: input.customScreeningQuestions,
+   contentSubmissionDeadline: input.contentSubmissionDeadline,
+   goLiveDate: input.goLiveDate,
+   campaignDuration: input.campaignDuration,
+   status: normalizeOfferStatus(input.status),
+   publishedAt: toDate(input.publishedAt),
+   closedAt: toDate(input.closedAt),
+   createdAt: toDate(input.createdAt) || new Date(),
+   updatedAt: toDate(input.updatedAt) || new Date(),
+   reactionCount: input.reactionCount || 0,
+ });
 
 const mapReaction = (input: BackendOfferReaction): BrandOfferReaction => ({
   id: input.id,
@@ -144,65 +180,101 @@ const mapReaction = (input: BackendOfferReaction): BrandOfferReaction => ({
 });
 
 export const offersService = {
-  async createOffer(payload: {
-    title: string;
-    brief: string;
-    offerType: string;
-    budgetMin: number;
-    budgetMax: number;
-    currency?: string;
-    deliverables?: string;
-    contentFormats?: string;
-    targetPlatforms?: string;
-    campaignGoal?: string;
-    categories?: string;
-    niches?: string;
-    tags?: string;
-    requirements?: string;
-    referenceUrls?: string;
-    coverImageUrl?: string;
-    deadlineDate?: string;
-    targetCity?: string;
-    targetLanguage?: string;
-    minFollowers?: number;
-    minEngagementRate?: number;
-    preferredDeliveryDays?: number;
-    slots?: number;
-    visibility?: 'public' | 'private';
-  }): Promise<BrandOffer> {
-    const response = await apiClient.post<BackendBrandOffer>('/api/v1/brand/offers', payload);
-    return mapOffer(response);
-  },
+   async createOffer(payload: {
+     title: string;
+     brief: string;
+     offerType: string;
+     budgetMin: number;
+     budgetMax: number;
+     currency?: string;
+     budgetType?: string;
+     paymentStructure?: string;
+     barterProductDesc?: string;
+     barterEstimatedValue?: number;
+     travelCostsCovered?: boolean;
+     deliverables?: string;
+     contentFormats?: string;
+     targetPlatforms?: string;
+     campaignGoal?: string;
+     categories?: string;
+     niches?: string;
+     referenceUrls?: string;
+     keyMessage?: string;
+     dosAndDonts?: string;
+     hashtagsMentions?: string;
+     usageRights?: string;
+     termsAndConditions?: string;
+     expectedOutcomes?: string;
+     coverImageUrl?: string;
+     deadlineDate?: string;
+     targetCity?: string;
+     targetLanguage?: string;
+     visibility?: 'public' | 'private';
+     creatorType?: string;
+     followerRange?: string;
+     creatorGenderPreference?: string;
+     minAge?: number;
+     maxAge?: number;
+     applicationType?: string;
+     maxApplicants?: number;
+     proposalRequired?: boolean;
+     portfolioRequired?: boolean;
+     customScreeningQuestions?: string;
+     contentSubmissionDeadline?: string;
+     goLiveDate?: string;
+     campaignDuration?: number;
+   }): Promise<BrandOffer> {
+     const response = await apiClient.post<BackendBrandOffer>('/api/v1/brand/offers', payload);
+     return mapOffer(response);
+   },
 
-  async updateOffer(offerId: string, payload: Partial<{
-    title: string;
-    brief: string;
-    offerType: string;
-    budgetMin: number;
-    budgetMax: number;
-    currency: string;
-    deliverables: string;
-    contentFormats: string;
-    targetPlatforms: string;
-    campaignGoal: string;
-    categories: string;
-    niches: string;
-    tags: string;
-    requirements: string;
-    referenceUrls: string;
-    coverImageUrl: string;
-    deadlineDate: string;
-    targetCity: string;
-    targetLanguage: string;
-    minFollowers: number;
-    minEngagementRate: number;
-    preferredDeliveryDays: number;
-    slots: number;
-    visibility: 'public' | 'private';
-  }>): Promise<BrandOffer> {
-    const response = await apiClient.patch<BackendBrandOffer>(`/api/v1/brand/offers/${offerId}`, payload);
-    return mapOffer(response);
-  },
+   async updateOffer(offerId: string, payload: Partial<{
+     title: string;
+     brief: string;
+     offerType: string;
+     budgetMin: number;
+     budgetMax: number;
+     currency: string;
+     budgetType: string;
+     paymentStructure: string;
+     barterProductDesc: string;
+     barterEstimatedValue: number;
+     travelCostsCovered: boolean;
+     deliverables: string;
+     contentFormats: string;
+     targetPlatforms: string;
+     campaignGoal: string;
+     categories: string;
+     niches: string;
+     referenceUrls: string;
+     keyMessage: string;
+     dosAndDonts: string;
+     hashtagsMentions: string;
+     usageRights: string;
+     termsAndConditions: string;
+     expectedOutcomes: string;
+     coverImageUrl: string;
+     deadlineDate: string;
+     targetCity: string;
+     targetLanguage: string;
+     visibility: 'public' | 'private';
+     creatorType: string;
+     followerRange: string;
+     creatorGenderPreference: string;
+     minAge: number;
+     maxAge: number;
+     applicationType: string;
+     maxApplicants: number;
+     proposalRequired: boolean;
+     portfolioRequired: boolean;
+     customScreeningQuestions: string;
+     contentSubmissionDeadline: string;
+     goLiveDate: string;
+     campaignDuration: number;
+   }>): Promise<BrandOffer> {
+     const response = await apiClient.patch<BackendBrandOffer>(`/api/v1/brand/offers/${offerId}`, payload);
+     return mapOffer(response);
+   },
 
   async updateOfferStatus(offerId: string, status: Uppercase<BrandOfferStatus>): Promise<BrandOffer> {
     const response = await apiClient.patch<BackendBrandOffer>(`/api/v1/brand/offers/${offerId}/status`, { status });
@@ -262,7 +334,6 @@ export const offersService = {
     campaignGoal?: string;
     budgetMin?: number;
     budgetMax?: number;
-    myFollowers?: number;
     page?: number;
     size?: number;
   }): Promise<{ content: BrandOffer[]; totalElements: number; totalPages: number; last: boolean }> {
@@ -275,7 +346,6 @@ export const offersService = {
         campaignGoal: filters?.campaignGoal,
         budgetMin: filters?.budgetMin,
         budgetMax: filters?.budgetMax,
-        myFollowers: filters?.myFollowers,
         page: filters?.page ?? 0,
         size: filters?.size ?? 20,
       },

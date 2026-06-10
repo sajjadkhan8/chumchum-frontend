@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,6 +22,19 @@ import { toast } from 'sonner';
 const OFFER_TYPES = ['UGC', 'POST', 'REEL', 'STORY', 'BUNDLE', 'Custom'];
 const CITIES = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'];
 const PLATFORMS = ['instagram', 'youtube', 'tiktok', 'facebook', 'snapchat'];
+
+const referencesScore = (offer: BrandOffer) => {
+  const checks = [
+    offer.keyMessage,
+    offer.dosAndDonts,
+    offer.hashtagsMentions,
+    offer.referenceUrls,
+    offer.usageRights,
+    offer.termsAndConditions,
+    offer.expectedOutcomes,
+  ];
+  return checks.filter((value) => Boolean(value && value.trim().length > 0)).length;
+};
 
 export default function CreatorOffersPage() {
   const router = useRouter();
@@ -290,7 +304,7 @@ export default function CreatorOffersPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="line-clamp-2 text-sm text-muted-foreground">{offer.brief}</p>
-                  {offer.campaignGoal ? <p className="text-xs text-muted-foreground">Goal: {offer.campaignGoal}</p> : null}
+                  {offer.campaignGoal ? <CampaignGoalBadge goal={offer.campaignGoal} /> : null}
                   {offer.targetPlatforms ? <p className="text-xs text-muted-foreground">Platforms: {offer.targetPlatforms}</p> : null}
                   {offer.contentFormats ? <p className="text-xs text-muted-foreground">Formats: {offer.contentFormats}</p> : null}
                   <p className="text-sm font-medium text-primary">
@@ -300,6 +314,7 @@ export default function CreatorOffersPage() {
                     <span>Deadline: {offer.deadlineDate || 'Open-ended'}</span>
                     {offer.targetLanguage ? <span>Lang: {offer.targetLanguage}</span> : null}
                     <span>Updated {formatRelativeTime(offer.updatedAt)}</span>
+                    <Badge variant="outline">Refs {referencesScore(offer)}/7</Badge>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" asChild>

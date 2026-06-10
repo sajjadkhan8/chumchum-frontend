@@ -6,6 +6,7 @@ import { Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
 import { offersService } from '@/services/offers.service';
 import type { BrandOffer, BrandOfferStatus } from '@/types';
 import { formatPrice, formatRelativeTime } from '@/lib/utils';
@@ -25,6 +26,19 @@ const statusClass = (status: BrandOfferStatus) => {
   if (status === 'paused') return 'bg-orange-100 text-orange-700';
   if (status === 'closed') return 'bg-slate-200 text-slate-700';
   return 'bg-muted text-muted-foreground';
+};
+
+const referencesScore = (offer: BrandOffer) => {
+  const checks = [
+    offer.keyMessage,
+    offer.dosAndDonts,
+    offer.hashtagsMentions,
+    offer.referenceUrls,
+    offer.usageRights,
+    offer.termsAndConditions,
+    offer.expectedOutcomes,
+  ];
+  return checks.filter((value) => Boolean(value && value.trim().length > 0)).length;
 };
 
 export default function BrandOffersPage() {
@@ -108,7 +122,7 @@ export default function BrandOffersPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="line-clamp-2 text-sm text-muted-foreground">{offer.brief}</p>
-                  {offer.campaignGoal ? <p className="text-xs text-muted-foreground">Goal: {offer.campaignGoal}</p> : null}
+                  {offer.campaignGoal ? <CampaignGoalBadge goal={offer.campaignGoal} /> : null}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                     <span className="font-medium text-primary">
                       {formatPrice(offer.budgetMin)} – {formatPrice(offer.budgetMax)} {offer.currency}
@@ -118,6 +132,7 @@ export default function BrandOffersPage() {
                       {offer.reactionCount} reactions
                     </span>
                     <span className="text-muted-foreground">Updated {formatRelativeTime(offer.updatedAt)}</span>
+                    <Badge variant="outline">Refs {referencesScore(offer)}/7</Badge>
                   </div>
                   <Button asChild variant="outline" size="sm">
                     <Link href={`/brand/offers/${offer.id}`}>Manage Offer</Link>

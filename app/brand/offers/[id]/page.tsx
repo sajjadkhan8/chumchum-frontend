@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { offersService } from '@/services/offers.service';
@@ -117,6 +118,9 @@ export default function BrandOfferDetailPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => router.push('/brand/offers')}>Back</Button>
+          <Button variant="outline" asChild>
+            <Link href={`/brand/offers/${offer.id}/edit`}>Edit Offer</Link>
+          </Button>
           {statusActions[offer.status]?.map((entry) => (
             <Button key={entry.next} onClick={() => void onStatusChange(entry.next)}>{entry.label}</Button>
           ))}
@@ -129,15 +133,23 @@ export default function BrandOfferDetailPage() {
           <CardContent className="space-y-3 text-sm">
             <p>{offer.brief}</p>
             <p><span className="font-medium">Budget:</span> {formatPrice(offer.budgetMin)} – {formatPrice(offer.budgetMax)} {offer.currency}</p>
-            {offer.campaignGoal ? <p><span className="font-medium">Campaign goal:</span> {offer.campaignGoal}</p> : null}
+            {offer.campaignGoal ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium">Campaign goal:</span>
+                <CampaignGoalBadge goal={offer.campaignGoal} />
+              </div>
+            ) : null}
             {offer.targetPlatforms ? <p><span className="font-medium">Platforms:</span> {offer.targetPlatforms}</p> : null}
             {offer.contentFormats ? <p><span className="font-medium">Formats:</span> {offer.contentFormats}</p> : null}
             {offer.deadlineDate ? <p><span className="font-medium">Deadline:</span> {offer.deadlineDate}</p> : null}
             {offer.deliverables ? <p><span className="font-medium">Deliverables:</span> {offer.deliverables}</p> : null}
-            {offer.requirements ? <p><span className="font-medium">Requirements:</span> {offer.requirements}</p> : null}
-            {offer.tags ? <p><span className="font-medium">Tags:</span> {offer.tags}</p> : null}
-            {offer.referenceUrls ? <p><span className="font-medium">References:</span> {offer.referenceUrls}</p> : null}
-            {offer.minFollowers ? <p><span className="font-medium">Min followers:</span> {offer.minFollowers.toLocaleString()}</p> : null}
+            {offer.keyMessage ? <p><span className="font-medium">Key message:</span> {offer.keyMessage}</p> : null}
+            {offer.dosAndDonts ? <p><span className="font-medium">Do's and don'ts:</span> {offer.dosAndDonts}</p> : null}
+            {offer.hashtagsMentions ? <p><span className="font-medium">Hashtags & mentions:</span> {offer.hashtagsMentions}</p> : null}
+            {offer.referenceUrls ? <p><span className="font-medium">Reference content:</span> {offer.referenceUrls}</p> : null}
+            {offer.usageRights ? <p><span className="font-medium">Usage rights:</span> {offer.usageRights}</p> : null}
+            {offer.termsAndConditions ? <p><span className="font-medium">Terms & conditions:</span> {offer.termsAndConditions}</p> : null}
+            {offer.expectedOutcomes ? <p><span className="font-medium">Expected outcomes:</span> {offer.expectedOutcomes}</p> : null}
             <p><span className="font-medium">Target:</span> {offer.targetCity || 'Any city'} • {offer.targetLanguage || 'Any language'}</p>
           </CardContent>
         </Card>

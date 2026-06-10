@@ -1,24 +1,26 @@
 'use client';
 
-import { type ComponentType, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { type ComponentType, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Camera, Check, Instagram, Lock, MessageCircle, Music2, Plus, Trash2, Upload, X, Youtube } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { CAMPAIGN_GOAL_SECTIONS } from '@/lib/offer-campaign-goals';
+import { CAMPAIGN_GOAL_SECTIONS, getCampaignGoalDescription } from '@/lib/offer-campaign-goals';
 import { offersService } from '@/services/offers.service';
 import { uploadsService } from '@/services/uploads.service';
+import type { BrandOffer } from '@/types';
 import { toast } from 'sonner';
 
 const DRAFT_KEY = 'brand-offer-wizard-draft-v1';
-const steps = ['Basics', 'Deliverables', 'Budget & Targeting', 'References', 'Publish'];
+const steps = ['Basics', 'Deliverables', 'Budget & Payment', 'Control', 'References & Legal', 'Publish'];
 
 const platformOptions = ['instagram', 'youtube', 'tiktok', 'facebook', 'snapchat'] as const;
 const platformMeta: Record<(typeof platformOptions)[number], { label: string; icon: ComponentType<{ className?: string }> }> = {
@@ -209,60 +211,98 @@ interface DeliverableItem {
 }
 
 interface OfferForm {
-  title: string;
-  brief: string;
-  offerType: string;
-  campaignGoal: string;
-  targetPlatforms: string[];
-  contentFormats: string[];
-  selectedServiceKeys: string[];
-  deliverableItems: DeliverableItem[];
-  deliverableNotes: string;
-  budgetMin: string;
-  budgetMax: string;
-  deadlineDate: string;
-  targetCity: string;
-  targetLanguage: string;
-  minFollowers: string;
-  minEngagementRate: string;
-  preferredDeliveryDays: string;
-  slots: string;
-  categories: string[];
-  niches: string[];
-  tags: string[];
-  requirements: string;
-  coverImageUrl: string;
-  referenceUrls: string[];
-  visibility: Visibility;
-}
+   title: string;
+   brief: string;
+   offerType: string;
+   campaignGoal: string;
+   targetPlatforms: string[];
+   contentFormats: string[];
+   selectedServiceKeys: string[];
+   deliverableItems: DeliverableItem[];
+   deliverableNotes: string;
+   budgetType: string;
+   budgetMin: string;
+   budgetMax: string;
+   paymentStructure: string;
+   barterProductDesc: string;
+   barterEstimatedValue: string;
+   travelCostsCovered: boolean;
+   deadlineDate: string;
+   targetCity: string;
+   targetLanguage: string;
+   categories: string[];
+   niches: string[];
+   coverImageUrl: string;
+   referenceUrls: string[];
+   keyMessage: string;
+   dosAndDonts: string;
+   hashtagsMentions: string;
+   usageRights: string;
+   termsAndConditions: string;
+   expectedOutcomes: string;
+   visibility: Visibility;
+   // Control tab fields
+   creatorType: string;
+   followerRange: string;
+   creatorGenderPreference: string;
+   minAge: string;
+   maxAge: string;
+   applicationType: string;
+   maxApplicants: string;
+   proposalRequired: boolean;
+   portfolioRequired: boolean;
+   customScreeningQuestions: string[];
+   contentSubmissionDeadline: string;
+   goLiveDate: string;
+   campaignDuration: string;
+ }
 
 const defaultForm: OfferForm = {
-  title: '',
-  brief: '',
-  offerType: '',
-  campaignGoal: '',
-  targetPlatforms: [],
-  contentFormats: [],
-  selectedServiceKeys: [],
-  deliverableItems: [],
-  deliverableNotes: '',
-  budgetMin: '25000',
-  budgetMax: '80000',
-  deadlineDate: '',
-  targetCity: '',
-  targetLanguage: '',
-  minFollowers: '',
-  minEngagementRate: '',
-  preferredDeliveryDays: '',
-  slots: '',
-  categories: [],
-  niches: [],
-  tags: [],
-  requirements: '',
-  coverImageUrl: '',
-  referenceUrls: [''],
-  visibility: 'public',
-};
+   title: '',
+   brief: '',
+   offerType: '',
+   campaignGoal: '',
+   targetPlatforms: [],
+   contentFormats: [],
+   selectedServiceKeys: [],
+   deliverableItems: [],
+   deliverableNotes: '',
+   budgetType: 'fixed',
+   budgetMin: '25000',
+   budgetMax: '80000',
+   paymentStructure: 'full_upfront',
+   barterProductDesc: '',
+   barterEstimatedValue: '',
+   travelCostsCovered: false,
+   deadlineDate: '',
+   targetCity: '',
+   targetLanguage: '',
+   categories: [],
+   niches: [],
+   coverImageUrl: '',
+   referenceUrls: [''],
+   keyMessage: '',
+   dosAndDonts: '',
+   hashtagsMentions: '',
+   usageRights: '',
+   termsAndConditions: '',
+   expectedOutcomes: '',
+   visibility: 'public',
+   // Control tab defaults
+   creatorType: '',
+   followerRange: '',
+   creatorGenderPreference: 'any',
+   minAge: '',
+   maxAge: '',
+   applicationType: 'open',
+   maxApplicants: '50',
+   proposalRequired: false,
+   portfolioRequired: false,
+   customScreeningQuestions: [],
+   contentSubmissionDeadline: '',
+   goLiveDate: '',
+   campaignDuration: '30',
+ };
 
 type SupportedPlatform = (typeof platformOptions)[number];
 
@@ -270,27 +310,108 @@ const isSupportedPlatform = (value: unknown): value is SupportedPlatform =>
   typeof value === 'string' && platformOptions.includes(value as SupportedPlatform);
 
 const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
-  const pf = rawForm ?? {};
-  return {
-    ...defaultForm,
-    ...pf,
-    offerType: isSupportedPlatform(pf.offerType) ? pf.offerType : defaultForm.offerType,
-    visibility: pf.visibility === 'private' ? 'private' : 'public',
-    // Guarantee every array field is always an array regardless of stale/corrupt localStorage data.
-    categories: Array.isArray(pf.categories) ? pf.categories : defaultForm.categories,
-    niches: Array.isArray(pf.niches) ? pf.niches : defaultForm.niches,
-    tags: Array.isArray(pf.tags) ? pf.tags : defaultForm.tags,
-    targetPlatforms: isSupportedPlatform(pf.offerType)
-      ? [pf.offerType]
-      : Array.isArray(pf.targetPlatforms)
-        ? pf.targetPlatforms
-        : defaultForm.targetPlatforms,
-    contentFormats: Array.isArray(pf.contentFormats) ? pf.contentFormats : defaultForm.contentFormats,
-    referenceUrls: Array.isArray(pf.referenceUrls) ? pf.referenceUrls : defaultForm.referenceUrls,
-    deliverableItems: Array.isArray(pf.deliverableItems) ? pf.deliverableItems : defaultForm.deliverableItems,
-    selectedServiceKeys: Array.isArray(pf.selectedServiceKeys) ? pf.selectedServiceKeys : defaultForm.selectedServiceKeys,
+   const pf = rawForm ?? {};
+   return {
+     ...defaultForm,
+     ...pf,
+     offerType: isSupportedPlatform(pf.offerType) ? pf.offerType : defaultForm.offerType,
+     visibility: pf.visibility === 'private' ? 'private' : 'public',
+     budgetType: pf.budgetType ?? defaultForm.budgetType,
+     paymentStructure: pf.paymentStructure ?? defaultForm.paymentStructure,
+     travelCostsCovered: typeof pf.travelCostsCovered === 'boolean' ? pf.travelCostsCovered : defaultForm.travelCostsCovered,
+     proposalRequired: typeof pf.proposalRequired === 'boolean' ? pf.proposalRequired : defaultForm.proposalRequired,
+     portfolioRequired: typeof pf.portfolioRequired === 'boolean' ? pf.portfolioRequired : defaultForm.portfolioRequired,
+     // Guarantee every array field is always an array regardless of stale/corrupt localStorage data.
+     categories: Array.isArray(pf.categories) ? pf.categories : defaultForm.categories,
+     niches: Array.isArray(pf.niches) ? pf.niches : defaultForm.niches,
+     customScreeningQuestions: Array.isArray(pf.customScreeningQuestions) ? pf.customScreeningQuestions : defaultForm.customScreeningQuestions,
+     targetPlatforms: isSupportedPlatform(pf.offerType)
+       ? [pf.offerType]
+       : Array.isArray(pf.targetPlatforms)
+         ? pf.targetPlatforms
+         : defaultForm.targetPlatforms,
+     contentFormats: Array.isArray(pf.contentFormats) ? pf.contentFormats : defaultForm.contentFormats,
+     referenceUrls: Array.isArray(pf.referenceUrls) ? pf.referenceUrls : defaultForm.referenceUrls,
+     deliverableItems: Array.isArray(pf.deliverableItems) ? pf.deliverableItems : defaultForm.deliverableItems,
+     selectedServiceKeys: Array.isArray(pf.selectedServiceKeys) ? pf.selectedServiceKeys : defaultForm.selectedServiceKeys,
+   };
   };
-};
+
+  const splitCsv = (value?: string) =>
+    (value || '')
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+
+  const splitLines = (value?: string) =>
+    (value || '')
+      .split('\n')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+
+  const parseDeliverableItems = (offerType: string, deliverables?: string): DeliverableItem[] => {
+    const platformPrefix = isSupportedPlatform(offerType) ? `${offerType}::` : 'imported::';
+    return splitLines(deliverables)
+      .filter((line) => !line.toLowerCase().startsWith('notes:'))
+      .map((line, index) => {
+        const match = line.match(/^(\d+)x\s+(.+)$/i);
+        const quantity = match ? Number(match[1]) : 1;
+        const label = (match ? match[2] : line).trim();
+        return {
+          id: `${platformPrefix}imported_${index}`,
+          label,
+          quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+        };
+      });
+  };
+
+  const mapOfferToForm = (offer: BrandOffer): OfferForm =>
+    normalizeDraftForm({
+      title: offer.title || '',
+      brief: offer.brief || '',
+      offerType: offer.offerType || '',
+      campaignGoal: offer.campaignGoal || '',
+      targetPlatforms: splitCsv(offer.targetPlatforms),
+      contentFormats: splitCsv(offer.contentFormats),
+      deliverableItems: parseDeliverableItems(offer.offerType, offer.deliverables),
+      deliverableNotes: splitLines(offer.deliverables)
+        .find((line) => line.toLowerCase().startsWith('notes:'))
+        ?.replace(/^notes:\s*/i, '') || '',
+      budgetType: offer.budgetType || 'fixed',
+      budgetMin: String(offer.budgetMin ?? ''),
+      budgetMax: String(offer.budgetMax ?? ''),
+      paymentStructure: offer.paymentStructure || 'full_upfront',
+      barterProductDesc: offer.barterProductDesc || '',
+      barterEstimatedValue: offer.barterEstimatedValue != null ? String(offer.barterEstimatedValue) : '',
+      travelCostsCovered: Boolean(offer.travelCostsCovered),
+      deadlineDate: offer.deadlineDate || '',
+      targetCity: offer.targetCity || '',
+      targetLanguage: offer.targetLanguage || '',
+      categories: splitCsv(offer.categories),
+      niches: splitCsv(offer.niches),
+      coverImageUrl: offer.coverImageUrl || '',
+      referenceUrls: splitLines(offer.referenceUrls).length > 0 ? splitLines(offer.referenceUrls) : [''],
+      visibility: offer.visibility === 'private' ? 'private' : 'public',
+      creatorType: offer.creatorType || '',
+      followerRange: offer.followerRange || '',
+      creatorGenderPreference: offer.creatorGenderPreference || 'any',
+      minAge: offer.minAge != null ? String(offer.minAge) : '',
+      maxAge: offer.maxAge != null ? String(offer.maxAge) : '',
+      applicationType: offer.applicationType || 'open',
+      maxApplicants: offer.maxApplicants != null ? String(offer.maxApplicants) : '',
+      proposalRequired: Boolean(offer.proposalRequired),
+      portfolioRequired: Boolean(offer.portfolioRequired),
+      customScreeningQuestions: splitLines(offer.customScreeningQuestions),
+      contentSubmissionDeadline: offer.contentSubmissionDeadline || '',
+      goLiveDate: offer.goLiveDate || '',
+      campaignDuration: offer.campaignDuration != null ? String(offer.campaignDuration) : '30',
+      keyMessage: offer.keyMessage || '',
+      dosAndDonts: offer.dosAndDonts || '',
+      hashtagsMentions: offer.hashtagsMentions || '',
+      usageRights: offer.usageRights || '',
+      termsAndConditions: offer.termsAndConditions || '',
+      expectedOutcomes: offer.expectedOutcomes || '',
+    });
 
 // ─── Chip Input ──────────────────────────────────────────────────────────────
 
@@ -384,14 +505,22 @@ function SectionRow({ label, count, max, hint }: { label: string; count?: number
   );
 }
 
-export function BrandOfferWizard() {
+interface BrandOfferWizardProps {
+  offerId?: string;
+}
+
+export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
   const router = useRouter();
+  const isEditMode = Boolean(offerId);
+  const draftKey = isEditMode ? `${DRAFT_KEY}-edit-${offerId}` : DRAFT_KEY;
   const [step, setStep] = useState(1);
   const [hasSavedDraft, setHasSavedDraft] = useState(false);
+  const [isHydratingOffer, setIsHydratingOffer] = useState(false);
   const prevOfferTypeRef = useRef<string>('');
+  const [activeCampaignGoalSection, setActiveCampaignGoalSection] = useState<string>(CAMPAIGN_GOAL_SECTIONS[0].label);
   const [form, setForm] = useState<OfferForm>(() => {
     if (typeof window === 'undefined') return defaultForm;
-    const raw = window.localStorage.getItem(DRAFT_KEY);
+    const raw = window.localStorage.getItem(draftKey);
     if (!raw) return defaultForm;
     try {
       const parsed = JSON.parse(raw) as { step?: number; form?: Partial<OfferForm> };
@@ -431,47 +560,91 @@ export function BrandOfferWizard() {
 
   const selectedServiceSet = useMemo(() => new Set(form.selectedServiceKeys), [form.selectedServiceKeys]);
 
+  const selectedCampaignGoalSection = useMemo(
+    () => CAMPAIGN_GOAL_SECTIONS.find((section) => section.options.some((goal) => goal === form.campaignGoal)),
+    [form.campaignGoal]
+  );
+
+  const activeCampaignGoalOptions = useMemo(
+    () => CAMPAIGN_GOAL_SECTIONS.find((section) => section.label === activeCampaignGoalSection)?.options ?? [],
+    [activeCampaignGoalSection]
+  );
+
   const serviceMap = useMemo(() => new Map(serviceOptions.map((entry) => [entry.key, entry.label])), [serviceOptions]);
 
-  const persistDraft = (nextForm: OfferForm, nextStep = step) => {
+  const persistDraft = useCallback((nextForm: OfferForm, nextStep = step) => {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ step: nextStep, form: nextForm }));
+    window.localStorage.setItem(draftKey, JSON.stringify({ step: nextStep, form: nextForm }));
     setHasSavedDraft(true);
-  };
+  }, [draftKey, step]);
 
-  const updateForm = (patch: Partial<OfferForm>) => {
+  const updateForm = useCallback((patch: Partial<OfferForm>) => {
     setForm((prev) => {
       const next = { ...prev, ...patch };
       persistDraft(next);
       return next;
     });
-  };
+  }, [persistDraft]);
 
-  const getMissingFields = (targetStep: number): string[] => {
-    if (targetStep === 1) {
-      const missing: string[] = [];
-      if (!form.title.trim()) missing.push('Title');
-      if (!form.brief.trim()) missing.push('Brief');
-      if (!form.campaignGoal.trim()) missing.push('Campaign goal');
-      if (!form.offerType.trim()) missing.push('Primary platform');
-      return missing;
-    }
-    if (targetStep === 2) {
-      const missing: string[] = [];
-      if (!form.deliverableItems.length) missing.push('At least one deliverable');
-      return missing;
-    }
-    if (targetStep === 3) {
-      const missing: string[] = [];
-      if (!form.budgetMin) missing.push('Budget min');
-      if (!form.budgetMax) missing.push('Budget max');
-      if (Number(form.budgetMin || 0) > Number(form.budgetMax || 0)) missing.push('Budget min must be <= budget max');
-      return missing;
-    }
-    return [];
-  };
+   const getMissingFields = (targetStep: number): string[] => {
+     if (targetStep === 1) {
+       const missing: string[] = [];
+       if (!form.title.trim()) missing.push('Title');
+       if (!form.brief.trim()) missing.push('Brief');
+       if (!form.offerType.trim()) missing.push('Platform');
+       return missing;
+     }
+     if (targetStep === 2) {
+       const missing: string[] = [];
+       if (!form.deliverableItems.length) missing.push('At least one deliverable');
+       return missing;
+     }
+     if (targetStep === 3) {
+       const missing: string[] = [];
+       if (!form.budgetType) missing.push('Budget type');
+       const isBarterOnly = form.budgetType === 'barter_only';
+       const hasBarter = form.budgetType === 'barter_only' || form.budgetType === 'paid_and_barter';
+       if (!isBarterOnly) {
+         if (!form.budgetMin) missing.push('Budget min');
+         if (!form.budgetMax) missing.push('Budget max');
+         if (Number(form.budgetMin || 0) > Number(form.budgetMax || 0)) missing.push('Budget min must be ≤ budget max');
+       }
+       if (hasBarter && !form.barterProductDesc.trim()) missing.push('Barter product description');
+       return missing;
+     }
+     if (targetStep === 4) {
+       const missing: string[] = [];
+       if (!form.creatorType.trim()) missing.push('Creator type');
+       if (!form.applicationType.trim()) missing.push('Application type');
+       return missing;
+     }
+     return [];
+   };
 
   const canContinue = getMissingFields(step).length === 0;
+
+  const referenceCompletenessChecks = useMemo(
+    () => [
+      { label: 'Key message', done: Boolean(form.keyMessage.trim()) },
+      { label: 'Do\'s and don\'ts', done: Boolean(form.dosAndDonts.trim()) },
+      { label: 'Hashtags & mentions', done: Boolean(form.hashtagsMentions.trim()) },
+      { label: 'At least 1 reference link', done: form.referenceUrls.some((url) => Boolean(url.trim())) },
+      { label: 'Usage rights', done: Boolean(form.usageRights.trim()) },
+      { label: 'Terms & conditions', done: Boolean(form.termsAndConditions.trim()) },
+      { label: 'Expected outcomes', done: Boolean(form.expectedOutcomes.trim()) },
+    ],
+    [
+      form.dosAndDonts,
+      form.expectedOutcomes,
+      form.hashtagsMentions,
+      form.keyMessage,
+      form.referenceUrls,
+      form.termsAndConditions,
+      form.usageRights,
+    ]
+  );
+
+  const referenceCompletenessScore = referenceCompletenessChecks.filter((entry) => entry.done).length;
 
   const maxUnlockedStep = (() => {
     let unlocked = 1;
@@ -482,9 +655,14 @@ export function BrandOfferWizard() {
     return unlocked;
   })();
 
-  useEffect(() => {
-    if (step > maxUnlockedStep) setStep(maxUnlockedStep);
-  }, [maxUnlockedStep, step]);
+   useEffect(() => {
+     if (step > maxUnlockedStep) setStep(maxUnlockedStep);
+   }, [maxUnlockedStep, step]);
+
+   // Scroll to top when step changes
+   useEffect(() => {
+     window.scrollTo({ top: 0, behavior: 'smooth' });
+   }, [step]);
 
   // Clear incompatible deliverables when primary platform changes
   useEffect(() => {
@@ -520,12 +698,44 @@ export function BrandOfferWizard() {
         deliverableItems: validDeliverables,
       });
     }
-  }, [form.deliverableItems, form.offerType, form.selectedServiceKeys, form.targetPlatforms]);
+  }, [form.deliverableItems, form.offerType, form.selectedServiceKeys, form.targetPlatforms, updateForm]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    setHasSavedDraft(Boolean(window.localStorage.getItem(DRAFT_KEY)));
-  }, []);
+    setHasSavedDraft(Boolean(window.localStorage.getItem(draftKey)));
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!offerId) return;
+    let isMounted = true;
+    setIsHydratingOffer(true);
+    offersService.getBrandOffer(offerId)
+      .then((offer) => {
+        if (!isMounted) return;
+        setForm(mapOfferToForm(offer));
+        setStep(1);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        toast.error('Failed to load offer for editing');
+        router.push('/brand/offers');
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setIsHydratingOffer(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [offerId, router]);
+
+  useEffect(() => {
+    if (selectedCampaignGoalSection && selectedCampaignGoalSection.label !== activeCampaignGoalSection) {
+      setActiveCampaignGoalSection(selectedCampaignGoalSection.label);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCampaignGoalSection]);
+
 
   const toggleServiceSelection = (serviceKey: string) => {
     const exists = form.selectedServiceKeys.includes(serviceKey);
@@ -592,64 +802,94 @@ export function BrandOfferWizard() {
     return entries.join('\n');
   };
 
-  const submit = async (publish = false) => {
-    setIsSaving(true);
-    try {
-      // Auto-derive platforms from selected deliverables
-      const autoPlatforms = [
-        ...new Set(
-          form.deliverableItems.map((item) => item.id.split('::')[0])
-        ),
-      ];
+   const submit = async (publish = false) => {
+     setIsSaving(true);
+     try {
+       if (publish && referenceCompletenessScore < 4) {
+         setStep(5);
+         toast.error('Please complete more References details before publishing (minimum 4 of 7 checks).');
+         return;
+       }
 
-      const created = await offersService.createOffer({
-        title: form.title.trim(),
-        brief: form.brief.trim(),
-        offerType: form.offerType.trim(),
-        campaignGoal: form.campaignGoal.trim(),
-        budgetMin: Number(form.budgetMin),
-        budgetMax: Number(form.budgetMax),
-        deliverables: buildDeliverablesText(),
-        contentFormats: form.contentFormats.length > 0 ? form.contentFormats.join(', ') : undefined,
-        targetPlatforms: autoPlatforms.join(', '),
-        categories: form.categories.join(', '),
-        niches: form.niches.join(', '),
-        tags: form.tags.join(', '),
-        requirements: form.requirements.trim() || undefined,
-        referenceUrls: form.referenceUrls.map((url) => url.trim()).filter(Boolean).join('\n') || undefined,
-        coverImageUrl: form.coverImageUrl || undefined,
-        deadlineDate: form.deadlineDate || undefined,
-        targetCity: form.targetCity || undefined,
-        targetLanguage: form.targetLanguage || undefined,
-        minFollowers: form.minFollowers ? Number(form.minFollowers) : undefined,
-        minEngagementRate: form.minEngagementRate ? Number(form.minEngagementRate) : undefined,
-        preferredDeliveryDays: form.preferredDeliveryDays ? Number(form.preferredDeliveryDays) : undefined,
-        slots: form.slots ? Number(form.slots) : undefined,
-        visibility: form.visibility,
-      });
+       // Auto-derive platforms from selected deliverables
+       const autoPlatforms = [
+         ...Array.from(new Set(form.deliverableItems.map((item) => item.id.split('::')[0])))
+           .filter((entry): entry is SupportedPlatform => isSupportedPlatform(entry)),
+       ];
+       const resolvedPlatforms = autoPlatforms.length > 0
+         ? autoPlatforms
+         : splitCsv(form.targetPlatforms.join(', ')).filter((entry) => isSupportedPlatform(entry));
+       const isBarterOnly = form.budgetType === 'barter_only';
 
-      if (publish) {
-        await offersService.updateOfferStatus(created.id, 'PUBLISHED');
-        toast.success('Offer published');
-      } else {
-        toast.success('Offer saved as draft');
-      }
+       const payload = {
+         title: form.title.trim(),
+         brief: form.brief.trim(),
+         offerType: form.offerType.trim(),
+         campaignGoal: form.campaignGoal.trim(),
+         budgetType: form.budgetType,
+         budgetMin: isBarterOnly ? 0 : Number(form.budgetMin),
+         budgetMax: isBarterOnly ? 0 : Number(form.budgetMax),
+         paymentStructure: isBarterOnly ? undefined : form.paymentStructure,
+         barterProductDesc: form.barterProductDesc.trim() || undefined,
+         barterEstimatedValue: form.barterEstimatedValue ? Number(form.barterEstimatedValue) : undefined,
+         travelCostsCovered: form.travelCostsCovered,
+         deliverables: buildDeliverablesText(),
+         contentFormats: form.contentFormats.length > 0 ? form.contentFormats.join(', ') : undefined,
+         targetPlatforms: (resolvedPlatforms.length > 0 ? resolvedPlatforms : [form.offerType]).join(', '),
+         categories: form.categories.join(', '),
+         niches: form.niches.join(', '),
+         referenceUrls: form.referenceUrls.map((url) => url.trim()).filter(Boolean).join('\n') || undefined,
+         keyMessage: form.keyMessage.trim() || undefined,
+         dosAndDonts: form.dosAndDonts.trim() || undefined,
+         hashtagsMentions: form.hashtagsMentions.trim() || undefined,
+         usageRights: form.usageRights.trim() || undefined,
+         termsAndConditions: form.termsAndConditions.trim() || undefined,
+         expectedOutcomes: form.expectedOutcomes.trim() || undefined,
+         coverImageUrl: form.coverImageUrl || undefined,
+         deadlineDate: form.deadlineDate || undefined,
+         targetCity: form.targetCity || undefined,
+         targetLanguage: form.targetLanguage || undefined,
+         visibility: form.visibility,
+         creatorType: form.creatorType || undefined,
+         followerRange: form.followerRange || undefined,
+         creatorGenderPreference: form.creatorGenderPreference || undefined,
+         minAge: form.minAge ? Number(form.minAge) : undefined,
+         maxAge: form.maxAge ? Number(form.maxAge) : undefined,
+         applicationType: form.applicationType || 'open',
+         maxApplicants: form.maxApplicants ? Number(form.maxApplicants) : undefined,
+         proposalRequired: form.proposalRequired,
+         portfolioRequired: form.portfolioRequired,
+         customScreeningQuestions: form.customScreeningQuestions.length > 0 ? form.customScreeningQuestions.join('\n') : undefined,
+         contentSubmissionDeadline: form.contentSubmissionDeadline || undefined,
+         goLiveDate: form.goLiveDate || undefined,
+         campaignDuration: form.campaignDuration ? Number(form.campaignDuration) : undefined,
+       };
+       const savedOffer = isEditMode && offerId
+         ? await offersService.updateOffer(offerId, payload)
+         : await offersService.createOffer(payload);
 
-      if (typeof window !== 'undefined') {
-        window.localStorage.removeItem(DRAFT_KEY);
-      }
-      setHasSavedDraft(false);
-      router.push(`/brand/offers/${created.id}`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to create offer');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+       if (publish) {
+         await offersService.updateOfferStatus(savedOffer.id, 'PUBLISHED');
+         toast.success(isEditMode ? 'Offer updated and published' : 'Offer published');
+       } else {
+         toast.success(isEditMode ? 'Offer updated successfully' : 'Offer saved as draft');
+       }
+
+       if (typeof window !== 'undefined') {
+         window.localStorage.removeItem(draftKey);
+       }
+       setHasSavedDraft(false);
+       router.push(`/brand/offers/${savedOffer.id}`);
+     } catch (error) {
+       toast.error(error instanceof Error ? error.message : `Failed to ${isEditMode ? 'update' : 'create'} offer`);
+     } finally {
+       setIsSaving(false);
+     }
+   };
 
   const restoreDraft = () => {
     if (typeof window === 'undefined') return;
-    const raw = window.localStorage.getItem(DRAFT_KEY);
+    const raw = window.localStorage.getItem(draftKey);
     if (!raw) return;
     try {
       const parsed = JSON.parse(raw) as { step?: number; form?: Partial<OfferForm> };
@@ -666,10 +906,20 @@ export function BrandOfferWizard() {
 
   const clearDraft = () => {
     if (typeof window === 'undefined') return;
-    window.localStorage.removeItem(DRAFT_KEY);
+    window.localStorage.removeItem(draftKey);
     setHasSavedDraft(false);
     toast.success('Saved draft cleared');
   };
+
+  if (isEditMode && isHydratingOffer) {
+    return (
+      <div className="mx-auto w-full max-w-4xl space-y-4 px-1 pb-6 sm:space-y-6">
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">Loading offer for editing…</CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4 px-1 pb-6 sm:space-y-6">
@@ -681,8 +931,8 @@ export function BrandOfferWizard() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold md:text-3xl">Create Offer</h1>
-            <p className="text-muted-foreground">Build a detailed brand requirement in five guided steps.</p>
+            <h1 className="text-2xl font-bold md:text-3xl">{isEditMode ? 'Edit Offer' : 'Create Offer'}</h1>
+            <p className="text-muted-foreground">Build a detailed brand requirement in six guided steps.</p>
           </div>
         </div>
       </div>
@@ -771,37 +1021,7 @@ export function BrandOfferWizard() {
               <p className="text-xs text-muted-foreground">Aim for 80–300 characters to give creators enough context.</p>
             </div>
             <div className="space-y-3">
-              <SectionRow label="Campaign goal *" count={form.campaignGoal ? 1 : 0} max={1} hint="selected" />
-              <div className="grid gap-3 xl:grid-cols-2">
-                {CAMPAIGN_GOAL_SECTIONS.map((section) => (
-                  <div key={section.label} className="rounded-xl border border-border/70 bg-muted/20 p-3">
-                    <p className="mb-3 text-sm font-semibold">{section.label}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {section.options.map((goal) => {
-                        const isSelected = form.campaignGoal === goal;
-                        return (
-                          <button
-                            key={goal}
-                            type="button"
-                            onClick={() => updateForm({ campaignGoal: goal })}
-                            className={`rounded-full border px-3 py-1.5 text-left text-xs font-medium transition-colors sm:text-sm ${
-                              isSelected
-                                ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                                : 'border-border bg-background hover:border-primary/40 hover:bg-primary/5'
-                            }`}
-                          >
-                            {goal}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">Choose the main business outcome you want this creator campaign to optimize for.</p>
-            </div>
-            <div className="space-y-2">
-              <SectionRow label="Primary platform *" count={form.offerType ? 1 : 0} max={1} hint="selected" />
+              <SectionRow label="Platform *" count={form.offerType ? 1 : 0} max={1} hint="selected" />
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                 {platformOptions.map((platform) => {
                   const { icon: Icon, label } = platformMeta[platform];
@@ -825,8 +1045,88 @@ export function BrandOfferWizard() {
                   );
                 })}
                </div>
-               <p className="text-xs text-muted-foreground">Your primary platform selection will determine available deliverable options in Step 2 (Deliverables).</p>
+               <p className="text-xs text-muted-foreground">Your platform selection determines available deliverable options in Step 2.</p>
              </div>
+            <div className="space-y-3">
+              <SectionRow label="Campaign goal (optional)" count={form.campaignGoal ? 1 : 0} max={1} hint="selected" />
+              <div className="rounded-xl border border-border/70 bg-muted/20 p-3 sm:p-4">
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-semibold">Pick a campaign goal</p>
+                  <p className="text-xs text-muted-foreground">Select a category, then pick one specific goal below.</p>
+                </div>
+
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {CAMPAIGN_GOAL_SECTIONS.map((section) => {
+                    const isActive = activeCampaignGoalSection === section.label;
+                    const isSelectedSection = selectedCampaignGoalSection?.label === section.label;
+                    return (
+                      <button
+                        key={section.label}
+                        type="button"
+                        onClick={() => {
+                          setActiveCampaignGoalSection(section.label);
+                        }}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm ${
+                          isActive
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border bg-background hover:border-primary/40 hover:bg-primary/5'
+                        }`}
+                      >
+                        {section.label}
+                        {isSelectedSection ? <Check className="ml-1.5 inline h-3.5 w-3.5" /> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-3 rounded-lg border border-border/60 bg-background p-3">
+                  <p className="mb-2 text-xs font-semibold text-muted-foreground">{activeCampaignGoalSection}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {activeCampaignGoalOptions.map((goal) => {
+                      const isSelected = form.campaignGoal === goal;
+                      return (
+                        <button
+                          key={goal}
+                          type="button"
+                          onClick={() => {
+                            updateForm({ campaignGoal: goal });
+                          }}
+                          className={`rounded-xl border px-3 py-2 text-left text-xs font-medium transition-colors sm:text-sm ${
+                            isSelected
+                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                              : 'border-border bg-background hover:border-primary/40 hover:bg-primary/5'
+                          }`}
+                        >
+                          <p>{goal}</p>
+                          <p className={`mt-1 text-[11px] leading-snug ${isSelected ? 'text-primary-foreground/90' : 'text-muted-foreground'}`}>
+                            {getCampaignGoalDescription(goal)}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {form.campaignGoal ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+                    <CampaignGoalBadge goal={form.campaignGoal} />
+                    <span className="text-xs text-muted-foreground">{getCampaignGoalDescription(form.campaignGoal)}</span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="ml-auto h-7 px-2 text-xs"
+                      onClick={() => updateForm({ campaignGoal: '' })}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                ) : null}
+
+              </div>
+              <p className="text-xs text-muted-foreground">Choose the main business outcome you want this creator campaign to optimize for.</p>
+            </div>
             <div className="rounded-lg border p-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
@@ -846,7 +1146,7 @@ export function BrandOfferWizard() {
                 </div>
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               <ChipInput
                 label="Categories"
                 chips={form.categories}
@@ -863,15 +1163,6 @@ export function BrandOfferWizard() {
                 onRemove={(i) => updateForm({ niches: form.niches.filter((_, idx) => idx !== i) })}
                 placeholder="UGC, Reviews…"
                 max={5}
-                helperText="Press Enter, comma, or Tab to add"
-              />
-              <ChipInput
-                label="Tags"
-                chips={form.tags}
-                onAdd={(v) => updateForm({ tags: [...form.tags, v] })}
-                onRemove={(i) => updateForm({ tags: form.tags.filter((_, idx) => idx !== i) })}
-                placeholder="ramadan, launch…"
-                max={10}
                 helperText="Press Enter, comma, or Tab to add"
               />
             </div>
@@ -1054,83 +1345,475 @@ export function BrandOfferWizard() {
 
       {step === 3 && (
         <Card>
-          <CardHeader><CardTitle>Step 3 — Budget & Targeting</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Step 3 — Budget & Payment</CardTitle></CardHeader>
           <CardContent className="space-y-5">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Budget range (PKR) <span className="text-destructive">*</span></Label>
-                {form.budgetMin && form.budgetMax && Number(form.budgetMin) <= Number(form.budgetMax) && (
-                  <span className="text-xs text-muted-foreground">
-                    PKR {Number(form.budgetMin).toLocaleString()} – {Number(form.budgetMax).toLocaleString()}
-                  </span>
-                )}
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Minimum</Label>
-                  <Input type="number" min={0} value={form.budgetMin} onChange={(e) => updateForm({ budgetMin: e.target.value })} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Maximum</Label>
-                  <Input type="number" min={0} value={form.budgetMax} onChange={(e) => updateForm({ budgetMax: e.target.value })} />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">This is the budget you're willing to offer per creator. Creators will see this range when browsing.</p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="space-y-1.5">
-                <Label>Target city</Label>
-                <Input value={form.targetCity} onChange={(e) => updateForm({ targetCity: e.target.value })} placeholder="Karachi" />
-                <p className="text-xs text-muted-foreground">Leave blank for nationwide.</p>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Target language</Label>
-                <Input value={form.targetLanguage} onChange={(e) => updateForm({ targetLanguage: e.target.value })} placeholder="Urdu" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Application deadline</Label>
-                <Input type="date" value={form.deadlineDate} onChange={(e) => updateForm({ deadlineDate: e.target.value })} />
-                <p className="text-xs text-muted-foreground">Offer auto-closes after this date.</p>
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-1.5">
-                <Label>Min followers</Label>
-                <Input type="number" min={0} value={form.minFollowers} onChange={(e) => updateForm({ minFollowers: e.target.value })} placeholder="10000" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Min engagement %</Label>
-                <Input type="number" min={0} max={100} step="0.1" value={form.minEngagementRate} onChange={(e) => updateForm({ minEngagementRate: e.target.value })} placeholder="2.5" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Delivery days</Label>
-                <Input type="number" min={1} value={form.preferredDeliveryDays} onChange={(e) => updateForm({ preferredDeliveryDays: e.target.value })} placeholder="14" />
-                <p className="text-xs text-muted-foreground">From approval to delivery.</p>
-              </div>
-              <div className="space-y-1.5">
-                <Label>
-                  Creator slots
-                  {form.slots ? <span className="ml-1 text-xs text-muted-foreground">({form.slots} open)</span> : null}
-                </Label>
-                <Input type="number" min={1} value={form.slots} onChange={(e) => updateForm({ slots: e.target.value })} placeholder="5" />
-                <p className="text-xs text-muted-foreground">Max creators you'll accept.</p>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label>Requirements & do/don'ts</Label>
-                <span className="text-xs text-muted-foreground">{form.requirements.length} chars</span>
-              </div>
-              <Textarea rows={4} value={form.requirements} onChange={(e) => updateForm({ requirements: e.target.value })} placeholder="Usage rights, do/don't list, legal disclaimers, approval flow..." />
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {step === 4 && (
-        <Card>
-          <CardHeader><CardTitle>Step 4 — References</CardTitle></CardHeader>
+            {/* Budget type */}
+            <div className="space-y-2">
+              <Label>Budget type <span className="text-destructive">*</span></Label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {([
+                  { value: 'fixed', label: '💰 Fixed price', desc: 'You set a fixed PKR amount per creator' },
+                  { value: 'open_to_bids', label: '📊 Open to bids', desc: 'Creators propose their own rates within a range' },
+                  { value: 'paid_and_barter', label: '🤝 Paid + barter', desc: 'Cash fee plus a product or service exchange' },
+                  { value: 'barter_only', label: '🎁 Barter only', desc: 'Product or service exchange — no cash payment' },
+                ] as const).map(({ value, label, desc }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => updateForm({ budgetType: value })}
+                    className={`rounded-xl border p-3 text-left transition-colors ${
+                      form.budgetType === value
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-primary/40 hover:bg-muted/30'
+                    }`}
+                  >
+                    <p className="text-sm font-medium">{label}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Cash budget — hidden for barter_only */}
+            {form.budgetType !== 'barter_only' && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>
+                    {form.budgetType === 'fixed' ? 'Fixed amount (PKR)' : 'Bid range (PKR)'}{' '}
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  {form.budgetMin && form.budgetMax && Number(form.budgetMin) <= Number(form.budgetMax) && (
+                    <span className="text-xs text-muted-foreground">
+                      PKR {Number(form.budgetMin).toLocaleString()}{form.budgetType !== 'fixed' ? ` – ${Number(form.budgetMax).toLocaleString()}` : ''}
+                    </span>
+                  )}
+                </div>
+                {form.budgetType === 'fixed' ? (
+                  <Input
+                    type="number"
+                    min={0}
+                    value={form.budgetMin}
+                    onChange={(e) => updateForm({ budgetMin: e.target.value, budgetMax: e.target.value })}
+                    placeholder="e.g. 25000"
+                  />
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Minimum</Label>
+                      <Input type="number" min={0} value={form.budgetMin} onChange={(e) => updateForm({ budgetMin: e.target.value })} placeholder="e.g. 10000" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Maximum</Label>
+                      <Input type="number" min={0} value={form.budgetMax} onChange={(e) => updateForm({ budgetMax: e.target.value })} placeholder="e.g. 80000" />
+                    </div>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">Per creator, in PKR. Creators will see this when browsing.</p>
+              </div>
+            )}
+
+            {/* Payment structure — hidden for barter_only */}
+            {form.budgetType !== 'barter_only' && (
+              <div className="space-y-2">
+                <Label>Payment structure</Label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {([
+                    { value: 'full_upfront', label: '🔒 Full upfront into escrow', desc: '100% held in escrow before work begins' },
+                    { value: 'split_50_50', label: '✂️ 50% upfront + 50% on delivery', desc: 'Split payment — milestone-based release' },
+                  ] as const).map(({ value, label, desc }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => updateForm({ paymentStructure: value })}
+                      className={`rounded-xl border p-3 text-left transition-colors ${
+                        form.paymentStructure === value
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border hover:border-primary/40 hover:bg-muted/30'
+                      }`}
+                    >
+                      <p className="text-sm font-medium">{label}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Barter details — shown for barter types */}
+            {(form.budgetType === 'barter_only' || form.budgetType === 'paid_and_barter') && (
+              <div className="space-y-4 rounded-xl border border-amber-200/70 bg-amber-50/40 p-4 dark:border-amber-900/40 dark:bg-amber-950/20">
+                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Barter details</p>
+                <div className="space-y-1.5">
+                  <Label>Product / service description <span className="text-destructive">*</span></Label>
+                  <Textarea
+                    rows={3}
+                    value={form.barterProductDesc}
+                    onChange={(e) => updateForm({ barterProductDesc: e.target.value })}
+                    placeholder="e.g. One full-size skincare kit (moisturiser, serum, SPF) worth PKR 8,000 — shipped within 3 days of confirmation."
+                  />
+                  <p className="text-xs text-muted-foreground">Describe what the creator will receive as their barter compensation.</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Estimated value (PKR)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={form.barterEstimatedValue}
+                    onChange={(e) => updateForm({ barterEstimatedValue: e.target.value })}
+                    placeholder="e.g. 8000"
+                  />
+                  <p className="text-xs text-muted-foreground">Approximate retail / market value. Helps creators evaluate the offer.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Travel & extra costs */}
+            <div className="rounded-lg border p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <Label>Travelling & extra costs covered</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {form.travelCostsCovered
+                      ? 'Brand covers reasonable travel or shoot expenses'
+                      : 'Creator is responsible for their own expenses'}
+                  </p>
+                </div>
+                <Switch
+                  checked={form.travelCostsCovered}
+                  onCheckedChange={(checked) => updateForm({ travelCostsCovered: checked })}
+                  aria-label="Toggle travel costs covered"
+                />
+              </div>
+            </div>
+
+            {/* Targeting and requirements moved to Control / References & Legal for cleaner separation */}
+           </CardContent>
+         </Card>
+       )}
+
+       {step === 4 && (
+         <Card>
+           <CardHeader><CardTitle>Step 4 — Creator Control & Timeline</CardTitle></CardHeader>
+           <CardContent className="space-y-5">
+
+             {/* Creator Profile Requirements */}
+             <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+               <p className="mb-4 text-sm font-semibold">Creator Profile Requirements</p>
+
+               <div className="space-y-4">
+                 {/* Creator Type */}
+                 <div className="space-y-2">
+                   <Label>Creator type <span className="text-destructive">*</span></Label>
+                   <div className="grid gap-2 sm:grid-cols-3">
+                     {([
+                       { value: 'influencer', label: '📢 Influencer', desc: 'Focus: Reach & audience size' },
+                       { value: 'creator', label: '🎬 Creator', desc: 'Focus: Content quality & storytelling' },
+                       { value: 'both', label: '⭐ Both', desc: 'Open to any creator type' },
+                     ] as const).map(({ value, label, desc }) => (
+                       <button
+                         key={value}
+                         type="button"
+                         onClick={() => updateForm({ creatorType: value })}
+                         className={`rounded-lg border p-3 text-left text-sm transition-colors ${
+                           form.creatorType === value
+                             ? 'border-primary bg-primary/10'
+                             : 'border-border hover:border-primary/40 hover:bg-muted/30'
+                         }`}
+                       >
+                         <p className="font-medium">{label}</p>
+                         <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>
+                       </button>
+                     ))}
+                   </div>
+                 </div>
+
+                 {/* Follower Range & Gender */}
+                 <div className="grid gap-4 sm:grid-cols-2">
+                   <div className="space-y-2">
+                     <Label>Follower range (optional)</Label>
+                     <select
+                       value={form.followerRange}
+                       onChange={(e) => updateForm({ followerRange: e.target.value })}
+                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                     >
+                       <option value="">— Any follower range</option>
+                       <option value="nano">🌱 Nano (1K–10K)</option>
+                       <option value="micro">📱 Micro (10K–100K)</option>
+                       <option value="macro">📈 Macro (100K–1M)</option>
+                       <option value="mega">🚀 Mega (1M+)</option>
+                     </select>
+                   </div>
+                   <div className="space-y-2">
+                     <Label>Creator gender preference (optional)</Label>
+                     <select
+                       value={form.creatorGenderPreference}
+                       onChange={(e) => updateForm({ creatorGenderPreference: e.target.value })}
+                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                     >
+                       <option value="any">Any</option>
+                       <option value="male">Male</option>
+                       <option value="female">Female</option>
+                     </select>
+                   </div>
+                 </div>
+
+                 {/* Age Range */}
+                 <div className="grid gap-4 sm:grid-cols-2">
+                   <div className="space-y-1.5">
+                     <Label>Min age (optional)</Label>
+                     <Input type="number" min={13} max={120} value={form.minAge} onChange={(e) => updateForm({ minAge: e.target.value })} placeholder="e.g. 18" />
+                   </div>
+                   <div className="space-y-1.5">
+                     <Label>Max age (optional)</Label>
+                     <Input type="number" min={13} max={120} value={form.maxAge} onChange={(e) => updateForm({ maxAge: e.target.value })} placeholder="e.g. 35" />
+                   </div>
+                 </div>
+
+                 <div className="grid gap-4 sm:grid-cols-2">
+                   <div className="space-y-1.5">
+                     <Label>Target city (optional)</Label>
+                     <Input value={form.targetCity} onChange={(e) => updateForm({ targetCity: e.target.value })} placeholder="Karachi" />
+                     <p className="text-xs text-muted-foreground">Leave blank for nationwide targeting.</p>
+                   </div>
+                   <div className="space-y-1.5">
+                     <Label>Target language (optional)</Label>
+                     <Input value={form.targetLanguage} onChange={(e) => updateForm({ targetLanguage: e.target.value })} placeholder="Urdu" />
+                   </div>
+                 </div>
+               </div>
+             </div>
+
+             {/* Application Settings */}
+             <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+               <p className="mb-4 text-sm font-semibold">Application Settings</p>
+
+               <div className="space-y-4">
+                 {/* Application Type */}
+                 <div className="space-y-2">
+                   <Label>Application type <span className="text-destructive">*</span></Label>
+                   <div className="grid gap-2 sm:grid-cols-3">
+                     {([
+                       { value: 'open', label: '🔓 Open', desc: 'Anyone can apply' },
+                       { value: 'shortlist', label: '📋 Shortlist-then-invite', desc: 'You review, then invite' },
+                       { value: 'invite_only', label: '🔐 Invite-only', desc: 'You invite specific creators' },
+                     ] as const).map(({ value, label, desc }) => (
+                       <button
+                         key={value}
+                         type="button"
+                         onClick={() => updateForm({ applicationType: value })}
+                         className={`rounded-lg border p-3 text-left text-sm transition-colors ${
+                           form.applicationType === value
+                             ? 'border-primary bg-primary/10'
+                             : 'border-border hover:border-primary/40 hover:bg-muted/30'
+                         }`}
+                       >
+                         <p className="font-medium">{label}</p>
+                         <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>
+                       </button>
+                     ))}
+                   </div>
+                 </div>
+
+                 {/* Max Applicants & Toggles */}
+                 <div className="space-y-2">
+                   <Label>Maximum applicants (optional)</Label>
+                   <Input
+                     type="number"
+                     min={1}
+                     value={form.maxApplicants}
+                     onChange={(e) => updateForm({ maxApplicants: e.target.value })}
+                     placeholder="e.g. 50"
+                   />
+                   <p className="text-xs text-muted-foreground">Leave empty for no cap. Set to limit application spam.</p>
+                 </div>
+
+                 <div className="grid gap-3 sm:grid-cols-2">
+                   <div className="rounded-lg border p-3 flex items-center justify-between">
+                     <div className="space-y-0.5">
+                       <Label className="text-sm">Proposal required</Label>
+                       <p className="text-xs text-muted-foreground">Creators pitch before applying</p>
+                     </div>
+                     <Switch
+                       checked={form.proposalRequired}
+                       onCheckedChange={(checked) => updateForm({ proposalRequired: checked })}
+                       aria-label="Require proposal"
+                     />
+                   </div>
+                   <div className="rounded-lg border p-3 flex items-center justify-between">
+                     <div className="space-y-0.5">
+                       <Label className="text-sm">Portfolio required</Label>
+                       <p className="text-xs text-muted-foreground">Creators submit past work samples</p>
+                     </div>
+                     <Switch
+                       checked={form.portfolioRequired}
+                       onCheckedChange={(checked) => updateForm({ portfolioRequired: checked })}
+                       aria-label="Require portfolio"
+                     />
+                   </div>
+                 </div>
+               </div>
+             </div>
+
+             {/* Custom Screening Questions */}
+             <div className="space-y-2">
+               <SectionRow
+                 label="Custom screening questions (optional)"
+                 count={form.customScreeningQuestions.length}
+                 max={3}
+               />
+               <p className="text-xs text-muted-foreground">Ask up to 3 custom questions to screen creators during applications.</p>
+               {form.customScreeningQuestions.map((question, idx) => (
+                 <div key={idx} className="flex gap-2">
+                   <Input
+                     value={question}
+                     onChange={(e) => {
+                       const updated = [...form.customScreeningQuestions];
+                       updated[idx] = e.target.value;
+                       updateForm({ customScreeningQuestions: updated });
+                     }}
+                     placeholder={`Question ${idx + 1}…`}
+                   />
+                   <Button
+                     type="button"
+                     size="icon"
+                     variant="ghost"
+                     onClick={() => {
+                       updateForm({
+                         customScreeningQuestions: form.customScreeningQuestions.filter((_, i) => i !== idx),
+                       });
+                     }}
+                   >
+                     <Trash2 className="h-4 w-4" />
+                   </Button>
+                 </div>
+               ))}
+               {form.customScreeningQuestions.length < 3 && (
+                 <Button
+                   type="button"
+                   variant="outline"
+                   size="sm"
+                   onClick={() => updateForm({ customScreeningQuestions: [...form.customScreeningQuestions, ''] })}
+                 >
+                   <Plus className="mr-2 h-4 w-4" /> Add question
+                 </Button>
+               )}
+             </div>
+
+             {/* Timeline & Campaign Duration */}
+             <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+               <p className="mb-4 text-sm font-semibold">Timeline & Duration</p>
+
+               <div className="space-y-3">
+                 <div className="grid gap-4 sm:grid-cols-2">
+                   <div className="space-y-1.5">
+                     <Label>Application deadline (optional)</Label>
+                     <Input
+                       type="date"
+                       value={form.deadlineDate}
+                       onChange={(e) => updateForm({ deadlineDate: e.target.value })}
+                     />
+                     <p className="text-xs text-muted-foreground">Last date creators can apply.</p>
+                   </div>
+                   <div className="space-y-1.5">
+                     <Label>Content submission deadline (optional)</Label>
+                     <Input
+                       type="date"
+                       value={form.contentSubmissionDeadline}
+                       onChange={(e) => updateForm({ contentSubmissionDeadline: e.target.value })}
+                     />
+                     <p className="text-xs text-muted-foreground">When creators must submit their content.</p>
+                   </div>
+                   <div className="space-y-1.5">
+                     <Label>Go-live / publish date (optional)</Label>
+                     <Input
+                       type="date"
+                       value={form.goLiveDate}
+                       onChange={(e) => updateForm({ goLiveDate: e.target.value })}
+                     />
+                     <p className="text-xs text-muted-foreground">When content should go live.</p>
+                   </div>
+                 </div>
+
+                 <div className="space-y-1.5">
+                   <Label>Campaign duration (days)</Label>
+                   <Input
+                     type="number"
+                     min={1}
+                     max={365}
+                     value={form.campaignDuration}
+                     onChange={(e) => updateForm({ campaignDuration: e.target.value })}
+                     placeholder="e.g. 30"
+                   />
+                   <p className="text-xs text-muted-foreground">How long the content should remain live (e.g., 30 days).</p>
+                 </div>
+               </div>
+             </div>
+
+           </CardContent>
+         </Card>
+       )}
+
+       {step === 5 && (
+         <Card>
+           <CardHeader><CardTitle>Step 5 — References</CardTitle></CardHeader>
           <CardContent className="space-y-5">
+                <div className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold">References quality score</p>
+                    <Badge variant={referenceCompletenessScore >= 5 ? 'default' : 'secondary'}>
+                      {referenceCompletenessScore}/{referenceCompletenessChecks.length}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {referenceCompletenessChecks.map((item) => (
+                      <Badge key={item.label} variant={item.done ? 'default' : 'outline'}>
+                        {item.done ? '✓' : '○'} {item.label}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Higher quality references improve creator submissions and reduce revisions.
+                  </p>
+                </div>
+
+              <div className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-4">
+                <p className="text-sm font-semibold">Messaging & brand guidelines</p>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label>Key message / talking points</Label>
+                    <span className="text-xs text-muted-foreground">{form.keyMessage.length} chars</span>
+                  </div>
+                  <Textarea
+                    rows={3}
+                    value={form.keyMessage}
+                    onChange={(e) => updateForm({ keyMessage: e.target.value })}
+                    placeholder="What must be communicated in every creator submission"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label>Do's and don'ts</Label>
+                    <span className="text-xs text-muted-foreground">{form.dosAndDonts.length} chars</span>
+                  </div>
+                  <Textarea
+                    rows={4}
+                    value={form.dosAndDonts}
+                    onChange={(e) => updateForm({ dosAndDonts: e.target.value })}
+                    placeholder="Include brand tone, mandatory claims, and forbidden competitor mentions"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Hashtags & mentions</Label>
+                  <Textarea
+                    rows={2}
+                    value={form.hashtagsMentions}
+                    onChange={(e) => updateForm({ hashtagsMentions: e.target.value })}
+                    placeholder="Example: #ChamChamGlow #Ad @brand_handle"
+                  />
+                </div>
+              </div>
+
             <div className="space-y-1.5">
               <Label>Cover image</Label>
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -1150,12 +1833,12 @@ export function BrandOfferWizard() {
 
             <div className="space-y-2">
               <SectionRow
-                label="Reference links"
+                label="Reference content links"
                 count={form.referenceUrls.filter(Boolean).length}
                 max={5}
                 hint="links"
               />
-              <p className="text-xs text-muted-foreground">Add inspiration posts, competitor campaigns, or mood-board links.</p>
+              <p className="text-xs text-muted-foreground">Add inspiration posts/videos for desired tone, style, and execution quality.</p>
               {form.referenceUrls.map((value, index) => (
                 <div key={`ref-${index}`} className="flex gap-2">
                   <Input value={value} onChange={(e) => updateReferenceUrl(index, e.target.value)} placeholder={`https://example.com/reference-${index + 1}`} />
@@ -1172,13 +1855,53 @@ export function BrandOfferWizard() {
                 </Button>
               )}
             </div>
+
+            <div className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-4">
+              <p className="text-sm font-semibold">Rights, terms & outcomes</p>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label>Usage rights</Label>
+                  <span className="text-xs text-muted-foreground">{form.usageRights.length} chars</span>
+                </div>
+                <Textarea
+                  rows={3}
+                  value={form.usageRights}
+                  onChange={(e) => updateForm({ usageRights: e.target.value })}
+                  placeholder="Can brand repurpose creator content? For which channels and for how long?"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label>Terms & conditions</Label>
+                  <span className="text-xs text-muted-foreground">{form.termsAndConditions.length} chars</span>
+                </div>
+                <Textarea
+                  rows={3}
+                  value={form.termsAndConditions}
+                  onChange={(e) => updateForm({ termsAndConditions: e.target.value })}
+                  placeholder="Legal/disclosure requirements, payment caveats, cancellation policy, compliance notes"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label>Expectations / desired outcomes</Label>
+                  <span className="text-xs text-muted-foreground">{form.expectedOutcomes.length} chars</span>
+                </div>
+                <Textarea
+                  rows={3}
+                  value={form.expectedOutcomes}
+                  onChange={(e) => updateForm({ expectedOutcomes: e.target.value })}
+                  placeholder="What success looks like (quality bar, CTA behavior, expected audience response)"
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {step === 5 && (
-        <Card>
-          <CardHeader><CardTitle>Step 5 — Review & Publish</CardTitle></CardHeader>
+       {step === 6 && (
+         <Card>
+           <CardHeader><CardTitle>Step 6 — Review & Publish</CardTitle></CardHeader>
           <CardContent className="space-y-4 text-sm">
             {form.coverImageUrl && (
               <img src={form.coverImageUrl} alt="Cover" className="h-40 w-full rounded-lg object-cover" />
@@ -1193,14 +1916,32 @@ export function BrandOfferWizard() {
                 <p>Primary platform: <span className="font-medium capitalize">{form.offerType || 'Not selected'}</span></p>
                 <p>Campaign goal: <span className="font-medium">{form.campaignGoal || 'Not selected'}</span></p>
                 <p>Visibility: <span className="font-medium capitalize">{form.visibility}</span></p>
-                {form.slots && <p>Slots: <span className="font-medium">{form.slots}</span></p>}
                 {form.deadlineDate && <p>Deadline: <span className="font-medium">{form.deadlineDate}</span></p>}
               </div>
               <div className="rounded-lg border p-3 space-y-1">
-                <p className="font-medium text-xs text-muted-foreground uppercase tracking-wide">Budget</p>
-                <p className="text-base font-semibold">PKR {Number(form.budgetMin || 0).toLocaleString()} – {Number(form.budgetMax || 0).toLocaleString()}</p>
+                <p className="font-medium text-xs text-muted-foreground uppercase tracking-wide">Budget & Payment</p>
+                {form.budgetType === 'barter_only' ? (
+                  <p>Budget type: <span className="font-medium">Barter only</span></p>
+                ) : (
+                  <>
+                    <p>Budget type: <span className="font-medium capitalize">{(form.budgetType || 'fixed').replace('_', ' ')}</span></p>
+                    <p className="text-base font-semibold">
+                      PKR {Number(form.budgetMin || 0).toLocaleString()}
+                      {form.budgetType !== 'fixed' ? ` – ${Number(form.budgetMax || 0).toLocaleString()}` : ''}
+                    </p>
+                    {form.paymentStructure && (
+                      <p>Payment: <span className="font-medium">{form.paymentStructure === 'split_50_50' ? '50% upfront + 50% on delivery' : 'Full upfront into escrow'}</span></p>
+                    )}
+                  </>
+                )}
+                {(form.budgetType === 'barter_only' || form.budgetType === 'paid_and_barter') && form.barterProductDesc && (
+                  <p>Barter: <span className="font-medium">{form.barterProductDesc}</span></p>
+                )}
+                {form.barterEstimatedValue && (
+                  <p>Barter value: <span className="font-medium">PKR {Number(form.barterEstimatedValue).toLocaleString()}</span></p>
+                )}
+                <p>Travel costs: <span className="font-medium">{form.travelCostsCovered ? 'Covered by brand' : 'Not covered'}</span></p>
                 {form.targetCity && <p>City: <span className="font-medium">{form.targetCity}</span></p>}
-                {form.minFollowers && <p>Min followers: <span className="font-medium">{Number(form.minFollowers).toLocaleString()}</span></p>}
               </div>
             </div>
             <div className="space-y-1">
@@ -1231,13 +1972,28 @@ export function BrandOfferWizard() {
                 ))}
               </div>
             </div>
-            {(form.categories.length > 0 || form.niches.length > 0 || form.tags.length > 0) && (
+            {(form.categories.length > 0 || form.niches.length > 0) && (
               <div className="space-y-1">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Categories / Niches / Tags</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Categories / Niches</p>
                 <div className="flex flex-wrap gap-1.5">
                   {form.categories.map((c) => <Badge key={c} className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">{c}</Badge>)}
                   {form.niches.map((n) => <Badge key={n} className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">{n}</Badge>)}
-                  {form.tags.map((t) => <Badge key={t} variant="outline">#{t}</Badge>)}
+                </div>
+              </div>
+            )}
+            {(form.keyMessage || form.dosAndDonts || form.hashtagsMentions || form.usageRights || form.termsAndConditions || form.expectedOutcomes || form.referenceUrls.some(Boolean)) && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">References & Guidelines</p>
+                <div className="space-y-1 text-muted-foreground">
+                  {form.keyMessage && <p><span className="font-medium text-foreground">Key message:</span> {form.keyMessage}</p>}
+                  {form.dosAndDonts && <p><span className="font-medium text-foreground">Do's/Don'ts:</span> {form.dosAndDonts}</p>}
+                  {form.hashtagsMentions && <p><span className="font-medium text-foreground">Hashtags & mentions:</span> {form.hashtagsMentions}</p>}
+                  {form.usageRights && <p><span className="font-medium text-foreground">Usage rights:</span> {form.usageRights}</p>}
+                  {form.termsAndConditions && <p><span className="font-medium text-foreground">Terms:</span> {form.termsAndConditions}</p>}
+                  {form.expectedOutcomes && <p><span className="font-medium text-foreground">Expected outcomes:</span> {form.expectedOutcomes}</p>}
+                  {form.referenceUrls.filter(Boolean).length > 0 && (
+                    <p><span className="font-medium text-foreground">Reference links:</span> {form.referenceUrls.filter(Boolean).join(', ')}</p>
+                  )}
                 </div>
               </div>
             )}
@@ -1254,25 +2010,25 @@ export function BrandOfferWizard() {
         }}>
           Back
         </Button>
-        {step < 5 ? (
-          <Button type="button" className="flex-1" onClick={() => {
-            if (!canContinue) {
-              toast.error(`Please complete: ${getMissingFields(step).join(', ')}`);
-              return;
-            }
-            const nextStep = Math.min(5, step + 1);
-            setStep(nextStep);
-            persistDraft(form, nextStep);
-          }}>
-            Next <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        ) : (
+         {step < 6 ? (
+           <Button type="button" className="flex-1" onClick={() => {
+             if (!canContinue) {
+               toast.error(`Please complete: ${getMissingFields(step).join(', ')}`);
+               return;
+             }
+             const nextStep = Math.min(6, step + 1);
+             setStep(nextStep);
+             persistDraft(form, nextStep);
+           }}>
+             Next <ArrowRight className="ml-2 h-4 w-4" />
+           </Button>
+         ) : (
           <div className="flex flex-1 gap-2">
             <Button type="button" variant="outline" className="flex-1" disabled={isSaving} onClick={() => void submit(false)}>
-              {isSaving ? 'Saving...' : 'Save Draft'}
+              {isSaving ? 'Saving...' : isEditMode ? 'Save Changes' : 'Save Draft'}
             </Button>
             <Button type="button" className="flex-1" disabled={isSaving} onClick={() => void submit(true)}>
-              {isSaving ? 'Publishing...' : 'Publish Offer'}
+              {isSaving ? 'Publishing...' : isEditMode ? 'Save & Publish' : 'Publish Offer'}
             </Button>
           </div>
         )}

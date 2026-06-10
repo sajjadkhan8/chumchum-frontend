@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
 import { offersService } from '@/services/offers.service';
 import type { BrandOffer } from '@/types';
 import { formatPrice } from '@/lib/utils';
@@ -39,11 +40,22 @@ export default function CreatorOfferDetailPage() {
         <CardContent className="space-y-3 text-sm">
           <p>{offer.brief}</p>
           <p><span className="font-medium">Budget:</span> {formatPrice(offer.budgetMin)} - {formatPrice(offer.budgetMax)} {offer.currency}</p>
-          {offer.campaignGoal ? <p><span className="font-medium">Campaign goal:</span> {offer.campaignGoal}</p> : null}
+          {offer.campaignGoal ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium">Campaign goal:</span>
+              <CampaignGoalBadge goal={offer.campaignGoal} />
+            </div>
+          ) : null}
           {offer.targetPlatforms ? <p><span className="font-medium">Platforms:</span> {offer.targetPlatforms}</p> : null}
           {offer.contentFormats ? <p><span className="font-medium">Formats:</span> {offer.contentFormats}</p> : null}
           {offer.deliverables ? <p><span className="font-medium">Deliverables:</span> {offer.deliverables}</p> : null}
-          {offer.requirements ? <p><span className="font-medium">Requirements:</span> {offer.requirements}</p> : null}
+          {offer.keyMessage ? <p><span className="font-medium">Key message:</span> {offer.keyMessage}</p> : null}
+          {offer.dosAndDonts ? <p><span className="font-medium">Do's and don'ts:</span> {offer.dosAndDonts}</p> : null}
+          {offer.hashtagsMentions ? <p><span className="font-medium">Hashtags & mentions:</span> {offer.hashtagsMentions}</p> : null}
+          {offer.referenceUrls ? <p><span className="font-medium">Reference content:</span> {offer.referenceUrls}</p> : null}
+          {offer.usageRights ? <p><span className="font-medium">Usage rights:</span> {offer.usageRights}</p> : null}
+          {offer.termsAndConditions ? <p><span className="font-medium">Terms & conditions:</span> {offer.termsAndConditions}</p> : null}
+          {offer.expectedOutcomes ? <p><span className="font-medium">Expected outcomes:</span> {offer.expectedOutcomes}</p> : null}
           <p><span className="font-medium">Target:</span> {offer.targetCity || 'Any city'} • {offer.targetLanguage || 'Any language'}</p>
           <p><span className="font-medium">Deadline:</span> {offer.deadlineDate || 'Open'}</p>
         </CardContent>
