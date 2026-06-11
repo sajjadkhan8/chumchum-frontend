@@ -352,7 +352,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               <Input
                 type="search"
                 placeholder="Search offers, brands, or creators"
-                className="h-11 rounded-xl border-border/60 bg-muted/25 pl-10 pr-10 text-sm"
+                className="h-11 rounded-md border-border/60 bg-muted/25 pl-10 pr-10 text-sm"
                 value={creatorGlobalSearch}
                 onChange={(e) => setCreatorGlobalSearch(e.target.value)}
                 onKeyDown={(e) => {
@@ -506,7 +506,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className={cn('w-56', isCreator && 'w-[23.5rem] rounded-2xl border-border/70 p-0')} align="end">
+                <DropdownMenuContent className={cn('w-56', isCreator && 'w-[23.5rem] rounded-xl border-border/70 p-0')} align="end">
                   <div className={cn('flex items-center gap-2 p-2', isCreator && 'gap-3 p-5')}>
                     <Avatar className={cn('h-10 w-10', isCreator && 'h-12 w-12')}>
                       <AvatarImage src={user.avatar} alt={user.name} />
@@ -526,7 +526,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                         asChild
                         key={item.label}
                         className={cn(
-                          isCreator && 'mx-2 my-1 rounded-2xl px-5 py-3 text-base data-[highlighted]:bg-muted/40',
+                          isCreator && 'mx-2 my-1 rounded-xl px-5 py-3 text-base data-[highlighted]:bg-muted/40',
                           isAmbassadorEntry && 'text-amber-400 data-[highlighted]:text-amber-300'
                         )}
                       >
@@ -545,7 +545,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                     );
                   })}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className={cn('text-destructive', isCreator && 'mx-2 my-1 rounded-2xl px-5 py-3 text-base data-[highlighted]:bg-muted/40')}>
+                  <DropdownMenuItem onClick={handleLogout} className={cn('text-destructive', isCreator && 'mx-2 my-1 rounded-xl px-5 py-3 text-base data-[highlighted]:bg-muted/40')}>
                     <LogOut className={cn('mr-2 h-4 w-4', isCreator && 'h-5 w-5')} />
                     Logout
                   </DropdownMenuItem>

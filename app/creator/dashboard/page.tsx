@@ -263,7 +263,7 @@ export default function CreatorDashboardPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="flex flex-col items-start gap-3 rounded-lg border border-border/50 p-4 sm:flex-row sm:items-center sm:gap-4"
+                    className="flex flex-col items-start gap-3 rounded-md border border-border/50 p-4 sm:flex-row sm:items-center sm:gap-4"
                   >
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={order.brand.logo} alt={order.brand.name} />
@@ -311,7 +311,7 @@ export default function CreatorDashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="rounded-lg border border-primary/20 bg-background p-3">
+                <div className="rounded-md border border-primary/20 bg-background p-3">
                   <p className="text-xs text-muted-foreground">Creator percentile</p>
                   <p className="text-xl font-semibold text-primary">
                     Top {Math.max(1, 100 - ambassadorMetrics.percentileRank)}%
@@ -377,7 +377,7 @@ export default function CreatorDashboardPage() {
                   <Link
                     key={msg.id}
                     href="/creator/messages"
-                    className="flex items-start gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
+                    className="flex items-start gap-3 rounded-md p-2 transition-colors hover:bg-muted/50"
                   >
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={msg.avatar} alt={msg.name} />

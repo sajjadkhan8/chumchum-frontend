@@ -52,7 +52,7 @@ export function StatsCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className={cn('overflow-hidden rounded-2xl', className)}>
+      <Card className={cn('overflow-hidden rounded-lg', className)}>
         <CardContent className="p-6">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
@@ -77,7 +77,7 @@ export function StatsCard({
               {action && <div className="pt-2">{action}</div>}
             </div>
             {Icon && (
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+              <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary/10">
                 <Icon className="h-6 w-6 text-primary" />
               </div>
             )}

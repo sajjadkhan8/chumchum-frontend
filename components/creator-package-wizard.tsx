@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  ArrowLeft,
   ArrowRight,
   Camera,
   Check,
@@ -1018,16 +1017,9 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4 px-1 pb-6 sm:space-y-6">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/creator/packages">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold md:text-3xl">{mode === "edit" ? "Edit Package" : "Create Package"}</h1>
-            <p className="text-muted-foreground">Build a conversion-ready package in five guided steps.</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold md:text-3xl">{mode === "edit" ? "Edit Package" : "Create Package"}</h1>
+          <p className="text-muted-foreground">Build a conversion-ready package in five guided steps.</p>
         </div>
       </div>
 
@@ -1070,7 +1062,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                       }
                       setCurrentStep(step.id);
                     }}
-                    className={`inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm transition-all ${
+                    className={`inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm transition-all ${
                       isCurrent
                         ? "bg-primary text-primary-foreground"
                         : isUnlocked
