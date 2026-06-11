@@ -301,20 +301,10 @@ function CreatorOrdersPageContent() {
     }
   };
 
-  return (
-    <div className="container mx-auto p-4 md:p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground md:text-3xl">
-          Orders
-        </h1>
-        <p className="text-muted-foreground">
-          Manage your active and completed orders
-        </p>
-      </div>
-
-      {/* Filters */}
-      <div className="mb-4 flex flex-wrap gap-2">
+   return (
+     <div className="container mx-auto p-4 md:p-6">
+       {/* Filters */}
+       <div className="mb-4 flex flex-wrap gap-2">
         {statusTabs.map((tab) => (
           <Button
             key={tab.key}

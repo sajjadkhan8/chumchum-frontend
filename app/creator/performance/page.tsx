@@ -42,10 +42,6 @@ export default function CreatorPerformancePage() {
 
   return (
     <div className="container mx-auto p-4 pb-6 md:p-6">
-      <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl font-bold text-foreground md:text-3xl">Package Performance</h1>
-        <p className="text-muted-foreground">Compare package efficiency across views, clicks, and conversion outcomes.</p>
-      </div>
 
       <Card className="mb-8">
         <CardHeader>

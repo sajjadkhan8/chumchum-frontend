@@ -332,6 +332,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   const updatePackage = useCreatorPackagesStore((state) => state.updatePackage);
   const [currentStep, setCurrentStep] = useState(1);
   const [hasSavedDraft, setHasSavedDraft] = useState(false);
+  const [showDraftModal, setShowDraftModal] = useState(false);
   const [showTierForm, setShowTierForm] = useState(false);
   const [expandedTiers, setExpandedTiers] = useState<Set<number>>(new Set());
 
@@ -499,6 +500,10 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     if (mode !== "create") return;
     const raw = localStorage.getItem(DRAFT_KEY);
     setHasSavedDraft(Boolean(raw));
+    // Show modal on first load if draft exists
+    if (raw) {
+      setShowDraftModal(true);
+    }
   }, [mode]);
 
   useEffect(() => {
@@ -1016,27 +1021,22 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
   return (
     <div className="container mx-auto p-4 pb-6 md:p-6">
-      <div className="mb-6 md:mb-8 flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold md:text-3xl">{mode === "edit" ? "Edit Package" : "Create Package"}</h1>
-          <p className="text-muted-foreground">Build a conversion-ready package in five guided steps.</p>
-        </div>
-      </div>
-
-      {mode === "create" && hasSavedDraft && (
-        <Card className="mb-6">
-          <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4 py-2">
-            <p className="text-sm text-muted-foreground">A local draft is available for this package form.</p>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={restoreDraft}>Restore Draft</Button>
-              <Button size="sm" variant="ghost" onClick={clearDraft}>Clear Draft</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <Card className="sticky top-16 z-20 mb-8 border-border/80 bg-background/95 backdrop-blur">
         <CardContent className="p-4">
+          {mode === "create" && hasSavedDraft && !showDraftModal && (
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+              <span>Draft saved locally.</span>
+              <div className="flex items-center gap-2">
+                <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={restoreDraft}>
+                  Restore
+                </Button>
+                <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={clearDraft}>
+                  Start fresh
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="flex gap-2 overflow-x-auto pb-1">
             {steps.map((step) => (
               (() => {
@@ -1079,7 +1079,46 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
             ))}
           </div>
         </CardContent>
-      </Card>
+       </Card>
+
+      {/* Draft Recovery Modal */}
+      {showDraftModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <Card className="w-full max-w-sm border-border/80">
+            <CardHeader>
+              <CardTitle>Unsaved Draft</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                You have an unsaved package draft. Would you like to restore it or start fresh?
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  className="flex-1"
+                  onClick={() => {
+                    restoreDraft();
+                    setShowDraftModal(false);
+                  }}
+                >
+                  Restore Draft
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    clearDraft();
+                    setShowDraftModal(false);
+                  }}
+                >
+                  Start Fresh
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <motion.div key={currentStep} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
         {currentStep === 1 && (

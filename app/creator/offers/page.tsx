@@ -165,21 +165,15 @@ function CreatorOffersFeedPage() {
     }
   };
 
-  return (
-    <div className="container mx-auto p-4 pb-6 md:p-6">
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold md:text-3xl">Brand Offers</h1>
-          <p className="text-sm text-muted-foreground">
-            {totalElements > 0 ? `${totalElements} open offers from brands` : 'Find open requests from brands and send your response.'}
-          </p>
-        </div>
-        <Button variant="outline" asChild>
-          <Link href="/creator/offers/reactions">My Reactions</Link>
-        </Button>
-      </div>
+   return (
+     <div className="container mx-auto p-4 pb-6 md:p-6">
+       <div className="mb-5 flex justify-end">
+         <Button variant="outline" asChild>
+           <Link href="/creator/offers/reactions">My Reactions</Link>
+         </Button>
+       </div>
 
-      {/* Search + filter bar */}
+       {/* Search + filter bar */}
       <div className="mb-4 flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

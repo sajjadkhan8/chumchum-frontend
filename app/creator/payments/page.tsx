@@ -304,14 +304,6 @@ function CreatorPaymentsContent() {
 
   return (
     <div className="container mx-auto p-4 pb-24 md:p-6 md:pb-6">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground md:text-3xl">
-          Payments
-        </h1>
-        <p className="text-muted-foreground">
-          Manage withdrawals, payout methods, schedule, and compliance controls
-        </p>
-      </div>
 
       {earnings && (
         <Card className="mb-6 bg-gradient-to-r from-primary/5 to-primary/10">

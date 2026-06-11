@@ -252,11 +252,7 @@ function CreatorPackagesPageContent() {
 
   return (
     <div className="container mx-auto p-4 pb-6 md:p-6">
-      <div className="mb-6 md:mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground md:text-3xl">Package Studio</h1>
-          <p className="text-muted-foreground">Manage paid, barter, and hybrid offers like a professional creator business.</p>
-        </div>
+      <div className="mb-8 flex items-center justify-end">
         <Button asChild>
           <Link href="/creator/packages/new">
             <Plus className="mr-2 h-4 w-4" />

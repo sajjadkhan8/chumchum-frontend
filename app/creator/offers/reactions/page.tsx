@@ -40,16 +40,9 @@ export default function CreatorOfferReactionsPage() {
     }
   };
 
-  return (
-    <div className="container mx-auto p-4 pb-6 md:p-6">
-      <div className="mb-5">
-        <h1 className="text-2xl font-bold md:text-3xl">My Offer Reactions</h1>
-        <p className="text-sm text-muted-foreground">
-          {totalElements > 0 ? `${totalElements} reactions submitted` : 'Track how brands respond to your offer submissions.'}
-        </p>
-      </div>
-
-      {isLoading && reactions.length === 0 ? (
+   return (
+     <div className="container mx-auto p-4 pb-6 md:p-6">
+       {isLoading && reactions.length === 0 ? (
         <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">Loading reactions…</CardContent></Card>
       ) : reactions.length === 0 ? (
         <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">No reactions yet. Start by responding to brand offers.</CardContent></Card>

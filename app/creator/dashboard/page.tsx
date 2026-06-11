@@ -170,17 +170,6 @@ export default function CreatorDashboardPage() {
 
   return (
     <div className="container mx-auto p-4 pb-6 md:p-6">
-      {/* Header */}
-      <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl font-bold text-foreground md:text-3xl">
-          {isActiveAmbassador ? "Ambassador Command Center" : "Dashboard"}
-        </h1>
-        <p className="text-muted-foreground">
-          {isActiveAmbassador
-            ? "Welcome back. Here is your premium ambassador overview and priority campaign queue."
-            : "Welcome back! Here's your performance overview."}
-        </p>
-      </div>
 
       <Card className="mb-6 border-border/60 bg-muted/20 md:mb-8">
         <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
