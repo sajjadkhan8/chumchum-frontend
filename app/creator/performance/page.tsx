@@ -41,13 +41,13 @@ export default function CreatorPerformancePage() {
     .sort((a, b) => parseFloat(b.conversion) - parseFloat(a.conversion));
 
   return (
-    <div className="space-y-6 p-1">
-      <div>
+    <div className="container mx-auto p-4 pb-6 md:p-6">
+      <div className="mb-6 md:mb-8">
         <h1 className="text-2xl font-bold text-foreground md:text-3xl">Package Performance</h1>
         <p className="text-muted-foreground">Compare package efficiency across views, clicks, and conversion outcomes.</p>
       </div>
 
-      <Card>
+      <Card className="mb-8">
         <CardHeader>
           <CardTitle>Performance Breakdown</CardTitle>
         </CardHeader>
@@ -78,7 +78,7 @@ export default function CreatorPerformancePage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="mb-8">
         <CardHeader>
           <CardTitle>Package Efficiency Meter</CardTitle>
         </CardHeader>

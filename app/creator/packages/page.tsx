@@ -251,8 +251,8 @@ function CreatorPackagesPageContent() {
   ];
 
   return (
-    <div className="space-y-6 p-1">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="container mx-auto p-4 pb-6 md:p-6">
+      <div className="mb-6 md:mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground md:text-3xl">Package Studio</h1>
           <p className="text-muted-foreground">Manage paid, barter, and hybrid offers like a professional creator business.</p>
@@ -265,14 +265,14 @@ function CreatorPackagesPageContent() {
         </Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Active Packages</p><p className="text-2xl font-bold">{summary.active}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Drafts</p><p className="text-2xl font-bold">{summary.drafts}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Archived</p><p className="text-2xl font-bold">{summary.archived}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Monthly Package Value</p><p className="text-2xl font-bold text-primary">{formatPrice(summary.monthlyProjection)}</p></CardContent></Card>
       </div>
 
-      <Card>
+      <Card className="mb-8">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-2">
             {statusLanes.map((lane) => (
@@ -362,31 +362,31 @@ function CreatorPackagesPageContent() {
             >
               Clear All
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+           </div>
+         </CardContent>
+       </Card>
 
-      {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <PackageCardSkeleton key={index} />
-          ))}
-        </div>
-      ) : filteredPackages.length === 0 ? (
-        <EmptyState
-          title={status === "active" ? "No active packages yet" : "No packages match your filters"}
-          description={
-            status === "active"
-              ? "Create your first barter, paid, or hybrid package to start getting inquiries."
-              : "Try adjusting status, pricing type, or performance filters."
-          }
-          action={{
-            label: "Create Package",
-            onClick: () => toast.info("Use the Create Package button to launch a new listing."),
-          }}
-        />
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+       {isLoading ? (
+         <div className="grid gap-4 md:grid-cols-2">
+           {Array.from({ length: 4 }).map((_, index) => (
+             <PackageCardSkeleton key={index} />
+           ))}
+         </div>
+       ) : filteredPackages.length === 0 ? (
+         <EmptyState
+           title={status === "active" ? "No active packages yet" : "No packages match your filters"}
+           description={
+             status === "active"
+               ? "Create your first barter, paid, or hybrid package to start getting inquiries."
+               : "Try adjusting status, pricing type, or performance filters."
+           }
+           action={{
+             label: "Create Package",
+             onClick: () => toast.info("Use the Create Package button to launch a new listing."),
+           }}
+         />
+       ) : (
+         <div className="grid gap-4 md:grid-cols-2">
           {filteredPackages.map((pkg, index) => (
             <motion.div
               key={pkg.id}
@@ -481,12 +481,12 @@ function CreatorPackagesPageContent() {
             </motion.div>
           ))}
         </div>
-      )}
+       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Top Performing Packages</CardTitle>
-        </CardHeader>
+       <Card className="mb-8">
+         <CardHeader>
+           <CardTitle className="text-base">Top Performing Packages</CardTitle>
+         </CardHeader>
         <CardContent className="space-y-3">
           {packages
             .slice()

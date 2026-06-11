@@ -113,7 +113,9 @@ function CreatorSidebarNav({ compact = false, closeOnNavigate = false, onNavigat
               const [itemPath, itemQuery = ''] = item.href.split('?');
               const itemTab = new URLSearchParams(itemQuery).get('tab');
               const currentTab = searchParams.get('tab') || (itemPath === '/creator/payments' ? 'withdraw' : null);
-              const pathMatches = pathname === itemPath || pathname.startsWith(`${itemPath}/`);
+              const isExactMatch = pathname === itemPath;
+              const isParentMatch = pathname.startsWith(`${itemPath}/`) && !/\/(new|reactions|edit|settings)($|\/)/.test(pathname.substring(itemPath.length));
+              const pathMatches = isExactMatch || isParentMatch;
               const isActive = pathMatches && (!itemTab || itemTab === currentTab);
               const Icon = item.icon || BookOpen;
 

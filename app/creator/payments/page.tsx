@@ -294,7 +294,7 @@ function CreatorPaymentsContent() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto max-w-4xl p-4">
+      <div className="container mx-auto p-4">
         <div className="flex items-center justify-center py-12">
           <p className="text-muted-foreground">Loading payment settings...</p>
         </div>
@@ -303,7 +303,7 @@ function CreatorPaymentsContent() {
   }
 
   return (
-    <div className="container mx-auto max-w-4xl p-4 pb-24 md:p-6 md:pb-6">
+    <div className="container mx-auto p-4 pb-24 md:p-6 md:pb-6">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-foreground md:text-3xl">
           Payments

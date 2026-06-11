@@ -1015,8 +1015,8 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-4 px-1 pb-6 sm:space-y-6">
-      <div className="flex items-center justify-between gap-3">
+    <div className="container mx-auto p-4 pb-6 md:p-6">
+      <div className="mb-6 md:mb-8 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold md:text-3xl">{mode === "edit" ? "Edit Package" : "Create Package"}</h1>
           <p className="text-muted-foreground">Build a conversion-ready package in five guided steps.</p>
@@ -1024,8 +1024,8 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       </div>
 
       {mode === "create" && hasSavedDraft && (
-        <Card>
-          <CardContent className="flex flex-wrap items-center justify-between gap-2 p-4">
+        <Card className="mb-6">
+          <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4 py-2">
             <p className="text-sm text-muted-foreground">A local draft is available for this package form.</p>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={restoreDraft}>Restore Draft</Button>
@@ -1035,7 +1035,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         </Card>
       )}
 
-      <Card className="sticky top-16 z-20 border-border/80 bg-background/95 backdrop-blur">
+      <Card className="sticky top-16 z-20 mb-8 border-border/80 bg-background/95 backdrop-blur">
         <CardContent className="p-4">
           <div className="flex gap-2 overflow-x-auto pb-1">
             {steps.map((step) => (

@@ -56,13 +56,13 @@ export default function CreatorInsightsPage() {
   ];
 
   return (
-    <div className="space-y-6 p-1">
-      <div>
+    <div className="container mx-auto p-4 pb-6 md:p-6">
+      <div className="mb-6 md:mb-8">
         <h1 className="text-2xl font-bold text-foreground md:text-3xl">Creator Insights</h1>
         <p className="text-muted-foreground">Track package funnel health and identify top-performing offers.</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {trendRows.map((item) => (
           <Card key={item.label}>
             <CardHeader className="pb-3">
@@ -78,7 +78,7 @@ export default function CreatorInsightsPage() {
         ))}
       </div>
 
-      <Card>
+      <Card className="mb-8">
         <CardHeader>
           <CardTitle>Top Package Trends</CardTitle>
         </CardHeader>
@@ -101,7 +101,7 @@ export default function CreatorInsightsPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Inquiry Trend (Last 6 Months)</CardTitle>
