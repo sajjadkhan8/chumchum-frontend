@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Menu, Bell, MessageCircle, User, LogOut, Package, Bookmark, Building2, Moon, Sun, Shield } from 'lucide-react';
+import { Search, Menu, Bell, MessageCircle, User, LogOut, Bookmark, Building2, Moon, Sun, Shield, Settings, Share2, Star, CircleHelp, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -40,6 +40,14 @@ interface NavNotification {
   createdAt: Date;
 }
 
+interface ProfileMenuItem {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  badge?: string;
+  accent?: 'amber';
+}
+
 const getNotificationSeenKey = (userId: string) => `nav-notifications-seen:${userId}`;
 
 export function Navbar({ showSearch = false, onSearchChange, searchValue }: NavbarProps) {
@@ -51,6 +59,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const [notifications, setNotifications] = useState<NavNotification[]>([]);
   const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>([]);
   const [offerNotifCount, setOfferNotifCount] = useState(0);
+  const [creatorGlobalSearch, setCreatorGlobalSearch] = useState('');
   const { resolvedTheme, setTheme } = useTheme();
   const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
   const isSignedIn = hasHydrated && isAuthenticated && !!user;
@@ -67,6 +76,27 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    const syncCreatorSearch = () => {
+      const nextSearchValue = pathname === '/creator/offers'
+        ? new URLSearchParams(window.location.search).get('search')?.trim() ?? ''
+        : '';
+      setCreatorGlobalSearch(nextSearchValue);
+    };
+
+    if (!isCreator) {
+      setCreatorGlobalSearch('');
+      return;
+    }
+
+    syncCreatorSearch();
+    window.addEventListener('popstate', syncCreatorSearch);
+
+    return () => {
+      window.removeEventListener('popstate', syncCreatorSearch);
+    };
+  }, [isCreator, pathname]);
 
   useEffect(() => {
     if (!mounted || !user || isAdmin) {
@@ -194,12 +224,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   ];
 
   const creatorNavLinks = [
-    { href: '/creator/dashboard', label: 'Dashboard' },
-    { href: '/creator/offers', label: 'Offers' },
-    { href: '/creator/packages', label: 'My Packages' },
-    { href: '/creator/ambassador-program', label: '👑 Ambassador Program' },
-    { href: '/creator/orders', label: 'Orders' },
-    { href: '/creator/payments?tab=withdraw', label: 'Payments' },
+    { href: '/brand/explore', label: 'Explore' },
+    { href: '/packages', label: 'Campaigns' },
+    { href: '/pricing', label: 'Pricing' },
+    { href: '/help', label: 'Help' },
   ];
 
   const brandNavLinks = [
@@ -219,8 +247,9 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   ];
 
   const navLinks = isSignedIn ? (isAdmin ? adminNavLinks : isCreator ? creatorNavLinks : brandNavLinks) : publicNavLinks;
+  const showCreatorUtilityTopbar = isCreator && isSignedIn;
 
-  const profileMenu = isAdmin
+  const profileMenu: ProfileMenuItem[] = isAdmin
     ? [
         { href: '/admin/dashboard', label: 'Admin Dashboard', icon: Shield },
         { href: '/admin/users', label: 'User Moderation', icon: User },
@@ -228,8 +257,9 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     : isCreator
     ? [
         { href: '/creator/profile/public', label: 'My Profile', icon: User },
-        { href: '/creator/packages', label: 'My Packages', icon: Package },
-        { href: '/creator/settings/preferences', label: 'Settings', icon: User },
+        { href: '/creator/profile/social', label: 'Social Accounts', icon: Share2 },
+        { href: '/creator/ambassador-program', label: 'Ambassador Program', icon: Star, badge: '79/100', accent: 'amber' },
+        { href: '/creator/settings/preferences', label: 'Preferences', icon: Settings },
       ]
     : [
         { href: '/brand/settings?tab=profile', label: 'Company Profile', icon: Building2 },
@@ -240,6 +270,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const messagesLink = isSignedIn && !isAdmin ? `/${user.role}/messages` : '/messages';
   const unseenNotifications = notifications.filter((item) => !seenNotificationIds.includes(item.id));
   const notificationCount = unseenNotifications.length + offerNotifCount;
+  const creatorRoleLabel = user?.role === 'creator' ? 'Creator' : user?.role;
 
   const persistSeenNotificationIds = (next: string[]) => {
     if (!mounted || !user) return;
@@ -267,36 +298,89 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     return pathname === pathOnly || pathname.startsWith(`${pathOnly}/`);
   };
 
+  const runCreatorGlobalSearch = () => {
+    const term = creatorGlobalSearch.trim();
+    if (!term) {
+      router.push('/creator/offers');
+      return;
+    }
+
+    // Route to offers with a query parameter so creator search has one consistent entry point.
+    router.push(`/creator/offers?search=${encodeURIComponent(term)}`);
+  };
+
   return (
     <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:gap-6 lg:px-8">
+      <div className={cn(
+        'mx-auto flex items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:gap-6 lg:px-8',
+        isCreator ? 'h-[5.25rem] w-full max-w-none' : 'h-16 max-w-7xl'
+      )}>
         {/* Logo */}
-        <Link href="/" className="flex min-h-11 items-center">
+        <Link href="/" className="flex min-h-11 items-center gap-3">
           <ZingZingLogo variant="icon" size={40} className="h-10 w-10" />
+          {isCreator && <span className="hidden text-2xl font-semibold tracking-tight text-foreground lg:inline">ZingZing</span>}
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden flex-1 items-center justify-center gap-5 md:flex lg:gap-6">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                'text-sm font-medium transition-colors hover:text-primary',
-                isLinkActive(link.href) ? 'text-primary' : 'text-muted-foreground'
+        {!showCreatorUtilityTopbar && (
+          <nav className={cn('hidden flex-1 items-center justify-center md:flex', isCreator ? 'gap-12' : 'gap-5 lg:gap-6')}>
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  'font-medium transition-colors hover:text-primary',
+                  isCreator ? 'text-lg font-normal tracking-[-0.01em]' : 'text-sm',
+                  isLinkActive(link.href) ? 'text-primary' : 'text-muted-foreground'
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        )}
+
+        {/* Creator Global Search */}
+        {showCreatorUtilityTopbar && (
+          <div className="mx-auto hidden w-full max-w-2xl flex-1 px-4 md:block">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search offers, brands, or creators"
+                className="h-11 rounded-xl border-border/60 bg-muted/25 pl-10 pr-10 text-sm"
+                value={creatorGlobalSearch}
+                onChange={(e) => setCreatorGlobalSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    runCreatorGlobalSearch();
+                  }
+                }}
+              />
+              {creatorGlobalSearch.trim() && (
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+                  aria-label="Clear creator search"
+                  onClick={() => {
+                    setCreatorGlobalSearch('');
+                    router.push('/creator/offers');
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </button>
               )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+            </div>
+          </div>
+        )}
 
         {/* Search Bar (optional) */}
-        {showSearch && (
+        {!showCreatorUtilityTopbar && showSearch && (
           <div className="hidden max-w-md flex-1 px-8 lg:block">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -312,9 +396,9 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
         )}
 
         {/* Right Side Actions */}
-        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <div className={cn('ml-auto flex items-center gap-2 sm:gap-3', showCreatorUtilityTopbar && 'gap-1.5 sm:gap-2')}>
           {/* Theme Toggle */}
-          {mounted && (
+          {mounted && !isCreator && (
             <Button
               variant="ghost"
               size="icon"
@@ -333,10 +417,17 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
             <>
               {!isAdmin && (
                 <>
+                  {showCreatorUtilityTopbar && (
+                    <Link href="/creator/help">
+                      <Button variant="ghost" size="icon" className={cn('hidden sm:flex', isCreator && 'h-10 w-10')} aria-label="Open help">
+                        <CircleHelp className={cn('h-5 w-5', isCreator && 'h-[17px] w-[17px]')} />
+                      </Button>
+                    </Link>
+                  )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="relative hidden sm:flex" aria-label="Open notifications">
-                        <Bell className="h-5 w-5" />
+                      <Button variant="ghost" size="icon" className={cn('relative hidden sm:flex', isCreator && 'h-10 w-10')} aria-label="Open notifications">
+                        <Bell className={cn('h-5 w-5', isCreator && 'h-[17px] w-[17px]')} />
                         {notificationCount > 0 && (
                           <Badge className="absolute -right-1 -top-1 h-5 min-w-5 rounded-full px-1 text-xs">
                             {notificationCount > 99 ? '99+' : notificationCount}
@@ -393,8 +484,8 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                   </DropdownMenu>
 
                   <Link href={messagesLink}>
-                    <Button variant="ghost" size="icon" className="relative hidden sm:flex">
-                      <MessageCircle className="h-5 w-5" />
+                    <Button variant="ghost" size="icon" className={cn('relative hidden sm:flex', isCreator && 'h-10 w-10')}>
+                      <MessageCircle className={cn('h-5 w-5', isCreator && 'h-[17px] w-[17px]')} />
                       {unreadMessageCount > 0 && (
                         <Badge className="absolute -right-1 -top-1 h-5 min-w-5 rounded-full px-1 text-xs">
                           {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
@@ -408,39 +499,54 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-9 w-9">
+                  <Button variant="ghost" className={cn('relative h-10 w-10 rounded-full', isCreator && 'h-10 w-10')}>
+                    <Avatar className={cn('h-9 w-9', isCreator && 'h-9 w-9')}>
                       <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      <AvatarFallback className={cn(isCreator && 'bg-emerald-700 text-emerald-50')}>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
-                  <div className="flex items-center gap-2 p-2">
-                    <Avatar className="h-10 w-10">
+                <DropdownMenuContent className={cn('w-56', isCreator && 'w-[23.5rem] rounded-2xl border-border/70 p-0')} align="end">
+                  <div className={cn('flex items-center gap-2 p-2', isCreator && 'gap-3 p-5')}>
+                    <Avatar className={cn('h-10 w-10', isCreator && 'h-12 w-12')}>
                       <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      <AvatarFallback className={cn(isCreator && 'bg-emerald-700 text-emerald-50')}>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
-                      <p className="text-sm font-medium">{user.name}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                      <p className={cn('text-sm font-medium', isCreator && 'text-2xl')}>{user.name}</p>
+                      <p className={cn('text-xs text-muted-foreground capitalize', isCreator && 'text-base capitalize')}>{creatorRoleLabel}</p>
                     </div>
                   </div>
                   <DropdownMenuSeparator />
                   {profileMenu.map((item) => {
                     const Icon = item.icon;
+                    const isAmbassadorEntry = isCreator && item.accent === 'amber';
                     return (
-                      <DropdownMenuItem asChild key={item.label}>
-                        <Link href={item.href}>
-                          <Icon className="mr-2 h-4 w-4" />
-                          {item.label}
+                      <DropdownMenuItem
+                        asChild
+                        key={item.label}
+                        className={cn(
+                          isCreator && 'mx-2 my-1 rounded-2xl px-5 py-3 text-base data-[highlighted]:bg-muted/40',
+                          isAmbassadorEntry && 'text-amber-400 data-[highlighted]:text-amber-300'
+                        )}
+                      >
+                        <Link href={item.href} className="flex w-full items-center justify-between gap-3">
+                          <span className="flex items-center">
+                            <Icon className={cn('mr-2 h-4 w-4', isCreator && 'h-5 w-5')} />
+                            {item.label}
+                          </span>
+                          {item.badge && (
+                            <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-sm font-semibold text-amber-300">
+                              {item.badge}
+                            </span>
+                          )}
                         </Link>
                       </DropdownMenuItem>
                     );
                   })}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem onClick={handleLogout} className={cn('text-destructive', isCreator && 'mx-2 my-1 rounded-2xl px-5 py-3 text-base data-[highlighted]:bg-muted/40')}>
+                    <LogOut className={cn('mr-2 h-4 w-4', isCreator && 'h-5 w-5')} />
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -487,11 +593,13 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                 ))}
                 {isSignedIn && user ? (
                   <>
-                    <SheetClose asChild>
-                      <Link href={messagesLink} className={cn('min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary', isLinkActive(messagesLink) ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>
-                        Messages
-                      </Link>
-                    </SheetClose>
+                    {!isCreator && (
+                      <SheetClose asChild>
+                        <Link href={messagesLink} className={cn('min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary', isLinkActive(messagesLink) ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>
+                          Messages
+                        </Link>
+                      </SheetClose>
+                    )}
                     {profileMenu.map((item) => (
                       <SheetClose asChild key={item.label}>
                         <Link href={item.href} className={cn('min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary', isLinkActive(item.href) ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>

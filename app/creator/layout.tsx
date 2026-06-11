@@ -55,15 +55,15 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
       <Navbar />
       <main className="pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
         {isProtectedCreatorRoute ? (
-          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-            <div className="mb-4 lg:hidden">
+          <>
+            <div className="px-4 py-4 lg:hidden">
               <CreatorSidebarDrawer />
             </div>
-            <div className="flex gap-6">
-            <CreatorSidebar />
-            <div className="min-w-0 flex-1">{children}</div>
+            <div className="flex min-h-[calc(100vh-4rem)]">
+              <CreatorSidebar />
+              <div className="min-w-0 flex-1">{children}</div>
             </div>
-          </div>
+          </>
         ) : (
           children
         )}

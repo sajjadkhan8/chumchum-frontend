@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { CreatorGlobalSearchResults } from '@/components/search/creator-global-search-results';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,7 +47,7 @@ const locationLabel = (offer: BrandOffer) => {
   return offer.targetCity || 'Nationwide';
 };
 
-export default function CreatorOffersPage() {
+function CreatorOffersFeedPage() {
   const router = useRouter();
 
   // filters
@@ -396,3 +397,15 @@ export default function CreatorOffersPage() {
     </div>
   );
 }
+
+export default function CreatorOffersPage() {
+  const searchParams = useSearchParams();
+  const searchTerm = searchParams.get('search')?.trim() ?? '';
+
+  if (searchTerm) {
+    return <CreatorGlobalSearchResults />;
+  }
+
+  return <CreatorOffersFeedPage />;
+}
+

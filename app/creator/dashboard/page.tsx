@@ -178,7 +178,7 @@ export default function CreatorDashboardPage() {
         <p className="text-muted-foreground">
           {isActiveAmbassador
             ? "Welcome back. Here is your premium ambassador overview and priority campaign queue."
-            : "Welcome back! Here&apos;s your performance overview."}
+            : "Welcome back! Here's your performance overview."}
         </p>
       </div>
 
