@@ -230,27 +230,27 @@ function BrandResultCard({
     >
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-[#101111] text-[1.65rem] font-semibold text-white">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-[#101111] text-2xl font-semibold text-white">
             {brand.initials}
           </div>
           <div className="min-w-0 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-[2rem] font-semibold leading-none tracking-[-0.03em] text-white sm:text-[2.15rem]">
+              <h3 className="text-2xl font-semibold leading-tight tracking-[-0.02em] text-white md:text-[1.7rem]">
                 {brand.name}
               </h3>
               {brand.isVerified ? (
-                <Badge className="rounded-full border border-emerald-400/20 bg-emerald-500/14 px-3 py-1 text-[0.95rem] font-medium text-emerald-300 hover:bg-emerald-500/14">
+                <Badge className="rounded-full border border-emerald-400/20 bg-emerald-500/14 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/14">
                   <CheckCircle2 className="h-4 w-4" /> Verified
                 </Badge>
               ) : null}
-              <Badge className="rounded-full border border-emerald-400/10 bg-emerald-500/10 px-3 py-1 text-[0.95rem] font-medium text-emerald-300 hover:bg-emerald-500/10">
+              <Badge className="rounded-full border border-emerald-400/10 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/10">
                 <Star className="h-4 w-4 fill-current" /> {brand.rating.toFixed(1)}
                 <span className="text-white/55">·</span>
                 {brand.paysOnTime ? 'Pays on time' : 'Responsive'}
               </Badge>
             </div>
 
-            <p className="text-lg text-white/58">
+            <p className="text-sm text-white/58">
               <span>{brand.industry}</span>
               <span className="px-2 text-white/25">·</span>
               <span>{brand.city}</span>
@@ -295,7 +295,7 @@ function BrandResultCard({
           <Button
             type="button"
             onClick={() => onViewOffers(brand.id)}
-            className="h-11 rounded-2xl bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-500"
+            className="h-11 rounded-2xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-500"
           >
             View offers
           </Button>
@@ -303,7 +303,7 @@ function BrandResultCard({
             <Button
               asChild
               variant="outline"
-              className="h-11 rounded-2xl border-white/10 bg-transparent text-base text-white/82 hover:bg-white/8 hover:text-white"
+              className="h-11 rounded-2xl border-white/10 bg-transparent text-sm text-white/82 hover:bg-white/8 hover:text-white"
             >
               <a href={brand.website} target="_blank" rel="noreferrer">
                 View profile
@@ -361,27 +361,27 @@ function OfferResultCard({
               {brand?.isVerified ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : null}
               {brand?.isVerified ? <span className="text-emerald-300">Verified</span> : null}
             </div>
-            <h3 className={cn('font-semibold tracking-[-0.02em] text-white', compact ? 'text-[1.7rem]' : 'text-[1.85rem]')}>
+            <h3 className={cn('font-semibold tracking-[-0.01em] text-white', compact ? 'text-xl' : 'text-2xl')}>
               {offer.title}
             </h3>
-            <p className={cn('max-w-4xl text-white/58', compact ? 'text-base leading-7' : 'text-lg leading-8')}>
+            <p className={cn('max-w-4xl text-white/58', compact ? 'text-sm leading-6' : 'text-base leading-7')}>
               {offer.brief}
             </p>
           </div>
         </div>
 
         <div className="flex shrink-0 flex-col gap-3 sm:min-w-[10rem] sm:items-end">
-          <Button asChild className="h-11 rounded-2xl bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-500">
+          <Button asChild className="h-11 rounded-2xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-500">
             <Link href={`/creator/offers/${offer.id}`}>Apply now</Link>
           </Button>
-          <Button asChild variant="outline" className="h-11 rounded-2xl border-white/10 bg-transparent text-base text-white/82 hover:bg-white/8 hover:text-white">
+          <Button asChild variant="outline" className="h-11 rounded-2xl border-white/10 bg-transparent text-sm text-white/82 hover:bg-white/8 hover:text-white">
             <Link href={`/creator/offers/${offer.id}`}>View details</Link>
           </Button>
         </div>
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-white/52">
-        <span className="text-[1.8rem] font-semibold tracking-[-0.03em] text-emerald-300">{compactOfferBudget(offer)}</span>
+        <span className="text-xl font-semibold tracking-[-0.01em] text-emerald-300">{compactOfferBudget(offer)}</span>
         {deadlineLabel ? (
           <span className="inline-flex items-center gap-2 text-amber-300">
             <Clock3 className="h-4 w-4" /> {deadlineLabel}
@@ -417,22 +417,22 @@ function CreatorResultCard({ creator }: { creator: Creator }) {
           />
           <div className="min-w-0 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-[1.95rem] font-semibold tracking-[-0.03em] text-white">{creator.name}</h3>
+              <h3 className="text-2xl font-semibold tracking-[-0.02em] text-white">{creator.name}</h3>
               {creator.isVerified ? (
-                <Badge className="rounded-full border border-emerald-400/20 bg-emerald-500/14 px-3 py-1 text-[0.95rem] font-medium text-emerald-300 hover:bg-emerald-500/14">
+                <Badge className="rounded-full border border-emerald-400/20 bg-emerald-500/14 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/14">
                   <CheckCircle2 className="h-4 w-4" /> Verified
                 </Badge>
               ) : null}
-              <Badge className="rounded-full border border-emerald-400/10 bg-emerald-500/10 px-3 py-1 text-[0.95rem] font-medium text-emerald-300 hover:bg-emerald-500/10">
+              <Badge className="rounded-full border border-emerald-400/10 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/10">
                 <Star className="h-4 w-4 fill-current" /> {creator.rating.toFixed(1)}
               </Badge>
             </div>
-            <p className="text-lg text-white/58">
+            <p className="text-sm text-white/58">
               {creator.categories.slice(0, 3).join(' • ')}
               <span className="px-2 text-white/25">·</span>
               {creator.city}
             </p>
-            <p className="max-w-3xl text-base leading-7 text-white/58">{creator.bio}</p>
+            <p className="max-w-3xl text-sm leading-6 text-white/58">{creator.bio}</p>
             <div className="flex flex-wrap gap-2">
               {creator.platforms.slice(0, 3).map((platform) => (
                 <span key={platform.platform} className="rounded-full border border-white/10 px-3 py-1 text-sm text-white/62">
@@ -460,7 +460,7 @@ function CreatorResultCard({ creator }: { creator: Creator }) {
         </div>
 
         <div className="flex shrink-0 gap-3">
-          <Button asChild className="h-11 rounded-2xl bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-500">
+          <Button asChild className="h-11 rounded-2xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-500">
             <Link href={`/creator/${creator.username}`}>View profile</Link>
           </Button>
         </div>
@@ -723,20 +723,20 @@ export function CreatorGlobalSearchResults() {
         <aside className="hidden border-r border-white/8 bg-[#090a0a] lg:block">
           <div className="sticky top-[5.25rem] space-y-8 px-5 py-6">
             <div>
-              <p className="text-[1.55rem] font-semibold uppercase tracking-[0.08em] text-white/48">Filters</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/48">Filters</p>
             </div>
 
             <section className="space-y-4">
               <div className="space-y-1">
-                <h2 className="text-[1.35rem] font-semibold text-white/72">Industry</h2>
+                <h2 className="text-base font-semibold text-white/72">Industry</h2>
               </div>
               <div className="space-y-3">
                 {industryOptions.map((industry) => (
-                  <label key={industry} className="flex cursor-pointer items-center gap-3 text-lg text-white/78">
+                  <label key={industry} className="flex cursor-pointer items-center gap-3 text-sm text-white/78">
                     <Checkbox
                       checked={filters.industries.includes(industry)}
                       onCheckedChange={() => toggleSelection('industries', industry)}
-                      className="size-5 rounded-md border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
+                      className="size-4 rounded-md border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
                     />
                     <span className={cn(filters.industries.includes(industry) && 'text-emerald-300')}>{industry}</span>
                   </label>
@@ -745,14 +745,14 @@ export function CreatorGlobalSearchResults() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-[1.35rem] font-semibold text-white/72">Brand reputation</h2>
+              <h2 className="text-base font-semibold text-white/72">Brand reputation</h2>
               <div className="space-y-3">
                 {[
                   { key: 'verifiedOnly', label: 'Verified only' },
                   { key: 'fourStarPlus', label: '4+ star rating' },
                   { key: 'paysOnTime', label: 'Pays on time' },
                 ].map((item) => (
-                  <label key={item.key} className="flex cursor-pointer items-center gap-3 text-lg text-white/78">
+                  <label key={item.key} className="flex cursor-pointer items-center gap-3 text-sm text-white/78">
                     <Checkbox
                       checked={filters[item.key as 'verifiedOnly' | 'fourStarPlus' | 'paysOnTime']}
                       onCheckedChange={() =>
@@ -761,7 +761,7 @@ export function CreatorGlobalSearchResults() {
                           [item.key]: !current[item.key as 'verifiedOnly' | 'fourStarPlus' | 'paysOnTime'],
                         }))
                       }
-                      className="size-5 rounded-md border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
+                      className="size-4 rounded-md border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
                     />
                     <span className={cn(filters[item.key as 'verifiedOnly' | 'fourStarPlus' | 'paysOnTime'] as boolean && 'text-emerald-300')}>
                       {item.label}
@@ -772,7 +772,7 @@ export function CreatorGlobalSearchResults() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-[1.35rem] font-semibold text-white/72">Budget range</h2>
+              <h2 className="text-base font-semibold text-white/72">Budget range</h2>
               <div className="space-y-4 pr-2">
                 <Slider
                   value={filters.budgetRange}
@@ -789,7 +789,7 @@ export function CreatorGlobalSearchResults() {
                   }}
                   className="[&_[data-slot=slider-range]]:bg-emerald-400 [&_[data-slot=slider-thumb]]:border-emerald-400 [&_[data-slot=slider-thumb]]:bg-emerald-400 [&_[data-slot=slider-track]]:bg-white/14"
                 />
-                <div className="flex items-center justify-between text-lg text-white/48">
+                <div className="flex items-center justify-between text-sm text-white/48">
                   <span>{formatShortRs(filters.budgetRange[0])}</span>
                   <span>{formatShortRs(filters.budgetRange[1])}</span>
                 </div>
@@ -797,14 +797,14 @@ export function CreatorGlobalSearchResults() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-[1.35rem] font-semibold text-white/72">Content type</h2>
+              <h2 className="text-base font-semibold text-white/72">Content type</h2>
               <div className="space-y-3">
                 {contentTypeOptions.map((contentType) => (
-                  <label key={contentType} className="flex cursor-pointer items-center gap-3 text-lg text-white/78">
+                  <label key={contentType} className="flex cursor-pointer items-center gap-3 text-sm text-white/78">
                     <Checkbox
                       checked={filters.contentTypes.includes(contentType)}
                       onCheckedChange={() => toggleSelection('contentTypes', contentType)}
-                      className="size-5 rounded-md border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
+                      className="size-4 rounded-md border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
                     />
                     <span className={cn(filters.contentTypes.includes(contentType) && 'text-emerald-300')}>{contentType}</span>
                   </label>
@@ -818,10 +818,10 @@ export function CreatorGlobalSearchResults() {
           <div className="space-y-5">
             <div className="flex flex-col gap-4 border-b border-white/8 pb-5 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-white/50">
-                <h1 className="text-[1.9rem] font-semibold tracking-[-0.03em] text-white/58">
+                <h1 className="text-lg font-semibold text-white/58 md:text-xl">
                   Showing results for <span className="font-semibold text-white">“{searchTerm}”</span>
                 </h1>
-                <div className="flex flex-wrap items-center gap-2 text-lg">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span>Sort:</span>
                   {SORT_OPTIONS.map((option) => (
                     <button
@@ -829,7 +829,7 @@ export function CreatorGlobalSearchResults() {
                       type="button"
                       onClick={() => updateParams({ sort: option.value, brand: currentTab === 'brands' ? brandFocus || null : brandFocus || null })}
                       className={cn(
-                        'rounded-2xl border px-4 py-2 text-[1.1rem] font-medium transition',
+                        'rounded-2xl border px-4 py-2 text-sm font-medium transition',
                         currentSort === option.value
                           ? 'border-emerald-500/40 bg-emerald-500/12 text-emerald-300'
                           : 'border-white/10 text-white/58 hover:border-white/20 hover:text-white',
@@ -887,7 +887,7 @@ export function CreatorGlobalSearchResults() {
                   type="button"
                   onClick={() => updateParams({ tab, brand: tab === 'offers' ? brandFocus || null : tab === 'brands' ? brandFocus || null : null })}
                   className={cn(
-                    'relative inline-flex items-center gap-3 pb-2 text-[1.6rem] font-semibold tracking-[-0.02em] transition',
+                    'relative inline-flex items-center gap-3 pb-2 text-lg font-semibold tracking-[-0.01em] transition',
                     currentTab === tab ? 'text-emerald-300' : 'text-white/45 hover:text-white/78',
                   )}
                 >

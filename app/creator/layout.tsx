@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { BottomNav } from "@/components/bottom-nav";
@@ -11,6 +11,7 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAuthenticated, hasHydrated } = useAuthStore();
+  const [hideCreatorWorkspacePanel, setHideCreatorWorkspacePanel] = useState(false);
 
   const isProtectedCreatorRoute =
     pathname.startsWith('/creator/dashboard') ||
@@ -42,6 +43,24 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
     }
   }, [hasHydrated, isAuthenticated, user, router, isProtectedCreatorRoute]);
 
+  useEffect(() => {
+    const handleSearchLayoutMode = (event: Event) => {
+      const detail = (event as CustomEvent<{ hideSidebar?: boolean }>).detail;
+      setHideCreatorWorkspacePanel(Boolean(detail?.hideSidebar));
+    };
+
+    window.addEventListener('creator-search-layout-mode', handleSearchLayoutMode as EventListener);
+    return () => {
+      window.removeEventListener('creator-search-layout-mode', handleSearchLayoutMode as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pathname.startsWith('/creator/offers')) {
+      setHideCreatorWorkspacePanel(false);
+    }
+  }, [pathname]);
+
   if (
     (isProtectedCreatorRoute && !hasHydrated) ||
     (isProtectedCreatorRoute && !isAuthenticated) ||
@@ -56,11 +75,13 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
       <main className="pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
         {isProtectedCreatorRoute ? (
           <>
-            <div className="px-4 py-4 lg:hidden">
-              <CreatorSidebarDrawer />
-            </div>
+            {!hideCreatorWorkspacePanel && (
+              <div className="px-4 py-4 lg:hidden">
+                <CreatorSidebarDrawer />
+              </div>
+            )}
             <div className="flex min-h-[calc(100vh-4rem)]">
-              <CreatorSidebar />
+              {!hideCreatorWorkspacePanel && <CreatorSidebar />}
               <div className="min-w-0 flex-1">{children}</div>
             </div>
           </>

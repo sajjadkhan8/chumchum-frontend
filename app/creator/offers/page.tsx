@@ -401,8 +401,21 @@ function CreatorOffersFeedPage() {
 export default function CreatorOffersPage() {
   const searchParams = useSearchParams();
   const searchTerm = searchParams.get('search')?.trim() ?? '';
+  const isSearchMode = Boolean(searchTerm);
 
-  if (searchTerm) {
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('creator-search-layout-mode', {
+      detail: { hideSidebar: isSearchMode },
+    }));
+
+    return () => {
+      window.dispatchEvent(new CustomEvent('creator-search-layout-mode', {
+        detail: { hideSidebar: false },
+      }));
+    };
+  }, [isSearchMode]);
+
+  if (isSearchMode) {
     return <CreatorGlobalSearchResults />;
   }
 
