@@ -165,6 +165,7 @@ export interface OrderDeliverable {
 
 export interface Order {
   id: string;
+  orderNumber?: string;
   packageId: string;
   package: Package;
   creatorId: string;
@@ -284,6 +285,7 @@ export interface BrandOfferReaction {
   proposedDeliveryDays?: number;
   brandNote?: string;
   creatorNote?: string;
+  orderId?: string;
   createdAt: Date;
   updatedAt: Date;
 }

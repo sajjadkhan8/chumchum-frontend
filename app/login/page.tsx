@@ -440,15 +440,15 @@ export default function LoginPage() {
             {showDemoAccounts && (
               <>
                 <div className="mt-2 space-y-2">
-                  <div className={`flex items-center justify-between rounded-lg border p-2.5 ${activeDemoEmail === 'ali.rehmani@chumchum.pk' ? 'border-primary/30 bg-primary/5' : 'border-border/60 bg-background'}`}>
+                  <div className={`flex items-center justify-between rounded-lg border p-2.5 ${activeDemoEmail === 'ali.rehmani@zingzing.pk' ? 'border-primary/30 bg-primary/5' : 'border-border/60 bg-background'}`}>
                     <div className="space-y-0.5">
                       <p className="text-xs font-medium text-foreground">
                         Creator (On Ambassador Path)
-                        {activeDemoEmail === 'ali.rehmani@chumchum.pk' && <span className="ml-2 text-primary">Active</span>}
+                        {activeDemoEmail === 'ali.rehmani@zingzing.pk' && <span className="ml-2 text-primary">Active</span>}
                       </p>
-                      <p className="text-xs text-muted-foreground font-mono">ali.rehmani@chumchum.pk</p>
+                      <p className="text-xs text-muted-foreground font-mono">ali.rehmani@zingzing.pk</p>
                     </div>
-                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('ali.rehmani@chumchum.pk')}>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('ali.rehmani@zingzing.pk')}>
                       Use
                     </Button>
                   </div>
@@ -476,15 +476,15 @@ export default function LoginPage() {
                       Use
                     </Button>
                   </div>
-                  <div className={`flex items-center justify-between rounded-lg border p-2.5 ${activeDemoEmail === 'ops@chumchum.pk' ? 'border-primary/30 bg-primary/5' : 'border-border/60 bg-background'}`}>
+                  <div className={`flex items-center justify-between rounded-lg border p-2.5 ${activeDemoEmail === 'ops@zingzing.pk' ? 'border-primary/30 bg-primary/5' : 'border-border/60 bg-background'}`}>
                     <div className="space-y-0.5">
                       <p className="text-xs font-medium text-foreground">
                         Admin
-                        {activeDemoEmail === 'ops@chumchum.pk' && <span className="ml-2 text-primary">Active</span>}
+                        {activeDemoEmail === 'ops@zingzing.pk' && <span className="ml-2 text-primary">Active</span>}
                       </p>
-                      <p className="text-xs text-muted-foreground font-mono">ops@chumchum.pk</p>
+                      <p className="text-xs text-muted-foreground font-mono">ops@zingzing.pk</p>
                     </div>
-                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('ops@chumchum.pk')}>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => applyDemoCredentials('ops@zingzing.pk')}>
                       Use
                     </Button>
                   </div>

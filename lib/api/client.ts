@@ -1,7 +1,6 @@
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
 
 const ACCESS_TOKEN_KEY = 'zingzing-access-token';
-const REFRESH_TOKEN_KEY = 'zingzing-refresh-token';
 
 export class ApiError extends Error {
   status: number;
@@ -62,16 +61,15 @@ const toQueryString = (query?: Record<string, unknown>): string => {
 
 const getStorage = () => {
   if (typeof window === 'undefined') return null;
-  return window.localStorage;
+  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+  window.localStorage.removeItem('zingzing-refresh-token');
+  return window.sessionStorage;
 };
 
 const getAccessToken = (): string | null => getStorage()?.getItem(ACCESS_TOKEN_KEY) ?? null;
-const getRefreshToken = (): string | null => getStorage()?.getItem(REFRESH_TOKEN_KEY) ?? null;
-
 export const tokenStorage = {
   getAccessToken,
-  getRefreshToken,
-  set(accessToken?: string | null, refreshToken?: string | null) {
+  set(accessToken?: string | null, _refreshToken?: string | null) {
     const storage = getStorage();
     if (!storage) return;
 
@@ -80,12 +78,7 @@ export const tokenStorage = {
     } else {
       storage.removeItem(ACCESS_TOKEN_KEY);
     }
-
-    if (refreshToken) {
-      storage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-    } else {
-      storage.removeItem(REFRESH_TOKEN_KEY);
-    }
+    storage.removeItem('zingzing-refresh-token');
   },
   clear() {
     tokenStorage.set(null, null);
@@ -97,15 +90,12 @@ let refreshPromise: Promise<string | null> | null = null;
 const refreshAccessToken = async (): Promise<string | null> => {
   if (refreshPromise) return refreshPromise;
 
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) return null;
-
   refreshPromise = (async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -122,7 +112,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
         return null;
       }
 
-      tokenStorage.set(nextAccessToken, nextRefreshToken ?? refreshToken);
+      tokenStorage.set(nextAccessToken, nextRefreshToken);
       return nextAccessToken;
     } catch {
       tokenStorage.clear();
@@ -183,6 +173,7 @@ export const apiClient = {
       headers: requestHeaders,
       body: normalizeBody(body),
       signal,
+      credentials: 'include',
     });
 
     if (response.status === 401 && auth && allowRetry) {

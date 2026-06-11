@@ -28,7 +28,7 @@ interface AuthState {
   setBrandProfile: (profile: Brand) => void;
   loadSavedCreators: () => Promise<void>;
   toggleSavedCreator: (creatorId: string) => Promise<void>;
-  markHydrated: () => void;
+  restoreSession: () => Promise<void>;
 }
 
 const syncSavedCreators = async (): Promise<string[]> => {
@@ -196,14 +196,27 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
-      markHydrated: () => {
-        set((state) => {
-          const hasUser = Boolean(state.user);
-          return {
+      restoreSession: async () => {
+        set({ hasHydrated: false, isAuthenticated: false });
+
+        try {
+          const user = await authService.me();
+          set({ user, isAuthenticated: true, hasHydrated: true });
+
+          if (user.role === 'brand') {
+            await get().loadSavedCreators();
+          }
+        } catch {
+          tokenStorage.clear();
+          set({
+            user: null,
+            creatorProfile: null,
+            brandProfile: null,
+            savedCreators: [],
+            isAuthenticated: false,
             hasHydrated: true,
-            isAuthenticated: hasUser,
-          };
-        });
+          });
+        }
       },
 
       setUser: (user: User) => {
@@ -275,14 +288,10 @@ export const useAuthStore = create<AuthState>()(
         return persistedState as AuthState;
       },
       onRehydrateStorage: () => (state) => {
-        state?.markHydrated();
-        if (state?.user?.role === 'brand') {
-          void state.loadSavedCreators();
-        }
+        void state?.restoreSession();
       },
       partialize: (state) => ({
         user: state.user,
-        isAuthenticated: state.isAuthenticated,
         creatorProfile: state.creatorProfile,
         brandProfile: state.brandProfile,
         savedCreators: state.savedCreators,

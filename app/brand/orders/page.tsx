@@ -335,7 +335,7 @@ export default function BrandOrdersPage() {
                             {order.package.title}
                           </p>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            Order {order.id} • {formatDate(order.createdAt)}
+                            Order {order.orderNumber || order.id} • {formatDate(order.createdAt)}
                           </p>
                         </div>
                       </div>

@@ -80,6 +80,7 @@ interface BackendOfferReaction {
   proposedDeliveryDays?: number;
   brandNote?: string;
   creatorNote?: string;
+  orderId?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -181,6 +182,7 @@ const mapReaction = (input: BackendOfferReaction): BrandOfferReaction => ({
   proposedDeliveryDays: input.proposedDeliveryDays,
   brandNote: input.brandNote,
   creatorNote: input.creatorNote,
+  orderId: input.orderId,
   createdAt: toDate(input.createdAt) || new Date(),
   updatedAt: toDate(input.updatedAt) || new Date(),
 });
@@ -409,5 +411,4 @@ export const offersService = {
     };
   },
 };
-
 

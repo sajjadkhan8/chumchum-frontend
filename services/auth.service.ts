@@ -4,7 +4,7 @@ import type { User, UserRole } from '@/types';
 
 interface AuthTokenResponse {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
   user: {
     id: string;
     email?: string;
@@ -70,7 +70,7 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    await apiClient.post('/api/v1/auth/logout', null);
+    await apiClient.post('/api/v1/auth/logout', null, { auth: false });
   },
 
   async me(): Promise<User> {

@@ -1955,7 +1955,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                     rows={2}
                     value={form.hashtagsMentions}
                     onChange={(e) => updateForm({ hashtagsMentions: e.target.value })}
-                    placeholder="Example: #ChamChamGlow #Ad @brand_handle"
+                    placeholder="Example: #ZingZingGlow #Ad @brand_handle"
                   />
                 </div>
               </div>

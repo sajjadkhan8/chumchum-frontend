@@ -358,6 +358,7 @@ export const mergePackageAnalytics = (pkg: CreatorPackage, analytics?: Partial<P
 
 interface BackendOrderResponse {
   id: string;
+  orderNumber?: string;
   packageId: string;
   packageTitle?: string;
   creatorId: string;
@@ -458,6 +459,7 @@ export const mapOrder = (input: BackendOrderResponse, packageMap: Record<string,
 
   return {
     id: input.id,
+    orderNumber: input.orderNumber,
     packageId: input.packageId,
     package: pkg,
     creatorId: input.creatorId,

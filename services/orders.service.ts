@@ -31,6 +31,7 @@ export interface UpdateDeliverableStatusRequest {
 
 interface BackendOrderResponse {
   id: string;
+  orderNumber?: string;
   packageId: string;
   packageTitle?: string;
   creatorId: string;

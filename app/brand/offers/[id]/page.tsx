@@ -103,7 +103,11 @@ export default function BrandOfferDetailPage() {
     try {
       const updated = await offersService.actionReaction(offerId, reactionId, action, reactionNotes[reactionId]);
       setReactions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
-      toast.success(`Reaction ${action.toLowerCase()}ed`);
+      toast.success(
+        action === 'ACCEPT' && updated.orderId
+          ? 'Proposal accepted and order created'
+          : `Reaction ${action.toLowerCase()}ed`,
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to update reaction');
     } finally {
@@ -235,10 +239,21 @@ export default function BrandOfferDetailPage() {
                         onChange={(event) => setReactionNotes((prev) => ({ ...prev, [reaction.id]: event.target.value }))}
                       />
                       <div className="flex flex-wrap gap-2">
-                        <Button size="sm" variant="outline" disabled={actioningReactionId === reaction.id} onClick={() => void onReactionAction(reaction.id, 'SHORTLIST')}>Shortlist</Button>
-                        <Button size="sm" variant="outline" disabled={actioningReactionId === reaction.id} onClick={() => void onReactionAction(reaction.id, 'REVIEW')}>Review</Button>
-                        <Button size="sm" disabled={actioningReactionId === reaction.id} onClick={() => void onReactionAction(reaction.id, 'ACCEPT')}>Accept</Button>
-                        <Button size="sm" variant="destructive" disabled={actioningReactionId === reaction.id} onClick={() => void onReactionAction(reaction.id, 'REJECT')}>Reject</Button>
+                        {reaction.orderId ? (
+                          <Button size="sm" asChild>
+                            <Link href="/brand/orders">View Order</Link>
+                          </Button>
+                        ) : null}
+                        {!['accepted', 'rejected', 'withdrawn'].includes(reaction.status) ? (
+                          <>
+                            <Button size="sm" variant="outline" disabled={actioningReactionId === reaction.id} onClick={() => void onReactionAction(reaction.id, 'SHORTLIST')}>Shortlist</Button>
+                            <Button size="sm" variant="outline" disabled={actioningReactionId === reaction.id} onClick={() => void onReactionAction(reaction.id, 'REVIEW')}>Review</Button>
+                            {['interested', 'proposal'].includes(reaction.reactionType) ? (
+                              <Button size="sm" disabled={actioningReactionId === reaction.id} onClick={() => void onReactionAction(reaction.id, 'ACCEPT')}>Accept & Create Order</Button>
+                            ) : null}
+                            <Button size="sm" variant="destructive" disabled={actioningReactionId === reaction.id} onClick={() => void onReactionAction(reaction.id, 'REJECT')}>Reject</Button>
+                          </>
+                        ) : null}
                       </div>
                     </div>
                   </div>
