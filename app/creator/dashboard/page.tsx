@@ -332,13 +332,13 @@ export default function CreatorDashboardPage() {
                 </Link>
               </Button>
               <Button variant="outline" className="h-auto min-h-20 flex-col py-4" asChild>
-                <Link href="/creator/earnings">
+                <Link href="/creator/payments">
                   <DollarSign className="mb-2 h-5 w-5" />
                   <span className="text-xs">Withdraw</span>
                 </Link>
               </Button>
               <Button variant="outline" className="h-auto min-h-20 flex-col py-4" asChild>
-                <Link href="/creator/settings">
+                <Link href="/creator/profile/public">
                   <Users className="mb-2 h-5 w-5" />
                   <span className="text-xs">Edit Profile</span>
                 </Link>

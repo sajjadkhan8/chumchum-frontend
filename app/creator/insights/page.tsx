@@ -56,17 +56,17 @@ export default function CreatorInsightsPage() {
   ];
 
   return (
-    <div className="container mx-auto p-4 pb-6 md:p-6">
+    <div className="container mx-auto p-2 pb-2.5 md:p-2.5">
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {trendRows.map((item) => (
           <Card key={item.label}>
-            <CardHeader className="pb-3">
+            <CardHeader className="px-3 pb-1 pt-2.5">
               <CardTitle className="text-sm text-muted-foreground">{item.label}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 pb-2.5 pt-0">
               <div className="flex items-center justify-between">
-                <p className="text-2xl font-bold">{isLoading ? "..." : item.value}</p>
+                <p className="text-2xl font-bold leading-none">{isLoading ? "..." : item.value}</p>
                 <Badge variant="secondary" className="bg-primary/10 text-primary">{item.change}</Badge>
               </div>
             </CardContent>
@@ -74,40 +74,40 @@ export default function CreatorInsightsPage() {
         ))}
       </div>
 
-      <Card className="mb-8">
-        <CardHeader>
+      <Card className="mb-3">
+        <CardHeader className="px-3 py-2.5">
           <CardTitle>Top Package Trends</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-2 px-3 pb-2.5 pt-0">
           {insights.topPackages.length > 0 ? insights.topPackages.map((item) => (
-            <div key={item.title} className="space-y-2 rounded-lg border border-border/60 p-3">
+            <div key={item.title} className="space-y-0.5 rounded-md border border-border/60 p-1.5">
               <div className="flex items-center justify-between">
                 <p className="font-medium">{item.title}</p>
                 <span className="text-xs text-muted-foreground">Conversion {item.conversionRate}%</span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
                 <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(item.conversionRate * 10, 100)}%` }} />
               </div>
             </div>
           )) : (
-            <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+            <div className="rounded-md border border-dashed border-border p-2.5 text-center text-sm text-muted-foreground">
               No package analytics yet. Package performance will appear after your offers receive traffic.
             </div>
           )}
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-2.5 lg:grid-cols-2">
         <Card>
-          <CardHeader>
+          <CardHeader className="px-3 py-2.5">
             <CardTitle>Inquiry Trend (Last 6 Months)</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 pb-2.5 pt-0">
             {insights.monthlyInquiryTrend.length > 0 ? (
-              <div className="flex items-end gap-2">
+              <div className="flex items-end gap-0.5">
                 {insights.monthlyInquiryTrend.map((point) => (
-                <div key={point.month} className="flex flex-1 flex-col items-center gap-2">
-                  <div className="w-full rounded-sm bg-primary/15" style={{ height: `${Math.max(point.value, 8)}px` }}>
+                <div key={point.month} className="flex flex-1 flex-col items-center gap-0.5">
+                  <div className="w-full rounded-sm bg-primary/15" style={{ height: `${Math.max(point.value, 6)}px` }}>
                     <div className="w-full rounded-sm bg-primary" style={{ height: `${point.value}%` }} />
                   </div>
                   <span className="text-xs text-muted-foreground">{point.month}</span>
@@ -115,7 +115,7 @@ export default function CreatorInsightsPage() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              <div className="rounded-md border border-dashed border-border p-2.5 text-center text-sm text-muted-foreground">
                 Monthly inquiry history is not available yet.
               </div>
             )}
@@ -123,17 +123,17 @@ export default function CreatorInsightsPage() {
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="px-3 py-2.5">
             <CardTitle>Platform Contribution</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-1 px-3 pb-2.5 pt-0">
             {insights.platformContribution.length > 0 ? insights.platformContribution.map((platform) => (
-              <div key={platform.platform} className="space-y-1">
+              <div key={platform.platform} className="space-y-0">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">{formatPlatform(platform.platform)}</p>
                   <span className="text-xs text-muted-foreground">{platform.score}%</span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-0.5 w-full overflow-hidden rounded-full bg-muted">
                   <div className="h-full rounded-full bg-primary" style={{ width: `${platform.score}%` }} />
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -141,7 +141,7 @@ export default function CreatorInsightsPage() {
                 </p>
               </div>
             )) : (
-              <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              <div className="rounded-md border border-dashed border-border p-2.5 text-center text-sm text-muted-foreground">
                 Platform contribution will appear after package analytics are recorded.
               </div>
             )}

@@ -7,13 +7,15 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Archive,
+  Bookmark,
+  BookmarkCheck,
+  ChevronDown,
   Copy,
   Eye,
   FilePenLine,
   Filter,
   Pause,
   Play,
-  Plus,
   Search,
   TrendingUp,
 } from "lucide-react";
@@ -34,6 +36,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Collapsible,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 import { EmptyState } from "@/components/empty-state";
 import { PackageCardSkeleton } from "@/components/skeletons";
 import { formatPrice } from "@/lib/utils";
@@ -83,6 +89,7 @@ function CreatorPackagesPageContent() {
   const [performance, setPerformance] = useState<"all" | "top" | "mid" | "low">("all");
   const [earningsBand, setEarningsBand] = useState<"all" | "under25" | "25to50" | "50plus">("all");
   const [sortBy, setSortBy] = useState<"recent" | "views" | "conversion" | "orders">("recent");
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   useEffect(() => {
     void fetchPackages();
@@ -241,97 +248,56 @@ function CreatorPackagesPageContent() {
     }
   };
 
-  const statusLanes: { key: PackageStatus | "all"; label: string }[] = [
-    { key: "all", label: `All (${packages.length})` },
-    { key: "active", label: `Active (${summary.active})` },
-    { key: "draft", label: `Draft (${summary.drafts})` },
-    { key: "paused", label: `Paused (${summary.paused})` },
-    { key: "under_review", label: `Under Review (${summary.underReview})` },
-    { key: "archived", label: `Archived (${summary.archived})` },
-  ];
-
   return (
-    <div className="container mx-auto p-4 pb-6 md:p-6">
-      <div className="mb-8 flex items-center justify-end">
-        <Button asChild>
-          <Link href="/creator/packages/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Package
-          </Link>
-        </Button>
+    <div className="container mx-auto p-2.5 pb-3 md:p-3">
+
+      {/* ── Compact stat strip ── */}
+      <div className="mb-2.5 grid grid-cols-2 gap-2 xl:grid-cols-4">
+        {[
+          { label: "Active", value: summary.active },
+          { label: "Drafts", value: summary.drafts },
+          { label: "Archived", value: summary.archived },
+          { label: "Monthly Value", value: formatPrice(summary.monthlyProjection), accent: true },
+        ].map((s) => (
+          <Card key={s.label}>
+            <CardContent className="flex items-center justify-between px-3 py-2">
+              <p className="text-[11px] text-muted-foreground">{s.label}</p>
+              <p className={`text-base font-bold leading-none ${s.accent ? "text-primary" : ""}`}>{s.value}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Active Packages</p><p className="text-2xl font-bold">{summary.active}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Drafts</p><p className="text-2xl font-bold">{summary.drafts}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Archived</p><p className="text-2xl font-bold">{summary.archived}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Monthly Package Value</p><p className="text-2xl font-bold text-primary">{formatPrice(summary.monthlyProjection)}</p></CardContent></Card>
-      </div>
+      {/* ── Inline search + status + actions ── */}
+      <Card className="mb-2.5">
+        <CardContent className="px-3 py-2">
+          <div className="flex items-center gap-2">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search packages…"
+                className="h-8 pl-8 text-sm"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
 
-      <Card className="mb-8">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-2">
-            {statusLanes.map((lane) => (
-              <Button
-                key={lane.key}
-                size="sm"
-                variant={status === lane.key ? "default" : "outline"}
-                onClick={() => updateStatusWithUrl(lane.key)}
-              >
-                {lane.label}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Search, Filter & Sort</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by title, tags, or package intent"
-              className="pl-9"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-            <Select value={status} onValueChange={(value) => updateStatusWithUrl(value as PackageStatus | "all")}>
-              <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
-              <SelectContent>{statusOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={dealType} onValueChange={(value) => setDealType(value as typeof dealType)}>
-              <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
-              <SelectContent>{dealTypeOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={platform} onValueChange={(value) => setPlatform(value as typeof platform)}>
-              <SelectTrigger><SelectValue placeholder="Platform" /></SelectTrigger>
-              <SelectContent>{platformOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={performance} onValueChange={(value) => setPerformance(value as typeof performance)}>
-              <SelectTrigger><SelectValue placeholder="Performance" /></SelectTrigger>
+            {/* Status — most-used filter inline */}
+            <Select value={status} onValueChange={(v) => updateStatusWithUrl(v as PackageStatus | "all")}>
+              <SelectTrigger className="h-8 w-36 shrink-0 text-xs">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Performance</SelectItem>
-                <SelectItem value="top">Top Conversion</SelectItem>
-                <SelectItem value="mid">Mid Conversion</SelectItem>
-                <SelectItem value="low">Low Conversion</SelectItem>
+                {statusOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={earningsBand} onValueChange={(value) => setEarningsBand(value as typeof earningsBand)}>
-              <SelectTrigger><SelectValue placeholder="Earnings" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Earnings</SelectItem>
-                <SelectItem value="under25">Under PKR 625k</SelectItem>
-                <SelectItem value="25to50">PKR 625k - 1.25M</SelectItem>
-                <SelectItem value="50plus">PKR 1.25M+</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
-              <SelectTrigger><SelectValue placeholder="Sort" /></SelectTrigger>
+
+            {/* Sort — second most-used inline */}
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+              <SelectTrigger className="h-8 w-36 shrink-0 text-xs">
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="recent">Most Recent</SelectItem>
                 <SelectItem value="views">Most Views</SelectItem>
@@ -339,80 +305,129 @@ function CreatorPackagesPageContent() {
                 <SelectItem value="orders">Most Orders</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={saveCurrentFilter}>Save Filters</Button>
-            <Button variant="outline" size="sm" onClick={applySavedFilter}>Use Saved Filters</Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSearch("");
-                updateStatusWithUrl("all");
-                setDealType("all");
-                setPlatform("all");
-                setPerformance("all");
-                setEarningsBand("all");
-                setSortBy("recent");
-              }}
-            >
-              Clear All
-            </Button>
-           </div>
-         </CardContent>
-       </Card>
 
-       {isLoading ? (
-         <div className="grid gap-4 md:grid-cols-2">
-           {Array.from({ length: 4 }).map((_, index) => (
-             <PackageCardSkeleton key={index} />
-           ))}
-         </div>
-       ) : filteredPackages.length === 0 ? (
-         <EmptyState
-           title={status === "active" ? "No active packages yet" : "No packages match your filters"}
-           description={
-             status === "active"
-               ? "Create your first barter, paid, or hybrid package to start getting inquiries."
-               : "Try adjusting status, pricing type, or performance filters."
-           }
-           action={{
-             label: "Create Package",
-             onClick: () => toast.info("Use the Create Package button to launch a new listing."),
-           }}
-         />
-       ) : (
-         <div className="grid gap-4 md:grid-cols-2">
-          {filteredPackages.map((pkg, index) => (
-            <motion.div
-              key={pkg.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.04 }}
+            {/* More filters toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 shrink-0 gap-1 text-xs"
+              onClick={() => setShowMoreFilters((v) => !v)}
             >
+              <Filter className="h-3 w-3" />
+              Filters
+              <ChevronDown className={`h-3 w-3 transition-transform ${showMoreFilters ? "rotate-180" : ""}`} />
+            </Button>
+
+            {/* Save/load filters hidden in icon dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                  <Bookmark className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={saveCurrentFilter}>
+                  <Bookmark className="mr-2 h-4 w-4" /> Save current filters
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={applySavedFilter}>
+                  <BookmarkCheck className="mr-2 h-4 w-4" /> Load saved filters
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Collapsible secondary filters */}
+          <Collapsible open={showMoreFilters}>
+            <CollapsibleContent>
+              <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                <Select value={dealType} onValueChange={(v) => setDealType(v as typeof dealType)}>
+                  <SelectTrigger className="h-8"><SelectValue placeholder="Deal Type" /></SelectTrigger>
+                  <SelectContent>{dealTypeOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={platform} onValueChange={(v) => setPlatform(v as typeof platform)}>
+                  <SelectTrigger className="h-8"><SelectValue placeholder="Platform" /></SelectTrigger>
+                  <SelectContent>{platformOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={performance} onValueChange={(v) => setPerformance(v as typeof performance)}>
+                  <SelectTrigger className="h-8"><SelectValue placeholder="Performance" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Performance</SelectItem>
+                    <SelectItem value="top">Top Conversion</SelectItem>
+                    <SelectItem value="mid">Mid Conversion</SelectItem>
+                    <SelectItem value="low">Low Conversion</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={earningsBand} onValueChange={(v) => setEarningsBand(v as typeof earningsBand)}>
+                  <SelectTrigger className="h-8"><SelectValue placeholder="Earnings" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Earnings</SelectItem>
+                    <SelectItem value="under25">Under PKR 625k</SelectItem>
+                    <SelectItem value="25to50">PKR 625k – 1.25M</SelectItem>
+                    <SelectItem value="50plus">PKR 1.25M+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-1.5 h-7"
+                onClick={() => {
+                  setSearch("");
+                  updateStatusWithUrl("all");
+                  setDealType("all");
+                  setPlatform("all");
+                  setPerformance("all");
+                  setEarningsBand("all");
+                  setSortBy("recent");
+                }}
+              >
+                Clear all
+              </Button>
+            </CollapsibleContent>
+          </Collapsible>
+        </CardContent>
+      </Card>
+
+      {/* ── Package grid ── */}
+      {isLoading ? (
+        <div className="grid gap-2.5 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => <PackageCardSkeleton key={i} />)}
+        </div>
+      ) : filteredPackages.length === 0 ? (
+        <EmptyState
+          title={status === "active" ? "No active packages yet" : "No packages match your filters"}
+          description={
+            status === "active"
+              ? "Create your first barter, paid, or hybrid package to start getting inquiries."
+              : "Try adjusting status, pricing type, or performance filters."
+          }
+          action={{ label: "Create Package", onClick: () => toast.info("Use the Create Package button to launch a new listing.") }}
+        />
+      ) : (
+        <div className="grid gap-2.5 md:grid-cols-2">
+          {filteredPackages.map((pkg, index) => (
+            <motion.div key={pkg.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}>
               <Card className="overflow-hidden border-border/70">
-                <div className="relative h-40 w-full">
+                <div className="relative h-28 w-full">
                   <Image src={pkg.thumbnail} alt={pkg.title} fill className="object-cover" />
-                  <div className="absolute left-3 top-3 flex gap-2">
+                  <div className="absolute left-2.5 top-2.5 flex gap-1.5">
                     <Badge variant="secondary" className={statusBadgeClass(pkg.status)}>{pkg.status.replace("_", " ")}</Badge>
                     <Badge variant="secondary" className="capitalize">{pkg.dealType}</Badge>
                   </div>
                 </div>
-                <CardContent className="space-y-3 p-4">
+                <CardContent className="space-y-2 px-3 pb-2.5 pt-2">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="font-semibold">{pkg.title}</h3>
+                      <h3 className="font-semibold leading-tight">{pkg.title}</h3>
                       <p className="text-sm text-muted-foreground">{pkg.platform} • {pkg.category}</p>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon"><Filter className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0"><Filter className="h-3.5 w-3.5" /></Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/creator/packages/${pkg.id}/edit`}>
-                            <FilePenLine className="mr-2 h-4 w-4" /> Edit
-                          </Link>
+                          <Link href={`/creator/packages/${pkg.id}/edit`}><FilePenLine className="mr-2 h-4 w-4" /> Edit</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => handleDuplicate(pkg)}>
                           <Copy className="mr-2 h-4 w-4" /> Duplicate
@@ -429,9 +444,7 @@ function CreatorPackagesPageContent() {
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem asChild>
-                          <Link href={`/creator/packages/${pkg.id}`}>
-                            <Eye className="mr-2 h-4 w-4" /> Preview
-                          </Link>
+                          <Link href={`/creator/packages/${pkg.id}`}><Eye className="mr-2 h-4 w-4" /> Preview</Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -439,36 +452,28 @@ function CreatorPackagesPageContent() {
 
                   <p className="line-clamp-2 text-sm text-muted-foreground">{pkg.shortDescription}</p>
 
-                  <div className="grid grid-cols-3 gap-2 rounded-lg border border-border/60 p-2 text-xs">
+                  <div className="grid grid-cols-3 gap-1.5 rounded-md border border-border/60 p-1.5 text-xs">
                     <div><p className="text-muted-foreground">Views</p><p className="font-semibold">{pkg.analytics.views.toLocaleString()}</p></div>
                     <div><p className="text-muted-foreground">Inquiries</p><p className="font-semibold">{pkg.analytics.inquiries}</p></div>
                     <div><p className="text-muted-foreground">Conversion</p><p className="font-semibold">{pkg.analytics.conversionRate}%</p></div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1">
                     <Badge variant="outline">Orders: {pkg.ordersCompleted}</Badge>
                     <Badge variant="outline">Completion: {pkg.analytics.completionRate}%</Badge>
                     <Badge variant="outline">Repeat: {pkg.analytics.repeatBrands}</Badge>
                   </div>
 
-                  <div className="flex items-center justify-between border-t border-border pt-3">
-                    <p className="font-bold text-primary">
-                      {pkg.dealType === "barter"
-                        ? "Barter"
-                        : pkg.dealType === "hybrid"
-                          ? `${formatPrice(pkg.hybridCashAmount || pkg.price)} + barter`
-                          : formatPrice(pkg.price)}
+                  <div className="flex items-center justify-between border-t border-border pt-2">
+                    <p className="text-sm font-bold text-primary">
+                      {pkg.dealType === "barter" ? "Barter" : pkg.dealType === "hybrid" ? `${formatPrice(pkg.hybridCashAmount || pkg.price)} + barter` : formatPrice(pkg.price)}
                     </p>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1.5">
                       <Button variant="outline" size="sm" asChild>
-                        <Link href={`/creator/packages/${pkg.id}`}>
-                          <Eye className="mr-1 h-3 w-3" /> Preview
-                        </Link>
+                        <Link href={`/creator/packages/${pkg.id}`}><Eye className="mr-1 h-3 w-3" /> Preview</Link>
                       </Button>
                       <Button size="sm" asChild>
-                        <Link href={`/creator/packages/${pkg.id}/edit`}>
-                          <FilePenLine className="mr-1 h-3 w-3" /> Edit
-                        </Link>
+                        <Link href={`/creator/packages/${pkg.id}/edit`}><FilePenLine className="mr-1 h-3 w-3" /> Edit</Link>
                       </Button>
                     </div>
                   </div>
@@ -477,26 +482,27 @@ function CreatorPackagesPageContent() {
             </motion.div>
           ))}
         </div>
-       )}
+      )}
 
-       <Card className="mb-8">
-         <CardHeader>
-           <CardTitle className="text-base">Top Performing Packages</CardTitle>
-         </CardHeader>
-        <CardContent className="space-y-3">
+      {/* ── Top Performing Packages ── */}
+      <Card className="mt-2.5">
+        <CardHeader className="px-3 py-2.5">
+          <CardTitle>Top Performing Packages</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 px-3 pb-2.5 pt-0">
           {packages
             .slice()
             .sort((a, b) => b.analytics.conversionRate - a.analytics.conversionRate)
             .slice(0, 3)
             .map((item) => (
-              <div key={item.id} className="rounded-lg border border-border/60 p-3">
-                <div className="mb-2 flex items-center justify-between">
+              <div key={item.id} className="rounded-md border border-border/60 p-2">
+                <div className="mb-1 flex items-center justify-between">
                   <p className="font-medium">{item.title}</p>
                   <Badge variant="secondary" className="bg-primary/10 text-primary">
                     <TrendingUp className="mr-1 h-3 w-3" /> {item.analytics.conversionRate}%
                   </Badge>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
                   <div className="h-full bg-primary" style={{ width: `${Math.min(item.analytics.conversionRate * 8, 100)}%` }} />
                 </div>
               </div>
