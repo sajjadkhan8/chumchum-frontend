@@ -11,7 +11,6 @@ import {
   Star,
   Users,
   Wallet,
-  X,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -142,10 +141,10 @@ function SearchResultsSkeleton() {
   return (
     <div className="space-y-4">
       {Array.from({ length: 3 }).map((_, index) => (
-        <div key={index} className="rounded-[28px] border border-white/8 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+        <div key={index} className="rounded-xl border border-white/8 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           <div className="animate-pulse space-y-4">
             <div className="flex items-start gap-4">
-              <div className="h-16 w-16 rounded-2xl bg-white/8" />
+              <div className="h-16 w-16 rounded-xl bg-white/8" />
               <div className="flex-1 space-y-3">
                 <div className="h-6 w-40 rounded-full bg-white/8" />
                 <div className="h-4 w-72 rounded-full bg-white/8" />
@@ -157,9 +156,9 @@ function SearchResultsSkeleton() {
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              <div className="h-12 rounded-2xl bg-white/8" />
-              <div className="h-12 rounded-2xl bg-white/8" />
-              <div className="h-12 rounded-2xl bg-white/8" />
+              <div className="h-12 rounded-xl bg-white/8" />
+              <div className="h-12 rounded-xl bg-white/8" />
+              <div className="h-12 rounded-xl bg-white/8" />
             </div>
           </div>
         </div>
@@ -178,9 +177,9 @@ function EmptyState({
   onReset?: () => void;
 }) {
   return (
-    <Card className="rounded-[28px] border-white/8 bg-white/[0.04] text-white shadow-none">
+    <Card className="rounded-xl border-white/8 bg-white/[0.04] text-white shadow-none">
       <CardContent className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-        <div className="rounded-full border border-white/10 bg-white/[0.04] p-3 text-emerald-400">
+        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-emerald-400">
           <Search className="h-5 w-5" />
         </div>
         <div className="space-y-1">
@@ -192,7 +191,7 @@ function EmptyState({
             type="button"
             variant="outline"
             onClick={onReset}
-            className="mt-3 rounded-full border-white/12 bg-transparent text-white hover:bg-white/8 hover:text-white"
+            className="mt-3 rounded-lg border-white/12 bg-transparent text-white hover:bg-white/8 hover:text-white"
           >
             Reset filters
           </Button>
@@ -204,7 +203,7 @@ function EmptyState({
 
 function ResultCountBadge({ count }: { count: number }) {
   return (
-    <span className="rounded-full bg-white/8 px-2 py-0.5 text-xs font-semibold text-white/62">
+    <span className="rounded-lg bg-white/8 px-2 py-0.5 text-xs font-semibold text-white/62">
       {count}
     </span>
   );
@@ -224,13 +223,13 @@ function BrandResultCard({
   return (
     <article
       className={cn(
-        'rounded-[28px] border border-white/8 bg-white/[0.05] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition hover:border-emerald-500/25 hover:bg-white/[0.06]',
+        'rounded-xl border border-white/8 bg-white/[0.05] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition hover:border-emerald-500/25 hover:bg-white/[0.06]',
         isFocused && 'border-emerald-500/40 bg-emerald-500/[0.08]',
       )}
     >
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-[#101111] text-2xl font-semibold text-white">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-[#101111] text-2xl font-semibold text-white">
             {brand.initials}
           </div>
           <div className="min-w-0 space-y-3">
@@ -239,11 +238,11 @@ function BrandResultCard({
                 {brand.name}
               </h3>
               {brand.isVerified ? (
-                <Badge className="rounded-full border border-emerald-400/20 bg-emerald-500/14 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/14">
+                <Badge className="rounded-lg border border-emerald-400/20 bg-emerald-500/14 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/14">
                   <CheckCircle2 className="h-4 w-4" /> Verified
                 </Badge>
               ) : null}
-              <Badge className="rounded-full border border-emerald-400/10 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/10">
+              <Badge className="rounded-lg border border-emerald-400/10 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/10">
                 <Star className="h-4 w-4 fill-current" /> {brand.rating.toFixed(1)}
                 <span className="text-white/55">·</span>
                 {brand.paysOnTime ? 'Pays on time' : 'Responsive'}
@@ -263,7 +262,7 @@ function BrandResultCard({
                 {brand.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full border border-white/10 bg-transparent px-3 py-1 text-sm text-white/62"
+                    className="rounded-lg border border-white/10 bg-transparent px-3 py-1 text-sm text-white/62"
                   >
                     {tag}
                   </span>
@@ -295,7 +294,7 @@ function BrandResultCard({
           <Button
             type="button"
             onClick={() => onViewOffers(brand.id)}
-            className="h-11 rounded-2xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-500"
+            className="h-11 rounded-lg bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-500"
           >
             View offers
           </Button>
@@ -303,7 +302,7 @@ function BrandResultCard({
             <Button
               asChild
               variant="outline"
-              className="h-11 rounded-2xl border-white/10 bg-transparent text-sm text-white/82 hover:bg-white/8 hover:text-white"
+              className="h-11 rounded-lg border-white/10 bg-transparent text-sm text-white/82 hover:bg-white/8 hover:text-white"
             >
               <a href={brand.website} target="_blank" rel="noreferrer">
                 View profile
@@ -314,7 +313,7 @@ function BrandResultCard({
               type="button"
               variant="outline"
               disabled
-              className="h-11 rounded-2xl border-white/10 bg-transparent text-base text-white/40"
+              className="h-11 rounded-lg border-white/10 bg-transparent text-sm text-white/40"
             >
               View profile
             </Button>
@@ -324,7 +323,7 @@ function BrandResultCard({
               type="button"
               variant="ghost"
               onClick={onClearBrandFocus}
-              className="h-10 rounded-2xl text-sm text-white/55 hover:bg-white/8 hover:text-white"
+              className="h-10 rounded-lg text-sm text-white/55 hover:bg-white/8 hover:text-white"
             >
               Clear focus
             </Button>
@@ -349,10 +348,10 @@ function OfferResultCard({
   const brandInitials = brand?.initials ?? offer.brandName.slice(0, 2).toUpperCase();
 
   return (
-    <article className={cn('rounded-[28px] border border-white/8 bg-white/[0.05] shadow-[0_0_0_1px_rgba(255,255,255,0.02)]', compact ? 'p-5' : 'p-6')}>
+    <article className={cn('rounded-xl border border-white/8 bg-white/[0.05] shadow-[0_0_0_1px_rgba(255,255,255,0.02)]', compact ? 'p-5' : 'p-6')}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-[#101111] text-xl font-semibold text-white">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-[#101111] text-xl font-semibold text-white">
             {brandInitials}
           </div>
           <div className="min-w-0 space-y-2">
@@ -371,10 +370,10 @@ function OfferResultCard({
         </div>
 
         <div className="flex shrink-0 flex-col gap-3 sm:min-w-[10rem] sm:items-end">
-          <Button asChild className="h-11 rounded-2xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-500">
+          <Button asChild className="h-11 rounded-lg bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-500">
             <Link href={`/creator/offers/${offer.id}`}>Apply now</Link>
           </Button>
-          <Button asChild variant="outline" className="h-11 rounded-2xl border-white/10 bg-transparent text-sm text-white/82 hover:bg-white/8 hover:text-white">
+          <Button asChild variant="outline" className="h-11 rounded-lg border-white/10 bg-transparent text-sm text-white/82 hover:bg-white/8 hover:text-white">
             <Link href={`/creator/offers/${offer.id}`}>View details</Link>
           </Button>
         </div>
@@ -407,23 +406,23 @@ function CreatorResultCard({ creator }: { creator: Creator }) {
   const budgetValue = Math.round(((creator.minPrice ?? 0) + (creator.maxPrice ?? creator.minPrice ?? 0)) / 2);
 
   return (
-    <article className="rounded-[28px] border border-white/8 bg-white/[0.05] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition hover:border-emerald-500/25 hover:bg-white/[0.06]">
+    <article className="rounded-xl border border-white/8 bg-white/[0.05] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition hover:border-emerald-500/25 hover:bg-white/[0.06]">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 gap-4">
           <img
             src={creator.avatar}
             alt={creator.name}
-            className="h-16 w-16 shrink-0 rounded-2xl object-cover"
+            className="h-16 w-16 shrink-0 rounded-lg object-cover"
           />
           <div className="min-w-0 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-2xl font-semibold tracking-[-0.02em] text-white">{creator.name}</h3>
               {creator.isVerified ? (
-                <Badge className="rounded-full border border-emerald-400/20 bg-emerald-500/14 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/14">
+                <Badge className="rounded-lg border border-emerald-400/20 bg-emerald-500/14 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/14">
                   <CheckCircle2 className="h-4 w-4" /> Verified
                 </Badge>
               ) : null}
-              <Badge className="rounded-full border border-emerald-400/10 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/10">
+              <Badge className="rounded-lg border border-emerald-400/10 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/10">
                 <Star className="h-4 w-4 fill-current" /> {creator.rating.toFixed(1)}
               </Badge>
             </div>
@@ -435,7 +434,7 @@ function CreatorResultCard({ creator }: { creator: Creator }) {
             <p className="max-w-3xl text-sm leading-6 text-white/58">{creator.bio}</p>
             <div className="flex flex-wrap gap-2">
               {creator.platforms.slice(0, 3).map((platform) => (
-                <span key={platform.platform} className="rounded-full border border-white/10 px-3 py-1 text-sm text-white/62">
+                <span key={platform.platform} className="rounded-lg border border-white/10 px-3 py-1 text-sm text-white/62">
                   {titleCase(platform.platform)}
                 </span>
               ))}
@@ -460,7 +459,7 @@ function CreatorResultCard({ creator }: { creator: Creator }) {
         </div>
 
         <div className="flex shrink-0 gap-3">
-          <Button asChild className="h-11 rounded-2xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-500">
+          <Button asChild className="h-11 rounded-lg bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-500">
             <Link href={`/creator/${creator.username}`}>View profile</Link>
           </Button>
         </div>
@@ -675,40 +674,6 @@ export function CreatorGlobalSearchResults() {
     [brandFocus, brandMap, filteredBrands],
   );
 
-  const activeFilterChips = useMemo(() => {
-    const chips: Array<{ key: string; label: string; onClear: () => void }> = [];
-    filters.industries.forEach((industry) => {
-      chips.push({
-        key: `industry-${industry}`,
-        label: industry,
-        onClear: () => setFilters((current) => ({ ...current, industries: current.industries.filter((entry) => entry !== industry) })),
-      });
-    });
-    filters.contentTypes.forEach((contentType) => {
-      chips.push({
-        key: `content-${contentType}`,
-        label: contentType,
-        onClear: () => setFilters((current) => ({ ...current, contentTypes: current.contentTypes.filter((entry) => entry !== contentType) })),
-      });
-    });
-    if (filters.verifiedOnly) {
-      chips.push({ key: 'verified', label: 'Verified only', onClear: () => setFilters((current) => ({ ...current, verifiedOnly: false })) });
-    }
-    if (filters.fourStarPlus) {
-      chips.push({ key: 'four-star', label: '4+ star rating', onClear: () => setFilters((current) => ({ ...current, fourStarPlus: false })) });
-    }
-    if (filters.paysOnTime) {
-      chips.push({ key: 'pays-on-time', label: 'Pays on time', onClear: () => setFilters((current) => ({ ...current, paysOnTime: false })) });
-    }
-    if (filters.budgetRange[0] !== budgetBounds[0] || filters.budgetRange[1] !== budgetBounds[1]) {
-      chips.push({ key: 'budget', label: `${formatShortRs(filters.budgetRange[0])} — ${formatShortRs(filters.budgetRange[1])}`, onClear: () => setFilters((current) => ({ ...current, budgetRange: budgetBounds })) });
-    }
-    if (brandFocus) {
-      chips.push({ key: 'brand-focus', label: `Brand: ${brandMap.get(brandFocus)?.name ?? 'Selected brand'}`, onClear: () => updateParams({ brand: null }) });
-    }
-    return chips;
-  }, [brandFocus, brandMap, budgetBounds, filters, updateParams]);
-
   const counts = {
     brands: filteredBrands.length,
     offers: filteredOffers.length,
@@ -736,7 +701,7 @@ export function CreatorGlobalSearchResults() {
                     <Checkbox
                       checked={filters.industries.includes(industry)}
                       onCheckedChange={() => toggleSelection('industries', industry)}
-                      className="size-4 rounded-md border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
+                      className="size-5 rounded-[4px] border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
                     />
                     <span className={cn(filters.industries.includes(industry) && 'text-emerald-300')}>{industry}</span>
                   </label>
@@ -761,7 +726,7 @@ export function CreatorGlobalSearchResults() {
                           [item.key]: !current[item.key as 'verifiedOnly' | 'fourStarPlus' | 'paysOnTime'],
                         }))
                       }
-                      className="size-4 rounded-md border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
+                      className="size-5 rounded-[4px] border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
                     />
                     <span className={cn(filters[item.key as 'verifiedOnly' | 'fourStarPlus' | 'paysOnTime'] as boolean && 'text-emerald-300')}>
                       {item.label}
@@ -804,7 +769,7 @@ export function CreatorGlobalSearchResults() {
                     <Checkbox
                       checked={filters.contentTypes.includes(contentType)}
                       onCheckedChange={() => toggleSelection('contentTypes', contentType)}
-                      className="size-4 rounded-md border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
+                      className="size-5 rounded-[4px] border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
                     />
                     <span className={cn(filters.contentTypes.includes(contentType) && 'text-emerald-300')}>{contentType}</span>
                   </label>
@@ -829,7 +794,7 @@ export function CreatorGlobalSearchResults() {
                       type="button"
                       onClick={() => updateParams({ sort: option.value, brand: currentTab === 'brands' ? brandFocus || null : brandFocus || null })}
                       className={cn(
-                        'rounded-2xl border px-4 py-2 text-sm font-medium transition',
+                        'rounded-lg border px-4 py-2 text-sm font-medium transition',
                         currentSort === option.value
                           ? 'border-emerald-500/40 bg-emerald-500/12 text-emerald-300'
                           : 'border-white/10 text-white/58 hover:border-white/20 hover:text-white',
@@ -843,7 +808,7 @@ export function CreatorGlobalSearchResults() {
             </div>
 
             <div className="lg:hidden">
-              <Card className="rounded-[28px] border-white/8 bg-white/[0.04] text-white shadow-none">
+              <Card className="rounded-xl border-white/8 bg-white/[0.04] text-white shadow-none">
                 <CardContent className="space-y-4 p-5">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -854,7 +819,7 @@ export function CreatorGlobalSearchResults() {
                       type="button"
                       variant="ghost"
                       onClick={clearAllFilters}
-                      className="rounded-full text-white/55 hover:bg-white/8 hover:text-white"
+                      className="rounded-lg text-white/55 hover:bg-white/8 hover:text-white"
                     >
                       Reset
                     </Button>
@@ -866,7 +831,7 @@ export function CreatorGlobalSearchResults() {
                         type="button"
                         onClick={() => toggleSelection('industries', industry)}
                         className={cn(
-                          'rounded-2xl border px-4 py-3 text-left text-sm transition',
+                          'rounded-lg border px-4 py-3 text-left text-sm transition',
                           filters.industries.includes(industry)
                             ? 'border-emerald-500/40 bg-emerald-500/12 text-emerald-300'
                             : 'border-white/10 text-white/62 hover:border-white/18 hover:text-white',
@@ -903,32 +868,10 @@ export function CreatorGlobalSearchResults() {
               ))}
             </div>
 
-            {activeFilterChips.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-2">
-                {activeFilterChips.map((chip) => (
-                  <button
-                    key={chip.key}
-                    type="button"
-                    onClick={chip.onClear}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-white/72 transition hover:bg-white/[0.08]"
-                  >
-                    <span>{chip.label}</span>
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                ))}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={clearAllFilters}
-                  className="rounded-full text-white/55 hover:bg-white/8 hover:text-white"
-                >
-                  Clear all
-                </Button>
-              </div>
-            ) : null}
+
 
             {focusedBrand && currentTab === 'offers' ? (
-              <div className="rounded-[28px] border border-emerald-500/20 bg-emerald-500/[0.08] px-5 py-4 text-white/76">
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] px-5 py-4 text-white/76">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm uppercase tracking-[0.16em] text-emerald-200/55">Focused brand</p>
@@ -938,7 +881,7 @@ export function CreatorGlobalSearchResults() {
                     type="button"
                     variant="ghost"
                     onClick={() => updateParams({ brand: null })}
-                    className="rounded-full text-white/62 hover:bg-white/8 hover:text-white"
+                    className="rounded-lg text-white/62 hover:bg-white/8 hover:text-white"
                   >
                     Clear focus
                   </Button>
@@ -1018,7 +961,7 @@ export function CreatorGlobalSearchResults() {
             )}
 
             {!isLoading && !hasError && currentTab === 'brands' && counts.brands > 0 ? (
-              <div className="rounded-[28px] border border-white/8 bg-white/[0.04] px-5 py-4 text-sm text-white/48">
+              <div className="rounded-xl border border-white/8 bg-white/[0.04] px-5 py-4 text-sm text-white/48">
                 Search blends real offer results with curated brand context so creators can move from discovery to application without losing the original feed experience.
               </div>
             ) : null}
