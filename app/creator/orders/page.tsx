@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Search,
+  Layers,
   Package,
   Clock,
   CheckCircle,
@@ -294,6 +295,54 @@ function CreatorOrdersPageContent() {
   return (
     <div className="min-h-full bg-[#fbfaf5] px-4 pb-8 pt-2 text-[#1e3d2e] sm:px-6 lg:px-8 lg:pb-12">
       <div className="mx-auto max-w-[1320px] space-y-4">
+
+        {/* ── Stat strip ── */}
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <div className="rounded-[1.35rem] border border-[#2d6b4e] bg-[#2d6b4e] p-5 text-white">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-white/70">Active</p>
+                <p className="mt-1.5 text-2xl font-extrabold leading-none">{orderCounts.in_progress + orderCounts.accepted}</p>
+              </div>
+              <div className="grid size-9 place-items-center rounded-xl bg-white/15">
+                <Package className="size-4" />
+              </div>
+            </div>
+          </div>
+          <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-[#87938b]">In Review</p>
+                <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{orderCounts.review}</p>
+              </div>
+              <div className="grid size-9 place-items-center rounded-xl bg-[#f4f7f5]">
+                <Clock className="size-4 text-[#6b7870]" />
+              </div>
+            </div>
+          </div>
+          <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-[#87938b]">Completed</p>
+                <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{orderCounts.completed}</p>
+              </div>
+              <div className="grid size-9 place-items-center rounded-xl bg-[#f4f7f5]">
+                <CheckCircle className="size-4 text-[#6b7870]" />
+              </div>
+            </div>
+          </div>
+          <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-[#b77a12]">Total Orders</p>
+                <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{orderCounts.all}</p>
+              </div>
+              <div className="grid size-9 place-items-center rounded-xl bg-[#fdf8ec]">
+                <Layers className="size-4 text-[#e6aa38]" />
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Filter panel */}
         <div className={`${panelClass} p-4`}>

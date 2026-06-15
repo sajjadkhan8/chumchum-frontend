@@ -92,12 +92,12 @@ function MetricCard({ title, value, detail, icon: Icon, accent = false }: { titl
       }
     >
       <div className="flex items-start justify-between gap-3">
-        <p className={`text-xs font-bold ${accent ? "text-[#c2d8cb]" : "text-[#6b7870]"}`}>{title}</p>
+        <p className={`text-xs font-bold ${accent ? "text-[#c2d8cb]" : "text-[#87938b]"}`}>{title}</p>
         <span className={`grid size-9 place-items-center rounded-xl ${accent ? "bg-white/10 text-[#f0c56e]" : "bg-[#e6eceb] text-[#2d6b4e]"}`}>
           <Icon className="size-4" />
         </span>
       </div>
-      <p className="mt-5 text-2xl font-extrabold tracking-[-0.045em]">{value}</p>
+      <p className="mt-1.5 text-2xl font-extrabold leading-none tracking-[-0.045em]">{value}</p>
       <p className={`mt-1 text-[11px] font-semibold ${accent ? "text-[#a9c4b3]" : "text-[#87938b]"}`}>{detail}</p>
     </motion.article>
   );
@@ -107,7 +107,7 @@ function GoalBar({ label, value, copy }: { label: string; value: number; copy: s
   return (
     <div>
       <div className="flex items-center justify-between gap-3 text-xs">
-        <span className="font-bold text-[#526259]">{label}</span>
+        <span className="font-bold text-[#496159]">{label}</span>
         <span className="font-extrabold text-[#1e3d2e]">{copy}</span>
       </div>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#e5eae4]">
@@ -249,7 +249,7 @@ export default function CreatorDashboardPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.4rem] border border-white/12 bg-[#244c39] p-4 sm:p-5">
+            <div className="rounded-[1.4rem] border border-white/15 bg-white/10 p-4 sm:p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#f0c56e]">Readiness score</p>
@@ -284,14 +284,14 @@ export default function CreatorDashboardPage() {
                   const statusStyle = getStatusStyle(order.status);
                   const StatusIcon = statusStyle.icon;
                   return (
-                    <motion.div key={order.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.06 }} className="group flex items-center gap-3 rounded-2xl border border-[#e2e7e1] bg-[#fbfaf5] p-3.5 transition hover:border-[#b0c5ba] hover:bg-[#f5f6f1] sm:gap-4">
+                    <motion.div key={order.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.06 }} className="group flex items-center gap-3 rounded-2xl border border-[#e2e7e1] bg-[#fbfaf5] p-3.5 transition hover:border-[#b0c5ba] hover:bg-[#f4f7f5] sm:gap-4">
                       <Avatar className="size-11 border border-[#d1ddd6]">
                         <AvatarImage src={order.brand.logo} alt={order.brand.name} />
                         <AvatarFallback className="bg-[#e6eceb] font-bold text-[#2d6b4e]">{getInitials(order.brand.name)}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-extrabold text-[#1e3d2e]">{order.brand.name}</p>
-                        <p className="mt-0.5 truncate text-xs text-[#718077]">{order.package.title}</p>
+                        <p className="mt-0.5 truncate text-xs text-[#87938b]">{order.package.title}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-xs font-extrabold text-[#1e3d2e] sm:text-sm">{formatPrice(order.amount || 0)}</p>
@@ -303,7 +303,7 @@ export default function CreatorDashboardPage() {
                   );
                 }) : (
                   <div className="rounded-2xl border border-dashed border-[#ccd7ce] bg-[#fbfaf5] px-5 py-10 text-center">
-                    <Package className="mx-auto size-5 text-[#b77a12]" />
+                    <Package className="mx-auto size-5 text-[#2d6b4e]" />
                     <p className="mt-3 text-sm font-extrabold text-[#1e3d2e]">No orders yet</p>
                     <p className="mt-1 text-xs text-[#718077]">New brand orders will appear here.</p>
                   </div>
@@ -315,7 +315,7 @@ export default function CreatorDashboardPage() {
               <SectionHeading eyebrow="Make the next move" title="Quick actions" />
               <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
                 {quickActions.map(({ label, copy, href, icon: Icon }) => (
-                  <Link key={href} href={href} className="group flex items-center gap-3 rounded-2xl border border-[#d1ddd6] bg-[#fbfaf5] p-3.5 transition hover:border-[#2d6b4e] hover:bg-[#f4f6f1]">
+                  <Link key={href} href={href} className="group flex items-center gap-3 rounded-2xl border border-[#d1ddd6] bg-[#fbfaf5] p-3.5 transition hover:border-[#2d6b4e] hover:bg-[#f4f7f5]">
                     <span className="grid size-10 place-items-center rounded-xl bg-[#e6eceb] text-[#2d6b4e] transition group-hover:bg-[#2d6b4e] group-hover:text-white"><Icon className="size-4" /></span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-xs font-extrabold text-[#1e3d2e]">{label}</span>
@@ -336,8 +336,8 @@ export default function CreatorDashboardPage() {
                 <GoalBar label={isActiveAmbassador ? "Premium campaigns" : "Orders"} value={ordersGoalProgress} copy={`${dashboardAnalytics.totalOrders} / ${monthlyOrdersTarget}`} />
               </div>
               <div className="mt-5 flex gap-3 rounded-2xl bg-[#f7e8c8] p-3.5">
-                <Target className="mt-0.5 size-4 shrink-0 text-[#9b6712]" />
-                <p className="text-[11px] font-semibold leading-5 text-[#73541e]">
+                <Target className="mt-0.5 size-4 shrink-0 text-[#8a6010]" />
+                <p className="text-[11px] font-semibold leading-5 text-[#8a6010]">
                   You are {Math.max(earningsGoalProgress, ordersGoalProgress)}% toward this month&apos;s next milestone.
                 </p>
               </div>
@@ -347,7 +347,7 @@ export default function CreatorDashboardPage() {
               <SectionHeading eyebrow="Stay connected" title="Messages" action="View all" href="/creator/messages" />
               <div className="mt-4 space-y-1.5">
                 {recentDashboardMessages.length > 0 ? recentDashboardMessages.map((message) => (
-                  <Link key={message.id} href="/creator/messages" className="flex items-center gap-3 rounded-xl p-2.5 transition hover:bg-[#f4f6f1]">
+                  <Link key={message.id} href="/creator/messages" className="flex items-center gap-3 rounded-xl p-2.5 transition hover:bg-[#f4f7f5]">
                     <Avatar className="size-9">
                       <AvatarImage src={message.avatar} alt={message.name} />
                       <AvatarFallback className="bg-[#e6eceb] text-xs font-bold text-[#2d6b4e]">{getInitials(message.name)}</AvatarFallback>
@@ -357,14 +357,14 @@ export default function CreatorDashboardPage() {
                         <p className="truncate text-xs font-extrabold text-[#1e3d2e]">{message.name}</p>
                         {message.unread ? <span className="size-1.5 rounded-full bg-[#e6aa38]" /> : null}
                       </div>
-                      <p className="mt-0.5 truncate text-[10px] text-[#718077]">{message.message}</p>
+                      <p className="mt-0.5 truncate text-[10px] text-[#87938b]">{message.message}</p>
                     </div>
                     <span className="text-[9px] font-semibold text-[#87938b]">{formatRelativeTime(message.time)}</span>
                   </Link>
                 )) : (
                   <div className="rounded-2xl border border-dashed border-[#ccd7ce] bg-[#fbfaf5] px-4 py-8 text-center">
-                    <MessageCircle className="mx-auto size-5 text-[#b77a12]" />
-                    <p className="mt-2 text-xs font-bold text-[#526259]">No messages yet</p>
+                    <MessageCircle className="mx-auto size-5 text-[#2d6b4e]" />
+                    <p className="mt-2 text-xs font-bold text-[#496159]">No messages yet</p>
                   </div>
                 )}
               </div>

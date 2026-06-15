@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, MessageSquare } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, MessageSquare, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { offersService } from '@/services/offers.service';
 import type { BrandOfferReaction } from '@/types';
@@ -93,6 +93,61 @@ export default function CreatorOfferReactionsPage() {
             Offers
           </Link>
         </div>
+
+        {/* ── Stat strip ── */}
+        {(() => {
+          const pending = reactions.filter((r) => ['submitted', 'in_review'].includes(r.status?.toLowerCase())).length;
+          const shortlisted = reactions.filter((r) => r.status?.toLowerCase() === 'shortlisted').length;
+          const accepted = reactions.filter((r) => r.status?.toLowerCase() === 'accepted').length;
+          return (
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+              <div className="rounded-[1.35rem] border border-[#2d6b4e] bg-[#2d6b4e] p-5 text-white">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-white/70">Total</p>
+                    <p className="mt-1.5 text-2xl font-extrabold leading-none">{totalElements}</p>
+                  </div>
+                  <div className="grid size-9 place-items-center rounded-xl bg-white/15">
+                    <MessageSquare className="size-4" />
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-[#87938b]">Pending</p>
+                    <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{pending}</p>
+                  </div>
+                  <div className="grid size-9 place-items-center rounded-xl bg-[#f4f7f5]">
+                    <Clock className="size-4 text-[#6b7870]" />
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-[#87938b]">Shortlisted</p>
+                    <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{shortlisted}</p>
+                  </div>
+                  <div className="grid size-9 place-items-center rounded-xl bg-[#f4f7f5]">
+                    <Star className="size-4 text-[#6b7870]" />
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-[#b77a12]">Accepted</p>
+                    <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{accepted}</p>
+                  </div>
+                  <div className="grid size-9 place-items-center rounded-xl bg-[#fdf8ec]">
+                    <CheckCircle className="size-4 text-[#e6aa38]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Loading state */}
         {isLoading && reactions.length === 0 && (

@@ -122,7 +122,7 @@ function SummaryCard({
           <Icon className="size-4" />
         </span>
       </div>
-      <p className="mt-5 text-2xl font-extrabold tracking-[-0.045em]">
+      <p className="mt-1.5 text-2xl font-extrabold leading-none tracking-[-0.045em]">
         {loading ? <span className="opacity-30">···</span> : value}
       </p>
       <p className={`mt-1.5 text-[11px] font-semibold ${accent ? "text-[#a9c4b3]" : "text-[#87938b]"}`}>

@@ -1,28 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import * as SelectPrimitive from "@radix-ui/react-select";
+import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { type PayoutMethodType } from "@/services/earnings.service";
+
+// ─── shared constants ──────────────────────────────────────────────────────────
+
+const inputClass =
+  "h-10 w-full rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] placeholder:text-[#b0bfb8] shadow-none outline-none transition-colors focus:border-[#2d6b4e] focus:ring-4 focus:ring-[#2d6b4e]/8";
+
+const triggerClass =
+  "flex h-10 w-full items-center justify-between gap-2 rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] outline-none transition-colors focus:border-[#2d6b4e]";
+
+const labelClass = "text-[10px] font-bold uppercase tracking-widest text-[#7a8f82]";
+
+// ─── logo helpers ──────────────────────────────────────────────────────────────
 
 const logoUrlForDomain = (domain: string) =>
   `https://logo.clearbit.com/${domain}`;
@@ -34,20 +34,9 @@ export const PAYOUT_METHOD_LOGOS: Record<
   string,
   { label: string; domain?: string; fallback: string }
 > = {
-  JAZZCASH: {
-    label: "JazzCash",
-    domain: "jazzcash.com.pk",
-    fallback: "JC",
-  },
-  EASYPAISA: {
-    label: "Easypaisa",
-    domain: "easypaisa.com.pk",
-    fallback: "EP",
-  },
-  BANK_TRANSFER: {
-    label: "Bank Transfer",
-    fallback: "PK",
-  },
+  JAZZCASH: { label: "JazzCash", domain: "jazzcash.com.pk", fallback: "JC" },
+  EASYPAISA: { label: "Easypaisa", domain: "easypaisa.com.pk", fallback: "EP" },
+  BANK_TRANSFER: { label: "Bank Transfer", fallback: "PK" },
 };
 
 export const PAKISTANI_BANKS = [
@@ -65,7 +54,7 @@ export const PAKISTANI_BANKS = [
   { value: "askari", label: "Askari Bank", domain: "askaribank.com", fallback: "AKBL" },
   { value: "js", label: "JS Bank", domain: "jsbl.com", fallback: "JS" },
   { value: "soneri", label: "Soneri Bank", domain: "soneribank.com", fallback: "SB" },
-  { value: "silk", label: "Silkbank", domain: "silkbank.com.pk", fallback: "SB" },
+  { value: "silk", label: "Silkbank", domain: "silkbank.com.pk", fallback: "SK" },
   { value: "summit", label: "Summit Bank", domain: "summitbank.com.pk", fallback: "SMB" },
   { value: "samba", label: "Samba Bank", domain: "samba.com.pk", fallback: "SAM" },
   { value: "albaraka", label: "Al Baraka Bank Pakistan", domain: "albaraka.com.pk", fallback: "AB" },
@@ -92,7 +81,7 @@ export function BrandLogo({
 
   if (!domain || source === "initials") {
     return (
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted text-[10px] font-semibold text-muted-foreground">
+      <span className="flex size-6 shrink-0 items-center justify-center rounded bg-[#e6eceb] text-[10px] font-bold text-[#2d6b4e]">
         {fallback}
       </span>
     );
@@ -100,17 +89,17 @@ export function BrandLogo({
 
   return (
     <img
-      src={
-        source === "logo" ? logoUrlForDomain(domain) : faviconUrlForDomain(domain)
-      }
+      src={source === "logo" ? logoUrlForDomain(domain) : faviconUrlForDomain(domain)}
       alt={alt}
-      className="h-6 w-6 shrink-0 rounded bg-white object-contain p-0.5"
+      className="size-6 shrink-0 rounded bg-white object-contain p-0.5"
       loading="lazy"
       referrerPolicy="no-referrer"
       onError={() => setSource(source === "logo" ? "favicon" : "initials")}
     />
   );
 }
+
+// ─── modal ─────────────────────────────────────────────────────────────────────
 
 interface AddPayoutMethodModalProps {
   isOpen: boolean;
@@ -122,13 +111,7 @@ interface AddPayoutMethodModalProps {
     bankName?: string;
   }) => Promise<void>;
   isLoading?: boolean;
-  triggerButtonVariant?:
-    | "default"
-    | "secondary"
-    | "destructive"
-    | "outline"
-    | "ghost"
-    | "link";
+  triggerButtonVariant?: string;
   showTriggerButton?: boolean;
 }
 
@@ -137,12 +120,9 @@ export function AddPayoutMethodModal({
   onOpenChange,
   onAddMethod,
   isLoading = false,
-  triggerButtonVariant = "default",
   showTriggerButton = true,
 }: AddPayoutMethodModalProps) {
-  const [methodType, setMethodType] = useState<PayoutMethodType>(
-    "BANK_TRANSFER"
-  );
+  const [methodType, setMethodType] = useState<PayoutMethodType>("BANK_TRANSFER");
   const [accountHolderName, setAccountHolderName] = useState("");
   const [accountDetails, setAccountDetails] = useState("");
   const [bankName, setBankName] = useState("");
@@ -157,19 +137,33 @@ export function AddPayoutMethodModal({
   };
 
   const handleClose = (open: boolean) => {
-    if (!open) {
-      resetForm();
-    }
+    if (!open) resetForm();
     onOpenChange(open);
   };
 
-  const handleSubmit = async () => {
-    const validation = validateForm();
-    if (validation) {
-      toast.error(validation);
-      return;
+  const validateForm = (): string | null => {
+    if (!accountHolderName.trim()) return "Account holder name is required";
+    if (!accountDetails.trim()) return "Account details are required";
+    if (methodType === "BANK_TRANSFER" && !bankName) return "Please select a bank";
+    const normalizedType = String(methodType).toUpperCase();
+    if (normalizedType === "BANK_TRANSFER") {
+      if (accountType === "iban") {
+        if (!/^PK\d{2}[A-Z0-9]{20,30}$/i.test(accountDetails.trim()))
+          return "Use a valid Pakistani IBAN (example: PK36ABCD0123456789012345)";
+      } else {
+        if (!/^\d{16,18}$/.test(accountDetails.trim()))
+          return "Bank account number should be 16-18 digits";
+      }
+    } else {
+      if (!/^\+?\d{10,15}$/.test(accountDetails.replaceAll("-", "")))
+        return "Use a valid wallet number (10 to 15 digits)";
     }
+    return null;
+  };
 
+  const handleSubmit = async () => {
+    const error = validateForm();
+    if (error) { toast.error(error); return; }
     try {
       await onAddMethod({
         type: methodType,
@@ -178,71 +172,57 @@ export function AddPayoutMethodModal({
         bankName: methodType === "BANK_TRANSFER" ? bankName : undefined,
       });
       handleClose(false);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to add payout method";
-      toast.error(message);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add payout method");
     }
-  };
-
-  const validateForm = (): string | null => {
-    if (!accountHolderName.trim()) {
-      return "Account holder name is required";
-    }
-    if (!accountDetails.trim()) {
-      return "Account details are required";
-    }
-    if (methodType === "BANK_TRANSFER" && !bankName) {
-      return "Please select a bank";
-    }
-
-    const normalizedType = String(methodType).toUpperCase();
-
-    if (normalizedType === "BANK_TRANSFER") {
-      if (accountType === "iban") {
-        if (!/^PK\d{2}[A-Z0-9]{20,30}$/i.test(accountDetails.trim())) {
-          return "Use a valid Pakistani IBAN (example: PK36ABCD0123456789012345)";
-        }
-      } else {
-        if (!/^\d{16,18}$/.test(accountDetails.trim())) {
-          return "Bank account number should be 16-18 digits";
-        }
-      }
-    } else {
-      if (!/^\+?\d{10,15}$/.test(accountDetails.replaceAll("-", ""))) {
-        return "Use a valid wallet number (10 to 15 digits)";
-      }
-    }
-
-    return null;
   };
 
   const isBankTransfer = methodType === "BANK_TRANSFER";
   const selectedMethod = PAYOUT_METHOD_LOGOS[methodType];
-  const selectedBank = PAKISTANI_BANKS.find((bank) => bank.value === bankName);
+  const selectedBank = PAKISTANI_BANKS.find((b) => b.value === bankName);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       {showTriggerButton && (
         <DialogTrigger asChild>
-          <Button size="sm" variant={triggerButtonVariant}>
-            <Plus className="mr-2 h-4 w-4" />
+          <button
+            type="button"
+            className="flex items-center gap-1.5 rounded-full bg-[#2d6b4e] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#1f5239]"
+          >
+            <Plus className="size-3.5" />
             Add Method
-          </Button>
+          </button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add Payout Method</DialogTitle>
-          <DialogDescription>
-            Add a new payout method to receive your earnings
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          {/* Payment Method Type */}
-          <div className="space-y-2">
-            <Label>Payment Method Type *</Label>
-            <Select
+
+      <DialogContent className="gap-0 overflow-hidden rounded-[1.6rem] border border-[#d1ddd6] bg-white p-0 shadow-[0_24px_64px_rgba(38,70,50,0.14)] sm:max-w-md [&>button]:hidden">
+        {/* Header */}
+        <div className="relative bg-[#2d6b4e] px-6 py-5">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-white/60">
+            Earnings
+          </p>
+          <h2 className="mt-0.5 text-lg font-extrabold tracking-[-0.03em] text-white">
+            Add Payout Method
+          </h2>
+          <p className="mt-0.5 text-xs text-white/60">
+            Add a bank account or wallet to receive your earnings
+          </p>
+          <button
+            type="button"
+            onClick={() => handleClose(false)}
+            className="absolute right-4 top-4 flex size-7 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white"
+            aria-label="Close"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="space-y-4 p-5 sm:p-6">
+          {/* Method type */}
+          <div className="space-y-1.5">
+            <p className={labelClass}>Payment Method Type</p>
+            <SelectPrimitive.Root
               value={methodType}
               onValueChange={(v) => {
                 setMethodType(v as PayoutMethodType);
@@ -250,151 +230,144 @@ export function AddPayoutMethodModal({
                 setBankName("");
               }}
             >
-              <SelectTrigger>
-                {selectedMethod ? (
-                  <div className="flex items-center gap-2">
-                    <BrandLogo
-                      alt={`${selectedMethod.label} logo`}
-                      domain={selectedMethod.domain}
-                      fallback={selectedMethod.fallback}
-                    />
-                    <span>{selectedMethod.label}</span>
-                  </div>
-                ) : (
-                  <SelectValue />
-                )}
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="JAZZCASH">
-                  <div className="flex items-center gap-2">
-                    <BrandLogo
-                      alt="JazzCash logo"
-                      domain={PAYOUT_METHOD_LOGOS.JAZZCASH.domain}
-                      fallback={PAYOUT_METHOD_LOGOS.JAZZCASH.fallback}
-                    />
-                    <span>JazzCash</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="EASYPAISA">
-                  <div className="flex items-center gap-2">
-                    <BrandLogo
-                      alt="Easypaisa logo"
-                      domain={PAYOUT_METHOD_LOGOS.EASYPAISA.domain}
-                      fallback={PAYOUT_METHOD_LOGOS.EASYPAISA.fallback}
-                    />
-                    <span>Easypaisa</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="BANK_TRANSFER">
-                  <div className="flex items-center gap-2">
-                    <BrandLogo
-                      alt="Bank transfer icon"
-                      fallback={PAYOUT_METHOD_LOGOS.BANK_TRANSFER.fallback}
-                    />
-                    <span>Bank Transfer</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+              <SelectPrimitive.Trigger className={triggerClass}>
+                <div className="flex items-center gap-2">
+                  {selectedMethod && (
+                    <BrandLogo alt={`${selectedMethod.label} logo`} domain={selectedMethod.domain} fallback={selectedMethod.fallback} />
+                  )}
+                  <SelectPrimitive.Value />
+                </div>
+                <SelectPrimitive.Icon asChild>
+                  <ChevronDownIcon className="size-4 text-[#87938b]" />
+                </SelectPrimitive.Icon>
+              </SelectPrimitive.Trigger>
+              <SelectPrimitive.Portal>
+                <SelectPrimitive.Content
+                  position="popper"
+                  className="z-50 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-xl border border-[#d1ddd6] bg-white shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+                >
+                  <SelectPrimitive.Viewport className="p-1">
+                    {[
+                      { value: "JAZZCASH", label: "JazzCash", logo: PAYOUT_METHOD_LOGOS.JAZZCASH },
+                      { value: "EASYPAISA", label: "Easypaisa", logo: PAYOUT_METHOD_LOGOS.EASYPAISA },
+                      { value: "BANK_TRANSFER", label: "Bank Transfer", logo: PAYOUT_METHOD_LOGOS.BANK_TRANSFER },
+                    ].map((opt) => (
+                      <SelectPrimitive.Item
+                        key={opt.value}
+                        value={opt.value}
+                        className="relative flex cursor-default select-none items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#1e3d2e] outline-none data-[highlighted]:bg-[#f4f7f5]"
+                      >
+                        <BrandLogo alt={`${opt.label} logo`} domain={opt.logo.domain} fallback={opt.logo.fallback} />
+                        <SelectPrimitive.ItemText>{opt.label}</SelectPrimitive.ItemText>
+                        <span className="absolute right-2">
+                          <SelectPrimitive.ItemIndicator>
+                            <CheckIcon className="size-3.5 text-[#2d6b4e]" />
+                          </SelectPrimitive.ItemIndicator>
+                        </span>
+                      </SelectPrimitive.Item>
+                    ))}
+                  </SelectPrimitive.Viewport>
+                </SelectPrimitive.Content>
+              </SelectPrimitive.Portal>
+            </SelectPrimitive.Root>
           </div>
 
-          {/* Bank Selection (Only for Bank Transfer) */}
+          {/* Bank selection */}
           {isBankTransfer && (
-            <div className="space-y-2">
-              <Label>Select Bank *</Label>
-              <Select value={bankName} onValueChange={setBankName}>
-                <SelectTrigger>
-                  {selectedBank ? (
-                    <div className="flex items-center gap-2">
-                      <BrandLogo
-                        alt={`${selectedBank.label} logo`}
-                        domain={selectedBank.domain}
-                        fallback={selectedBank.fallback}
-                      />
-                      <span>{selectedBank.label}</span>
-                    </div>
-                  ) : (
-                    <SelectValue placeholder="Choose your bank" />
-                  )}
-                </SelectTrigger>
-                <SelectContent className="max-h-64">
-                  {PAKISTANI_BANKS.map((bank) => (
-                    <SelectItem key={bank.value} value={bank.value}>
-                      <div className="flex items-center gap-2">
-                        <BrandLogo
-                          alt={`${bank.label} logo`}
-                          domain={bank.domain}
-                          fallback={bank.fallback}
-                        />
-                        <span>{bank.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-1.5">
+              <p className={labelClass}>Select Bank</p>
+              <SelectPrimitive.Root value={bankName} onValueChange={setBankName}>
+                <SelectPrimitive.Trigger className={triggerClass}>
+                  <div className="flex items-center gap-2">
+                    {selectedBank ? (
+                      <>
+                        <BrandLogo alt={`${selectedBank.label} logo`} domain={selectedBank.domain} fallback={selectedBank.fallback} />
+                        <span>{selectedBank.label}</span>
+                      </>
+                    ) : (
+                      <span className="text-[#b0bfb8]">Choose your bank</span>
+                    )}
+                  </div>
+                  <SelectPrimitive.Icon asChild>
+                    <ChevronDownIcon className="size-4 text-[#87938b]" />
+                  </SelectPrimitive.Icon>
+                </SelectPrimitive.Trigger>
+                <SelectPrimitive.Portal>
+                  <SelectPrimitive.Content
+                    position="popper"
+                    className="z-50 max-h-64 min-w-[var(--radix-select-trigger-width)] overflow-y-auto rounded-xl border border-[#d1ddd6] bg-white shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+                  >
+                    <SelectPrimitive.Viewport className="p-1">
+                      {PAKISTANI_BANKS.map((bank) => (
+                        <SelectPrimitive.Item
+                          key={bank.value}
+                          value={bank.value}
+                          className="relative flex cursor-default select-none items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#1e3d2e] outline-none data-[highlighted]:bg-[#f4f7f5]"
+                        >
+                          <BrandLogo alt={`${bank.label} logo`} domain={bank.domain} fallback={bank.fallback} />
+                          <SelectPrimitive.ItemText>{bank.label}</SelectPrimitive.ItemText>
+                          <span className="absolute right-2">
+                            <SelectPrimitive.ItemIndicator>
+                              <CheckIcon className="size-3.5 text-[#2d6b4e]" />
+                            </SelectPrimitive.ItemIndicator>
+                          </span>
+                        </SelectPrimitive.Item>
+                      ))}
+                    </SelectPrimitive.Viewport>
+                  </SelectPrimitive.Content>
+                </SelectPrimitive.Portal>
+              </SelectPrimitive.Root>
             </div>
           )}
 
-          {/* Account Holder Name */}
-          <div className="space-y-2">
-            <Label>Account Holder Name *</Label>
-            <Input
-              placeholder="Full name (exactly as shown in bank records)"
+          {/* Account holder name */}
+          <div className="space-y-1.5">
+            <p className={labelClass}>Account Holder Name</p>
+            <input
+              className={inputClass}
+              placeholder="Full name (exactly as in bank records)"
               value={accountHolderName}
               onChange={(e) => setAccountHolderName(e.target.value)}
             />
           </div>
 
-          {/* Account Details */}
+          {/* Account details */}
           {isBankTransfer ? (
             <div className="space-y-3">
-              {/* Account Type Toggle */}
-              <div className="space-y-2">
-                <Label>Account Type *</Label>
+              <div className="space-y-1.5">
+                <p className={labelClass}>Account Type</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant={accountType === "iban" ? "default" : "outline"}
-                    onClick={() => {
-                      setAccountType("iban");
-                      setAccountDetails("");
-                    }}
-                    className="w-full"
-                  >
-                    IBAN (Preferred)
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={accountType === "number" ? "default" : "outline"}
-                    onClick={() => {
-                      setAccountType("number");
-                      setAccountDetails("");
-                    }}
-                    className="w-full"
-                  >
-                    Account Number
-                  </Button>
+                  {(["iban", "number"] as const).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => { setAccountType(type); setAccountDetails(""); }}
+                      className={`h-9 rounded-xl border-2 text-xs font-bold transition-all ${
+                        accountType === type
+                          ? "border-[#2d6b4e] bg-[#e4f1e8] text-[#1e5c3e]"
+                          : "border-[#dce6df] bg-white text-[#7a8f82] hover:border-[#b0c5ba]"
+                      }`}
+                    >
+                      {type === "iban" ? "IBAN (Preferred)" : "Account Number"}
+                    </button>
+                  ))}
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>
-                  {accountType === "iban" ? "IBAN Number" : "Account Number"} *
-                </Label>
-                <Input
-                  placeholder={
-                    accountType === "iban"
-                      ? "PK36ABCD0123456789012345"
-                      : "Account number (16-18 digits)"
-                  }
+              <div className="space-y-1.5">
+                <p className={labelClass}>{accountType === "iban" ? "IBAN Number" : "Account Number"}</p>
+                <input
+                  className={inputClass}
+                  placeholder={accountType === "iban" ? "PK36ABCD0123456789012345" : "Account number (16-18 digits)"}
                   value={accountDetails}
                   onChange={(e) => setAccountDetails(e.target.value)}
                 />
               </div>
             </div>
           ) : (
-            <div className="space-y-2">
-              <Label>Mobile/Wallet Number *</Label>
-              <Input
+            <div className="space-y-1.5">
+              <p className={labelClass}>Mobile / Wallet Number</p>
+              <input
+                className={inputClass}
                 placeholder="03001234567 or +923001234567"
                 value={accountDetails}
                 onChange={(e) => setAccountDetails(e.target.value)}
@@ -403,16 +376,25 @@ export function AddPayoutMethodModal({
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => handleClose(false)}>
+        {/* Footer */}
+        <div className="flex gap-2.5 border-t border-[#e8eeed] px-5 pb-5 pt-4 sm:px-6">
+          <button
+            type="button"
+            onClick={() => handleClose(false)}
+            className="h-10 flex-1 rounded-full border-2 border-[#d1ddd6] bg-white text-sm font-bold text-[#496159] transition-colors hover:border-[#b0c5ba] hover:bg-[#f4f7f5]"
+          >
             Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? "Adding..." : "Add Method"}
-          </Button>
-        </DialogFooter>
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="h-10 flex-1 rounded-full bg-[#2d6b4e] text-sm font-bold text-white transition-colors hover:bg-[#1f5239] disabled:opacity-60"
+          >
+            {isLoading ? "Adding…" : "Add Method"}
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
-

@@ -161,7 +161,7 @@ function MetricCard({
           <Icon className="size-4" />
         </span>
       </div>
-      <p className="mt-5 text-2xl font-extrabold tracking-[-0.045em]">
+      <p className="mt-1.5 text-2xl font-extrabold leading-none tracking-[-0.045em]">
         {loading ? <span className="opacity-30">···</span> : value}
       </p>
       <div className="mt-2 flex items-center gap-2">

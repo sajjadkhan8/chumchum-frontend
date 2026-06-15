@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { DollarSign, Layers, Search, SlidersHorizontal, X } from 'lucide-react';
 import { CreatorGlobalSearchResults } from '@/components/search/creator-global-search-results';
 import { Input } from '@/components/ui/input';
 import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
@@ -208,6 +208,62 @@ function CreatorOffersFeedPage() {
             My Reactions
           </Link>
         </div>
+
+        {/* ── Stat strip ── */}
+        {(() => {
+          const avgBudget = offers.length
+            ? offers.reduce((sum, o) => sum + ((o.budgetMin || 0) + (o.budgetMax || 0)) / 2, 0) / offers.length
+            : 0;
+          const typeCount = new Set(offers.map((o) => o.offerType).filter(Boolean)).size;
+          return (
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+              <div className="rounded-[1.35rem] border border-[#2d6b4e] bg-[#2d6b4e] p-5 text-white">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-white/70">Open Offers</p>
+                    <p className="mt-1.5 text-2xl font-extrabold leading-none">{totalElements}</p>
+                  </div>
+                  <div className="grid size-9 place-items-center rounded-xl bg-white/15">
+                    <Layers className="size-4" />
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-[#87938b]">Loaded</p>
+                    <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{offers.length}</p>
+                  </div>
+                  <div className="grid size-9 place-items-center rounded-xl bg-[#f4f7f5]">
+                    <Search className="size-4 text-[#6b7870]" />
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-[#87938b]">Offer Types</p>
+                    <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{typeCount || '—'}</p>
+                  </div>
+                  <div className="grid size-9 place-items-center rounded-xl bg-[#f4f7f5]">
+                    <Layers className="size-4 text-[#6b7870]" />
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-[#b77a12]">Avg. Budget</p>
+                    <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{avgBudget ? formatPrice(avgBudget) : '—'}</p>
+                  </div>
+                  <div className="grid size-9 place-items-center rounded-xl bg-[#fdf8ec]">
+                    <DollarSign className="size-4 text-[#e6aa38]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Search + filter bar */}
         <div className={`${panelClass} p-4`}>

@@ -3,8 +3,9 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowDownToLine, Clock3, CreditCard, ShieldCheck, Wallet } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowDownToLine, Clock3, CreditCard, TrendingUp, Wallet } from "lucide-react";
+import * as TabsPrimitive from "@radix-ui/react-tabs";
+import { TabsContent } from "@/components/ui/tabs";
 import { formatPrice } from "@/lib/utils";
 import {
   earningsService,
@@ -305,47 +306,66 @@ function CreatorPaymentsContent() {
   return (
     <div className="min-h-full bg-[#fbfaf5] px-4 pb-24 pt-2 text-[#1e3d2e] sm:px-6 lg:px-8 lg:pb-12">
       <div className="mx-auto max-w-[1320px]">
-        <section className="overflow-hidden rounded-[1.8rem] bg-[#1e3d2e] p-5 text-white sm:p-7 lg:p-8">
-          <div className="grid gap-7 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-            <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#f0c56e]">
-                <ShieldCheck className="size-3.5" /> Secure payments hub
-              </span>
-              <p className="mt-7 text-xs font-bold text-[#a9c4b3]">Your money, clearly managed</p>
-              <h1 className="mt-2 max-w-3xl text-[clamp(2.3rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-0.06em] text-white">
-                Move earnings with confidence.
-              </h1>
-              <p className="mt-4 max-w-xl text-sm leading-6 text-[#c2d8cb]">
-                Withdraw your available balance, manage trusted payout methods, and keep every payment preference in one calm place.
-              </p>
-            </div>
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              <div className="rounded-[1.3rem] border border-white/12 bg-[#244c39] p-4">
-                <div className="flex items-start justify-between">
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#f0c56e]">Available</p>
-                  <Wallet className="size-4 text-[#f0c56e]" />
-                </div>
-                <p className="mt-5 text-2xl font-extrabold tracking-[-0.04em] text-white">{formatPrice(earnings?.availableBalance || 0)}</p>
-                <p className="mt-1 text-[10px] font-semibold text-[#a9c4b3]">Ready to withdraw</p>
+        {/* ── Page header ── */}
+        <div>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Earnings</p>
+          <h1 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-[#1e3d2e]">Payments</h1>
+        </div>
+
+        {/* ── Stat strip ── */}
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <div className="rounded-[1.35rem] border border-[#2d6b4e] bg-[#2d6b4e] p-5 text-white">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-white/70">Available</p>
+                <p className="mt-1.5 text-2xl font-extrabold leading-none">{formatPrice(earnings?.availableBalance || 0)}</p>
               </div>
-              <div className="rounded-[1.3rem] border border-white/12 bg-white/8 p-4">
-                <div className="flex items-start justify-between">
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#f0c56e]">Pending</p>
-                  <Clock3 className="size-4 text-[#f0c56e]" />
-                </div>
-                <p className="mt-5 text-2xl font-extrabold tracking-[-0.04em] text-white">{formatPrice(earnings?.pendingBalance || 0)}</p>
-                <p className="mt-1 text-[10px] font-semibold text-[#a9c4b3]">Awaiting clearance</p>
+              <div className="grid size-9 place-items-center rounded-xl bg-white/15">
+                <Wallet className="size-4" />
               </div>
             </div>
           </div>
-        </section>
+          <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-[#87938b]">Pending</p>
+                <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{formatPrice(earnings?.pendingBalance || 0)}</p>
+              </div>
+              <div className="grid size-9 place-items-center rounded-xl bg-[#f4f7f5]">
+                <Clock3 className="size-4 text-[#6b7870]" />
+              </div>
+            </div>
+          </div>
+          <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-[#87938b]">Total Earned</p>
+                <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{formatPrice(earnings?.totalEarned || 0)}</p>
+              </div>
+              <div className="grid size-9 place-items-center rounded-xl bg-[#f4f7f5]">
+                <TrendingUp className="size-4 text-[#6b7870]" />
+              </div>
+            </div>
+          </div>
+          <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-[#b77a12]">Withdrawn</p>
+                <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{formatPrice(earnings?.totalWithdrawn || 0)}</p>
+              </div>
+              <div className="grid size-9 place-items-center rounded-xl bg-[#fdf8ec]">
+                <ArrowDownToLine className="size-4 text-[#e6aa38]" />
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <Tabs value={activeTab} onValueChange={updateTabInUrl} className="mt-5 space-y-5">
-        <TabsList className="grid h-auto w-full grid-cols-3 rounded-[1.25rem] border border-[#d1ddd6] bg-[#f4f2e9] p-1">
-          <TabsTrigger value="withdraw" className="min-h-11 gap-2 rounded-xl px-2 text-xs font-extrabold text-[#6b7870] data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white"><ArrowDownToLine className="size-4" /> <span className="hidden sm:inline">Withdraw</span></TabsTrigger>
-          <TabsTrigger value="methods" className="min-h-11 gap-2 rounded-xl px-2 text-xs font-extrabold text-[#6b7870] data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white"><CreditCard className="size-4" /> <span className="hidden sm:inline">Payout Methods</span><span className="sm:hidden">Methods</span></TabsTrigger>
-          <TabsTrigger value="schedule" className="min-h-11 gap-2 rounded-xl px-2 text-xs font-extrabold text-[#6b7870] data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white"><Clock3 className="size-4" /> <span className="hidden sm:inline">Schedule & Preferences</span><span className="sm:hidden">Preferences</span></TabsTrigger>
-        </TabsList>
+      <TabsPrimitive.Root value={activeTab} onValueChange={updateTabInUrl} className="mt-5 space-y-5">
+        <TabsPrimitive.List className="grid w-full grid-cols-3 rounded-xl bg-[#e8ede9] p-1 gap-1">
+          <TabsPrimitive.Trigger value="withdraw" className="flex h-9 items-center justify-center gap-2 rounded-lg px-2 text-xs font-semibold text-[#6b7c72] transition-all duration-200 hover:text-[#2e5440] data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white data-[state=active]:shadow-sm"><ArrowDownToLine className="size-4" /> <span className="hidden sm:inline">Withdraw</span></TabsPrimitive.Trigger>
+          <TabsPrimitive.Trigger value="methods" className="flex h-9 items-center justify-center gap-2 rounded-lg px-2 text-xs font-semibold text-[#6b7c72] transition-all duration-200 hover:text-[#2e5440] data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white data-[state=active]:shadow-sm"><CreditCard className="size-4" /> <span className="hidden sm:inline">Payout Methods</span><span className="sm:hidden">Methods</span></TabsPrimitive.Trigger>
+          <TabsPrimitive.Trigger value="schedule" className="flex h-9 items-center justify-center gap-2 rounded-lg px-2 text-xs font-semibold text-[#6b7c72] transition-all duration-200 hover:text-[#2e5440] data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white data-[state=active]:shadow-sm"><Clock3 className="size-4" /> <span className="hidden sm:inline">Schedule & Preferences</span><span className="sm:hidden">Preferences</span></TabsPrimitive.Trigger>
+        </TabsPrimitive.List>
 
         <TabsContent value="withdraw" className="space-y-4">
           <WithdrawTab
@@ -390,7 +410,7 @@ function CreatorPaymentsContent() {
             onSavePreferences={handleSavePreferences}
           />
         </TabsContent>
-      </Tabs>
+      </TabsPrimitive.Root>
       </div>
     </div>
   );
