@@ -262,15 +262,12 @@ function CreatorOrdersPageContent() {
         fileUrl,
         note: submissionNote.trim(),
       });
-      if (submissionTarget.order.status === "in_progress") {
-        await ordersService.updateStatus(submissionTarget.order.id, "delivered");
-      }
       await loadOrders();
       setSubmissionTarget(null);
       setSubmissionFile(null);
       setSubmissionFileUrl("");
       setSubmissionNote("");
-      toast.success("Deliverable submitted for brand review");
+      toast.success("Deliverable submitted. The order moves to review after all items are submitted.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to submit deliverable";
       toast.error(message);

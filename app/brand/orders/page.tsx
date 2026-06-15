@@ -119,6 +119,11 @@ const getOrderDeliverables = (order: Order): OrderDeliverable[] => {
   }));
 };
 
+const areAllDeliverablesApproved = (order: Order) => {
+  const deliverables = getOrderDeliverables(order);
+  return deliverables.length > 0 && deliverables.every((deliverable) => deliverable.status === "completed");
+};
+
 export default function BrandOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -377,16 +382,10 @@ export default function BrandOrdersPage() {
                                 Cancel Order
                               </DropdownMenuItem>
                             )}
-                            {(order.status === "delivered" || order.status === "review") && (
+                            {(order.status === "delivered" || order.status === "review") && areAllDeliverablesApproved(order) && (
                               <DropdownMenuItem onSelect={() => updateOrderStatus(order.id, "completed")}>
                                 <CheckCircle className="mr-2 h-4 w-4" />
                                 Approve Delivery
-                              </DropdownMenuItem>
-                            )}
-                            {(order.status === "delivered" || order.status === "review") && (
-                              <DropdownMenuItem onSelect={() => updateOrderStatus(order.id, "revision")}>
-                                <RefreshCw className="mr-2 h-4 w-4" />
-                                Request Revision
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
