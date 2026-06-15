@@ -49,6 +49,7 @@ import { toast } from "sonner";
 import { ordersService } from "@/services/orders.service";
 import { reviewsService } from "@/services/reviews.service";
 import type { Order, OrderDeliverable, OrderStatus } from "@/types";
+import { downloadFile } from "@/lib/download-file";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -443,8 +444,13 @@ export default function BrandOrdersPage() {
                                   </div>
                                   <div className="flex items-center gap-2">
                                     {deliverable.fileUrl && (
-                                      <Button variant="outline" size="sm" asChild onClick={(e) => e.stopPropagation()}>
-                                        <a href={deliverable.fileUrl} target="_blank" rel="noreferrer">View</a>
+                                      <Button variant="outline" size="sm" onClick={(e) => {
+                                        e.stopPropagation();
+                                        void downloadFile(deliverable.fileUrl!, deliverable.name).catch((error) =>
+                                          toast.error(error instanceof Error ? error.message : "Could not download file"),
+                                        );
+                                      }}>
+                                        View
                                       </Button>
                                     )}
                                     {deliverableStatus === "review" && !deliverable.id.startsWith("fallback-") && (

@@ -222,4 +222,30 @@ export const apiClient = {
   delete<T>(path: string, options?: Omit<RequestOptions, 'method' | 'body'>) {
     return this.request<T>(path, { ...options, method: 'DELETE' });
   },
+
+  async download(path: string, allowRetry = true): Promise<{ blob: Blob; filename?: string }> {
+    const url = /^https?:\/\//i.test(path) ? path : `${API_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+    const accessToken = getAccessToken();
+    const response = await fetch(url, {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      credentials: 'include',
+    });
+
+    if (response.status === 401 && allowRetry) {
+      const nextToken = await refreshAccessToken();
+      if (nextToken) return this.download(path, false);
+    }
+    if (!response.ok) {
+      let message = `Download failed with status ${response.status}`;
+      if ((response.headers.get('content-type') || '').includes('application/json')) {
+        const payload = (await response.json()) as ApiEnvelope<unknown>;
+        message = payload?.error?.message || message;
+      }
+      throw new ApiError(message, response.status);
+    }
+
+    const disposition = response.headers.get('content-disposition') || '';
+    const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1];
+    return { blob: await response.blob(), filename };
+  },
 };

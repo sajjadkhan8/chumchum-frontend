@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import { ordersService } from "@/services/orders.service";
 import { uploadsService } from "@/services/uploads.service";
 import { messagesService } from "@/services/messages.service";
+import { downloadFile } from "@/lib/download-file";
 import { useAuthStore } from "@/store/auth-store";
 import type { Order, OrderDeliverable, OrderStatus } from "@/types";
 
@@ -128,7 +129,6 @@ function CreatorOrdersPageContent() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [submissionTarget, setSubmissionTarget] = useState<{ order: Order; deliverable: OrderDeliverable } | null>(null);
-  const [submissionFileUrl, setSubmissionFileUrl] = useState("");
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
   const [submissionNote, setSubmissionNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -230,7 +230,6 @@ function CreatorOrdersPageContent() {
       return;
     }
     setSubmissionTarget({ order, deliverable: target });
-    setSubmissionFileUrl(target.fileUrl || "");
     setSubmissionFile(null);
     setSubmissionNote("");
   };
@@ -239,19 +238,16 @@ function CreatorOrdersPageContent() {
     if (!submissionTarget) return;
     setIsSubmitting(true);
     try {
-      let fileUrl = submissionFileUrl.trim();
-      if (!fileUrl) {
-        if (!submissionFile) {
-          toast.error("Add a deliverable file or preview URL.");
-          return;
-        }
-        const uploaded = await uploadsService.deliverable(
-          submissionFile,
-          submissionTarget.order.id,
-          submissionTarget.deliverable.id,
-        );
-        fileUrl = uploaded.url;
+      if (!submissionFile) {
+        toast.error("Choose a deliverable file.");
+        return;
       }
+      const uploaded = await uploadsService.deliverable(
+        submissionFile,
+        submissionTarget.order.id,
+        submissionTarget.deliverable.id,
+      );
+      const fileUrl = uploaded.url;
 
       if (!fileUrl) {
         toast.error("Upload did not return a file URL.");
@@ -265,7 +261,6 @@ function CreatorOrdersPageContent() {
       await loadOrders();
       setSubmissionTarget(null);
       setSubmissionFile(null);
-      setSubmissionFileUrl("");
       setSubmissionNote("");
       toast.success("Deliverable submitted. The order moves to review after all items are submitted.");
     } catch (error) {
@@ -466,8 +461,13 @@ function CreatorOrdersPageContent() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                   {deliverable.fileUrl && (
-                                    <Button variant="outline" size="sm" asChild onClick={(e) => e.stopPropagation()}>
-                                      <a href={deliverable.fileUrl} target="_blank" rel="noreferrer">View</a>
+                                    <Button variant="outline" size="sm" onClick={(e) => {
+                                      e.stopPropagation();
+                                      void downloadFile(deliverable.fileUrl!, deliverable.name).catch((error) =>
+                                        toast.error(error instanceof Error ? error.message : "Could not download file"),
+                                      );
+                                    }}>
+                                      View
                                     </Button>
                                   )}
                                   {(order.status === "in_progress" || order.status === "revision") &&
@@ -554,15 +554,6 @@ function CreatorOrdersPageContent() {
                   {submissionFile.name}
                 </p>
               )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="deliverable-url">Or paste file URL</Label>
-              <Input
-                id="deliverable-url"
-                value={submissionFileUrl}
-                onChange={(event) => setSubmissionFileUrl(event.target.value)}
-                placeholder="https://..."
-              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="deliverable-note">Note</Label>

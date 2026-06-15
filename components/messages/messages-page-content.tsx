@@ -40,8 +40,7 @@ import { formatRelativeTime, formatPrice, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import type { Message, Conversation } from "@/types";
 import { toast } from "sonner";
-
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080").replace(/\/$/, "");
+import { downloadFile } from "@/lib/download-file";
 
 export function MessagesPageContent() {
   const router = useRouter();
@@ -263,12 +262,6 @@ export function MessagesPageContent() {
     const path = url.split("?")[0];
     const name = path.split("/").filter(Boolean).pop();
     return name ? decodeURIComponent(name) : "Attachment";
-  };
-
-  const getAttachmentHref = (url?: string) => {
-    if (!url) return "#";
-    if (/^https?:\/\//i.test(url)) return url;
-    return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
   };
 
   const handleSendAttachment = async (file?: File | null) => {
@@ -532,10 +525,12 @@ export function MessagesPageContent() {
                           )}
 
                           {message.type === "attachment" && (
-                            <a
-                              href={getAttachmentHref(message.attachmentUrl)}
-                              target="_blank"
-                              rel="noreferrer"
+                            <button
+                              type="button"
+                              onClick={() => message.attachmentUrl && void downloadFile(
+                                message.attachmentUrl,
+                                getAttachmentName(message.attachmentUrl),
+                              ).catch((error) => toast.error(error instanceof Error ? error.message : "Could not download attachment"))}
                               className={`flex min-w-0 items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition-colors ${
                                 isOwn
                                   ? "border-primary/20 bg-primary text-primary-foreground hover:bg-primary/90"
@@ -544,7 +539,7 @@ export function MessagesPageContent() {
                             >
                               <FileText className="h-5 w-5 shrink-0" />
                               <span className="min-w-0 truncate">{getAttachmentName(message.attachmentUrl)}</span>
-                            </a>
+                            </button>
                           )}
 
                           {message.type === "offer" && message.offer && (
@@ -670,13 +665,14 @@ export function MessagesPageContent() {
                   <input
                     ref={imageInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
                     className="hidden"
                     onChange={(event) => void handleSendAttachment(event.target.files?.[0])}
                   />
                   <input
                     ref={fileInputRef}
                     type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/x-msvideo,application/pdf,text/plain,application/zip,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     className="hidden"
                     onChange={(event) => void handleSendAttachment(event.target.files?.[0])}
                   />
@@ -731,5 +727,3 @@ export function MessagesPageContent() {
     </div>
   );
 }
-
-
