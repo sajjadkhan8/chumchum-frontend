@@ -74,8 +74,8 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
 
   useEffect(() => {
     const syncCreatorSearch = () => {
-      const nextSearchValue = pathname === '/creator/offers'
-        ? new URLSearchParams(window.location.search).get('search')?.trim() ?? ''
+      const nextSearchValue = pathname === '/creator/search'
+        ? new URLSearchParams(window.location.search).get('q')?.trim() ?? ''
         : '';
       setCreatorGlobalSearch(nextSearchValue);
     };
@@ -238,8 +238,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
       return;
     }
 
-    // Route to offers with a query parameter so creator search has one consistent entry point.
-    router.push(`/creator/offers?search=${encodeURIComponent(term)}`);
+    router.push(`/creator/search?q=${encodeURIComponent(term)}`);
   };
 
   return (
@@ -309,7 +308,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                   aria-label="Clear creator search"
                   onClick={() => {
                     setCreatorGlobalSearch('');
-                    router.push('/creator/offers');
+                    router.push('/creator/dashboard');
                   }}
                 >
                   <X className="h-4 w-4" />

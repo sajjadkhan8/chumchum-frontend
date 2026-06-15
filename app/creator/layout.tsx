@@ -25,7 +25,8 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
     pathname.startsWith('/creator/insights') ||
     pathname.startsWith('/creator/performance') ||
     pathname.startsWith('/creator/profile') ||
-    pathname.startsWith('/creator/help');
+    pathname.startsWith('/creator/help') ||
+    pathname.startsWith('/creator/search');
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -56,7 +57,7 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!pathname.startsWith('/creator/offers')) {
+    if (!pathname.startsWith('/creator/offers') && !pathname.startsWith('/creator/search')) {
       setHideCreatorWorkspacePanel(false);
     }
   }, [pathname]);

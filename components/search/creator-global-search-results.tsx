@@ -12,9 +12,6 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { cn, formatFollowers, formatPrice, formatRelativeTime } from '@/lib/utils';
@@ -51,12 +48,8 @@ const splitList = (value?: string | null) =>
     .filter(Boolean);
 
 const formatShortRs = (amount: number) => {
-  if (amount >= 1000000) {
-    return `Rs ${(amount / 1000000).toFixed(amount >= 10000000 ? 0 : 1)}M`;
-  }
-  if (amount >= 1000) {
-    return `Rs ${(amount / 1000).toFixed(amount >= 100000 ? 0 : 1)}k`;
-  }
+  if (amount >= 1000000) return `Rs ${(amount / 1000000).toFixed(amount >= 10000000 ? 0 : 1)}M`;
+  if (amount >= 1000) return `Rs ${(amount / 1000).toFixed(amount >= 100000 ? 0 : 1)}k`;
   return `Rs ${amount}`;
 };
 
@@ -65,7 +58,6 @@ const titleCase = (value: string) => value.replace(/[-_]/g, ' ').replace(/\b\w/g
 const contentTypeTokens = (offer: BrandOffer) => {
   const combined = [offer.offerType, offer.contentFormats, offer.targetPlatforms].flatMap((value) => splitList(value));
   const values = new Set<string>();
-
   for (const token of combined) {
     const normalized = normalize(token);
     if (!normalized) continue;
@@ -74,7 +66,6 @@ const contentTypeTokens = (offer: BrandOffer) => {
     else if (normalized.includes('blog') || normalized.includes('article')) values.add('Blog / Article');
     else values.add('Static post');
   }
-
   return Array.from(values);
 };
 
@@ -137,29 +128,28 @@ const dedupeOffers = (offers: BrandOffer[]) => {
   });
 };
 
+// ─── Sub-components ────────────────────────────────────────────────────────────
+
 function SearchResultsSkeleton() {
   return (
     <div className="space-y-4">
       {Array.from({ length: 3 }).map((_, index) => (
-        <div key={index} className="rounded-xl border border-white/8 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-          <div className="animate-pulse space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="h-16 w-16 rounded-xl bg-white/8" />
-              <div className="flex-1 space-y-3">
-                <div className="h-6 w-40 rounded-full bg-white/8" />
-                <div className="h-4 w-72 rounded-full bg-white/8" />
-                <div className="flex gap-2">
-                  <div className="h-8 w-20 rounded-full bg-white/8" />
-                  <div className="h-8 w-24 rounded-full bg-white/8" />
-                  <div className="h-8 w-16 rounded-full bg-white/8" />
-                </div>
+        <div key={index} className="animate-pulse rounded-[1.4rem] border border-[#d1ddd6] bg-white p-5 shadow-[0_8px_28px_rgba(38,70,50,0.06)]">
+          <div className="flex items-start gap-4">
+            <div className="size-16 rounded-xl bg-[#e8ede9]" />
+            <div className="flex-1 space-y-3">
+              <div className="h-5 w-40 rounded-full bg-[#e8ede9]" />
+              <div className="h-4 w-72 rounded-full bg-[#e8ede9]" />
+              <div className="flex gap-2">
+                <div className="h-7 w-20 rounded-full bg-[#e8ede9]" />
+                <div className="h-7 w-24 rounded-full bg-[#e8ede9]" />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="h-12 rounded-xl bg-white/8" />
-              <div className="h-12 rounded-xl bg-white/8" />
-              <div className="h-12 rounded-xl bg-white/8" />
-            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            <div className="h-10 rounded-xl bg-[#e8ede9]" />
+            <div className="h-10 rounded-xl bg-[#e8ede9]" />
+            <div className="h-10 rounded-xl bg-[#e8ede9]" />
           </div>
         </div>
       ))}
@@ -167,45 +157,40 @@ function SearchResultsSkeleton() {
   );
 }
 
-function EmptyState({
-  title,
-  description,
-  onReset,
-}: {
-  title: string;
-  description: string;
-  onReset?: () => void;
-}) {
+function EmptyState({ title, description, onReset }: { title: string; description: string; onReset?: () => void }) {
   return (
-    <Card className="rounded-xl border-white/8 bg-white/[0.04] text-white shadow-none">
-      <CardContent className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-emerald-400">
-          <Search className="h-5 w-5" />
-        </div>
-        <div className="space-y-1">
-          <h3 className="text-xl font-semibold">{title}</h3>
-          <p className="max-w-xl text-sm text-white/58">{description}</p>
-        </div>
-        {onReset ? (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onReset}
-            className="mt-3 rounded-lg border-white/12 bg-transparent text-white hover:bg-white/8 hover:text-white"
-          >
-            Reset filters
-          </Button>
-        ) : null}
-      </CardContent>
-    </Card>
+    <div className="rounded-[1.4rem] border border-[#d1ddd6] bg-white p-12 text-center shadow-[0_8px_28px_rgba(38,70,50,0.06)]">
+      <div className="mx-auto mb-4 grid size-12 place-items-center rounded-2xl bg-[#e6eceb] text-[#2d6b4e]">
+        <Search className="size-5" />
+      </div>
+      <h3 className="mb-1 text-lg font-extrabold text-[#1e3d2e]">{title}</h3>
+      <p className="mx-auto max-w-sm text-sm text-[#87938b]">{description}</p>
+      {onReset && (
+        <button
+          type="button"
+          onClick={onReset}
+          className="mt-5 h-9 rounded-full border-2 border-[#d1ddd6] px-5 text-sm font-bold text-[#87938b] transition-colors hover:border-[#b0c5ba] hover:text-[#1e3d2e]"
+        >
+          Reset filters
+        </button>
+      )}
+    </div>
   );
 }
 
 function ResultCountBadge({ count }: { count: number }) {
   return (
-    <span className="rounded-lg bg-white/8 px-2 py-0.5 text-xs font-semibold text-white/62">
+    <span className="rounded-full bg-[#e8ede9] px-2.5 py-0.5 text-xs font-bold text-[#87938b]">
       {count}
     </span>
+  );
+}
+
+function BrandInitials({ initials }: { initials: string }) {
+  return (
+    <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-[#d1ddd6] bg-[#e6eceb] text-lg font-extrabold text-[#2d6b4e]">
+      {initials}
+    </div>
   );
 }
 
@@ -223,179 +208,165 @@ function BrandResultCard({
   return (
     <article
       className={cn(
-        'rounded-xl border border-white/8 bg-white/[0.05] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition hover:border-emerald-500/25 hover:bg-white/[0.06]',
-        isFocused && 'border-emerald-500/40 bg-emerald-500/[0.08]',
+        'rounded-[1.4rem] border bg-white p-5 sm:p-6 shadow-[0_8px_28px_rgba(38,70,50,0.06)] transition-all',
+        isFocused ? 'border-[#2d6b4e]' : 'border-[#d1ddd6] hover:border-[#b0c5ba] hover:shadow-[0_12px_36px_rgba(38,70,50,0.10)]',
       )}
     >
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-[#101111] text-2xl font-semibold text-white">
-            {brand.initials}
-          </div>
-          <div className="min-w-0 space-y-3">
+          <BrandInitials initials={brand.initials} />
+          <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-2xl font-semibold leading-tight tracking-[-0.02em] text-white md:text-[1.7rem]">
-                {brand.name}
-              </h3>
-              {brand.isVerified ? (
-                <Badge className="rounded-lg border border-emerald-400/20 bg-emerald-500/14 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/14">
-                  <CheckCircle2 className="h-4 w-4" /> Verified
-                </Badge>
-              ) : null}
-              <Badge className="rounded-lg border border-emerald-400/10 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/10">
-                <Star className="h-4 w-4 fill-current" /> {brand.rating.toFixed(1)}
-                <span className="text-white/55">·</span>
-                {brand.paysOnTime ? 'Pays on time' : 'Responsive'}
-              </Badge>
+              <h3 className="text-xl font-extrabold tracking-[-0.04em] text-[#1e3d2e]">{brand.name}</h3>
+              {brand.isVerified && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#2d6b4e] px-2.5 py-0.5 text-[10px] font-bold text-white">
+                  <CheckCircle2 className="size-3" /> Verified
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1 rounded-full border border-[#e8c98a] bg-[#fdf3dc] px-2.5 py-0.5 text-[10px] font-bold text-[#9b6712]">
+                <Star className="size-3 fill-current" /> {brand.rating.toFixed(1)}
+                {brand.paysOnTime && <span className="ml-1">· Pays on time</span>}
+              </span>
             </div>
 
-            <p className="text-sm text-white/58">
-              <span>{brand.industry}</span>
-              <span className="px-2 text-white/25">·</span>
-              <span>{brand.city}</span>
-              <span className="px-2 text-white/25">·</span>
-              <span>{brand.campaignCount} campaigns run</span>
+            <p className="text-xs text-[#87938b]">
+              {brand.industry}
+              <span className="px-1.5 text-[#d1ddd6]">·</span>
+              {brand.city}
+              <span className="px-1.5 text-[#d1ddd6]">·</span>
+              {brand.campaignCount} campaigns run
             </p>
 
-            {brand.tags.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
+            {brand.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
                 {brand.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-lg border border-white/10 bg-transparent px-3 py-1 text-sm text-white/62"
-                  >
+                  <span key={tag} className="rounded-full border border-[#d1ddd6] bg-[#f4f7f5] px-2.5 py-0.5 text-xs text-[#87938b]">
                     {tag}
                   </span>
                 ))}
               </div>
-            ) : null}
+            )}
 
-            <div className="grid gap-3 text-sm text-white/70 sm:grid-cols-3 lg:min-w-[34rem]">
+            <div className="grid gap-3 text-sm sm:grid-cols-3 lg:min-w-[32rem]">
               <div className="flex items-center gap-2">
-                <Wallet className="h-4 w-4 text-white/38" />
-                <span className="text-white/48">Avg budget</span>
-                <span className="font-semibold text-white">{formatShortRs(brand.avgBudget)}</span>
+                <Wallet className="size-4 text-[#b0bfb8]" />
+                <span className="text-xs text-[#87938b]">Avg budget</span>
+                <span className="text-sm font-bold text-[#1e3d2e]">{formatShortRs(brand.avgBudget)}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-white/38" />
-                <span className="font-semibold text-white">{brand.creatorsHired}</span>
-                <span className="text-white/48">creators hired</span>
+                <Users className="size-4 text-[#b0bfb8]" />
+                <span className="text-sm font-bold text-[#1e3d2e]">{brand.creatorsHired}</span>
+                <span className="text-xs text-[#87938b]">hired</span>
               </div>
               <div className="flex items-center gap-2">
-                <Clock3 className="h-4 w-4 text-white/38" />
-                <span className="text-white/48">Replies in</span>
-                <span className="font-semibold text-white">{brand.replyTimeLabel}</span>
+                <Clock3 className="size-4 text-[#b0bfb8]" />
+                <span className="text-xs text-[#87938b]">Replies in</span>
+                <span className="text-sm font-bold text-[#1e3d2e]">{brand.replyTimeLabel}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid shrink-0 gap-3 sm:w-[11rem]">
-          <Button
+        <div className="flex shrink-0 flex-col gap-2 sm:w-40">
+          <button
             type="button"
             onClick={() => onViewOffers(brand.id)}
-            className="h-11 rounded-lg bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-500"
+            className="h-10 rounded-full bg-[#2d6b4e] px-4 text-sm font-bold text-white transition-colors hover:bg-[#1f5239]"
           >
             View offers
-          </Button>
+          </button>
           {brand.website ? (
-            <Button
-              asChild
-              variant="outline"
-              className="h-11 rounded-lg border-white/10 bg-transparent text-sm text-white/82 hover:bg-white/8 hover:text-white"
-            >
-              <a href={brand.website} target="_blank" rel="noreferrer">
-                View profile
-              </a>
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              disabled
-              className="h-11 rounded-lg border-white/10 bg-transparent text-sm text-white/40"
+            <a
+              href={brand.website}
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-10 items-center justify-center rounded-full border-2 border-[#d1ddd6] px-4 text-sm font-bold text-[#1e3d2e] transition-colors hover:border-[#b0c5ba]"
             >
               View profile
-            </Button>
-          )}
-          {isFocused ? (
-            <Button
+            </a>
+          ) : (
+            <button
               type="button"
-              variant="ghost"
+              disabled
+              className="h-10 rounded-full border-2 border-[#d1ddd6] px-4 text-sm font-bold text-[#b0bfb8]"
+            >
+              View profile
+            </button>
+          )}
+          {isFocused && (
+            <button
+              type="button"
               onClick={onClearBrandFocus}
-              className="h-10 rounded-lg text-sm text-white/55 hover:bg-white/8 hover:text-white"
+              className="h-9 rounded-full px-4 text-sm text-[#87938b] transition-colors hover:bg-[#f4f7f5] hover:text-[#1e3d2e]"
             >
               Clear focus
-            </Button>
-          ) : null}
+            </button>
+          )}
         </div>
       </div>
     </article>
   );
 }
 
-function OfferResultCard({
-  offer,
-  brand,
-  compact = false,
-}: {
-  offer: BrandOffer;
-  brand?: CreatorSearchBrandResult;
-  compact?: boolean;
-}) {
+function OfferResultCard({ offer, brand, compact = false }: { offer: BrandOffer; brand?: CreatorSearchBrandResult; compact?: boolean }) {
   const deadlineLabel = offerDaysLeft(offer);
   const contentTypes = contentTypeTokens(offer);
   const brandInitials = brand?.initials ?? offer.brandName.slice(0, 2).toUpperCase();
 
   return (
-    <article className={cn('rounded-xl border border-white/8 bg-white/[0.05] shadow-[0_0_0_1px_rgba(255,255,255,0.02)]', compact ? 'p-5' : 'p-6')}>
+    <article className={cn('rounded-[1.4rem] border border-[#d1ddd6] bg-white shadow-[0_8px_28px_rgba(38,70,50,0.06)]', compact ? 'p-4 sm:p-5' : 'p-5 sm:p-6')}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-[#101111] text-xl font-semibold text-white">
+        <div className="flex min-w-0 gap-3">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-[#d1ddd6] bg-[#e6eceb] text-base font-extrabold text-[#2d6b4e]">
             {brandInitials}
           </div>
-          <div className="min-w-0 space-y-2">
-            <div className="flex items-center gap-3 text-sm text-white/55">
-              <span className="font-medium text-white/72">{offer.brandName}</span>
-              {brand?.isVerified ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : null}
-              {brand?.isVerified ? <span className="text-emerald-300">Verified</span> : null}
+          <div className="min-w-0 space-y-1.5">
+            <div className="flex items-center gap-2 text-xs text-[#87938b]">
+              <span className="font-semibold text-[#496159]">{offer.brandName}</span>
+              {brand?.isVerified && <CheckCircle2 className="size-3.5 text-[#2d6b4e]" />}
             </div>
-            <h3 className={cn('font-semibold tracking-[-0.01em] text-white', compact ? 'text-xl' : 'text-2xl')}>
+            <h3 className={cn('font-extrabold tracking-[-0.03em] text-[#1e3d2e]', compact ? 'text-lg' : 'text-xl')}>
               {offer.title}
             </h3>
-            <p className={cn('max-w-4xl text-white/58', compact ? 'text-sm leading-6' : 'text-base leading-7')}>
+            <p className={cn('max-w-3xl text-[#87938b]', compact ? 'text-xs leading-5' : 'text-sm leading-6')}>
               {offer.brief}
             </p>
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-col gap-3 sm:min-w-[10rem] sm:items-end">
-          <Button asChild className="h-11 rounded-lg bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-500">
-            <Link href={`/creator/offers/${offer.id}`}>Apply now</Link>
-          </Button>
-          <Button asChild variant="outline" className="h-11 rounded-lg border-white/10 bg-transparent text-sm text-white/82 hover:bg-white/8 hover:text-white">
-            <Link href={`/creator/offers/${offer.id}`}>View details</Link>
-          </Button>
+        <div className="flex shrink-0 flex-col gap-2 sm:min-w-[9rem] sm:items-end">
+          <Link
+            href={`/creator/offers/${offer.id}`}
+            className="flex h-10 items-center justify-center rounded-full bg-[#2d6b4e] px-4 text-sm font-bold text-white transition-colors hover:bg-[#1f5239]"
+          >
+            Apply now
+          </Link>
+          <Link
+            href={`/creator/offers/${offer.id}`}
+            className="flex h-10 items-center justify-center rounded-full border-2 border-[#d1ddd6] px-4 text-sm font-bold text-[#1e3d2e] transition-colors hover:border-[#b0c5ba]"
+          >
+            View details
+          </Link>
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-white/52">
-        <span className="text-xl font-semibold tracking-[-0.01em] text-emerald-300">{compactOfferBudget(offer)}</span>
-        {deadlineLabel ? (
-          <span className="inline-flex items-center gap-2 text-amber-300">
-            <Clock3 className="h-4 w-4" /> {deadlineLabel}
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[#87938b]">
+        <span className="text-lg font-extrabold tracking-[-0.03em] text-[#2d6b4e]">{compactOfferBudget(offer)}</span>
+        {deadlineLabel && (
+          <span className="inline-flex items-center gap-1.5 font-medium text-[#9b6712]">
+            <Clock3 className="size-3.5" /> {deadlineLabel}
           </span>
-        ) : null}
-        {offer.maxApplicants ? (
-          <span className="inline-flex items-center gap-2">
-            <Users className="h-4 w-4" /> {offer.maxApplicants} spots left
+        )}
+        {offer.maxApplicants && (
+          <span className="inline-flex items-center gap-1.5">
+            <Users className="size-3.5" /> {offer.maxApplicants} spots left
           </span>
-        ) : null}
-        {contentTypes[0] ? (
-          <span className="inline-flex items-center gap-2">
-            <Play className="h-4 w-4" /> {contentTypes[0]}
+        )}
+        {contentTypes[0] && (
+          <span className="inline-flex items-center gap-1.5">
+            <Play className="size-3.5" /> {contentTypes[0]}
           </span>
-        ) : null}
+        )}
         <span>Updated {formatRelativeTime(offer.updatedAt)}</span>
       </div>
     </article>
@@ -406,72 +377,77 @@ function CreatorResultCard({ creator }: { creator: Creator }) {
   const budgetValue = Math.round(((creator.minPrice ?? 0) + (creator.maxPrice ?? creator.minPrice ?? 0)) / 2);
 
   return (
-    <article className="rounded-xl border border-white/8 bg-white/[0.05] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition hover:border-emerald-500/25 hover:bg-white/[0.06]">
+    <article className="rounded-[1.4rem] border border-[#d1ddd6] bg-white p-5 sm:p-6 shadow-[0_8px_28px_rgba(38,70,50,0.06)] transition-all hover:border-[#b0c5ba] hover:shadow-[0_12px_36px_rgba(38,70,50,0.10)]">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 gap-4">
           <img
             src={creator.avatar}
             alt={creator.name}
-            className="h-16 w-16 shrink-0 rounded-lg object-cover"
+            className="size-14 shrink-0 rounded-xl object-cover"
           />
-          <div className="min-w-0 space-y-3">
+          <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-2xl font-semibold tracking-[-0.02em] text-white">{creator.name}</h3>
-              {creator.isVerified ? (
-                <Badge className="rounded-lg border border-emerald-400/20 bg-emerald-500/14 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/14">
-                  <CheckCircle2 className="h-4 w-4" /> Verified
-                </Badge>
-              ) : null}
-              <Badge className="rounded-lg border border-emerald-400/10 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/10">
-                <Star className="h-4 w-4 fill-current" /> {creator.rating.toFixed(1)}
-              </Badge>
+              <h3 className="text-xl font-extrabold tracking-[-0.04em] text-[#1e3d2e]">{creator.name}</h3>
+              {creator.isVerified && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#2d6b4e] px-2.5 py-0.5 text-[10px] font-bold text-white">
+                  <CheckCircle2 className="size-3" /> Verified
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1 rounded-full border border-[#e8c98a] bg-[#fdf3dc] px-2.5 py-0.5 text-[10px] font-bold text-[#9b6712]">
+                <Star className="size-3 fill-current" /> {creator.rating.toFixed(1)}
+              </span>
             </div>
-            <p className="text-sm text-white/58">
+            <p className="text-xs text-[#87938b]">
               {creator.categories.slice(0, 3).join(' • ')}
-              <span className="px-2 text-white/25">·</span>
+              <span className="px-1.5 text-[#d1ddd6]">·</span>
               {creator.city}
             </p>
-            <p className="max-w-3xl text-sm leading-6 text-white/58">{creator.bio}</p>
-            <div className="flex flex-wrap gap-2">
+            <p className="max-w-2xl text-sm leading-6 text-[#87938b]">{creator.bio}</p>
+            <div className="flex flex-wrap gap-1.5">
               {creator.platforms.slice(0, 3).map((platform) => (
-                <span key={platform.platform} className="rounded-lg border border-white/10 px-3 py-1 text-sm text-white/62">
+                <span key={platform.platform} className="rounded-full border border-[#d1ddd6] bg-[#f4f7f5] px-2.5 py-0.5 text-xs text-[#87938b]">
                   {titleCase(platform.platform)}
                 </span>
               ))}
             </div>
-            <div className="grid gap-3 text-sm text-white/70 sm:grid-cols-3 lg:min-w-[34rem]">
+            <div className="grid gap-3 text-sm sm:grid-cols-3 lg:min-w-[32rem]">
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-white/38" />
-                <span className="font-semibold text-white">{formatFollowers(creator.totalFollowers)}</span>
-                <span className="text-white/48">followers</span>
+                <Users className="size-4 text-[#b0bfb8]" />
+                <span className="text-sm font-bold text-[#1e3d2e]">{formatFollowers(creator.totalFollowers)}</span>
+                <span className="text-xs text-[#87938b]">followers</span>
               </div>
               <div className="flex items-center gap-2">
-                <Wallet className="h-4 w-4 text-white/38" />
-                <span className="font-semibold text-white">{formatShortRs(budgetValue)}</span>
-                <span className="text-white/48">avg rate</span>
+                <Wallet className="size-4 text-[#b0bfb8]" />
+                <span className="text-sm font-bold text-[#1e3d2e]">{formatShortRs(budgetValue)}</span>
+                <span className="text-xs text-[#87938b]">avg rate</span>
               </div>
               <div className="flex items-center gap-2">
-                <Clock3 className="h-4 w-4 text-white/38" />
-                <span className="font-semibold text-white">{creator.responseTime}</span>
+                <Clock3 className="size-4 text-[#b0bfb8]" />
+                <span className="text-sm font-bold text-[#1e3d2e]">{creator.responseTime}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex shrink-0 gap-3">
-          <Button asChild className="h-11 rounded-lg bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-500">
-            <Link href={`/creator/${creator.username}`}>View profile</Link>
-          </Button>
+        <div className="shrink-0">
+          <Link
+            href={`/creator/${creator.username}`}
+            className="flex h-10 items-center justify-center rounded-full bg-[#2d6b4e] px-5 text-sm font-bold text-white transition-colors hover:bg-[#1f5239]"
+          >
+            View profile
+          </Link>
         </div>
       </div>
     </article>
   );
 }
 
+// ─── Main component ────────────────────────────────────────────────────────────
+
 export function CreatorGlobalSearchResults() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const searchTerm = searchParams.get('search')?.trim() ?? '';
+  const searchTerm = searchParams.get('q')?.trim() ?? '';
   const currentTab = (searchParams.get('tab') as SearchTab | null) ?? 'brands';
   const currentSort = (searchParams.get('sort') as SortOption | null) ?? 'relevant';
   const brandFocus = searchParams.get('brand') ?? '';
@@ -495,31 +471,18 @@ export function CreatorGlobalSearchResults() {
       setResults({ brands: [], offers: [], creators: [] });
       setIsLoading(false);
       setHasError(false);
-      return () => {
-        cancelled = true;
-      };
+      return () => { cancelled = true; };
     }
 
     setIsLoading(true);
     setHasError(false);
 
     void getCreatorGlobalSearchResults(searchTerm)
-      .then((nextResults) => {
-        if (cancelled) return;
-        setResults(nextResults);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setResults({ brands: [], offers: [], creators: [] });
-        setHasError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
+      .then((nextResults) => { if (!cancelled) setResults(nextResults); })
+      .catch(() => { if (!cancelled) { setResults({ brands: [], offers: [], creators: [] }); setHasError(true); } })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [searchTerm]);
 
   const brandMap = useMemo(
@@ -529,39 +492,30 @@ export function CreatorGlobalSearchResults() {
 
   const budgetBounds = useMemo<[number, number]>(() => {
     const values = [
-      ...results.brands.map((brand) => brand.avgBudget).filter((value) => value > 0),
-      ...results.offers.map((offer) => Math.round((offer.budgetMin + offer.budgetMax) / 2)).filter((value) => value > 0),
-      ...results.creators.map((creator) => Math.round(((creator.minPrice ?? 0) + (creator.maxPrice ?? creator.minPrice ?? 0)) / 2)).filter((value) => value > 0),
+      ...results.brands.map((b) => b.avgBudget).filter((v) => v > 0),
+      ...results.offers.map((o) => Math.round((o.budgetMin + o.budgetMax) / 2)).filter((v) => v > 0),
+      ...results.creators.map((c) => Math.round(((c.minPrice ?? 0) + (c.maxPrice ?? c.minPrice ?? 0)) / 2)).filter((v) => v > 0),
     ];
-
     if (values.length === 0) return DEFAULT_BUDGET_RANGE;
-
     const min = Math.max(0, Math.floor(Math.min(...values) / 10000) * 10000);
     const max = Math.max(min + 10000, Math.ceil(Math.max(...values) / 10000) * 10000);
     return [min, max];
   }, [results]);
 
   useEffect(() => {
-    setFilters({
-      industries: [],
-      contentTypes: [],
-      verifiedOnly: false,
-      fourStarPlus: false,
-      paysOnTime: false,
-      budgetRange: budgetBounds,
-    });
+    setFilters({ industries: [], contentTypes: [], verifiedOnly: false, fourStarPlus: false, paysOnTime: false, budgetRange: budgetBounds });
   }, [budgetBounds, searchTerm]);
 
   const industryOptions = useMemo(() => {
     const options = new Set<string>(FALLBACK_INDUSTRIES);
-    results.brands.forEach((brand) => options.add(brand.industry));
-    results.offers.forEach((offer) => offerIndustryTokens(offer).forEach((token) => options.add(token)));
+    results.brands.forEach((b) => options.add(b.industry));
+    results.offers.forEach((o) => offerIndustryTokens(o).forEach((t) => options.add(t)));
     return Array.from(options).filter(Boolean).slice(0, 8);
   }, [results.brands, results.offers]);
 
   const contentTypeOptions = useMemo(() => {
     const options = new Set<string>(FALLBACK_CONTENT_TYPES);
-    results.offers.forEach((offer) => contentTypeTokens(offer).forEach((token) => options.add(token)));
+    results.offers.forEach((o) => contentTypeTokens(o).forEach((t) => options.add(t)));
     return Array.from(options);
   }, [results.offers]);
 
@@ -571,340 +525,319 @@ export function CreatorGlobalSearchResults() {
       if (!value) params.delete(key);
       else params.set(key, value);
     });
-    router.replace(`/creator/offers?${params.toString()}`);
+    router.replace(`/creator/search?${params.toString()}`);
   }, [router, searchParams]);
 
   const toggleSelection = (key: 'industries' | 'contentTypes', value: string) => {
     setFilters((current) => ({
       ...current,
-      [key]: current[key].includes(value)
-        ? current[key].filter((entry) => entry !== value)
-        : [...current[key], value],
+      [key]: current[key].includes(value) ? current[key].filter((e) => e !== value) : [...current[key], value],
     }));
   };
 
   const clearAllFilters = () => {
-    setFilters((current) => ({
-      ...current,
-      industries: [],
-      contentTypes: [],
-      verifiedOnly: false,
-      fourStarPlus: false,
-      paysOnTime: false,
-      budgetRange: budgetBounds,
-    }));
+    setFilters((current) => ({ ...current, industries: [], contentTypes: [], verifiedOnly: false, fourStarPlus: false, paysOnTime: false, budgetRange: budgetBounds }));
   };
 
   const filteredBrands = useMemo(() => {
     const [budgetMin, budgetMax] = filters.budgetRange;
-    const nextResults = results.brands.filter((brand) => {
-      const matchesBudget = brand.avgBudget === 0 || (brand.avgBudget >= budgetMin && brand.avgBudget <= budgetMax);
-      if (!matchesBudget) return false;
-      if (!brandMatchesIndustry(brand, filters.industries)) return false;
-      if (!brandMatchesContentType(brand, filters.contentTypes)) return false;
-      if (filters.verifiedOnly && !brand.isVerified) return false;
-      if (filters.fourStarPlus && brand.rating < 4) return false;
-      return !filters.paysOnTime || brand.paysOnTime;
-    });
-
-    return nextResults.sort((left, right) => {
-      if (currentSort === 'top-rated') return right.rating - left.rating;
-      if (currentSort === 'budget-high') return right.avgBudget - left.avgBudget;
-      if (right.matchScore !== left.matchScore) return right.matchScore - left.matchScore;
-      return right.rating - left.rating;
-    });
+    return results.brands
+      .filter((brand) => {
+        if (brand.avgBudget > 0 && (brand.avgBudget < budgetMin || brand.avgBudget > budgetMax)) return false;
+        if (!brandMatchesIndustry(brand, filters.industries)) return false;
+        if (!brandMatchesContentType(brand, filters.contentTypes)) return false;
+        if (filters.verifiedOnly && !brand.isVerified) return false;
+        if (filters.fourStarPlus && brand.rating < 4) return false;
+        return !filters.paysOnTime || brand.paysOnTime;
+      })
+      .sort((l, r) => {
+        if (currentSort === 'top-rated') return r.rating - l.rating;
+        if (currentSort === 'budget-high') return r.avgBudget - l.avgBudget;
+        if (r.matchScore !== l.matchScore) return r.matchScore - l.matchScore;
+        return r.rating - l.rating;
+      });
   }, [currentSort, filters, results.brands]);
 
   const filteredOffers = useMemo(() => {
     const [budgetMin, budgetMax] = filters.budgetRange;
-    const nextResults = results.offers.filter((offer) => {
-      const offerBudget = Math.round((offer.budgetMin + offer.budgetMax) / 2);
-      const associatedBrand = Array.from(brandMap.values()).find((brand) => brand.id === offer.brandId || normalize(brand.name) === normalize(offer.brandName));
-      if (brandFocus && associatedBrand && associatedBrand.id !== brandFocus) return false;
-      if (brandFocus && !associatedBrand && offer.brandId !== brandFocus) return false;
-      if (offerBudget > 0 && (offerBudget < budgetMin || offerBudget > budgetMax)) return false;
-      if (filters.industries.length > 0) {
-        const matchesIndustry = filters.industries.some((industry) => {
-          const target = normalize(industry);
-          return offerIndustryTokens(offer).some((token) => normalize(token).includes(target))
-            || (associatedBrand ? normalize(associatedBrand.industry).includes(target) : false);
-        });
-        if (!matchesIndustry) return false;
-      }
-      if (filters.contentTypes.length > 0 && !filters.contentTypes.some((contentType) => contentTypeTokens(offer).includes(contentType))) return false;
-      if (filters.verifiedOnly && associatedBrand && !associatedBrand.isVerified) return false;
-      if (filters.fourStarPlus && associatedBrand && associatedBrand.rating < 4) return false;
-      if (filters.paysOnTime && associatedBrand?.paysOnTime === false) return false;
-      return true;
-    });
-
-    return nextResults.sort((left, right) => {
-      if (currentSort === 'budget-high') return right.budgetMax - left.budgetMax;
-      if (currentSort === 'top-rated') {
-        const leftBrand = Array.from(brandMap.values()).find((brand) => brand.id === left.brandId || normalize(brand.name) === normalize(left.brandName));
-        const rightBrand = Array.from(brandMap.values()).find((brand) => brand.id === right.brandId || normalize(brand.name) === normalize(right.brandName));
-        return (rightBrand?.rating ?? 0) - (leftBrand?.rating ?? 0);
-      }
-      return right.updatedAt.getTime() - left.updatedAt.getTime();
-    });
+    return results.offers
+      .filter((offer) => {
+        const offerBudget = Math.round((offer.budgetMin + offer.budgetMax) / 2);
+        const assoc = Array.from(brandMap.values()).find((b) => b.id === offer.brandId || normalize(b.name) === normalize(offer.brandName));
+        if (brandFocus && assoc && assoc.id !== brandFocus) return false;
+        if (brandFocus && !assoc && offer.brandId !== brandFocus) return false;
+        if (offerBudget > 0 && (offerBudget < budgetMin || offerBudget > budgetMax)) return false;
+        if (filters.industries.length > 0) {
+          const matches = filters.industries.some((ind) => {
+            const target = normalize(ind);
+            return offerIndustryTokens(offer).some((t) => normalize(t).includes(target)) || (assoc ? normalize(assoc.industry).includes(target) : false);
+          });
+          if (!matches) return false;
+        }
+        if (filters.contentTypes.length > 0 && !filters.contentTypes.some((ct) => contentTypeTokens(offer).includes(ct))) return false;
+        if (filters.verifiedOnly && assoc && !assoc.isVerified) return false;
+        if (filters.fourStarPlus && assoc && assoc.rating < 4) return false;
+        if (filters.paysOnTime && assoc?.paysOnTime === false) return false;
+        return true;
+      })
+      .sort((l, r) => {
+        if (currentSort === 'budget-high') return r.budgetMax - l.budgetMax;
+        if (currentSort === 'top-rated') {
+          const lb = Array.from(brandMap.values()).find((b) => b.id === l.brandId || normalize(b.name) === normalize(l.brandName));
+          const rb = Array.from(brandMap.values()).find((b) => b.id === r.brandId || normalize(b.name) === normalize(r.brandName));
+          return (rb?.rating ?? 0) - (lb?.rating ?? 0);
+        }
+        return r.updatedAt.getTime() - l.updatedAt.getTime();
+      });
   }, [brandFocus, brandMap, currentSort, filters, results.offers]);
 
   const filteredCreators = useMemo(() => {
     const [budgetMin, budgetMax] = filters.budgetRange;
-    const nextResults = results.creators.filter((creator) => {
-      const creatorBudget = Math.round(((creator.minPrice ?? 0) + (creator.maxPrice ?? creator.minPrice ?? 0)) / 2);
-      if (creatorBudget > 0 && (creatorBudget < budgetMin || creatorBudget > budgetMax)) return false;
-      if (!creatorMatchesIndustry(creator, filters.industries)) return false;
-      if (!creatorMatchesContentType(creator, filters.contentTypes)) return false;
-      if (filters.verifiedOnly && !creator.isVerified) return false;
-      return !filters.fourStarPlus || creator.rating >= 4;
-    });
-
-    return nextResults.sort((left, right) => {
-      if (currentSort === 'top-rated') return right.rating - left.rating;
-      if (currentSort === 'budget-high') return (right.maxPrice ?? right.minPrice ?? 0) - (left.maxPrice ?? left.minPrice ?? 0);
-      return right.totalFollowers - left.totalFollowers;
-    });
+    return results.creators
+      .filter((creator) => {
+        const budget = Math.round(((creator.minPrice ?? 0) + (creator.maxPrice ?? creator.minPrice ?? 0)) / 2);
+        if (budget > 0 && (budget < budgetMin || budget > budgetMax)) return false;
+        if (!creatorMatchesIndustry(creator, filters.industries)) return false;
+        if (!creatorMatchesContentType(creator, filters.contentTypes)) return false;
+        if (filters.verifiedOnly && !creator.isVerified) return false;
+        return !filters.fourStarPlus || creator.rating >= 4;
+      })
+      .sort((l, r) => {
+        if (currentSort === 'top-rated') return r.rating - l.rating;
+        if (currentSort === 'budget-high') return (r.maxPrice ?? r.minPrice ?? 0) - (l.maxPrice ?? l.minPrice ?? 0);
+        return r.totalFollowers - l.totalFollowers;
+      });
   }, [currentSort, filters, results.creators]);
 
   const activeOffersFromBrands = useMemo(
-    () => dedupeOffers(filteredBrands.flatMap((brand) => brand.activeOffers))
-      .filter((offer) => !brandFocus || offer.brandId === brandFocus || normalize(offer.brandName) === normalize(brandMap.get(brandFocus)?.name))
+    () => dedupeOffers(filteredBrands.flatMap((b) => b.activeOffers))
+      .filter((o) => !brandFocus || o.brandId === brandFocus || normalize(o.brandName) === normalize(brandMap.get(brandFocus)?.name))
       .slice(0, 4),
     [brandFocus, brandMap, filteredBrands],
   );
 
-  const counts = {
-    brands: filteredBrands.length,
-    offers: filteredOffers.length,
-    creators: filteredCreators.length,
-  };
-
+  const counts = { brands: filteredBrands.length, offers: filteredOffers.length, creators: filteredCreators.length };
   const focusedBrand = brandFocus ? brandMap.get(brandFocus) : undefined;
 
+  // ─── Sidebar ────────────────────────────────────────────────────────────────
+
+  const SidebarContent = (
+    <div className="space-y-7">
+      <div>
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Filters</p>
+      </div>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Industry</h2>
+        <div className="space-y-2.5">
+          {industryOptions.map((industry) => (
+            <label key={industry} className="flex cursor-pointer items-center gap-3 text-sm text-[#496159]">
+              <Checkbox
+                checked={filters.industries.includes(industry)}
+                onCheckedChange={() => toggleSelection('industries', industry)}
+                className="size-4 rounded-[3px] border-[#d1ddd6] data-[state=checked]:border-[#2d6b4e] data-[state=checked]:bg-[#2d6b4e]"
+              />
+              <span className={cn(filters.industries.includes(industry) && 'font-bold text-[#2d6b4e]')}>{industry}</span>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Brand reputation</h2>
+        <div className="space-y-2.5">
+          {[
+            { key: 'verifiedOnly', label: 'Verified only' },
+            { key: 'fourStarPlus', label: '4+ star rating' },
+            { key: 'paysOnTime', label: 'Pays on time' },
+          ].map((item) => (
+            <label key={item.key} className="flex cursor-pointer items-center gap-3 text-sm text-[#496159]">
+              <Checkbox
+                checked={filters[item.key as 'verifiedOnly' | 'fourStarPlus' | 'paysOnTime']}
+                onCheckedChange={() =>
+                  setFilters((c) => ({ ...c, [item.key]: !c[item.key as 'verifiedOnly' | 'fourStarPlus' | 'paysOnTime'] }))
+                }
+                className="size-4 rounded-[3px] border-[#d1ddd6] data-[state=checked]:border-[#2d6b4e] data-[state=checked]:bg-[#2d6b4e]"
+              />
+              <span className={cn((filters[item.key as 'verifiedOnly' | 'fourStarPlus' | 'paysOnTime'] as boolean) && 'font-bold text-[#2d6b4e]')}>
+                {item.label}
+              </span>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Budget range</h2>
+        <div className="space-y-4 pr-2">
+          <Slider
+            value={filters.budgetRange}
+            min={budgetBounds[0]}
+            max={budgetBounds[1]}
+            step={5000}
+            minStepsBetweenThumbs={1}
+            onValueChange={(value) => {
+              if (value.length !== 2) return;
+              setFilters((c) => ({ ...c, budgetRange: [value[0], value[1]] }));
+            }}
+            className="[&_[data-slot=slider-range]]:bg-[#2d6b4e] [&_[data-slot=slider-thumb]]:border-[#2d6b4e] [&_[data-slot=slider-thumb]]:bg-[#2d6b4e] [&_[data-slot=slider-track]]:bg-[#e8ede9]"
+          />
+          <div className="flex items-center justify-between text-xs text-[#87938b]">
+            <span>{formatShortRs(filters.budgetRange[0])}</span>
+            <span>{formatShortRs(filters.budgetRange[1])}</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Content type</h2>
+        <div className="space-y-2.5">
+          {contentTypeOptions.map((contentType) => (
+            <label key={contentType} className="flex cursor-pointer items-center gap-3 text-sm text-[#496159]">
+              <Checkbox
+                checked={filters.contentTypes.includes(contentType)}
+                onCheckedChange={() => toggleSelection('contentTypes', contentType)}
+                className="size-4 rounded-[3px] border-[#d1ddd6] data-[state=checked]:border-[#2d6b4e] data-[state=checked]:bg-[#2d6b4e]"
+              />
+              <span className={cn(filters.contentTypes.includes(contentType) && 'font-bold text-[#2d6b4e]')}>{contentType}</span>
+            </label>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+
+  // ─── Render ─────────────────────────────────────────────────────────────────
+
   return (
-    <div className="min-h-[calc(100vh-5.25rem)] bg-[#080909] text-white">
-      <div className="mx-auto grid max-w-[1600px] lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="hidden border-r border-white/8 bg-[#090a0a] lg:block">
-          <div className="sticky top-[5.25rem] space-y-8 px-5 py-6">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/48">Filters</p>
-            </div>
+    <div className="min-h-[calc(100vh-5.25rem)] bg-[#fbfaf5] text-[#1e3d2e]">
+      <div className="mx-auto grid max-w-[1600px] lg:grid-cols-[272px_minmax(0,1fr)]">
 
-            <section className="space-y-4">
-              <div className="space-y-1">
-                <h2 className="text-base font-semibold text-white/72">Industry</h2>
-              </div>
-              <div className="space-y-3">
-                {industryOptions.map((industry) => (
-                  <label key={industry} className="flex cursor-pointer items-center gap-3 text-sm text-white/78">
-                    <Checkbox
-                      checked={filters.industries.includes(industry)}
-                      onCheckedChange={() => toggleSelection('industries', industry)}
-                      className="size-5 rounded-[4px] border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
-                    />
-                    <span className={cn(filters.industries.includes(industry) && 'text-emerald-300')}>{industry}</span>
-                  </label>
-                ))}
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <h2 className="text-base font-semibold text-white/72">Brand reputation</h2>
-              <div className="space-y-3">
-                {[
-                  { key: 'verifiedOnly', label: 'Verified only' },
-                  { key: 'fourStarPlus', label: '4+ star rating' },
-                  { key: 'paysOnTime', label: 'Pays on time' },
-                ].map((item) => (
-                  <label key={item.key} className="flex cursor-pointer items-center gap-3 text-sm text-white/78">
-                    <Checkbox
-                      checked={filters[item.key as 'verifiedOnly' | 'fourStarPlus' | 'paysOnTime']}
-                      onCheckedChange={() =>
-                        setFilters((current) => ({
-                          ...current,
-                          [item.key]: !current[item.key as 'verifiedOnly' | 'fourStarPlus' | 'paysOnTime'],
-                        }))
-                      }
-                      className="size-5 rounded-[4px] border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
-                    />
-                    <span className={cn(filters[item.key as 'verifiedOnly' | 'fourStarPlus' | 'paysOnTime'] as boolean && 'text-emerald-300')}>
-                      {item.label}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <h2 className="text-base font-semibold text-white/72">Budget range</h2>
-              <div className="space-y-4 pr-2">
-                <Slider
-                  value={filters.budgetRange}
-                  min={budgetBounds[0]}
-                  max={budgetBounds[1]}
-                  step={5000}
-                  minStepsBetweenThumbs={1}
-                  onValueChange={(value) => {
-                    if (value.length !== 2) return;
-                    setFilters((current) => ({
-                      ...current,
-                      budgetRange: [value[0], value[1]],
-                    }));
-                  }}
-                  className="[&_[data-slot=slider-range]]:bg-emerald-400 [&_[data-slot=slider-thumb]]:border-emerald-400 [&_[data-slot=slider-thumb]]:bg-emerald-400 [&_[data-slot=slider-track]]:bg-white/14"
-                />
-                <div className="flex items-center justify-between text-sm text-white/48">
-                  <span>{formatShortRs(filters.budgetRange[0])}</span>
-                  <span>{formatShortRs(filters.budgetRange[1])}</span>
-                </div>
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <h2 className="text-base font-semibold text-white/72">Content type</h2>
-              <div className="space-y-3">
-                {contentTypeOptions.map((contentType) => (
-                  <label key={contentType} className="flex cursor-pointer items-center gap-3 text-sm text-white/78">
-                    <Checkbox
-                      checked={filters.contentTypes.includes(contentType)}
-                      onCheckedChange={() => toggleSelection('contentTypes', contentType)}
-                      className="size-5 rounded-[4px] border-white/18 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
-                    />
-                    <span className={cn(filters.contentTypes.includes(contentType) && 'text-emerald-300')}>{contentType}</span>
-                  </label>
-                ))}
-              </div>
-            </section>
+        {/* Desktop sidebar */}
+        <aside className="hidden border-r border-[#d1ddd6] bg-white lg:block">
+          <div className="sticky top-[5.25rem] px-5 py-6">
+            {SidebarContent}
           </div>
         </aside>
 
-        <main className="min-w-0 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
+        <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-8">
           <div className="space-y-5">
-            <div className="flex flex-col gap-4 border-b border-white/8 pb-5 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-white/50">
-                <h1 className="text-lg font-semibold text-white/58 md:text-xl">
-                  Showing results for <span className="font-semibold text-white">“{searchTerm}”</span>
-                </h1>
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span>Sort:</span>
-                  {SORT_OPTIONS.map((option) => (
+
+            {/* Heading + sort */}
+            <div className="flex flex-col gap-4 border-b border-[#d1ddd6] pb-5 xl:flex-row xl:items-center xl:justify-between">
+              <h1 className="text-lg font-extrabold tracking-[-0.03em] text-[#87938b]">
+                Results for <span className="text-[#1e3d2e]">"{searchTerm}"</span>
+              </h1>
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="text-xs font-bold uppercase tracking-widest text-[#7a8f82]">Sort:</span>
+                {SORT_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => updateParams({ sort: option.value })}
+                    className={cn(
+                      'rounded-lg border px-3.5 py-1.5 text-sm font-semibold transition',
+                      currentSort === option.value
+                        ? 'border-[#2d6b4e] bg-[#e4f1e8] text-[#1e3d2e]'
+                        : 'border-[#d1ddd6] text-[#87938b] hover:border-[#b0c5ba] hover:text-[#1e3d2e]',
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Mobile quick filters */}
+            <div className="lg:hidden">
+              <div className="rounded-[1.4rem] border border-[#d1ddd6] bg-white p-5 shadow-[0_8px_28px_rgba(38,70,50,0.06)]">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Quick refine</p>
+                    <p className="text-base font-extrabold text-[#1e3d2e]">Filters</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="rounded-full border border-[#d1ddd6] px-3 py-1 text-xs font-bold text-[#87938b] transition-colors hover:border-[#b0c5ba] hover:text-[#1e3d2e]"
+                  >
+                    Reset
+                  </button>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {industryOptions.slice(0, 4).map((industry) => (
                     <button
-                      key={option.value}
+                      key={industry}
                       type="button"
-                      onClick={() => updateParams({ sort: option.value, brand: currentTab === 'brands' ? brandFocus || null : brandFocus || null })}
+                      onClick={() => toggleSelection('industries', industry)}
                       className={cn(
-                        'rounded-lg border px-4 py-2 text-sm font-medium transition',
-                        currentSort === option.value
-                          ? 'border-emerald-500/40 bg-emerald-500/12 text-emerald-300'
-                          : 'border-white/10 text-white/58 hover:border-white/20 hover:text-white',
+                        'rounded-xl border px-4 py-2.5 text-left text-sm font-medium transition',
+                        filters.industries.includes(industry)
+                          ? 'border-[#2d6b4e] bg-[#e4f1e8] text-[#1e3d2e]'
+                          : 'border-[#d1ddd6] text-[#87938b] hover:border-[#b0c5ba] hover:text-[#1e3d2e]',
                       )}
                     >
-                      {option.label}
+                      {industry}
                     </button>
                   ))}
                 </div>
               </div>
             </div>
 
-            <div className="lg:hidden">
-              <Card className="rounded-xl border-white/8 bg-white/[0.04] text-white shadow-none">
-                <CardContent className="space-y-4 p-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm uppercase tracking-[0.18em] text-white/40">Filters</p>
-                      <p className="text-lg font-semibold text-white">Quick refine</p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={clearAllFilters}
-                      className="rounded-lg text-white/55 hover:bg-white/8 hover:text-white"
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {industryOptions.slice(0, 4).map((industry) => (
-                      <button
-                        key={industry}
-                        type="button"
-                        onClick={() => toggleSelection('industries', industry)}
-                        className={cn(
-                          'rounded-lg border px-4 py-3 text-left text-sm transition',
-                          filters.industries.includes(industry)
-                            ? 'border-emerald-500/40 bg-emerald-500/12 text-emerald-300'
-                            : 'border-white/10 text-white/62 hover:border-white/18 hover:text-white',
-                        )}
-                      >
-                        {industry}
-                      </button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-6 border-b border-white/8 pb-5">
+            {/* Tab strip */}
+            <div className="flex items-center gap-6 border-b border-[#d1ddd6] pb-0">
               {(['brands', 'offers', 'creators'] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
-                  onClick={() => updateParams({ tab, brand: tab === 'offers' ? brandFocus || null : tab === 'brands' ? brandFocus || null : null })}
+                  onClick={() => updateParams({ tab, brand: tab === 'brands' || tab === 'offers' ? brandFocus || null : null })}
                   className={cn(
-                    'relative inline-flex items-center gap-3 pb-2 text-lg font-semibold tracking-[-0.01em] transition',
-                    currentTab === tab ? 'text-emerald-300' : 'text-white/45 hover:text-white/78',
+                    'relative inline-flex items-center gap-2 pb-3 text-sm font-bold tracking-[-0.01em] transition',
+                    currentTab === tab ? 'text-[#2d6b4e]' : 'text-[#87938b] hover:text-[#496159]',
                   )}
                 >
                   <span>{titleCase(tab)}</span>
                   <ResultCountBadge count={counts[tab]} />
                   <span
                     className={cn(
-                      'absolute inset-x-0 -bottom-[21px] h-[3px] rounded-full transition',
-                      currentTab === tab ? 'bg-emerald-400' : 'bg-transparent',
+                      'absolute inset-x-0 -bottom-px h-[2.5px] rounded-full transition',
+                      currentTab === tab ? 'bg-[#2d6b4e]' : 'bg-transparent',
                     )}
                   />
                 </button>
               ))}
             </div>
 
-
-
-            {focusedBrand && currentTab === 'offers' ? (
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] px-5 py-4 text-white/76">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.16em] text-emerald-200/55">Focused brand</p>
-                    <p className="text-lg font-semibold text-white">Showing offers from {focusedBrand.name}</p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => updateParams({ brand: null })}
-                    className="rounded-lg text-white/62 hover:bg-white/8 hover:text-white"
-                  >
-                    Clear focus
-                  </Button>
+            {/* Focused brand banner */}
+            {focusedBrand && currentTab === 'offers' && (
+              <div className="flex flex-col gap-2 rounded-2xl border border-[#c2dac9] bg-[#e4f1e8] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Focused brand</p>
+                  <p className="text-base font-extrabold text-[#1e3d2e]">Showing offers from {focusedBrand.name}</p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => updateParams({ brand: null })}
+                  className="h-8 self-start rounded-full border border-[#d1ddd6] bg-white px-4 text-sm font-bold text-[#87938b] transition-colors hover:border-[#b0c5ba] hover:text-[#1e3d2e] sm:self-auto"
+                >
+                  Clear focus
+                </button>
               </div>
-            ) : null}
+            )}
 
+            {/* Results */}
             {isLoading ? (
               <SearchResultsSkeleton />
             ) : hasError ? (
               <EmptyState
-                title="We couldn’t load search results"
-                description="The search experience is ready, but the results service didn’t respond this time. Please try again in a moment."
+                title="Couldn't load results"
+                description="The search service didn't respond. Please try again in a moment."
               />
             ) : currentTab === 'brands' ? (
               filteredBrands.length === 0 ? (
-                <EmptyState
-                  title="No brands match these filters"
-                  description="Try removing one or two filters to see more brand opportunities for this search."
-                  onReset={clearAllFilters}
-                />
+                <EmptyState title="No brands match these filters" description="Try removing one or two filters to see more brand opportunities." onReset={clearAllFilters} />
               ) : (
-                <div className="space-y-5">
+                <div className="space-y-4">
                   {filteredBrands.map((brand) => (
                     <BrandResultCard
                       key={brand.id}
@@ -914,44 +847,33 @@ export function CreatorGlobalSearchResults() {
                       onClearBrandFocus={() => updateParams({ brand: null })}
                     />
                   ))}
-
-                  {activeOffersFromBrands.length > 0 ? (
-                    <section className="space-y-4 pt-3">
-                      <div>
-                        <p className="text-[1.55rem] font-semibold tracking-[-0.03em] text-white/36">Active offers from these brands</p>
-                      </div>
-                      <div className="space-y-4">
+                  {activeOffersFromBrands.length > 0 && (
+                    <section className="space-y-4 pt-2">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Active offers from these brands</p>
+                      <div className="space-y-3">
                         {activeOffersFromBrands.map((offer) => {
-                          const brand = filteredBrands.find((entry) => entry.id === offer.brandId || normalize(entry.name) === normalize(offer.brandName));
+                          const brand = filteredBrands.find((b) => b.id === offer.brandId || normalize(b.name) === normalize(offer.brandName));
                           return <OfferResultCard key={offer.id} offer={offer} brand={brand} compact />;
                         })}
                       </div>
                     </section>
-                  ) : null}
+                  )}
                 </div>
               )
             ) : currentTab === 'offers' ? (
               filteredOffers.length === 0 ? (
-                <EmptyState
-                  title="No offers match these filters"
-                  description="Try a broader budget or remove a content type to surface more open campaigns."
-                  onReset={clearAllFilters}
-                />
+                <EmptyState title="No offers match these filters" description="Try a broader budget or remove a content type to surface more open campaigns." onReset={clearAllFilters} />
               ) : (
                 <div className="space-y-4">
                   {filteredOffers.map((offer) => {
-                    const brand = filteredBrands.find((entry) => entry.id === offer.brandId || normalize(entry.name) === normalize(offer.brandName))
-                      ?? results.brands.find((entry) => entry.id === offer.brandId || normalize(entry.name) === normalize(offer.brandName));
+                    const brand = filteredBrands.find((b) => b.id === offer.brandId || normalize(b.name) === normalize(offer.brandName))
+                      ?? results.brands.find((b) => b.id === offer.brandId || normalize(b.name) === normalize(offer.brandName));
                     return <OfferResultCard key={offer.id} offer={offer} brand={brand} />;
                   })}
                 </div>
               )
             ) : filteredCreators.length === 0 ? (
-              <EmptyState
-                title="No creators match these filters"
-                description="Broaden the industry or content type filters to discover more creator matches."
-                onReset={clearAllFilters}
-              />
+              <EmptyState title="No creators match these filters" description="Broaden the industry or content type filters to discover more creator matches." onReset={clearAllFilters} />
             ) : (
               <div className="space-y-4">
                 {filteredCreators.map((creator) => (
@@ -960,15 +882,9 @@ export function CreatorGlobalSearchResults() {
               </div>
             )}
 
-            {!isLoading && !hasError && currentTab === 'brands' && counts.brands > 0 ? (
-              <div className="rounded-xl border border-white/8 bg-white/[0.04] px-5 py-4 text-sm text-white/48">
-                Search blends real offer results with curated brand context so creators can move from discovery to application without losing the original feed experience.
-              </div>
-            ) : null}
           </div>
         </main>
       </div>
     </div>
   );
 }
-

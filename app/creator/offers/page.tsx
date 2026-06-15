@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { DollarSign, Layers, Search, SlidersHorizontal, X } from 'lucide-react';
-import { CreatorGlobalSearchResults } from '@/components/search/creator-global-search-results';
 import { Input } from '@/components/ui/input';
 import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -643,25 +642,5 @@ function CreatorOffersFeedPage() {
 }
 
 export default function CreatorOffersPage() {
-  const searchParams = useSearchParams();
-  const searchTerm = searchParams.get('search')?.trim() ?? '';
-  const isSearchMode = Boolean(searchTerm);
-
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent('creator-search-layout-mode', {
-      detail: { hideSidebar: isSearchMode },
-    }));
-
-    return () => {
-      window.dispatchEvent(new CustomEvent('creator-search-layout-mode', {
-        detail: { hideSidebar: false },
-      }));
-    };
-  }, [isSearchMode]);
-
-  if (isSearchMode) {
-    return <CreatorGlobalSearchResults />;
-  }
-
   return <CreatorOffersFeedPage />;
 }
