@@ -70,13 +70,13 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#fbfaf5]">
       <Navbar />
       <main className="pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
         {isProtectedCreatorRoute ? (
           <>
             {!hideCreatorWorkspacePanel && (
-              <div className="px-4 py-4 lg:hidden">
+              <div className="bg-[#fbfaf5] px-4 py-3 lg:hidden">
                 <CreatorSidebarDrawer />
               </div>
             )}

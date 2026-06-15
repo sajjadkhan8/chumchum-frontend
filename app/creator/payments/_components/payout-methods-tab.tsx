@@ -42,14 +42,16 @@ export function PayoutMethodsTab({
   onDeleteMethod,
   maskAccountDetails,
 }: PayoutMethodsTabProps) {
+  const panelClass = "rounded-[1.6rem] border border-[#dce3dc] bg-white shadow-[0_18px_55px_rgba(38,70,50,0.07)]";
+
   if (payoutMethods.length === 0) {
     return (
-      <Card>
+      <Card className={panelClass}>
         <CardContent className="pt-6">
-          <div className="text-center">
-            <CreditCard className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
-            <h3 className="font-semibold">No payout methods added yet</h3>
-            <p className="mt-1 mb-4 text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-dashed border-[#ccd7ce] bg-[#fbfaf5] px-5 py-12 text-center">
+            <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#eef2eb] text-[#185c39]"><CreditCard className="size-5" /></span>
+            <h3 className="mt-4 text-sm font-extrabold text-[#173b2a]">No payout methods added yet</h3>
+            <p className="mb-4 mt-1 text-xs text-[#718077]">
               Add your first payout method to start receiving earnings
             </p>
             <AddPayoutMethodModal
@@ -67,9 +69,12 @@ export function PayoutMethodsTab({
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Connected Methods</CardTitle>
+    <Card className={panelClass}>
+      <CardHeader className="flex flex-row items-end justify-between gap-4 pb-4">
+        <div>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Where money lands</p>
+          <CardTitle className="mt-1.5 text-xl font-extrabold tracking-[-0.035em] text-[#173b2a]">Connected methods</CardTitle>
+        </div>
         <AddPayoutMethodModal
           isOpen={showAddMethodDialog}
           onOpenChange={onOpenAddMethodDialogChange}
@@ -87,39 +92,39 @@ export function PayoutMethodsTab({
           return (
             <div
               key={method.id}
-              className={`cursor-pointer rounded-lg border transition-all ${
+              className={`cursor-pointer rounded-2xl border transition-all ${
                 isExpanded
-                  ? "border-green-400 bg-green-50 dark:border-green-600 dark:bg-green-950/20"
-                  : "border-border hover:border-border/80"
+                  ? "border-[#185c39] bg-[#eef2eb]"
+                  : "border-[#dce3dc] bg-[#fbfaf5] hover:border-[#b8c8bb]"
               }`}
               onClick={() => onToggleMethodExpanded(method.id)}
             >
-              <div className="flex items-center gap-3 p-4">
+              <div className="flex items-center gap-3 p-3.5 sm:p-4">
                 <BrandLogo alt={logo.alt} domain={logo.domain} fallback={logo.fallback} />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="font-medium">{method.displayName}</p>
+                    <p className="text-sm font-extrabold text-[#173b2a]">{method.displayName}</p>
                     {method.isDefault && (
-                      <Badge variant="default" className="text-xs">
+                      <Badge className="rounded-full bg-[#185c39] px-2 py-0.5 text-[9px] font-extrabold text-white">
                         Default
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="mt-0.5 text-xs text-[#718077]">
                     {maskAccountDetails(method.type, method.accountDetails)} · Instant payout
                   </p>
                 </div>
                 <div className="flex-shrink-0">
                   {isExpanded ? (
-                    <Check className="h-5 w-5 text-green-600" />
+                    <Check className="size-4 text-[#185c39]" />
                   ) : (
-                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    <ChevronDown className="size-4 text-[#87938b]" />
                   )}
                 </div>
               </div>
 
               {isExpanded && (
-                <div className="space-y-3 border-t border-green-200 bg-green-50/50 p-4 dark:border-green-900/50 dark:bg-green-950/30">
+                <div className="space-y-3 border-t border-[#cbd7cd] bg-white/70 p-4">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground">Account Holder</p>
@@ -184,4 +189,3 @@ export function PayoutMethodsTab({
     </Card>
   );
 }
-

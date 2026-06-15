@@ -105,7 +105,7 @@ function CreatorSidebarNav({ compact = false, closeOnNavigate = false, onNavigat
     <div className={cn('space-y-6', compact && 'space-y-5')}>
       {navGroups.map((group) => (
         <div key={group.title} className="space-y-2">
-          <p className="px-2 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
+          <p className="px-3 text-[0.62rem] font-extrabold uppercase tracking-[0.18em] text-[#a16d16]">
             {group.title}
           </p>
           <div className="space-y-1">
@@ -125,17 +125,17 @@ function CreatorSidebarNav({ compact = false, closeOnNavigate = false, onNavigat
                   href={item.href}
                   onClick={onNavigate}
                   className={cn(
-                    'flex items-center gap-3 rounded-2xl border border-transparent px-3 text-base transition-all',
+                    'flex items-center gap-3 rounded-xl border border-transparent px-3 text-sm font-bold transition-all',
                     compact ? 'min-h-11 py-2.5' : 'py-2.5',
                     isActive
-                      ? 'border-emerald-500/20 bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 font-medium text-emerald-400'
-                      : 'text-muted-foreground hover:border-border/60 hover:bg-muted/40 hover:text-foreground'
+                      ? 'border-[#185c39] bg-[#185c39] text-white shadow-sm'
+                      : 'text-[#69766e] hover:border-[#dce3dc] hover:bg-white hover:text-[#185c39]'
                   )}
                 >
-                  <Icon className={cn('h-4 w-4 shrink-0', isActive && 'text-emerald-400')} />
+                  <Icon className={cn('h-4 w-4 shrink-0', isActive && 'text-[#f0c56e]')} />
                   <span className="flex-1">{item.label}</span>
                   {item.href === '/creator/orders' && ordersBadgeCount > 0 && (
-                    <span className="rounded-full bg-emerald-600/25 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
+                    <span className="rounded-full bg-[#e6aa38] px-2.5 py-0.5 text-[10px] font-extrabold text-[#173b2a]">
                       {ordersBadgeCount > 99 ? '99+' : ordersBadgeCount}
                     </span>
                   )}
@@ -161,7 +161,7 @@ function CreatorSidebarNav({ compact = false, closeOnNavigate = false, onNavigat
 
 export function CreatorSidebar() {
   return (
-    <aside className="sticky top-[5.25rem] hidden h-[calc(100vh-5.25rem)] w-[22.5rem] shrink-0 overflow-y-auto overscroll-contain border-r border-border/50 bg-background px-5 py-7 xl:w-[23rem] lg:block">
+    <aside className="sticky top-[5.25rem] hidden h-[calc(100vh-5.25rem)] w-[17rem] shrink-0 overflow-y-auto overscroll-contain border-r border-[#dce3dc] bg-[#f4f2e9] px-4 py-6 xl:w-[18rem] lg:block">
       <CreatorSidebarNav />
     </aside>
   );
@@ -176,7 +176,7 @@ export function CreatorSidebarDrawer() {
           Menu
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[90vw] max-w-sm overflow-y-auto p-0">
+      <SheetContent side="left" className="w-[90vw] max-w-sm overflow-y-auto border-[#dce3dc] bg-[#f4f2e9] p-0">
         <div className="p-4 pb-safe pt-5">
           <CreatorSidebarNav compact closeOnNavigate />
         </div>

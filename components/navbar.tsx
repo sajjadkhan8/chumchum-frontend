@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Menu, Bell, MessageCircle, User, LogOut, Bookmark, Building2, Moon, Sun, Shield, Settings, Share2, Star, CircleHelp, X } from 'lucide-react';
+import { Search, Menu, Bell, MessageCircle, User, LogOut, Bookmark, Building2, Moon, Sun, Shield, Settings, Share2, Star, CircleHelp, X, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -246,7 +246,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      className={cn(
+        "sticky top-0 z-50 w-full border-b backdrop-blur",
+        isCreator ? "border-[#dce3dc] bg-[#fbfaf5]/95" : "border-border bg-background/95 supports-[backdrop-filter]:bg-background/60"
+      )}
     >
       <div className={cn(
         'mx-auto flex items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:gap-6 lg:px-8',
@@ -255,7 +258,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
         {/* Logo */}
         <Link href="/" className="flex min-h-11 items-center gap-3">
           <ZingZingLogo variant="icon" size={40} className="h-10 w-10" />
-          {isCreator && <span className="hidden text-2xl font-semibold tracking-tight text-foreground lg:inline">ZingZing</span>}
+          {isCreator && <span className="hidden text-xl font-extrabold tracking-[-0.04em] text-[#173b2a] lg:inline">Zing<span className="text-[#e3a52f]">Zing</span></span>}
         </Link>
 
         {/* Desktop Navigation */}
@@ -280,12 +283,16 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
         {/* Creator Global Search */}
         {showCreatorUtilityTopbar && (
           <div className="mx-auto hidden w-full max-w-2xl flex-1 px-4 md:block">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="group relative rounded-full border border-[#d6ded7] bg-[#f4f2e9] p-1 transition-[border-color,box-shadow,background-color] focus-within:border-[#185c39] focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(24,92,57,0.10)]">
+              <span className="absolute left-3 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full bg-white text-[#185c39] shadow-sm transition group-focus-within:bg-[#185c39] group-focus-within:text-white">
+                <Search className="size-4" />
+              </span>
               <Input
-                type="search"
-                placeholder="Search offers, brands, or creators"
-                className="h-11 rounded-md border-border/60 bg-muted/25 pl-10 pr-10 text-sm"
+                type="text"
+                role="searchbox"
+                aria-label="Search offers, brands, or creators"
+                placeholder="Search offers, brands, or creators..."
+                className="h-10 rounded-full border-0 bg-transparent pl-11 pr-11 text-sm font-semibold text-[#173b2a] shadow-none placeholder:font-medium placeholder:text-[#87938b] focus-visible:border-0 focus-visible:ring-0"
                 value={creatorGlobalSearch}
                 onChange={(e) => setCreatorGlobalSearch(e.target.value)}
                 onKeyDown={(e) => {
@@ -298,7 +305,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               {creatorGlobalSearch.trim() && (
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+                  className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full text-[#718077] transition hover:bg-[#f7e8c8] hover:text-[#8b5e12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185c39]/25"
                   aria-label="Clear creator search"
                   onClick={() => {
                     setCreatorGlobalSearch('');
@@ -432,25 +439,43 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className={cn('relative h-10 w-10 rounded-full', isCreator && 'h-10 w-10')}>
-                    <Avatar className={cn('h-9 w-9', isCreator && 'h-9 w-9')}>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      'relative h-10 w-10 rounded-full',
+                      isCreator && 'border border-transparent bg-[#eef2eb] p-0 transition hover:border-[#b8c8bb] hover:bg-white data-[state=open]:border-[#185c39] data-[state=open]:bg-white data-[state=open]:shadow-[0_0_0_4px_rgba(24,92,57,0.10)]'
+                    )}
+                    aria-label="Open creator profile menu"
+                  >
+                    <Avatar className={cn('h-9 w-9', isCreator && 'h-8 w-8')}>
                       <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback className={cn(isCreator && 'bg-emerald-700 text-emerald-50')}>{user.name.charAt(0)}</AvatarFallback>
+                      <AvatarFallback className={cn(isCreator && 'bg-[#185c39] text-sm font-extrabold text-white')}>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
+                    {isCreator && <span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-[#fbfaf5] bg-[#e6aa38]" aria-hidden="true" />}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className={cn('w-56', isCreator && 'w-[23.5rem] rounded-xl border-border/70 p-0')} align="end">
-                  <div className={cn('flex items-center gap-2 p-2', isCreator && 'gap-3 p-5')}>
-                    <Avatar className={cn('h-10 w-10', isCreator && 'h-12 w-12')}>
+                <DropdownMenuContent
+                  className={cn(
+                    'w-56',
+                    isCreator && 'w-[18rem] rounded-2xl border-[#dce3dc] bg-[#fbfaf5] p-1.5 shadow-[0_18px_50px_rgba(38,70,50,0.16)]'
+                  )}
+                  align="end"
+                  sideOffset={8}
+                >
+                  <div className={cn('flex items-center gap-2 p-2', isCreator && 'rounded-xl bg-[#173b2a] px-3 py-2.5 text-white')}>
+                    <Avatar className={cn('h-10 w-10', isCreator && 'size-9 border border-white/15')}>
                       <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback className={cn(isCreator && 'bg-emerald-700 text-emerald-50')}>{user.name.charAt(0)}</AvatarFallback>
+                      <AvatarFallback className={cn(isCreator && 'bg-[#214b36] text-sm font-extrabold text-white')}>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col">
-                      <p className={cn('text-sm font-medium', isCreator && 'text-2xl')}>{user.name}</p>
-                      <p className={cn('text-xs text-muted-foreground capitalize', isCreator && 'text-base capitalize')}>{creatorRoleLabel}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className={cn('text-sm font-medium', isCreator && 'truncate text-sm font-extrabold tracking-[-0.01em] text-white')}>{user.name}</p>
+                      <p className={cn('text-xs text-muted-foreground capitalize', isCreator && 'text-[9px] font-bold uppercase tracking-[0.12em] text-[#f0c56e]')}>{creatorRoleLabel}</p>
                     </div>
+                    {isCreator && (
+                      <span className="size-2 rounded-full bg-[#e6aa38]" title="Online" aria-label="Online" />
+                    )}
                   </div>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className={cn(isCreator && 'mx-1.5 my-1.5 bg-[#dce3dc]')} />
                   {profileMenu.map((item) => {
                     const Icon = item.icon;
                     const isAmbassadorEntry = isCreator && item.accent === 'amber';
@@ -459,27 +484,32 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                         asChild
                         key={item.label}
                         className={cn(
-                          isCreator && 'mx-2 my-1 rounded-xl px-5 py-3 text-base data-[highlighted]:bg-muted/40',
-                          isAmbassadorEntry && 'text-amber-400 data-[highlighted]:text-amber-300'
+                          isCreator && 'rounded-lg px-2 py-1.5 text-xs font-bold text-[#526259] data-[highlighted]:bg-[#eef2eb] data-[highlighted]:text-[#185c39]',
+                          isAmbassadorEntry && 'bg-[#f7e8c8]/65 text-[#8b5e12] data-[highlighted]:bg-[#f7e8c8] data-[highlighted]:text-[#73541e]'
                         )}
                       >
-                        <Link href={item.href} className="flex w-full items-center justify-between gap-3">
-                          <span className="flex items-center">
-                            <Icon className={cn('mr-2 h-4 w-4', isCreator && 'h-5 w-5')} />
-                            {item.label}
+                        <Link href={item.href} className="flex w-full items-center justify-between gap-2">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className={cn('grid size-7 shrink-0 place-items-center rounded-lg', isAmbassadorEntry ? 'bg-white/75 text-[#9b6712]' : 'bg-white text-[#185c39]')}>
+                              <Icon className="size-3.5" />
+                            </span>
+                            <span className="truncate">{item.label}</span>
                           </span>
                           {item.badge && (
-                            <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-sm font-semibold text-amber-300">
+                            <span className="rounded-full bg-white/75 px-1.5 py-0.5 text-[9px] font-extrabold text-[#8b5e12]">
                               {item.badge}
                             </span>
                           )}
+                          {!item.badge && isCreator && <ChevronRight className="size-3 text-[#9aa49d]" />}
                         </Link>
                       </DropdownMenuItem>
                     );
                   })}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className={cn('text-destructive', isCreator && 'mx-2 my-1 rounded-xl px-5 py-3 text-base data-[highlighted]:bg-muted/40')}>
-                    <LogOut className={cn('mr-2 h-4 w-4', isCreator && 'h-5 w-5')} />
+                  <DropdownMenuSeparator className={cn(isCreator && 'mx-1.5 my-1.5 bg-[#dce3dc]')} />
+                  <DropdownMenuItem onClick={handleLogout} className={cn('text-destructive', isCreator && 'rounded-lg px-2 py-1.5 text-xs font-bold text-[#9d3c36] data-[highlighted]:bg-[#f9ebe8] data-[highlighted]:text-[#8b302b]')}>
+                    <span className={cn(isCreator && 'grid size-7 place-items-center rounded-lg bg-[#f9ebe8]')}>
+                      <LogOut className={cn('h-3.5 w-3.5', !isCreator && 'mr-2')} />
+                    </span>
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>

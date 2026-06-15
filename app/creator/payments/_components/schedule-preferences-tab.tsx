@@ -22,11 +22,16 @@ export function SchedulePreferencesTab({
   isSaving,
   onSavePreferences,
 }: SchedulePreferencesTabProps) {
+  const panelClass = "rounded-[1.6rem] border border-[#dce3dc] bg-white shadow-[0_18px_55px_rgba(38,70,50,0.07)]";
+  const inputClass = "h-11 rounded-xl border-[#d6ded7] bg-[#fbfaf5] shadow-none focus-visible:border-[#185c39] focus-visible:ring-[#185c39]/15";
+  const sectionTitle = "text-xl font-extrabold tracking-[-0.035em] text-[#173b2a]";
+
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Payout Schedule</CardTitle>
+      <Card className={panelClass}>
+        <CardHeader className="pb-4">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Timing</p>
+          <CardTitle className={sectionTitle}>Payout schedule</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -41,7 +46,7 @@ export function SchedulePreferencesTab({
                   }))
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className={inputClass}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -63,7 +68,7 @@ export function SchedulePreferencesTab({
                   }))
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className={inputClass}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -78,9 +83,10 @@ export function SchedulePreferencesTab({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Information</CardTitle>
+      <Card className={panelClass}>
+        <CardHeader className="pb-4">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Identity</p>
+          <CardTitle className={sectionTitle}>Account information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -88,6 +94,7 @@ export function SchedulePreferencesTab({
             <Input
               placeholder="Your full name"
               value={payoutPreferences.accountHolderName}
+              className={inputClass}
               onChange={(event) =>
                 setPayoutPreferences((preferences) => ({
                   ...preferences,
@@ -99,9 +106,10 @@ export function SchedulePreferencesTab({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Tax & Compliance (FBR)</CardTitle>
+      <Card className={panelClass}>
+        <CardHeader className="pb-4">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Verification</p>
+          <CardTitle className={sectionTitle}>Tax & compliance</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -117,6 +125,7 @@ export function SchedulePreferencesTab({
                   }))
                 }
                 maxLength={4}
+                className={inputClass}
               />
             </div>
             <div className="space-y-2">
@@ -130,11 +139,12 @@ export function SchedulePreferencesTab({
                     ntnNumber: event.target.value,
                   }))
                 }
+                className={inputClass}
               />
             </div>
           </div>
-          <div className="flex gap-2 rounded-lg bg-blue-50 p-3 text-sm text-blue-900 dark:bg-blue-950 dark:text-blue-100">
-            <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <div className="flex gap-2 rounded-2xl bg-[#f7e8c8] p-3.5 text-xs leading-5 text-[#73541e]">
+            <Info className="mt-0.5 size-4 flex-shrink-0 text-[#9b6712]" />
             <p>
               Per FBR rules, WHT is deducted at source. Filers: 10% · Non-filers: 15%. Add
               your NTN to confirm filer status and save 5%.
@@ -143,15 +153,16 @@ export function SchedulePreferencesTab({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Payout Preferences</CardTitle>
+      <Card className={panelClass}>
+        <CardHeader className="pb-4">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Automation</p>
+          <CardTitle className={sectionTitle}>Payout preferences</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex items-center justify-between rounded-lg border p-3">
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#dce3dc] bg-[#fbfaf5] p-3.5">
             <div>
-              <p className="font-medium">Instant withdrawal</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm font-extrabold text-[#173b2a]">Instant withdrawal</p>
+              <p className="mt-0.5 text-xs text-[#718077]">
                 Use mobile wallet for immediate transfers (daily limits apply)
               </p>
             </div>
@@ -165,10 +176,10 @@ export function SchedulePreferencesTab({
               }
             />
           </div>
-          <div className="flex items-center justify-between rounded-lg border p-3">
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#dce3dc] bg-[#fbfaf5] p-3.5">
             <div>
-              <p className="font-medium">Earnings notifications</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm font-extrabold text-[#173b2a]">Earnings notifications</p>
+              <p className="mt-0.5 text-xs text-[#718077]">
                 SMS + push when a payment clears into your balance
               </p>
             </div>
@@ -182,10 +193,10 @@ export function SchedulePreferencesTab({
               }
             />
           </div>
-          <div className="flex items-center justify-between rounded-lg border p-3">
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#dce3dc] bg-[#fbfaf5] p-3.5">
             <div>
-              <p className="font-medium">Weekly earnings digest</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm font-extrabold text-[#173b2a]">Weekly earnings digest</p>
+              <p className="mt-0.5 text-xs text-[#718077]">
                 Email summary every Sunday with your week's earnings
               </p>
             </div>
@@ -202,7 +213,7 @@ export function SchedulePreferencesTab({
         </CardContent>
       </Card>
 
-      <Button onClick={onSavePreferences} disabled={isSaving} className="w-full">
+      <Button onClick={onSavePreferences} disabled={isSaving} className="h-11 w-full rounded-full bg-[#185c39] font-extrabold text-white hover:bg-[#104b2d]">
         {isSaving ? (
           "Saving..."
         ) : (
@@ -215,4 +226,3 @@ export function SchedulePreferencesTab({
     </>
   );
 }
-

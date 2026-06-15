@@ -4,34 +4,33 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  DollarSign,
-  Package,
-  Users,
-  Star,
-  Clock,
-  BarChart3,
-  Eye,
-  CheckCircle,
   AlertCircle,
+  ArrowRight,
+  BarChart3,
+  CheckCircle,
+  Clock,
   Crown,
+  DollarSign,
+  Eye,
+  MessageCircle,
+  Package,
+  Plus,
   ShieldCheck,
   Sparkles,
+  Star,
+  Target,
+  Users,
+  Wallet,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
-import { StatsCard } from "@/components/stats-card";
-import { formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
-import { useAuthStore } from "@/store/auth-store";
-import { AmbassadorTierBadge } from "@/components/ambassador-score-display";
 import { calculateCreatorAmbassadorMetrics } from "@/lib/ambassador-scoring";
+import { formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
 import { analyticsService, type CreatorDashboardAnalytics } from "@/services/analytics.service";
 import { creatorsService } from "@/services/creators.service";
 import { earningsService, type EarningsSummary } from "@/services/earnings.service";
 import { messagesService } from "@/services/messages.service";
 import { ordersService } from "@/services/orders.service";
+import { useAuthStore } from "@/store/auth-store";
 import type { Conversation, Creator, Order } from "@/types";
 
 const emptyDashboardAnalytics: CreatorDashboardAnalytics = {
@@ -52,31 +51,70 @@ const emptyEarningsSummary: EarningsSummary = {
   platformFees: 0,
 };
 
-const getStatusColor = (status: string) => {
+const panelClass = "rounded-[1.6rem] border border-[#dce3dc] bg-white shadow-[0_18px_55px_rgba(38,70,50,0.07)]";
+
+const getStatusStyle = (status: string) => {
   switch (status) {
     case "completed":
-      return "bg-green-100 text-green-700";
+      return { className: "bg-[#e4f1e8] text-[#185c39]", icon: CheckCircle };
     case "in_progress":
-      return "bg-blue-100 text-blue-700";
+      return { className: "bg-[#e8eef4] text-[#365b78]", icon: Clock };
     case "pending":
-      return "bg-yellow-100 text-yellow-700";
+      return { className: "bg-[#f7e8c8] text-[#8b5e12]", icon: AlertCircle };
     default:
-      return "bg-gray-100 text-gray-700";
+      return { className: "bg-[#eef2eb] text-[#526259]", icon: Clock };
   }
 };
 
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case "completed":
-      return CheckCircle;
-    case "in_progress":
-      return Clock;
-    case "pending":
-      return AlertCircle;
-    default:
-      return Clock;
-  }
-};
+function SectionHeading({ eyebrow, title, action, href }: { eyebrow: string; title: string; action?: string; href?: string }) {
+  return (
+    <div className="flex items-end justify-between gap-4">
+      <div>
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">{eyebrow}</p>
+        <h2 className="mt-1.5 text-xl font-extrabold tracking-[-0.035em] text-[#173b2a]">{title}</h2>
+      </div>
+      {action && href ? (
+        <Link href={href} className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#185c39] hover:underline">
+          {action} <ArrowRight className="size-3.5" />
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
+function MetricCard({ title, value, detail, icon: Icon, accent = false }: { title: string; value: string; detail: string; icon: React.ElementType; accent?: boolean }) {
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`rounded-[1.35rem] border p-4 sm:p-5 ${accent ? "border-[#185c39] bg-[#185c39] text-white" : "border-[#dce3dc] bg-white text-[#173b2a]"}`
+      }
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className={`text-xs font-bold ${accent ? "text-[#c9dace]" : "text-[#69766e]"}`}>{title}</p>
+        <span className={`grid size-9 place-items-center rounded-xl ${accent ? "bg-white/10 text-[#f0c56e]" : "bg-[#eef2eb] text-[#185c39]"}`}>
+          <Icon className="size-4" />
+        </span>
+      </div>
+      <p className="mt-5 text-2xl font-extrabold tracking-[-0.045em]">{value}</p>
+      <p className={`mt-1 text-[11px] font-semibold ${accent ? "text-[#a9c4b3]" : "text-[#87938b]"}`}>{detail}</p>
+    </motion.article>
+  );
+}
+
+function GoalBar({ label, value, copy }: { label: string; value: number; copy: string }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <span className="font-bold text-[#526259]">{label}</span>
+        <span className="font-extrabold text-[#173b2a]">{copy}</span>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#e5eae4]">
+        <motion.div initial={{ width: 0 }} animate={{ width: `${value}%` }} transition={{ duration: 0.65 }} className="h-full rounded-full bg-[#185c39]" />
+      </div>
+    </div>
+  );
+}
 
 export default function CreatorDashboardPage() {
   const { user } = useAuthStore();
@@ -105,27 +143,25 @@ export default function CreatorDashboardPage() {
       setConversations(conversationList);
       setIsLoading(false);
     };
-
     void loadDashboard();
   }, [user?.id]);
 
   const primaryCreator = useMemo<Creator>(() => {
     if (creatorProfile) return creatorProfile;
-
     return {
-      id: user?.id || 'unknown-creator',
-      userId: user?.id || 'unknown-user',
-      username: user?.email?.split('@')[0] || 'creator',
-      name: user?.name || 'Creator',
-      avatar: user?.avatar || '',
-      bio: '',
-      city: 'Karachi',
+      id: user?.id || "unknown-creator",
+      userId: user?.id || "unknown-user",
+      username: user?.email?.split("@")[0] || "creator",
+      name: user?.name || "Creator",
+      avatar: user?.avatar || "",
+      bio: "",
+      city: "Karachi",
       categories: [],
-      platforms: [{ platform: 'instagram', followers: 0, engagementRate: 0, username: 'creator' }],
+      platforms: [{ platform: "instagram", followers: 0, engagementRate: 0, username: "creator" }],
       totalFollowers: 0,
       avgEngagementRate: 0,
-      dealTypes: ['paid'],
-      responseTime: 'Within 24 hours',
+      dealTypes: ["paid"],
+      responseTime: "Within 24 hours",
       isVerified: false,
       isTrending: false,
       isFastResponder: false,
@@ -139,300 +175,194 @@ export default function CreatorDashboardPage() {
 
   const ambassadorMetrics = calculateCreatorAmbassadorMetrics(primaryCreator);
   const profileViews = Math.max(0, primaryCreator.totalFollowers ? Math.round(primaryCreator.totalFollowers * 0.02) : 0);
-  const monthlyEarningsTarget = Math.max(600000, earningsSummary.totalEarned || dashboardAnalytics.totalEarnings || 0);
+  const totalEarnings = earningsSummary.totalEarned || dashboardAnalytics.totalEarnings;
+  const monthlyEarningsTarget = Math.max(600000, totalEarnings || 0);
   const monthlyOrdersTarget = Math.max(10, dashboardAnalytics.totalOrders || 0);
-  const earningsGoalProgress = monthlyEarningsTarget > 0
-    ? Math.min(100, Math.round(((earningsSummary.totalEarned || dashboardAnalytics.totalEarnings) / monthlyEarningsTarget) * 100))
-    : 0;
-  const ordersGoalProgress = monthlyOrdersTarget > 0
-    ? Math.min(100, Math.round((dashboardAnalytics.totalOrders / monthlyOrdersTarget) * 100))
-    : 0;
-  const recentDashboardOrders = orders
-    .slice()
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, 3);
-  const recentDashboardMessages = conversations
-    .slice()
-    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-    .slice(0, 3)
-    .map((conversation) => ({
-      id: conversation.id,
-      name: conversation.brand.name,
-      avatar: conversation.brand.logo,
-      message: conversation.lastMessage?.content || "No messages yet",
-      time: conversation.lastMessage?.createdAt || conversation.updatedAt,
-      unread: conversation.unreadCount > 0,
-    }));
+  const earningsGoalProgress = monthlyEarningsTarget > 0 ? Math.min(100, Math.round((totalEarnings / monthlyEarningsTarget) * 100)) : 0;
+  const ordersGoalProgress = monthlyOrdersTarget > 0 ? Math.min(100, Math.round((dashboardAnalytics.totalOrders / monthlyOrdersTarget) * 100)) : 0;
+  const recentDashboardOrders = orders.slice().sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 4);
+  const recentDashboardMessages = conversations.slice().sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()).slice(0, 3).map((conversation) => ({
+    id: conversation.id,
+    name: conversation.brand.name,
+    avatar: conversation.brand.logo,
+    message: conversation.lastMessage?.content || "No messages yet",
+    time: conversation.lastMessage?.createdAt || conversation.updatedAt,
+    unread: conversation.unreadCount > 0,
+  }));
+  const firstName = (primaryCreator.name || user?.name || "Creator").split(" ")[0];
 
-  const readinessCopy = isActiveAmbassador
-    ? "You are an active Brand Ambassador. Your priority queue is optimized for premium campaigns."
-    : "You are on the ambassador path. Keep your quality, consistency, and deliveries high to qualify.";
+  const quickActions = [
+    { label: "New package", copy: "Create an offer", href: "/creator/packages/new", icon: Plus },
+    { label: "Withdraw", copy: "Manage earnings", href: "/creator/payments", icon: Wallet },
+    { label: "Edit profile", copy: "Keep it fresh", href: "/creator/profile/public", icon: Users },
+    { label: "View insights", copy: "Know your reach", href: "/creator/insights", icon: BarChart3 },
+  ];
 
   return (
-    <div className="container mx-auto p-4 pb-6 md:p-6">
-
-      <Card className="mb-6 border-border/60 bg-muted/20 md:mb-8">
-        <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              {isActiveAmbassador ? (
-                <Badge className="bg-primary text-primary-foreground">
-                  <Crown className="mr-1 h-3 w-3" />
-                  Active Ambassador
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="bg-primary/10 text-primary">
-                  <Sparkles className="mr-1 h-3 w-3" />
-                  Ambassador Path
-                </Badge>
-              )}
-              <AmbassadorTierBadge tier={ambassadorMetrics.tier} size="sm" />
+    <div className="min-h-full bg-[#fbfaf5] px-4 pb-8 pt-2 text-[#173b2a] sm:px-6 lg:px-8 lg:pb-12">
+      <div className="mx-auto max-w-[1320px]">
+        <section className="overflow-hidden rounded-[1.8rem] bg-[#173b2a] p-5 text-white sm:p-7 lg:p-8">
+          <div className="grid gap-7 lg:grid-cols-[1.25fr_0.75fr] lg:items-end">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#f0c56e]">
+                  {isActiveAmbassador ? <Crown className="size-3.5" /> : <Sparkles className="size-3.5" />}
+                  {isActiveAmbassador ? "Active ambassador" : "Ambassador path"}
+                </span>
+                <span className="rounded-full border border-white/15 px-3 py-1.5 text-[10px] font-bold text-[#c9dace]">{ambassadorMetrics.tier} tier</span>
+              </div>
+              <p className="mt-7 text-xs font-bold text-[#a9c4b3]">Good to see you, {firstName}</p>
+              <h1 className="mt-2 max-w-3xl text-[clamp(2.2rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-0.06em] text-white">
+                Keep the momentum moving.
+              </h1>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-[#c9dace]">
+                {isActiveAmbassador
+                  ? "Your priority queue is ready. Stay responsive and keep premium campaigns moving."
+                  : "You are building a strong ambassador profile. Consistent delivery is your clearest next step."}
+              </p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                <Link href="/creator/offers" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#e6aa38] px-5 py-3 text-xs font-extrabold text-[#173b2a] transition hover:bg-[#f0bd58]">
+                  Discover offers <ArrowRight className="size-4" />
+                </Link>
+                <Link href="/creator/ambassador-program" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 bg-white/8 px-5 py-3 text-xs font-extrabold text-white transition hover:bg-white/12">
+                  Track ambassador progress
+                </Link>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground">{readinessCopy}</p>
-            <p className="text-xs text-muted-foreground">
-              Readiness score: <span className="font-semibold text-primary">{ambassadorMetrics.score.total}/100</span>
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant={isActiveAmbassador ? "default" : "outline"} asChild>
-              <Link href="/creator/ambassador-program">
-                {isActiveAmbassador ? "Manage Ambassador Status" : "Track Ambassador Progress"}
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Stats Grid */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title={isActiveAmbassador ? "Ambassador Earnings" : "Total Earnings"}
-          value={isLoading ? "Loading..." : formatPrice(earningsSummary.totalEarned || dashboardAnalytics.totalEarnings)}
-          icon={DollarSign}
-          trend="up"
-        />
-        <StatsCard
-          title={isActiveAmbassador ? "Priority Campaigns" : "Active Orders"}
-          value={isLoading ? "..." : dashboardAnalytics.activeOrders.toString()}
-          icon={Package}
-          subtitle={`${dashboardAnalytics.completedOrders} completed`}
-          trend="up"
-        />
-        <StatsCard
-          title="Profile Views"
-          value={isLoading ? "..." : profileViews.toLocaleString()}
-          subtitle={`${dashboardAnalytics.repeatBrands} repeat brands`}
-          icon={Eye}
-          trend="up"
-        />
-        <StatsCard
-          title={isActiveAmbassador ? "Quality Score" : "Rating"}
-          value={(dashboardAnalytics.avgRating || primaryCreator.rating).toFixed(1)}
-          subtitle={`${dashboardAnalytics.totalReviews || primaryCreator.totalReviews} reviews`}
-          icon={Star}
-        />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Recent Orders */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Orders</CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/creator/orders">View All</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentDashboardOrders.length > 0 ? recentDashboardOrders.map((order, index) => {
-                const StatusIcon = getStatusIcon(order.status);
-                return (
-                  <motion.div
-                    key={order.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="flex flex-col items-start gap-3 rounded-md border border-border/50 p-4 sm:flex-row sm:items-center sm:gap-4"
-                  >
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={order.brand.logo} alt={order.brand.name} />
-                      <AvatarFallback>
-                        {getInitials(order.brand.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium">{order.brand.name}</p>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {order.package.title}
-                      </p>
-                    </div>
-                    <div className="w-full text-left sm:w-auto sm:text-right">
-                      <p className="font-semibold text-primary">
-                        {formatPrice(order.amount || 0)}
-                      </p>
-                      <Badge
-                        variant="secondary"
-                        className={getStatusColor(order.status)}
-                      >
-                        <StatusIcon className="mr-1 h-3 w-3" />
-                        {order.status.replace("_", " ")}
-                      </Badge>
-                    </div>
-                  </motion.div>
-                );
-              }) : (
-                <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                  No orders yet. New brand orders will appear here as soon as they are created.
+            <div className="rounded-[1.4rem] border border-white/12 bg-[#214b36] p-4 sm:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#f0c56e]">Readiness score</p>
+                  <p className="mt-2 text-4xl font-extrabold tracking-[-0.05em] text-white">{ambassadorMetrics.score.total}<span className="text-lg text-[#a9c4b3]">/100</span></p>
                 </div>
-              )}
+                <span className="grid size-11 place-items-center rounded-2xl bg-white/10 text-[#f0c56e]"><ShieldCheck className="size-5" /></span>
+              </div>
+              <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
+                <motion.div initial={{ width: 0 }} animate={{ width: `${ambassadorMetrics.score.total}%` }} className="h-full rounded-full bg-[#e6aa38]" />
+              </div>
+              <p className="mt-3 text-[11px] leading-5 text-[#b9d0c1]">
+                {isActiveAmbassador ? `Ahead of ${ambassadorMetrics.percentileRank}% of creators.` : "Improve consistency, profile quality, and delivery performance to qualify."}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
 
-        {/* Quick Actions & Messages */}
-        <div className="space-y-6">
-          {isActiveAmbassador && (
-            <Card className="border-primary/20 bg-primary/5">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <ShieldCheck className="h-5 w-5 text-primary" />
-                  Ambassador Performance
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="rounded-md border border-primary/20 bg-background p-3">
-                  <p className="text-xs text-muted-foreground">Creator percentile</p>
-                  <p className="text-xl font-semibold text-primary">
-                    Top {Math.max(1, 100 - ambassadorMetrics.percentileRank)}%
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Ahead of {ambassadorMetrics.percentileRank}% of creators
-                  </p>
-                </div>
-                <div className="space-y-2 text-xs text-muted-foreground">
-                  <p className="font-medium text-foreground">Next best actions</p>
-                  <p>• Keep response SLA under 2 hours for premium campaigns.</p>
-                  <p>• Publish one high-impact Reel this week to sustain momentum.</p>
-                  <p>• Close 2 active campaigns to protect your Elite tier track.</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+        <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard title={isActiveAmbassador ? "Ambassador earnings" : "Total earnings"} value={isLoading ? "Loading..." : formatPrice(totalEarnings)} detail={`${formatPrice(earningsSummary.availableBalance)} available`} icon={DollarSign} accent />
+          <MetricCard title={isActiveAmbassador ? "Priority campaigns" : "Active orders"} value={isLoading ? "..." : dashboardAnalytics.activeOrders.toString()} detail={`${dashboardAnalytics.completedOrders} completed`} icon={Package} />
+          <MetricCard title="Profile views" value={isLoading ? "..." : profileViews.toLocaleString()} detail={`${dashboardAnalytics.repeatBrands} repeat brands`} icon={Eye} />
+          <MetricCard title={isActiveAmbassador ? "Quality score" : "Rating"} value={(dashboardAnalytics.avgRating || primaryCreator.rating).toFixed(1)} detail={`${dashboardAnalytics.totalReviews || primaryCreator.totalReviews} reviews`} icon={Star} />
+        </section>
 
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-2">
-              <Button variant="outline" className="h-auto min-h-20 flex-col py-4" asChild>
-                <Link href="/creator/packages/new">
-                  <Package className="mb-2 h-5 w-5" />
-                  <span className="text-xs">New Package</span>
-                </Link>
-              </Button>
-              <Button variant="outline" className="h-auto min-h-20 flex-col py-4" asChild>
-                <Link href="/creator/payments">
-                  <DollarSign className="mb-2 h-5 w-5" />
-                  <span className="text-xs">Withdraw</span>
-                </Link>
-              </Button>
-              <Button variant="outline" className="h-auto min-h-20 flex-col py-4" asChild>
-                <Link href="/creator/profile/public">
-                  <Users className="mb-2 h-5 w-5" />
-                  <span className="text-xs">Edit Profile</span>
-                </Link>
-              </Button>
-              <Button variant="outline" className="h-auto min-h-20 flex-col py-4" asChild>
-                <Link href="/creator/insights">
-                  <BarChart3 className="mb-2 h-5 w-5" />
-                  <span className="text-xs">Insights</span>
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Recent Messages */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Messages</CardTitle>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/creator/messages">View All</Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentDashboardMessages.length > 0 ? recentDashboardMessages.map((msg) => (
-                  <Link
-                    key={msg.id}
-                    href="/creator/messages"
-                    className="flex items-start gap-3 rounded-md p-2 transition-colors hover:bg-muted/50"
-                  >
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={msg.avatar} alt={msg.name} />
-                      <AvatarFallback>{getInitials(msg.name)}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="truncate text-sm font-medium">{msg.name}</p>
-                        {msg.unread && (
-                          <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
-                        )}
+        <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.75fr)]">
+          <div className="space-y-5">
+            <section className={`${panelClass} p-5 sm:p-6`}>
+              <SectionHeading eyebrow="Work in motion" title="Recent orders" action="View all" href="/creator/orders" />
+              <div className="mt-5 space-y-2.5">
+                {recentDashboardOrders.length > 0 ? recentDashboardOrders.map((order, index) => {
+                  const statusStyle = getStatusStyle(order.status);
+                  const StatusIcon = statusStyle.icon;
+                  return (
+                    <motion.div key={order.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.06 }} className="group flex items-center gap-3 rounded-2xl border border-[#e2e7e1] bg-[#fbfaf5] p-3.5 transition hover:border-[#b8c8bb] hover:bg-[#f5f6f1] sm:gap-4">
+                      <Avatar className="size-11 border border-[#dce3dc]">
+                        <AvatarImage src={order.brand.logo} alt={order.brand.name} />
+                        <AvatarFallback className="bg-[#eef2eb] font-bold text-[#185c39]">{getInitials(order.brand.name)}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-extrabold text-[#173b2a]">{order.brand.name}</p>
+                        <p className="mt-0.5 truncate text-xs text-[#718077]">{order.package.title}</p>
                       </div>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {msg.message}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatRelativeTime(msg.time)}
-                      </p>
-                    </div>
-                  </Link>
-                )) : (
-                  <div className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-                    No messages yet. Brand conversations will appear here when they start chatting with you.
+                      <div className="text-right">
+                        <p className="text-xs font-extrabold text-[#173b2a] sm:text-sm">{formatPrice(order.amount || 0)}</p>
+                        <span className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-extrabold capitalize ${statusStyle.className}`}>
+                          <StatusIcon className="size-3" /> {order.status.replace("_", " ")}
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                }) : (
+                  <div className="rounded-2xl border border-dashed border-[#ccd7ce] bg-[#fbfaf5] px-5 py-10 text-center">
+                    <Package className="mx-auto size-5 text-[#b77a12]" />
+                    <p className="mt-3 text-sm font-extrabold text-[#173b2a]">No orders yet</p>
+                    <p className="mt-1 text-xs text-[#718077]">New brand orders will appear here.</p>
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </section>
 
-          {/* Monthly Goal Progress */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{isActiveAmbassador ? "Elite Goal Tracker" : "Monthly Goal"}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <div className="mb-2 flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Earnings</span>
-                    <span className="font-medium">
-                      {formatPrice(earningsSummary.totalEarned || dashboardAnalytics.totalEarnings)} / {formatPrice(monthlyEarningsTarget)}
+            <section className={`${panelClass} p-5 sm:p-6`}>
+              <SectionHeading eyebrow="Make the next move" title="Quick actions" />
+              <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
+                {quickActions.map(({ label, copy, href, icon: Icon }) => (
+                  <Link key={href} href={href} className="group flex items-center gap-3 rounded-2xl border border-[#dce3dc] bg-[#fbfaf5] p-3.5 transition hover:border-[#185c39] hover:bg-[#f4f6f1]">
+                    <span className="grid size-10 place-items-center rounded-xl bg-[#eef2eb] text-[#185c39] transition group-hover:bg-[#185c39] group-hover:text-white"><Icon className="size-4" /></span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-xs font-extrabold text-[#173b2a]">{label}</span>
+                      <span className="mt-0.5 block text-[10px] font-semibold text-[#87938b]">{copy}</span>
                     </span>
-                  </div>
-                  <Progress value={earningsGoalProgress} className="h-2" />
-                </div>
-                <div>
-                  <div className="mb-2 flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{isActiveAmbassador ? "Premium Campaigns" : "Orders"}</span>
-                    <span className="font-medium">{dashboardAnalytics.totalOrders} / {monthlyOrdersTarget}</span>
-                  </div>
-                  <Progress value={ordersGoalProgress} className="h-2" />
-                </div>
-                <p className="text-center text-sm text-muted-foreground">
-                  {isActiveAmbassador ? (
-                    <>
-                      You&apos;re <span className="font-medium text-primary">{ordersGoalProgress}%</span> towards unlocking this month&apos;s Elite bonus.
-                    </>
-                  ) : (
-                    <>
-                      You&apos;re <span className="font-medium text-primary">{Math.max(earningsGoalProgress, ordersGoalProgress)}%</span> towards your monthly goal!
-                    </>
-                  )}
+                    <ArrowRight className="size-3.5 text-[#87938b] transition group-hover:translate-x-0.5 group-hover:text-[#185c39]" />
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          <aside className="space-y-5">
+            <section className={`${panelClass} p-5`}>
+              <SectionHeading eyebrow="This month" title={isActiveAmbassador ? "Elite goal tracker" : "Goal tracker"} />
+              <div className="mt-5 space-y-5">
+                <GoalBar label="Earnings" value={earningsGoalProgress} copy={`${earningsGoalProgress}%`} />
+                <GoalBar label={isActiveAmbassador ? "Premium campaigns" : "Orders"} value={ordersGoalProgress} copy={`${dashboardAnalytics.totalOrders} / ${monthlyOrdersTarget}`} />
+              </div>
+              <div className="mt-5 flex gap-3 rounded-2xl bg-[#f7e8c8] p-3.5">
+                <Target className="mt-0.5 size-4 shrink-0 text-[#9b6712]" />
+                <p className="text-[11px] font-semibold leading-5 text-[#73541e]">
+                  You are {Math.max(earningsGoalProgress, ordersGoalProgress)}% toward this month&apos;s next milestone.
                 </p>
               </div>
-            </CardContent>
-          </Card>
+            </section>
+
+            <section className={`${panelClass} p-5`}>
+              <SectionHeading eyebrow="Stay connected" title="Messages" action="View all" href="/creator/messages" />
+              <div className="mt-4 space-y-1.5">
+                {recentDashboardMessages.length > 0 ? recentDashboardMessages.map((message) => (
+                  <Link key={message.id} href="/creator/messages" className="flex items-center gap-3 rounded-xl p-2.5 transition hover:bg-[#f4f6f1]">
+                    <Avatar className="size-9">
+                      <AvatarImage src={message.avatar} alt={message.name} />
+                      <AvatarFallback className="bg-[#eef2eb] text-xs font-bold text-[#185c39]">{getInitials(message.name)}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-xs font-extrabold text-[#173b2a]">{message.name}</p>
+                        {message.unread ? <span className="size-1.5 rounded-full bg-[#e6aa38]" /> : null}
+                      </div>
+                      <p className="mt-0.5 truncate text-[10px] text-[#718077]">{message.message}</p>
+                    </div>
+                    <span className="text-[9px] font-semibold text-[#87938b]">{formatRelativeTime(message.time)}</span>
+                  </Link>
+                )) : (
+                  <div className="rounded-2xl border border-dashed border-[#ccd7ce] bg-[#fbfaf5] px-4 py-8 text-center">
+                    <MessageCircle className="mx-auto size-5 text-[#b77a12]" />
+                    <p className="mt-2 text-xs font-bold text-[#526259]">No messages yet</p>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {isActiveAmbassador ? (
+              <section className="rounded-[1.6rem] bg-[#185c39] p-5 text-white">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#f0c56e]">Ambassador edge</p>
+                    <h2 className="mt-1.5 text-xl font-extrabold tracking-[-0.035em]">Top {Math.max(1, 100 - ambassadorMetrics.percentileRank)}%</h2>
+                  </div>
+                  <ShieldCheck className="size-5 text-[#f0c56e]" />
+                </div>
+                <p className="mt-3 text-[11px] leading-5 text-[#c9dace]">Keep response time low and close active campaigns to protect your premium position.</p>
+              </section>
+            ) : null}
+          </aside>
         </div>
       </div>
     </div>

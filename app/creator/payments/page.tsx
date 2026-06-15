@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowDownToLine, Clock3, CreditCard, ShieldCheck, Wallet } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -294,52 +294,57 @@ function CreatorPaymentsContent() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="flex items-center justify-center py-12">
-          <p className="text-muted-foreground">Loading payment settings...</p>
+      <div className="min-h-full bg-[#fbfaf5] px-4 py-8">
+        <div className="mx-auto max-w-6xl rounded-[1.6rem] border border-[#dce3dc] bg-white px-6 py-16 text-center shadow-[0_18px_55px_rgba(38,70,50,0.07)]">
+          <p className="text-sm font-bold text-[#69766e]">Loading payment settings...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 pb-24 md:p-6 md:pb-6">
-
-      {earnings && (
-        <Card className="mb-6 bg-gradient-to-r from-primary/5 to-primary/10">
-          <CardHeader>
-            <CardTitle className="text-base">Withdrawal Console</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 pt-0">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-lg bg-background/50 p-3">
-                <p className="text-sm text-muted-foreground">Available to Withdraw</p>
-                <p className="mt-1 text-2xl font-semibold text-green-600">
-                  {formatPrice(earnings.availableBalance)}
-                </p>
+    <div className="min-h-full bg-[#fbfaf5] px-4 pb-24 pt-2 text-[#173b2a] sm:px-6 lg:px-8 lg:pb-12">
+      <div className="mx-auto max-w-[1320px]">
+        <section className="overflow-hidden rounded-[1.8rem] bg-[#173b2a] p-5 text-white sm:p-7 lg:p-8">
+          <div className="grid gap-7 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+            <div>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#f0c56e]">
+                <ShieldCheck className="size-3.5" /> Secure payments hub
+              </span>
+              <p className="mt-7 text-xs font-bold text-[#a9c4b3]">Your money, clearly managed</p>
+              <h1 className="mt-2 max-w-3xl text-[clamp(2.3rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-0.06em] text-white">
+                Move earnings with confidence.
+              </h1>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-[#c9dace]">
+                Withdraw your available balance, manage trusted payout methods, and keep every payment preference in one calm place.
+              </p>
+            </div>
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              <div className="rounded-[1.3rem] border border-white/12 bg-[#214b36] p-4">
+                <div className="flex items-start justify-between">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#f0c56e]">Available</p>
+                  <Wallet className="size-4 text-[#f0c56e]" />
+                </div>
+                <p className="mt-5 text-2xl font-extrabold tracking-[-0.04em] text-white">{formatPrice(earnings?.availableBalance || 0)}</p>
+                <p className="mt-1 text-[10px] font-semibold text-[#a9c4b3]">Ready to withdraw</p>
               </div>
-              <div className="rounded-lg bg-background/50 p-3">
-                <p className="text-sm text-muted-foreground">Pending Clearance</p>
-                <p className="mt-1 text-2xl font-semibold text-amber-600">
-                  {formatPrice(earnings.pendingBalance)}
-                </p>
-              </div>
-              <div className="rounded-lg bg-background/50 p-3">
-                <p className="text-sm text-muted-foreground">Suggested Next Step</p>
-                <p className="mt-1 text-sm font-medium">
-                  Keep at least one verified payout method set as default.
-                </p>
+              <div className="rounded-[1.3rem] border border-white/12 bg-white/8 p-4">
+                <div className="flex items-start justify-between">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#f0c56e]">Pending</p>
+                  <Clock3 className="size-4 text-[#f0c56e]" />
+                </div>
+                <p className="mt-5 text-2xl font-extrabold tracking-[-0.04em] text-white">{formatPrice(earnings?.pendingBalance || 0)}</p>
+                <p className="mt-1 text-[10px] font-semibold text-[#a9c4b3]">Awaiting clearance</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </section>
 
-      <Tabs value={activeTab} onValueChange={updateTabInUrl} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 gap-1">
-          <TabsTrigger value="withdraw">Withdraw</TabsTrigger>
-          <TabsTrigger value="methods">Payout Methods</TabsTrigger>
-          <TabsTrigger value="schedule">Schedule & Preferences</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={updateTabInUrl} className="mt-5 space-y-5">
+        <TabsList className="grid h-auto w-full grid-cols-3 rounded-[1.25rem] border border-[#dce3dc] bg-[#f4f2e9] p-1">
+          <TabsTrigger value="withdraw" className="min-h-11 gap-2 rounded-xl px-2 text-xs font-extrabold text-[#69766e] data-[state=active]:bg-[#185c39] data-[state=active]:text-white"><ArrowDownToLine className="size-4" /> <span className="hidden sm:inline">Withdraw</span></TabsTrigger>
+          <TabsTrigger value="methods" className="min-h-11 gap-2 rounded-xl px-2 text-xs font-extrabold text-[#69766e] data-[state=active]:bg-[#185c39] data-[state=active]:text-white"><CreditCard className="size-4" /> <span className="hidden sm:inline">Payout Methods</span><span className="sm:hidden">Methods</span></TabsTrigger>
+          <TabsTrigger value="schedule" className="min-h-11 gap-2 rounded-xl px-2 text-xs font-extrabold text-[#69766e] data-[state=active]:bg-[#185c39] data-[state=active]:text-white"><Clock3 className="size-4" /> <span className="hidden sm:inline">Schedule & Preferences</span><span className="sm:hidden">Preferences</span></TabsTrigger>
         </TabsList>
 
         <TabsContent value="withdraw" className="space-y-4">
@@ -386,6 +391,7 @@ function CreatorPaymentsContent() {
           />
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

@@ -66,6 +66,7 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
               width={1536}
               height={1024}
               priority
+              loading="eager"
               className="aspect-[2.15/1] w-full object-cover opacity-90"
             />
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 bg-[#173b2a]/90 p-5 backdrop-blur-sm">
