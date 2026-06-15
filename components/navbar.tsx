@@ -22,9 +22,8 @@ import { cn, formatRelativeTime } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { ZingZingLogo } from '@/src/components/ZingZingLogo';
 import { messagesService } from '@/services/messages.service';
-import { ordersService } from '@/services/orders.service';
 import { notificationsService } from '@/services/notifications.service';
-import type { Order } from '@/types';
+import { notificationHref } from '@/lib/notification-href';
 
 interface NavbarProps {
   showSearch?: boolean;
@@ -48,8 +47,6 @@ interface ProfileMenuItem {
   accent?: 'amber';
 }
 
-const getNotificationSeenKey = (userId: string) => `nav-notifications-seen:${userId}`;
-
 export function Navbar({ showSearch = false, onSearchChange, searchValue }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -57,8 +54,6 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const [mounted, setMounted] = useState(false);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [notifications, setNotifications] = useState<NavNotification[]>([]);
-  const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>([]);
-  const [offerNotifCount, setOfferNotifCount] = useState(0);
   const [creatorGlobalSearch, setCreatorGlobalSearch] = useState('');
   const { resolvedTheme, setTheme } = useTheme();
   const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
@@ -99,60 +94,19 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   }, [isCreator, pathname]);
 
   useEffect(() => {
-    if (!mounted || !user || isAdmin) {
-      setSeenNotificationIds([]);
-      return;
-    }
-
-    try {
-      const raw = localStorage.getItem(getNotificationSeenKey(user.id));
-      if (!raw) {
-        setSeenNotificationIds([]);
-        return;
-      }
-
-      const parsed = JSON.parse(raw) as unknown;
-      if (Array.isArray(parsed)) {
-        setSeenNotificationIds(parsed.filter((entry): entry is string => typeof entry === 'string'));
-        return;
-      }
-    } catch {
-      // Reset invalid local notification cache silently.
-    }
-
-    setSeenNotificationIds([]);
-  }, [mounted, user, isAdmin]);
-
-  useEffect(() => {
     if (!isSignedIn || !user || isAdmin) {
       setUnreadMessageCount(0);
       setNotifications([]);
-      setOfferNotifCount(0);
       return;
     }
 
     let cancelled = false;
 
-    const toNotification = (order: Order): NavNotification => {
-      const baseHref = user.role === 'creator' ? '/creator/orders' : '/brand/orders';
-      const statusLabel = order.status.replace('_', ' ');
-      const participantName = user.role === 'creator' ? order.brand.name : order.creator.name;
-
-      return {
-        id: `order-${order.id}-${order.status}`,
-        title: `${participantName} • ${order.package.title}`,
-        description: `Status update: ${statusLabel}`,
-        href: `${baseHref}?status=${order.status}`,
-        createdAt: order.updatedAt,
-      };
-    };
-
     const loadNavSignals = async () => {
       try {
-        const [conversationResult, ordersResult, offerNotifResult] = await Promise.allSettled([
+        const [conversationResult, notificationResult] = await Promise.allSettled([
           messagesService.getConversations(user.id, user.role as 'creator' | 'brand'),
-          ordersService.getAll(),
-          notificationsService.getUnreadCount(),
+          notificationsService.list(0, 8),
         ]);
 
         if (cancelled) return;
@@ -164,27 +118,14 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
           setUnreadMessageCount(0);
         }
 
-        if (offerNotifResult.status === 'fulfilled') {
-          setOfferNotifCount(offerNotifResult.value);
-        } else {
-          setOfferNotifCount(0);
-        }
-
-        if (ordersResult.status === 'fulfilled') {
-          const myOrders = ordersResult.value.filter((order) =>
-            user.role === 'creator' ? order.creatorId === user.id : order.brandId === user.id
-          );
-          const relevantStatuses = user.role === 'creator'
-            ? new Set(['pending', 'revision', 'review', 'cancelled'])
-            : new Set(['delivered', 'review', 'revision', 'cancelled', 'completed']);
-
-          const nextNotifications = myOrders
-            .filter((order) => relevantStatuses.has(order.status))
-            .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-            .slice(0, 8)
-            .map(toNotification);
-
-          setNotifications(nextNotifications);
+        if (notificationResult.status === 'fulfilled') {
+          setNotifications(notificationResult.value.content.filter((item) => !item.read).map((item) => ({
+            id: item.id,
+            title: item.title,
+            description: item.body || 'Open notification',
+            href: notificationHref(item, user.role),
+            createdAt: item.createdAt,
+          })));
         } else {
           setNotifications([]);
         }
@@ -192,7 +133,6 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
         if (!cancelled) {
           setUnreadMessageCount(0);
           setNotifications([]);
-          setOfferNotifCount(0);
         }
       }
     };
@@ -268,24 +208,17 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
       ];
 
   const messagesLink = isSignedIn && !isAdmin ? `/${user.role}/messages` : '/messages';
-  const unseenNotifications = notifications.filter((item) => !seenNotificationIds.includes(item.id));
-  const notificationCount = unseenNotifications.length + offerNotifCount;
+  const notificationCount = notifications.length;
   const creatorRoleLabel = user?.role === 'creator' ? 'Creator' : user?.role;
 
-  const persistSeenNotificationIds = (next: string[]) => {
-    if (!mounted || !user) return;
-    setSeenNotificationIds(next);
-    localStorage.setItem(getNotificationSeenKey(user.id), JSON.stringify(next));
-  };
-
   const markAllNotificationsSeen = () => {
-    const merged = Array.from(new Set([...seenNotificationIds, ...notifications.map((item) => item.id)]));
-    persistSeenNotificationIds(merged);
+    setNotifications([]);
+    void notificationsService.markAllRead();
   };
 
   const markNotificationSeen = (notificationId: string) => {
-    if (seenNotificationIds.includes(notificationId)) return;
-    persistSeenNotificationIds([...seenNotificationIds, notificationId]);
+    setNotifications((current) => current.filter((item) => item.id !== notificationId));
+    void notificationsService.markRead(notificationId);
   };
 
   const isLinkActive = (href: string) => {
@@ -459,7 +392,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                           You are all caught up.
                         </div>
                       ) : (
-                        unseenNotifications.map((item) => (
+                        notifications.map((item) => (
                           <DropdownMenuItem asChild key={item.id} className="items-start py-2">
                             <Link href={item.href} className="flex w-full flex-col gap-1" onClick={() => markNotificationSeen(item.id)}>
                               <span className="flex items-center justify-between gap-2">

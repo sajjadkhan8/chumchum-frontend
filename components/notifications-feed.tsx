@@ -11,16 +11,7 @@ import { notificationsService, type AppNotification } from '@/services/notificat
 import { formatRelativeTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-
-const notificationHref = (notif: AppNotification, role?: string): string => {
-  if (notif.entityType === 'BRAND_OFFER') {
-    return role === 'brand' ? `/brand/offers/${notif.entityId ?? ''}` : '/creator/offers';
-  }
-  if (notif.entityType === 'BRAND_OFFER_REACTION') {
-    return role === 'brand' ? `/brand/offers` : '/creator/offers/reactions';
-  }
-  return role === 'brand' ? '/brand/dashboard' : '/creator/dashboard';
-};
+import { notificationHref } from '@/lib/notification-href';
 
 interface Props {
   role?: string;
@@ -130,4 +121,3 @@ export function NotificationsFeed({ role }: Props) {
     </Card>
   );
 }
-

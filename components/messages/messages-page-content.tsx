@@ -148,6 +148,9 @@ export function MessagesPageContent() {
       const data = await messagesService.getMessages(conversationId);
       setMessages(data);
       await messagesService.markAsRead(conversationId);
+      setConversations((current) => current.map((conversation) =>
+        conversation.id === conversationId ? { ...conversation, unreadCount: 0 } : conversation
+      ));
       return data;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load messages";
@@ -242,11 +245,10 @@ export function MessagesPageContent() {
 
       setMessages((prev) => [...prev, createdMessage]);
       setConversations((prev) =>
-        prev.map((conversation) =>
-          conversation.id === selectedConversation.id
-            ? { ...conversation, lastMessage: createdMessage, updatedAt: createdMessage.createdAt }
-            : conversation,
-        ),
+        prev.map((conversation) => conversation.id === selectedConversation.id
+          ? { ...conversation, lastMessage: createdMessage, updatedAt: createdMessage.createdAt, unreadCount: 0 }
+          : conversation)
+          .sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime()),
       );
     } catch (error) {
       setNewMessage(messageText);
@@ -271,11 +273,10 @@ export function MessagesPageContent() {
       const createdMessage = await messagesService.sendAttachment(selectedConversation.id, file);
       setMessages((prev) => [...prev, createdMessage]);
       setConversations((prev) =>
-        prev.map((conversation) =>
-          conversation.id === selectedConversation.id
-            ? { ...conversation, lastMessage: createdMessage, updatedAt: createdMessage.createdAt }
-            : conversation,
-        ),
+        prev.map((conversation) => conversation.id === selectedConversation.id
+          ? { ...conversation, lastMessage: createdMessage, updatedAt: createdMessage.createdAt, unreadCount: 0 }
+          : conversation)
+          .sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime()),
       );
       toast.success("Attachment sent");
     } catch (error) {
@@ -296,7 +297,9 @@ export function MessagesPageContent() {
   };
 
   const selectConversation = (conversation: Conversation) => {
-    setSelectedConversation(conversation);
+    const readConversation = { ...conversation, unreadCount: 0 };
+    setSelectedConversation(readConversation);
+    setConversations((current) => current.map((item) => item.id === conversation.id ? readConversation : item));
     setShowMobileChat(true);
     router.replace(buildMessagesHref({ conversation: conversation.id }));
   };
