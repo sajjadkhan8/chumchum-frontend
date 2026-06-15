@@ -1,19 +1,40 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, ArrowRight, Users, Building2, CheckCircle, Circle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building2, Check, Circle, Eye, EyeOff, Loader2, Users } from 'lucide-react';
+import { toast } from 'sonner';
+import { AuthShell } from '@/components/auth/auth-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
+import { validatePassword, type PasswordStrengthResult } from '@/lib/password-validation';
 import { useAuthStore } from '@/store/auth-store';
 import type { UserRole } from '@/types';
-import { toast } from 'sonner';
-import { ZingZingLogo } from '@/src/components/ZingZingLogo';
-import { validatePassword, type PasswordStrengthResult } from '@/lib/password-validation';
+
+const inputClass = 'h-11 rounded-xl border-[#d6ded7] bg-[#fbfaf5] px-3.5 text-[#173b2a] shadow-none focus-visible:border-[#185c39] focus-visible:ring-[#185c39]/15';
+const primaryButtonClass = 'h-11 w-full rounded-full bg-[#185c39] font-bold text-white hover:bg-[#104b2d]';
+
+const roleOptions: { value: UserRole; label: string; eyebrow: string; icon: React.ElementType; description: string; benefits: string[] }[] = [
+  {
+    value: 'creator',
+    label: 'Creator',
+    eyebrow: 'Build your profile',
+    icon: Users,
+    description: 'Find fitting opportunities and turn your point of view into better work.',
+    benefits: ['Package your services', 'Meet verified brands', 'Track every collaboration'],
+  },
+  {
+    value: 'brand',
+    label: 'Brand',
+    eyebrow: 'Grow your reach',
+    icon: Building2,
+    description: 'Discover trusted local creators and run campaigns in one calm place.',
+    benefits: ['Search verified creators', 'Send clear offers', 'Manage campaign delivery'],
+  },
+];
 
 export default function SignupPage() {
   const router = useRouter();
@@ -26,451 +47,169 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState<PasswordStrengthResult | null>(null);
 
-  // Redirect already-authenticated users to their dashboard
   useEffect(() => {
-    if (!hasHydrated || !isAuthenticated || !user?.role) return;
-    router.replace(user.role === 'creator' ? '/creator/dashboard' : '/brand/dashboard');
-  }, [hasHydrated, isAuthenticated, user, router]);
+    if (hasHydrated && isAuthenticated && user?.role) {
+      router.replace(user.role === 'creator' ? '/creator/dashboard' : '/brand/dashboard');
+      return;
+    }
+    const requestedRole = new URLSearchParams(window.location.search).get('role');
+    if (!role && (requestedRole === 'creator' || requestedRole === 'brand')) {
+      setRole(requestedRole);
+      setStep('details');
+    }
+  }, [hasHydrated, isAuthenticated, user, router, role]);
 
   if (hasHydrated && isAuthenticated && user?.role) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="grid min-h-screen place-items-center bg-[#fbfaf5]"><Loader2 className="size-6 animate-spin text-[#185c39]" /></div>;
   }
 
   const handlePasswordChange = (value: string) => {
     setPassword(value);
-    const strength = validatePassword(value);
-    setPasswordStrength(strength);
+    setPasswordStrength(validatePassword(value));
   };
 
-  const roleOptions: { value: UserRole; label: string; icon: React.ElementType; description: string; benefits: string[] }[] = [
-    {
-      value: 'creator',
-      label: 'I am a Creator',
-      icon: Users,
-      description: 'Showcase your work, get brand deals, and earn money',
-      benefits: ['Create packages for brands', 'Accept paid & barter deals', 'Track your earnings'],
-    },
-    {
-      value: 'brand',
-      label: 'I am a Brand',
-      icon: Building2,
-      description: 'Find creators and run influencer marketing campaigns',
-      benefits: ['Discover verified creators', 'Send quick deal offers', 'Manage all campaigns'],
-    },
-  ];
-
-  const handleRoleSelect = (selectedRole: UserRole) => {
-    setRole(selectedRole);
-    setStep('details');
-  };
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignup = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!role) return;
-
     try {
       await signup(email, password, role, name);
       toast.success('Account created successfully!');
-      
-      if (role === 'creator') {
-        router.push('/creator/dashboard');
-      } else {
-        router.push('/brand/dashboard');
-      }
+      router.push(role === 'creator' ? '/creator/dashboard' : '/brand/dashboard');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
-      toast.error(message);
+      toast.error(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
     }
   };
 
   const handleGoogleSignup = async () => {
     if (!role) return;
-
     try {
       await signupWithGoogle(role, name);
       toast.success('Account created successfully!');
       router.push(role === 'creator' ? '/creator/dashboard' : '/brand/dashboard');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Google signup failed. Please try again.';
-      toast.error(message);
+      toast.error(error instanceof Error ? error.message : 'Google signup failed. Please try again.');
     }
   };
 
+  const requirements = passwordStrength ? [
+    ['8+ characters', passwordStrength.requirements.minLength],
+    ['Lowercase', passwordStrength.requirements.hasLowercase],
+    ['Uppercase', passwordStrength.requirements.hasUppercase],
+    ['Number', passwordStrength.requirements.hasNumber],
+    ['Special character', passwordStrength.requirements.hasSpecialChar],
+  ] : [];
+
   return (
-    <div className="flex min-h-screen">
-      {/* Left Side - Branding */}
-      <div className="hidden bg-gradient-to-br from-primary via-primary to-primary/80 lg:flex lg:w-1/2 lg:flex-col lg:justify-between lg:p-12">
-        <div>
-          <Link href="/" className="inline-flex items-center">
-            <ZingZingLogo variant="dark" className="h-11 w-[230px]" />
-          </Link>
-        </div>
-        
-        <div className="space-y-6">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl font-bold leading-tight text-white xl:text-5xl"
-          >
-            Join Pakistan&apos;s
-            <br />
-            Largest Creator
-            <br />
-            Marketplace
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="max-w-md text-lg text-white/80"
-          >
-            Whether you&apos;re a creator looking for brand deals or a brand searching for influencers, ZingZing connects you with the right partners.
-          </motion.p>
-        </div>
+    <AuthShell
+      eyebrow="Join the network"
+      title="Make local influence feel effortless."
+      description="A focused place for creators and brands to discover each other, agree on the work, and build lasting partnerships."
+    >
+      {step === 'role' ? (
+        <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#b77a12]">Get started</p>
+          <h2 className="mt-2 text-3xl font-extrabold tracking-[-0.045em] text-[#173b2a]">Choose your path.</h2>
+          <p className="mt-2 text-sm leading-6 text-[#69766e]">We’ll shape your workspace around what you want to do.</p>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="grid grid-cols-3 gap-4"
-        >
-          {[
-            { value: '10K+', label: 'Creators' },
-            { value: '5K+', label: 'Brands' },
-            { value: '50K+', label: 'Deals' },
-          ].map((stat) => (
-            <div key={stat.label} className="text-center">
-              <p className="text-2xl font-bold text-white">{stat.value}</p>
-              <p className="text-sm text-white/70">{stat.label}</p>
-            </div>
-          ))}
-        </motion.div>
-      </div>
-
-      {/* Right Side - Signup Form */}
-      <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 lg:px-16 xl:px-24">
-        <div className="mx-auto w-full max-w-md">
-          {/* Mobile Logo */}
-          <Link href="/" className="mb-8 inline-flex items-center lg:hidden">
-            <ZingZingLogo variant="light" className="h-10 w-[210px]" />
-          </Link>
-
-          {step === 'role' ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <h2 className="text-2xl font-bold text-foreground">Create your account</h2>
-              <p className="mt-2 text-muted-foreground">
-                Choose how you want to use ZingZing
-              </p>
-
-              <div className="mt-8 space-y-4">
-                {roleOptions.map((option) => {
-                  const Icon = option.icon;
-                  return (
-                    <motion.button
-                      key={option.value}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      onClick={() => handleRoleSelect(option.value)}
-                      className="w-full rounded-2xl border-2 border-border p-6 text-left transition-all hover:border-primary hover:bg-primary/5"
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                          <Icon className="h-6 w-6 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-foreground">{option.label}</h3>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {option.description}
-                          </p>
-                          <ul className="mt-3 space-y-1">
-                            {option.benefits.map((benefit, index) => (
-                              <li key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <CheckCircle className="h-4 w-4 text-primary" />
-                                {benefit}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <ArrowRight className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                    </motion.button>
-                  );
-                })}
-              </div>
-
-              <p className="mt-8 text-center text-sm text-muted-foreground">
-                Already have an account?{' '}
-                <Link href="/login" className="font-medium text-primary hover:underline">
-                  Sign in
-                </Link>
-              </p>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <button
-                onClick={() => setStep('role')}
-                className="mb-6 text-sm text-muted-foreground hover:text-foreground"
-              >
-                &larr; Back to role selection
-              </button>
-
-              <h2 className="text-2xl font-bold text-foreground">
-                {role === 'creator' ? 'Create your creator profile' : 'Set up your brand account'}
-              </h2>
-              <p className="mt-2 text-muted-foreground">
-                Fill in your details to get started
-              </p>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="mt-6 w-full rounded-full"
-                onClick={handleGoogleSignup}
-                disabled={isLoading || !role}
-              >
-                Continue with Google
-              </Button>
-
-              <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
-                <div className="h-px flex-1 bg-border" />
-                Or continue with email
-                <div className="h-px flex-1 bg-border" />
-              </div>
-
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">
-                    {role === 'creator' ? 'Full Name' : 'Brand/Company Name'}
-                  </Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder={role === 'creator' ? 'Ali Hassan Khan' : 'Foodpanda Pakistan'}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Create a strong password"
-                      value={password}
-                      onChange={(e) => handlePasswordChange(e.target.value)}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Password Strength Indicator */}
-                  {password && passwordStrength && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="space-y-3 rounded-lg border border-border bg-muted/30 p-4"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-foreground">
-                          Password Strength
-                        </span>
-                        <span
-                          className={`text-sm font-semibold capitalize ${
-                            passwordStrength.strength === 'strong'
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : passwordStrength.strength === 'good'
-                                ? 'text-blue-600 dark:text-blue-400'
-                                : passwordStrength.strength === 'fair'
-                                  ? 'text-orange-600 dark:text-orange-400'
-                                  : 'text-destructive'
-                          }`}
-                        >
-                          {passwordStrength.strength}
-                        </span>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="space-y-1">
-                        <div className="flex gap-1">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <div
-                              key={i}
-                              className={`h-1 flex-1 rounded-full transition-colors ${
-                                i < Math.ceil(passwordStrength.score / 20)
-                                  ? passwordStrength.strength === 'strong'
-                                    ? 'bg-emerald-600 dark:bg-emerald-400'
-                                    : passwordStrength.strength === 'good'
-                                      ? 'bg-blue-600 dark:bg-blue-400'
-                                      : passwordStrength.strength === 'fair'
-                                        ? 'bg-orange-600 dark:bg-orange-400'
-                                        : 'bg-destructive'
-                                  : 'bg-muted'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Password Requirements */}
-                      <div className="space-y-2">
-                        <p className="text-xs font-semibold text-foreground">
-                          Password Requirements:
-                        </p>
-                        <ul className="space-y-1.5 text-xs">
-                          <li
-                            className={`flex items-center gap-2 ${
-                              passwordStrength.requirements.minLength
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : 'text-muted-foreground'
-                            }`}
-                          >
-                            {passwordStrength.requirements.minLength ? (
-                              <CheckCircle className="h-4 w-4 flex-shrink-0" />
-                            ) : (
-                              <Circle className="h-4 w-4 flex-shrink-0" />
-                            )}
-                            <span>At least 8 characters long</span>
-                          </li>
-                          <li
-                            className={`flex items-center gap-2 ${
-                              passwordStrength.requirements.hasLowercase
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : 'text-muted-foreground'
-                            }`}
-                          >
-                            {passwordStrength.requirements.hasLowercase ? (
-                              <CheckCircle className="h-4 w-4 flex-shrink-0" />
-                            ) : (
-                              <Circle className="h-4 w-4 flex-shrink-0" />
-                            )}
-                            <span>Contains lowercase letter</span>
-                          </li>
-                          <li
-                            className={`flex items-center gap-2 ${
-                              passwordStrength.requirements.hasUppercase
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : 'text-muted-foreground'
-                            }`}
-                          >
-                            {passwordStrength.requirements.hasUppercase ? (
-                              <CheckCircle className="h-4 w-4 flex-shrink-0" />
-                            ) : (
-                              <Circle className="h-4 w-4 flex-shrink-0" />
-                            )}
-                            <span>Contains uppercase letter</span>
-                          </li>
-                          <li
-                            className={`flex items-center gap-2 ${
-                              passwordStrength.requirements.hasNumber
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : 'text-muted-foreground'
-                            }`}
-                          >
-                            {passwordStrength.requirements.hasNumber ? (
-                              <CheckCircle className="h-4 w-4 flex-shrink-0" />
-                            ) : (
-                              <Circle className="h-4 w-4 flex-shrink-0" />
-                            )}
-                            <span>Contains number</span>
-                          </li>
-                          <li
-                            className={`flex items-center gap-2 ${
-                              passwordStrength.requirements.hasSpecialChar
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : 'text-muted-foreground'
-                            }`}
-                          >
-                            {passwordStrength.requirements.hasSpecialChar ? (
-                              <CheckCircle className="h-4 w-4 flex-shrink-0" />
-                            ) : (
-                              <Circle className="h-4 w-4 flex-shrink-0" />
-                            )}
-                            <span>Contains special character (@$!%*?&)</span>
-                          </li>
-                        </ul>
-                      </div>
-                    </motion.div>
-                  )}
-                </div>
-
-                <div className="rounded-xl border border-border bg-muted/50 p-4">
-                  <p className="text-sm text-muted-foreground">
-                    By creating an account, you agree to our{' '}
-                    <Link href="/terms" className="text-primary hover:underline">
-                      Terms of Service
-                    </Link>{' '}
-                    and{' '}
-                    <Link href="/privacy" className="text-primary hover:underline">
-                      Privacy Policy
-                    </Link>
-                  </p>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full gap-2 rounded-full"
-                  size="lg"
-                  disabled={isLoading}
+          <div className="mt-6 grid gap-3">
+            {roleOptions.map((option) => {
+              const Icon = option.icon;
+              return (
+                <motion.button
+                  key={option.value}
+                  type="button"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={() => { setRole(option.value); setStep('details'); }}
+                  className="group rounded-2xl border border-[#dce3dc] bg-[#fbfaf5] p-4 text-left transition hover:border-[#185c39] hover:bg-[#f4f6f1]"
                 >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : (
-                    <>
-                      Create Account
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
+                  <div className="flex items-start gap-3">
+                    <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#185c39] text-white"><Icon className="size-5" /></span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#b77a12]">{option.eyebrow}</p>
+                      <div className="mt-1 flex items-center justify-between gap-3">
+                        <h3 className="text-lg font-extrabold tracking-[-0.025em] text-[#173b2a]">{option.label}</h3>
+                        <ArrowRight className="size-4 text-[#718077] transition group-hover:translate-x-1 group-hover:text-[#185c39]" />
+                      </div>
+                      <p className="mt-1 text-xs leading-5 text-[#69766e]">{option.description}</p>
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {option.benefits.map((benefit) => <span key={benefit} className="rounded-full border border-[#dce3dc] bg-white px-2 py-1 text-[10px] font-bold text-[#526259]">{benefit}</span>)}
+                      </div>
+                    </div>
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+          <p className="mt-6 text-center text-sm text-[#69766e]">Already have an account? <Link href="/login" className="font-extrabold text-[#185c39] hover:underline">Sign in</Link></p>
+        </motion.div>
+      ) : (
+        <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }}>
+          <button type="button" onClick={() => setStep('role')} className="mb-4 inline-flex items-center gap-1.5 text-xs font-bold text-[#69766e] hover:text-[#185c39]">
+            <ArrowLeft className="size-3.5" /> Change account type
+          </button>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#b77a12]">{role === 'creator' ? 'Creator account' : 'Brand account'}</p>
+              <h2 className="mt-2 text-3xl font-extrabold tracking-[-0.045em] text-[#173b2a]">Create your account.</h2>
+              <p className="mt-2 text-sm leading-6 text-[#69766e]">A few details and you’re ready to connect.</p>
+            </div>
+            <span className="mt-1 hidden rounded-full bg-[#f7e8c8] px-3 py-2 text-[11px] font-bold capitalize text-[#8b5e12] sm:inline-flex">{role}</span>
+          </div>
 
-              <p className="mt-8 text-center text-sm text-muted-foreground">
-                Already have an account?{' '}
-                <Link href="/login" className="font-medium text-primary hover:underline">
-                  Sign in
-                </Link>
-              </p>
-            </motion.div>
-          )}
-        </div>
-      </div>
-    </div>
+          <Button type="button" variant="outline" onClick={handleGoogleSignup} disabled={isLoading || !role} className="mt-5 h-11 w-full rounded-full border-[#ccd7ce] bg-white font-bold text-[#294b38] hover:border-[#185c39] hover:bg-[#fbfaf5]">
+            Continue with Google
+          </Button>
+          <div className="my-4 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#87938b]">
+            <div className="h-px flex-1 bg-[#dce3dc]" /> or use email <div className="h-px flex-1 bg-[#dce3dc]" />
+          </div>
+
+          <form onSubmit={handleSignup} className="space-y-3.5">
+            <div className="space-y-1.5">
+              <Label htmlFor="name" className="text-xs font-bold text-[#3d5d49]">{role === 'creator' ? 'Full name' : 'Brand or company name'}</Label>
+              <Input id="name" type="text" placeholder={role === 'creator' ? 'Ali Hassan Khan' : 'Your brand name'} value={name} onChange={(event) => setName(event.target.value)} required className={inputClass} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-xs font-bold text-[#3d5d49]">Email address</Label>
+              <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required className={inputClass} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-xs font-bold text-[#3d5d49]">Password</Label>
+              <div className="relative">
+                <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Create a strong password" value={password} onChange={(event) => handlePasswordChange(event.target.value)} required className={`${inputClass} pr-11`} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-1.5 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full text-[#718077] hover:bg-[#eef2eb] hover:text-[#185c39]" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
+              {password && passwordStrength && (
+                <div className="rounded-xl border border-[#dce3dc] bg-[#f4f2e9] p-3">
+                  <div className="flex items-center justify-between text-[11px] font-bold">
+                    <span className="text-[#526259]">Password strength</span>
+                    <span className="capitalize text-[#185c39]">{passwordStrength.strength}</span>
+                  </div>
+                  <div className="mt-2 flex gap-1">
+                    {Array.from({ length: 5 }).map((_, index) => <span key={index} className={`h-1 flex-1 rounded-full ${index < Math.ceil(passwordStrength.score / 20) ? 'bg-[#185c39]' : 'bg-[#d6ded7]'}`} />)}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1.5">
+                    {requirements.map(([label, met]) => (
+                      <span key={String(label)} className={`inline-flex items-center gap-1 text-[10px] font-semibold ${met ? 'text-[#185c39]' : 'text-[#87938b]'}`}>
+                        {met ? <Check className="size-3" /> : <Circle className="size-2.5" />} {label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <p className="rounded-xl bg-[#eef2eb] px-3 py-2.5 text-[11px] leading-5 text-[#69766e]">
+              By creating an account, you agree to our <Link href="/terms" className="font-bold text-[#185c39] hover:underline">Terms</Link> and <Link href="/privacy" className="font-bold text-[#185c39] hover:underline">Privacy Policy</Link>.
+            </p>
+            <Button type="submit" disabled={isLoading} className={primaryButtonClass}>
+              {isLoading ? <><Loader2 className="size-4 animate-spin" /> Creating account...</> : <>Create account <ArrowRight className="size-4" /></>}
+            </Button>
+          </form>
+          <p className="mt-5 text-center text-sm text-[#69766e]">Already have an account? <Link href="/login" className="font-extrabold text-[#185c39] hover:underline">Sign in</Link></p>
+        </motion.div>
+      )}
+    </AuthShell>
   );
 }
