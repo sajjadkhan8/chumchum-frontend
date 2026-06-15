@@ -287,12 +287,12 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               <span className="absolute left-3 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full bg-white text-[#2d6b4e] shadow-sm transition group-focus-within:bg-[#2d6b4e] group-focus-within:text-white">
                 <Search className="size-4" />
               </span>
-              <Input
+              <input
                 type="text"
                 role="searchbox"
                 aria-label="Search offers, brands, or creators"
                 placeholder="Search offers, brands, or creators..."
-                className="h-10 rounded-full border-0 bg-transparent pl-11 pr-11 text-sm font-semibold text-[#1e3d2e] shadow-none placeholder:font-medium placeholder:text-[#87938b] focus-visible:border-0 focus-visible:ring-0"
+                className="h-10 w-full rounded-full border-0 bg-transparent pl-11 pr-11 text-sm font-semibold text-[#1e3d2e] outline-none placeholder:font-medium placeholder:text-[#87938b]"
                 value={creatorGlobalSearch}
                 onChange={(e) => setCreatorGlobalSearch(e.target.value)}
                 onKeyDown={(e) => {

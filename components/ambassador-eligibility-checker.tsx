@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Check, X, AlertCircle } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { Creator } from '@/types';
 import { formatFollowers } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -60,6 +57,8 @@ export function AmbassadorEligibilityChecker({ creator, className }: AmbassadorE
     meetsRatingRequirement &&
     meetsDealsRequirement;
 
+  const metCount = [meetsFollowersRequirement, meetsEngagementRequirement, meetsRatingRequirement, meetsDealsRequirement].filter(Boolean).length;
+
   const requirements = [
     {
       title: 'Minimum Followers',
@@ -92,91 +91,104 @@ export function AmbassadorEligibilityChecker({ creator, className }: AmbassadorE
   ];
 
   return (
-    <Card className={cn('border-border/50', className)}>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Ambassador Eligibility Check</span>
-          {allRequirementsMet ? (
-            <Badge className="bg-primary/90 text-primary-foreground">
-              <Check className="mr-1 h-3 w-3" />
-              Qualified
-            </Badge>
-          ) : (
-            <Badge variant="secondary">
-              {[meetsFollowersRequirement, meetsEngagementRequirement, meetsRatingRequirement, meetsDealsRequirement].filter(Boolean).length}/{requirements.length}
-            </Badge>
-          )}
-        </CardTitle>
-        <CardDescription>
-          Platform Ambassadors are verified creators who receive guaranteed monthly income and exclusive brand partnerships.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {!allRequirementsMet && (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              You don't meet all requirements yet, but you're making progress! Keep improving and check back soon.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <div className="space-y-3">
-          {requirements.map((req) => (
-            <div key={req.title} className={cn(
-              'flex items-start gap-3 rounded-lg border p-3 transition-colors',
-              req.met
-                ? 'border-border/50 bg-background'
-                : 'border-border/50 bg-muted/30'
-            )}>
-              <div className="text-2xl">{req.icon}</div>
-              <div className="flex-1">
-                <p className="font-semibold text-sm">{req.title}</p>
-                <p className="text-xs text-muted-foreground">{req.description}</p>
-                <p className={cn(
-                  'mt-1 text-sm font-medium',
-                  req.met ? 'text-primary' : 'text-muted-foreground'
-                )}>
-                  Current: {req.current}
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                {req.met ? (
-                  <Check className="h-5 w-5 text-primary" />
-                ) : (
-                  <X className="h-5 w-5 text-muted-foreground" />
-                )}
-              </div>
-            </div>
-          ))}
+    <div
+      className={cn(
+        'rounded-[1.6rem] border border-[#d1ddd6] bg-white shadow-[0_18px_55px_rgba(38,70,50,0.07)] p-5 sm:p-6',
+        className
+      )}
+    >
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Eligibility</p>
+          <h2 className="mt-1 text-xl font-extrabold tracking-[-0.035em] text-[#1e3d2e]">
+            Ambassador Eligibility Check
+          </h2>
+          <p className="mt-1 text-xs text-[#87938b]">
+            Platform Ambassadors are verified creators who receive guaranteed monthly income and exclusive brand partnerships.
+          </p>
         </div>
-
-        {allRequirementsMet && (
-          <Alert className="bg-primary/10 border-primary/20">
-            <Check className="h-4 w-4 text-primary" />
-            <AlertDescription className="text-primary">
-              🎉 Congratulations! You meet all requirements and can apply for the Platform Ambassador program.
-            </AlertDescription>
-          </Alert>
+        {allRequirementsMet ? (
+          <span className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-full bg-[#2d6b4e] px-3 py-1.5 text-xs font-bold text-white">
+            <Check className="size-3" />
+            Qualified
+          </span>
+        ) : (
+          <span className="flex-shrink-0 rounded-full border border-[#d1ddd6] bg-[#f4f7f5] px-3 py-1.5 text-xs font-bold text-[#87938b]">
+            {metCount}/4
+          </span>
         )}
+      </div>
 
-        {reqs.verificationSteps && (
-          <div className="border-t border-border pt-4">
-            <h4 className="mb-3 font-semibold text-sm">Verification Process</h4>
-            <ol className="space-y-2">
-              {reqs.verificationSteps.map((step, idx) => (
-                <li key={idx} className="flex gap-3 text-sm text-muted-foreground">
-                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 font-medium text-primary text-xs">
-                    {idx + 1}
-                  </span>
-                  <span>{step}</span>
-                </li>
-              ))}
-            </ol>
+      {/* Progress alert */}
+      {!allRequirementsMet && (
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-[#e8c98a] bg-[#fdf3dc] p-3.5">
+          <AlertCircle className="mt-0.5 size-4 shrink-0 text-[#9b6712]" />
+          <p className="text-xs leading-5 text-[#73541e]">
+            You don't meet all requirements yet, but you're making progress! Keep improving and check back soon.
+          </p>
+        </div>
+      )}
+
+      {/* Requirements list */}
+      <div className="space-y-3">
+        {requirements.map((req) => (
+          <div
+            key={req.title}
+            className={cn(
+              'flex items-start gap-3 rounded-2xl border p-3.5 transition-colors',
+              req.met
+                ? 'border-[#c2dac9] bg-[#f0f9f4]'
+                : 'border-[#d1ddd6] bg-[#f9f9f6]'
+            )}
+          >
+            <div className="text-2xl">{req.icon}</div>
+            <div className="flex-1">
+              <p className="text-sm font-extrabold text-[#1e3d2e]">{req.title}</p>
+              <p className="text-xs text-[#87938b]">{req.description}</p>
+              <p className={cn('mt-1 text-sm font-bold', req.met ? 'text-[#2d6b4e]' : 'text-[#87938b]')}>
+                Current: {req.current}
+              </p>
+            </div>
+            <div className="flex-shrink-0">
+              {req.met ? (
+                <Check className="size-5 text-[#2d6b4e]" />
+              ) : (
+                <X className="size-5 text-[#87938b]" />
+              )}
+            </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        ))}
+      </div>
+
+      {/* Qualified banner */}
+      {allRequirementsMet && (
+        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-[#c2dac9] bg-[#e4f1e8] p-3.5">
+          <Check className="mt-0.5 size-4 shrink-0 text-[#2d6b4e]" />
+          <p className="text-sm text-[#1e5c3e]">
+            🎉 Congratulations! You meet all requirements and can apply for the Platform Ambassador program.
+          </p>
+        </div>
+      )}
+
+      {/* Verification steps */}
+      {reqs.verificationSteps && (
+        <div className="mt-5 border-t border-[#edf1ed] pt-5">
+          <h4 className="mb-3 text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">
+            Verification Process
+          </h4>
+          <ol className="space-y-2">
+            {reqs.verificationSteps.map((step, idx) => (
+              <li key={idx} className="flex gap-3 text-sm text-[#87938b]">
+                <span className="flex size-6 flex-shrink-0 items-center justify-center rounded-full bg-[#e4f1e8] text-xs font-extrabold text-[#2d6b4e]">
+                  {idx + 1}
+                </span>
+                <span className="pt-0.5">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+    </div>
   );
 }
-

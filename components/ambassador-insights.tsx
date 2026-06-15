@@ -54,13 +54,13 @@ export function AmbassadorJourneyTimeline({ metrics }: AmbassadorJourneyTimeline
               animate={{ scale: 1 }}
               transition={{ delay: idx * 0.15 + 0.1 }}
               className={cn(
-                'h-10 w-10 rounded-full flex items-center justify-center text-lg font-bold',
+                'flex size-10 items-center justify-center rounded-full font-bold text-lg',
                 milestone.completed
-                  ? 'bg-primary/20 text-primary'
-                  : 'bg-muted text-muted-foreground'
+                  ? 'bg-[#e4f1e8] text-[#2d6b4e]'
+                  : 'bg-[#f0f0ec] text-[#87938b]'
               )}
             >
-              {milestone.completed ? <Check className="h-5 w-5" /> : <Lock className="h-5 w-5" />}
+              {milestone.completed ? <Check className="size-5" /> : <Lock className="size-5" />}
             </motion.div>
             {idx < milestones.length - 1 && (
               <motion.div
@@ -68,8 +68,8 @@ export function AmbassadorJourneyTimeline({ metrics }: AmbassadorJourneyTimeline
                 animate={{ height: 48 }}
                 transition={{ delay: idx * 0.15 + 0.2 }}
                 className={cn(
-                  'w-0.5 my-1',
-                  milestones[idx + 1].completed ? 'bg-primary/30' : 'bg-muted/30'
+                  'my-1 w-0.5',
+                  milestones[idx + 1].completed ? 'bg-[#c2dac9]' : 'bg-[#e0e9e3]'
                 )}
               />
             )}
@@ -82,9 +82,9 @@ export function AmbassadorJourneyTimeline({ metrics }: AmbassadorJourneyTimeline
               animate={{ opacity: 1 }}
               transition={{ delay: idx * 0.15 + 0.2 }}
             >
-              <p className="font-semibold text-sm">{milestone.title}</p>
+              <p className="text-sm font-semibold text-[#1e3d2e]">{milestone.title}</p>
               {milestone.date && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-[#87938b]">
                   {milestone.date.toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
@@ -93,7 +93,7 @@ export function AmbassadorJourneyTimeline({ metrics }: AmbassadorJourneyTimeline
                 </p>
               )}
               {!milestone.completed && !milestone.date && (
-                <p className="text-xs text-muted-foreground italic">
+                <p className="text-xs italic text-[#87938b]">
                   Complete previous milestones to unlock
                 </p>
               )}
@@ -117,15 +117,15 @@ export function AmbassadorSuggestions({
   improvements,
 }: AmbassadorSuggestionsProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Smart Suggestions */}
       {suggestions.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-lg border border-primary/20 bg-primary/5 p-4"
+          className="rounded-[1.4rem] border border-[#c2dac9] bg-[#f0f9f4] p-4"
         >
-          <h4 className="font-semibold text-sm mb-3 text-primary">
+          <h4 className="mb-3 text-sm font-extrabold text-[#2d6b4e]">
             🎯 How to Level Up Faster
           </h4>
           <ul className="space-y-2">
@@ -135,9 +135,9 @@ export function AmbassadorSuggestions({
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className="flex gap-2 text-sm text-foreground"
+                className="flex gap-2 text-sm text-[#1e3d2e]"
               >
-                <span className="text-primary">→</span>
+                <span className="text-[#2d6b4e]">→</span>
                 <span>{suggestion}</span>
               </motion.li>
             ))}
@@ -151,15 +151,15 @@ export function AmbassadorSuggestions({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-lg border border-green-500/20 bg-green-500/5 p-4"
+          className="rounded-[1.4rem] border border-[#c2dac9] bg-[#f0f9f4] p-4"
         >
-          <h4 className="font-semibold text-sm mb-3 text-green-700 dark:text-green-400">
+          <h4 className="mb-3 text-sm font-extrabold text-[#2d6b4e]">
             ✨ Your Strengths
           </h4>
           <ul className="space-y-1">
             {strengths.map((strength) => (
-              <li key={strength} className="flex gap-2 text-sm text-foreground">
-                <span className="text-green-600">✓</span>
+              <li key={strength} className="flex gap-2 text-sm text-[#1e3d2e]">
+                <span className="text-[#2d6b4e]">✓</span>
                 <span>{strength}</span>
               </li>
             ))}
@@ -173,15 +173,15 @@ export function AmbassadorSuggestions({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4"
+          className="rounded-[1.4rem] border border-[#e8c98a] bg-[#fdf3dc] p-4"
         >
-          <h4 className="font-semibold text-sm mb-3 text-amber-700 dark:text-amber-400">
+          <h4 className="mb-3 text-sm font-extrabold text-[#73541e]">
             📈 Areas to Improve
           </h4>
           <ul className="space-y-1">
             {improvements.map((improvement) => (
-              <li key={improvement} className="flex gap-2 text-sm text-foreground">
-                <span className="text-amber-600">•</span>
+              <li key={improvement} className="flex gap-2 text-sm text-[#1e3d2e]">
+                <span className="text-[#9b6712]">•</span>
                 <span>{improvement}</span>
               </li>
             ))}
@@ -205,7 +205,7 @@ export function AmbassadorPercentileComparison({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="rounded-lg border border-border/50 bg-muted/30 p-6 text-center"
+      className="rounded-[1.6rem] border border-[#d1ddd6] bg-[#f4f7f5] p-6 text-center shadow-[0_8px_28px_rgba(38,70,50,0.05)]"
     >
       <div className="space-y-3">
         <div>
@@ -213,11 +213,11 @@ export function AmbassadorPercentileComparison({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-4xl font-bold text-primary"
+            className="text-4xl font-extrabold text-[#2d6b4e]"
           >
             {percentile}%
           </motion.div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-[#87938b]">
             You're ahead of {percentile}% of creators
           </p>
         </div>
@@ -228,20 +228,20 @@ export function AmbassadorPercentileComparison({
           transition={{ delay: 0.4 }}
           className="origin-left"
         >
-          <div className="h-2 rounded-full bg-muted overflow-hidden">
+          <div className="h-2 overflow-hidden rounded-full bg-[#e0e9e3]">
             <div
-              className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+              className="h-full rounded-full bg-gradient-to-r from-[#2d6b4e] to-[#3d9e71]"
               style={{ width: `${percentile}%` }}
             />
           </div>
         </motion.div>
 
-        <p className="text-sm font-medium text-foreground">
+        <p className="text-sm font-bold text-[#1e3d2e]">
           In the top {percentile >= 90 ? '10%' : percentile >= 75 ? '25%' : percentile >= 50 ? '50%' : 'growing'} of {tierName}
         </p>
 
         {percentile >= 90 && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
+          <p className="text-xs font-semibold text-[#9b6712]">
             🌟 You're eligible for Elite tier soon!
           </p>
         )}
@@ -249,4 +249,3 @@ export function AmbassadorPercentileComparison({
     </motion.div>
   );
 }
-

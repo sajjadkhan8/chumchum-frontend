@@ -3,10 +3,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Clock, AlertCircle, Crown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BottomNav } from '@/components/bottom-nav';
 import { AmbassadorEligibilityChecker } from '@/components/ambassador-eligibility-checker';
 import { AmbassadorDetailedCard } from '@/components/ambassador-detailed-card';
@@ -16,6 +12,9 @@ import { ambassadorService, type AmbassadorBenefit } from '@/services/ambassador
 import { creatorsService } from '@/services/creators.service';
 import type { Creator } from '@/types';
 import Link from 'next/link';
+
+const panelClass =
+  'rounded-[1.6rem] border border-[#d1ddd6] bg-white shadow-[0_18px_55px_rgba(38,70,50,0.07)] p-5 sm:p-6';
 
 export default function AmbassadorProgramPage() {
   const { user, isAuthenticated } = useAuthStore();
@@ -76,20 +75,21 @@ export default function AmbassadorProgramPage() {
   if (!isAuthenticated || user?.role !== 'creator') {
     return (
       <>
-        <div className="min-h-screen bg-background">
-          <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <AlertCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <h1 className="mb-2 text-3xl font-bold">Creators Only</h1>
-              <p className="mb-6 text-muted-foreground">
-                Sign in as a creator to access the Platform Ambassador program.
-              </p>
-              <Link href="/login">
-                <Button size="lg">
-                  Sign In
-                </Button>
-              </Link>
+        <div className="min-h-screen bg-[#fbfaf5] px-4 py-12 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-4xl text-center">
+            <div className="mx-auto mb-4 grid size-16 place-items-center rounded-2xl bg-[#e6eceb] text-[#2d6b4e]">
+              <AlertCircle className="size-8" />
             </div>
+            <h1 className="mb-2 text-3xl font-extrabold tracking-[-0.04em] text-[#1e3d2e]">Creators Only</h1>
+            <p className="mb-6 text-[#87938b]">
+              Sign in as a creator to access the Platform Ambassador program.
+            </p>
+            <Link
+              href="/login"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-[#2d6b4e] px-6 font-bold text-white transition-colors hover:bg-[#1f5239]"
+            >
+              Sign In
+            </Link>
           </div>
         </div>
         <BottomNav />
@@ -99,121 +99,120 @@ export default function AmbassadorProgramPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-background">
-        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[#fbfaf5] px-4 pb-10 pt-2 text-[#1e3d2e] sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl space-y-8">
+
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-12 text-center"
+            className="pt-6 text-center"
           >
-            <div className="mb-4 inline-block">
-              <Badge variant="secondary" className="bg-primary/10 text-primary">
-                <Crown className="mr-1 h-3 w-3" />
-                Exclusive Program
-              </Badge>
-            </div>
-            <h1 className="mb-4 text-4xl font-bold">Platform Ambassador Program</h1>
-            <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+            <span className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-[#e8c98a] bg-[#fdf3dc] px-3 py-1 text-xs font-bold text-[#9b6712]">
+              <Crown className="size-3" />
+              Exclusive Program
+            </span>
+            <h1 className="mb-3 text-4xl font-extrabold tracking-[-0.045em] text-[#1e3d2e]">
+              Platform Ambassador Program
+            </h1>
+            <p className="mx-auto max-w-2xl text-base text-[#87938b]">
               Join our network of verified creators. Earn guaranteed monthly income,
               access exclusive brands, and grow your influence with platform support.
             </p>
           </motion.div>
 
           {/* Application Status Section */}
-          {currentCreator && (
+          {currentCreator && applicationStatus && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="mb-12"
             >
-              {applicationStatus && (
-                <Card className="border-border/50 shadow-sm">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {applicationStatus.status === 'approved' ? (
-                          <CheckCircle2 className="h-6 w-6 text-primary" />
-                        ) : applicationStatus.status === 'rejected' ? (
-                          <AlertCircle className="h-6 w-6 text-muted-foreground" />
-                        ) : (
-                          <Clock className="h-6 w-6 text-muted-foreground" />
-                        )}
-                        <div>
-                          <CardTitle className="capitalize">
-                            {applicationStatus.status === 'approved'
-                              ? 'Welcome to the Program!'
-                              : applicationStatus.status === 'rejected'
-                                ? 'Application Rejected'
-                                : `Application Status: ${applicationStatus.status.replace(/_/g, ' ')}`}
-                          </CardTitle>
-                          <CardDescription>
-                            Last updated on {new Date(applicationStatus.updatedAt).toLocaleDateString()}
-                          </CardDescription>
-                        </div>
+              <div className={panelClass}>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    {applicationStatus.status === 'approved' ? (
+                      <div className="grid size-10 place-items-center rounded-xl bg-[#e4f1e8] text-[#2d6b4e]">
+                        <CheckCircle2 className="size-5" />
                       </div>
-                      {applicationStatus.status === 'approved' && (
-                        <Badge className="bg-primary/90 text-primary-foreground">Active</Badge>
-                      )}
+                    ) : applicationStatus.status === 'rejected' ? (
+                      <div className="grid size-10 place-items-center rounded-xl bg-[#fce8e6] text-[#c0392b]">
+                        <AlertCircle className="size-5" />
+                      </div>
+                    ) : (
+                      <div className="grid size-10 place-items-center rounded-xl bg-[#fdf3dc] text-[#9b6712]">
+                        <Clock className="size-5" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-extrabold text-[#1e3d2e]">
+                        {applicationStatus.status === 'approved'
+                          ? 'Welcome to the Program!'
+                          : applicationStatus.status === 'rejected'
+                            ? 'Application Rejected'
+                            : `Application Status: ${applicationStatus.status.replace(/_/g, ' ')}`}
+                      </p>
+                      <p className="text-xs text-[#87938b]">
+                        Last updated on {new Date(applicationStatus.updatedAt).toLocaleDateString()}
+                      </p>
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {applicationStatus.status === 'approved' && (
-                      <Alert className="bg-muted/50 border-border/50">
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                        <AlertDescription>
-                          You're now part of our ambassador network. Check your dashboard for exclusive opportunities.
-                        </AlertDescription>
-                      </Alert>
-                    )}
+                  </div>
+                  {applicationStatus.status === 'approved' && (
+                    <span className="rounded-full bg-[#2d6b4e] px-3 py-1 text-[10px] font-extrabold text-white">
+                      Active
+                    </span>
+                  )}
+                </div>
 
-                    {applicationStatus.status === 'rejected' && applicationStatus.rejectionReason && (
-                      <>
-                        <Alert className="border-border/50 bg-muted/30">
-                          <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                          <AlertDescription>
-                            {applicationStatus.rejectionReason}
-                          </AlertDescription>
-                        </Alert>
-                        <p className="text-sm text-muted-foreground">
-                          Please improve the mentioned areas and feel free to reapply after 30 days.
-                        </p>
-                      </>
-                    )}
+                {applicationStatus.status === 'approved' && (
+                  <div className="mt-4 flex items-start gap-3 rounded-2xl bg-[#e4f1e8] border border-[#c2dac9] p-3.5">
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#2d6b4e]" />
+                    <p className="text-sm text-[#1e5c3e]">
+                      You're now part of our ambassador network. Check your dashboard for exclusive opportunities.
+                    </p>
+                  </div>
+                )}
 
-                    {(applicationStatus.status === 'submitted' || applicationStatus.status === 'under_review') && (
-                      <>
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium">Verification Progress:</p>
-                          <div className="space-y-2">
-                            {[
-                              { step: 'Identity Verification', completed: applicationStatus.verificationSteps.identityVerified },
-                              { step: 'Engagement Verification', completed: applicationStatus.verificationSteps.engagementVerified },
-                              { step: 'Content Review', completed: applicationStatus.verificationSteps.contentReviewPassed },
-                              { step: 'Background Check', completed: applicationStatus.verificationSteps.backgroundCheckPassed },
-                            ].map((step, idx) => (
-                              <div key={idx} className="flex items-center gap-2">
-                                {step.completed ? (
-                                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                                ) : (
-                                  <Clock className="h-4 w-4 text-muted-foreground" />
-                                )}
-                                <span className="text-sm text-muted-foreground">{step.step}</span>
-                              </div>
-                            ))}
-                          </div>
+                {applicationStatus.status === 'rejected' && applicationStatus.rejectionReason && (
+                  <>
+                    <div className="mt-4 flex items-start gap-3 rounded-2xl bg-[#fce8e6] border border-[#f0c8c5] p-3.5">
+                      <AlertCircle className="mt-0.5 size-4 shrink-0 text-[#c0392b]" />
+                      <p className="text-sm text-[#8b2020]">{applicationStatus.rejectionReason}</p>
+                    </div>
+                    <p className="mt-3 text-sm text-[#87938b]">
+                      Please improve the mentioned areas and feel free to reapply after 30 days.
+                    </p>
+                  </>
+                )}
+
+                {(applicationStatus.status === 'submitted' || applicationStatus.status === 'under_review') && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs font-bold uppercase tracking-widest text-[#7a8f82]">Verification Progress</p>
+                    <div className="space-y-2">
+                      {[
+                        { step: 'Identity Verification', completed: applicationStatus.verificationSteps.identityVerified },
+                        { step: 'Engagement Verification', completed: applicationStatus.verificationSteps.engagementVerified },
+                        { step: 'Content Review', completed: applicationStatus.verificationSteps.contentReviewPassed },
+                        { step: 'Background Check', completed: applicationStatus.verificationSteps.backgroundCheckPassed },
+                      ].map((step, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          {step.completed ? (
+                            <CheckCircle2 className="size-4 text-[#2d6b4e]" />
+                          ) : (
+                            <Clock className="size-4 text-[#87938b]" />
+                          )}
+                          <span className="text-sm text-[#87938b]">{step.step}</span>
                         </div>
-                        {applicationStatus.notes && (
-                          <p className="text-sm italic text-muted-foreground">
-                            📝 Note: {applicationStatus.notes}
-                          </p>
-                        )}
-                      </>
+                      ))}
+                    </div>
+                    {applicationStatus.notes && (
+                      <p className="text-sm italic text-[#87938b]">
+                        📝 Note: {applicationStatus.notes}
+                      </p>
                     )}
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
 
@@ -223,7 +222,6 @@ export default function AmbassadorProgramPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="mb-12"
             >
               <AmbassadorDetailedCard creator={currentCreator} className="mb-6" />
               {!applicationStatus && (
@@ -233,145 +231,125 @@ export default function AmbassadorProgramPage() {
           )}
 
           {/* Benefits Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mb-12"
-          >
-            <h2 className="mb-8 text-3xl font-bold">Program Benefits</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {benefits.map((benefit, idx) => (
-                <Card
-                  key={idx}
-                  className="border-border/50 transition-shadow hover:shadow-lg"
-                >
-                  <CardContent className="p-6">
+          {benefits.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <p className="mb-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Perks</p>
+              <h2 className="mb-5 text-2xl font-extrabold tracking-[-0.04em] text-[#1e3d2e]">Program Benefits</h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {benefits.map((benefit, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-[1.4rem] border border-[#d1ddd6] bg-white p-5 shadow-[0_8px_28px_rgba(38,70,50,0.06)] transition-shadow hover:shadow-[0_12px_36px_rgba(38,70,50,0.1)]"
+                  >
                     <div className="mb-3 text-4xl">{benefit.icon}</div>
-                    <h3 className="mb-2 font-bold text-sm">{benefit.title}</h3>
-                    <p className="text-xs text-muted-foreground">{benefit.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </motion.div>
+                    <h3 className="mb-1 text-sm font-extrabold text-[#1e3d2e]">{benefit.title}</h3>
+                    <p className="text-xs leading-5 text-[#87938b]">{benefit.description}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
           {/* Program Details */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="mb-12 space-y-6"
+            className="space-y-5"
           >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span>💼</span> What is the Ambassador Program?
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-muted-foreground">
+            {/* What is it */}
+            <div className={panelClass}>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Overview</p>
+              <h2 className="mb-4 mt-1 text-xl font-extrabold tracking-[-0.035em] text-[#1e3d2e]">
+                💼 What is the Ambassador Program?
+              </h2>
+              <div className="space-y-3 text-sm text-[#87938b]">
                 <p>
                   Our Platform Ambassador program is designed for dedicated creators who want to unlock premium earning potential
                   and exclusive partnership opportunities. As a platform ambassador, you'll receive:
                 </p>
-                <ul className="space-y-2 pl-4">
-                  <li>✓ Monthly guaranteed base income starting from PKR 1,250,000</li>
-                  <li>✓ Direct access to premium brands and enterprise clients</li>
-                  <li>✓ Dedicated account manager for personalized support</li>
-                  <li>✓ First access to exclusive and high-value campaigns</li>
-                  <li>✓ Performance bonuses and incentives</li>
-                  <li>✓ Professional platform support and content consultation</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span>📋</span> Application Process
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+                <ul className="space-y-1.5 pl-4">
                   {[
-                    {
-                      step: 1,
-                      title: 'Submit Application',
-                      desc: 'Complete your application with your creator profile information',
-                    },
-                    {
-                      step: 2,
-                      title: 'Identity Verification',
-                      desc: 'Verify your identity with valid CNIC details',
-                    },
-                    {
-                      step: 3,
-                      title: 'Metrics Review',
-                      desc: 'Our team verifies your follower count and engagement metrics',
-                    },
-                    {
-                      step: 4,
-                      title: 'Content Review',
-                      desc: 'We review your content for brand safety and quality standards',
-                    },
-                    {
-                      step: 5,
-                      title: 'Background Check',
-                      desc: 'Final compliance and background verification',
-                    },
-                    {
-                      step: 6,
-                      title: 'Approval & Onboarding',
-                      desc: 'Get approved and start earning as a Platform Ambassador',
-                    },
+                    'Monthly guaranteed base income starting from PKR 1,250,000',
+                    'Direct access to premium brands and enterprise clients',
+                    'Dedicated account manager for personalized support',
+                    'First access to exclusive and high-value campaigns',
+                    'Performance bonuses and incentives',
+                    'Professional platform support and content consultation',
                   ].map((item) => (
-                    <div key={item.step} className="flex gap-4">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
-                        {item.step}
-                      </div>
-                      <div>
-                        <p className="font-semibold">{item.title}</p>
-                        <p className="text-sm text-muted-foreground">{item.desc}</p>
-                      </div>
-                    </div>
+                    <li key={item} className="flex gap-2">
+                      <span className="text-[#2d6b4e]">✓</span>
+                      <span>{item}</span>
+                    </li>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
+                </ul>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span>❓</span> FAQ
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm">
-                <div>
-                  <p className="font-semibold">Can I work with other platforms while being an ambassador?</p>
-                  <p className="text-muted-foreground">
-                    Ambassadors can work with other platforms, but exclusive brand deals may have non-compete clauses.
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold">How long does the application process take?</p>
-                  <p className="text-muted-foreground">
-                    Typically 7-14 days from submission. We'll notify you of the status via email.
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold">What if my application is rejected?</p>
-                  <p className="text-muted-foreground">
-                    You'll receive specific feedback on which areas to improve. You can reapply after 30 days.
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold">Is there a contract commitment?</p>
-                  <p className="text-muted-foreground">
-                    Yes, ambassadors commit to a minimum of 6 months, with monthly base income guarantee.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Application process */}
+            <div className={panelClass}>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">How it works</p>
+              <h2 className="mb-5 mt-1 text-xl font-extrabold tracking-[-0.035em] text-[#1e3d2e]">
+                📋 Application Process
+              </h2>
+              <div className="space-y-4">
+                {[
+                  { step: 1, title: 'Submit Application', desc: 'Complete your application with your creator profile information' },
+                  { step: 2, title: 'Identity Verification', desc: 'Verify your identity with valid CNIC details' },
+                  { step: 3, title: 'Metrics Review', desc: 'Our team verifies your follower count and engagement metrics' },
+                  { step: 4, title: 'Content Review', desc: 'We review your content for brand safety and quality standards' },
+                  { step: 5, title: 'Background Check', desc: 'Final compliance and background verification' },
+                  { step: 6, title: 'Approval & Onboarding', desc: 'Get approved and start earning as a Platform Ambassador' },
+                ].map((item) => (
+                  <div key={item.step} className="flex gap-4">
+                    <div className="grid size-10 flex-shrink-0 place-items-center rounded-full bg-[#e4f1e8] text-sm font-extrabold text-[#2d6b4e]">
+                      {item.step}
+                    </div>
+                    <div className="pt-1">
+                      <p className="text-sm font-extrabold text-[#1e3d2e]">{item.title}</p>
+                      <p className="mt-0.5 text-xs text-[#87938b]">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* FAQ */}
+            <div className={panelClass}>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Questions</p>
+              <h2 className="mb-5 mt-1 text-xl font-extrabold tracking-[-0.035em] text-[#1e3d2e]">
+                ❓ FAQ
+              </h2>
+              <div className="space-y-4">
+                {[
+                  {
+                    q: 'Can I work with other platforms while being an ambassador?',
+                    a: 'Ambassadors can work with other platforms, but exclusive brand deals may have non-compete clauses.',
+                  },
+                  {
+                    q: 'How long does the application process take?',
+                    a: "Typically 7-14 days from submission. We'll notify you of the status via email.",
+                  },
+                  {
+                    q: 'What if my application is rejected?',
+                    a: "You'll receive specific feedback on which areas to improve. You can reapply after 30 days.",
+                  },
+                  {
+                    q: 'Is there a contract commitment?',
+                    a: 'Yes, ambassadors commit to a minimum of 6 months, with monthly base income guarantee.',
+                  },
+                ].map(({ q, a }) => (
+                  <div key={q} className="border-b border-[#edf1ed] pb-4 last:border-0 last:pb-0">
+                    <p className="text-sm font-extrabold text-[#1e3d2e]">{q}</p>
+                    <p className="mt-1 text-sm text-[#87938b]">{a}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </motion.div>
 
           {/* CTA Button */}
@@ -380,16 +358,16 @@ export default function AmbassadorProgramPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="text-center"
+              className="pb-4 text-center"
             >
-              <Button
-                size="lg"
+              <button
                 onClick={handleApplyClick}
                 disabled={isSubmitting || loading}
+                className="inline-flex h-12 items-center gap-2 rounded-full bg-[#2d6b4e] px-8 font-extrabold text-white transition-colors hover:bg-[#1f5239] disabled:opacity-60"
               >
-                {isSubmitting ? 'Submitting...' : 'Apply for Program'}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+                {isSubmitting ? 'Submitting…' : 'Apply for Program'}
+                <ArrowRight className="size-4" />
+              </button>
             </motion.div>
           )}
         </div>

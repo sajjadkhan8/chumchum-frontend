@@ -69,11 +69,10 @@ export function AmbassadorScoreGauge({
   const config = sizeConfig[size];
   const offset = config.circumference - (score / 100) * config.circumference;
 
-  // Color gradient based on score
-  let strokeColor = '#84cc16'; // lime for 0-40
-  if (score >= 41 && score < 71) strokeColor = '#3b82f6'; // blue
-  if (score >= 71 && score < 91) strokeColor = '#f59e0b'; // amber
-  if (score >= 91) strokeColor = '#8b5cf6'; // purple
+  let strokeColor = '#84cc16';
+  if (score >= 41 && score < 71) strokeColor = '#3b82f6';
+  if (score >= 71 && score < 91) strokeColor = '#f59e0b';
+  if (score >= 91) strokeColor = '#8b5cf6';
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -89,9 +88,8 @@ export function AmbassadorScoreGauge({
             cy={config.width / 2}
             r={config.radius}
             fill="none"
-            stroke="currentColor"
+            stroke="#e0e9e3"
             strokeWidth={config.strokeWidth}
-            className="text-muted"
           />
 
           {/* Progress circle */}
@@ -127,7 +125,7 @@ export function AmbassadorScoreGauge({
             >
               {Math.round(score)}
             </div>
-            <div className="text-xs text-muted-foreground">/ 100</div>
+            <div className="text-xs text-[#87938b]">/ 100</div>
           </motion.div>
         </div>
       </div>
@@ -139,7 +137,7 @@ export function AmbassadorScoreGauge({
           transition={animated ? { delay: 0.8 } : {}}
           className="text-center"
         >
-          <div className="text-xs font-medium text-muted-foreground">
+          <div className="text-xs font-medium text-[#87938b]">
             Ambassador Readiness Score
           </div>
         </motion.div>
@@ -181,17 +179,17 @@ export function AmbassadorScoreBreakdown({ score }: ScoreBreakdownProps) {
           className="space-y-1.5"
         >
           <div className="flex items-center justify-between text-sm">
-            <span className="font-medium text-foreground">{component.label}</span>
-            <span className="text-xs font-semibold text-primary">
+            <span className="font-medium text-[#1e3d2e]">{component.label}</span>
+            <span className="text-xs font-semibold text-[#2d6b4e]">
               {component.value}/{component.max}
             </span>
           </div>
-          <div className="h-2 rounded-full bg-muted overflow-hidden">
+          <div className="h-2 overflow-hidden rounded-full bg-[#e0e9e3]">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${(component.value / component.max) * 100}%` }}
               transition={{ delay: idx * 0.1 + 0.3, duration: 0.6 }}
-              className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+              className="h-full rounded-full bg-gradient-to-r from-[#2d6b4e] to-[#3d9e71]"
             />
           </div>
         </motion.div>
@@ -199,4 +197,3 @@ export function AmbassadorScoreBreakdown({ score }: ScoreBreakdownProps) {
     </div>
   );
 }
-
