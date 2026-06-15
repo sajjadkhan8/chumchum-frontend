@@ -9,34 +9,36 @@ import {
   ArrowRight,
   BadgeCheck,
   Camera,
+  Coffee,
   ChevronRight,
+  Hotel,
+  IceCreamBowl,
   Instagram,
   MapPin,
   Menu,
+  Pizza,
   Play,
   Search,
   ShieldCheck,
-  Sparkles,
-  Star,
-  Users,
+  Utensils,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 
 const categories = [
-  { label: "Fashion", icon: Camera },
-  { label: "Beauty", icon: Sparkles },
-  { label: "Food", icon: Star },
-  { label: "Lifestyle", icon: Users },
+  { label: "Restaurants", icon: Utensils },
+  { label: "Food vloggers", icon: Camera },
+  { label: "Cafes", icon: Coffee },
+  { label: "Fast food", icon: Pizza },
+  { label: "Desserts", icon: IceCreamBowl },
+  { label: "Hotels", icon: Hotel },
   { label: "Lahore", icon: MapPin },
-  { label: "Karachi", icon: MapPin },
-  { label: "Islamabad", icon: MapPin },
 ];
 
 const creators = [
-  { name: "Areeba Khan", niche: "Beauty & lifestyle", followers: "184K", position: "50% 17%" },
-  { name: "Hamza Ali", niche: "Film & culture", followers: "92K", position: "84% 20%" },
-  { name: "Maham Noor", niche: "Food & home", followers: "128K", position: "51% 80%" },
-  { name: "Saad Raza", niche: "Fashion & travel", followers: "210K", position: "15% 58%" },
+  { name: "Areeba Khan", niche: "Cafe finds & lifestyle", followers: "184K", position: "50% 17%" },
+  { name: "Hamza Ali", niche: "Street food & film", followers: "92K", position: "84% 20%" },
+  { name: "Maham Noor", niche: "Recipes & restaurant reviews", followers: "128K", position: "51% 80%" },
+  { name: "Saad Raza", niche: "Hotels & travel dining", followers: "210K", position: "15% 58%" },
 ];
 
 const fadeUp = {
@@ -125,13 +127,13 @@ export default function Home() {
           <motion.div initial={false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65 }}>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#d5dfd5] bg-white px-3.5 py-2 text-xs font-bold text-[#3d5d49] shadow-sm">
               <span className="size-2 rounded-full bg-[#e6aa38]" />
-              Pakistan&apos;s creator partnership network
+              Built first for food & hospitality
             </div>
             <h1 className="max-w-2xl text-[clamp(2.75rem,7vw,5.4rem)] font-extrabold leading-[0.98] tracking-[-0.065em] text-[#173b2a]">
-              Good partnerships start with the right people.
+              Turn local cravings into loyal communities.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-[#5a6b61]">
-              ZingZing brings brands and creators together for thoughtful campaigns, clear deliverables, and work people actually notice.
+              ZingZing helps restaurants, cafes, hotels, and food creators build campaigns that bring people through the door. Built for food first, ready for every category.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/brand/explore" className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#185c39] px-6 py-3.5 text-sm font-bold text-white transition hover:bg-[#104b2d]">
@@ -144,7 +146,7 @@ export default function Home() {
             <div className="mt-10 grid max-w-lg grid-cols-3 border-t border-[#dce3dc] pt-6">
               {[
                 ["5,000+", "creators"],
-                ["500+", "brands"],
+                ["500+", "businesses"],
                 ["25K+", "collaborations"],
               ].map(([value, label]) => (
                 <div key={label}>
@@ -179,7 +181,7 @@ export default function Home() {
             </div>
             <div className="absolute -bottom-5 right-3 rounded-2xl bg-[#e6aa38] px-4 py-3 text-[#173b2a] shadow-lg sm:right-8">
               <p className="text-xs font-bold">New collaboration</p>
-              <p className="mt-0.5 text-sm font-extrabold">Skincare launch · Lahore</p>
+              <p className="mt-0.5 text-sm font-extrabold">Restaurant tasting · Lahore</p>
             </div>
           </motion.div>
         </div>
@@ -198,17 +200,17 @@ export default function Home() {
       <section id="how-it-works" className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
         <SectionIntro
           eyebrow="One network, two paths"
-          title="Less chasing. Better collaborations."
-          copy="Whether you are building a brand or a creative career, ZingZing keeps discovery, offers, deliverables, and conversation in one calm place."
+          title="From discovery to dinner tables."
+          copy="Restaurants and hospitality teams can find the right local voices, while creators get clearer opportunities, deliverables, and conversations in one calm place."
         />
         <div className="mt-12 grid gap-5 lg:grid-cols-2">
           <motion.article {...fadeUp} className="rounded-[1.75rem] bg-[#185c39] p-7 text-white sm:p-9">
             <div className="flex items-start justify-between">
               <span className="grid size-11 place-items-center rounded-2xl bg-white/12"><Search className="size-5" /></span>
-              <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#b9d5c4]">For brands</span>
+              <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#b9d5c4]">For food businesses</span>
             </div>
-            <h3 className="mt-16 max-w-sm text-3xl font-extrabold tracking-[-0.04em]">Find people your audience already trusts.</h3>
-            <p className="mt-4 max-w-md leading-7 text-[#c9dace]">Explore verified talent, compare real profiles, send clear offers, and follow campaign progress without spreadsheet archaeology.</p>
+            <h3 className="mt-16 max-w-sm text-3xl font-extrabold tracking-[-0.04em]">Find creators who make people hungry.</h3>
+            <p className="mt-4 max-w-md leading-7 text-[#c9dace]">Discover local food vloggers, invite them to tastings, agree on deliverables, and follow every promotion without spreadsheet archaeology.</p>
             <Link href="/brand/explore" className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-[#185c39]">
               Explore creators <ArrowRight className="size-4" />
             </Link>
@@ -231,10 +233,10 @@ export default function Home() {
         <div className="mx-auto grid max-w-7xl overflow-hidden rounded-[2rem] bg-[#214b36] lg:grid-cols-[1.05fr_0.95fr]">
           <motion.div {...fadeUp} className="flex flex-col justify-center p-7 sm:p-12">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#f0c56e]">Featured opportunity</p>
-            <h2 className="mt-4 max-w-lg text-4xl font-extrabold tracking-[-0.05em] sm:text-5xl">Help a local skincare story find its people.</h2>
-            <p className="mt-5 max-w-xl leading-7 text-[#c6d8cc]">A Lahore-based clean beauty brand is looking for warm, educational short-form content from beauty and lifestyle creators.</p>
+            <h2 className="mt-4 max-w-lg text-4xl font-extrabold tracking-[-0.05em] sm:text-5xl">Put a new Lahore burger on everyone&apos;s feed.</h2>
+            <p className="mt-5 max-w-xl leading-7 text-[#c6d8cc]">A growing fast-casual restaurant is inviting food vloggers for a tasting and a warm, honest short-form review.</p>
             <div className="mt-7 flex flex-wrap gap-2 text-xs font-bold">
-              {["PKR 45K–80K", "Instagram + TikTok", "3 deliverables", "Lahore preferred"].map((item) => (
+              {["Hosted tasting + PKR 25K", "Instagram + TikTok", "2 short videos", "Lahore creators"].map((item) => (
                 <span key={item} className="rounded-full border border-white/15 bg-white/8 px-3 py-2">{item}</span>
               ))}
             </div>
@@ -243,7 +245,7 @@ export default function Home() {
             </Link>
           </motion.div>
           <div className="relative min-h-[340px]">
-            <Image src="/landing/skincare-opportunity.png" alt="Skincare serum photographed in warm natural light" fill className="object-cover" />
+            <Image src="/landing/restaurant-opportunity.png" alt="A food vlogger recording a restaurant burger, fries, drink, and dessert" fill className="object-cover" />
             <div className="absolute bottom-5 left-5 rounded-2xl bg-white/95 p-4 text-[#173b2a] shadow-xl">
               <p className="flex items-center gap-1 text-xs font-extrabold"><ShieldCheck className="size-4 text-[#185c39]" /> Brand verified</p>
               <p className="mt-1 text-[11px] text-[#69766e]">Applications close in 6 days</p>
@@ -254,7 +256,7 @@ export default function Home() {
 
       <section id="creators" className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <SectionIntro eyebrow="People worth knowing" title="Creators with a point of view." copy="A small glimpse of the talent building trusted communities across Pakistan." />
+          <SectionIntro eyebrow="Food voices worth knowing" title="Creators who know what tastes good." copy="Meet food vloggers, recipe creators, cafe explorers, and hospitality storytellers building trusted local communities." />
           <Link href="/brand/explore" className="inline-flex items-center gap-2 text-sm font-extrabold text-[#185c39]">Explore everyone <ArrowRight className="size-4" /></Link>
         </div>
         <div className="mt-10 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
@@ -283,13 +285,13 @@ export default function Home() {
           <motion.div {...fadeUp}>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#b77a12]">Built for real working relationships</p>
             <blockquote className="mt-5 text-3xl font-extrabold leading-tight tracking-[-0.045em] text-[#173b2a] sm:text-5xl">
-              “We stopped treating creators like media slots and started building campaigns with them.”
+              “The right local creators helped us turn one tasting night into weeks of real customer conversations.”
             </blockquote>
-            <p className="mt-6 max-w-xl text-base leading-7 text-[#637168]">With clear creator profiles and deliverables agreed up front, the team launched in half the usual time and built relationships they could return to.</p>
+            <p className="mt-6 max-w-xl text-base leading-7 text-[#637168]">With relevant food creators and deliverables agreed up front, the restaurant launched quickly, filled tables, and built relationships for future menu drops.</p>
             <div className="mt-8 flex items-center gap-4 border-t border-[#d3d9d2] pt-6">
-              <div><p className="font-extrabold">Maya Hassan</p><p className="text-sm text-[#738078]">Marketing Director, Nura</p></div>
+              <div><p className="font-extrabold">Maya Hassan</p><p className="text-sm text-[#738078]">Marketing Director, The Olive Table</p></div>
               <div className="ml-auto flex gap-5">
-                <div><p className="text-lg font-extrabold">2.4×</p><p className="text-xs text-[#738078]">engagement</p></div>
+                <div><p className="text-lg font-extrabold">2.4×</p><p className="text-xs text-[#738078]">table inquiries</p></div>
                 <div><p className="text-lg font-extrabold">12 days</p><p className="text-xs text-[#738078]">to launch</p></div>
               </div>
             </div>
@@ -300,8 +302,8 @@ export default function Home() {
       <section className="px-5 py-20 lg:px-8 lg:py-24">
         <motion.div {...fadeUp} className="mx-auto max-w-7xl rounded-[2rem] bg-[#e8ad3c] px-6 py-12 text-center text-[#173b2a] sm:px-12 sm:py-16">
           <p className="text-xs font-bold uppercase tracking-[0.2em]">Ready when you are</p>
-          <h2 className="mx-auto mt-4 max-w-3xl text-4xl font-extrabold tracking-[-0.055em] sm:text-6xl">Find your next good collaboration.</h2>
-          <p className="mx-auto mt-5 max-w-xl leading-7 text-[#59471f]">Join the network where creators and brands meet with clarity, mutual respect, and better ideas.</p>
+          <h2 className="mx-auto mt-4 max-w-3xl text-4xl font-extrabold tracking-[-0.055em] sm:text-6xl">Make your next launch worth tasting.</h2>
+          <p className="mx-auto mt-5 max-w-xl leading-7 text-[#59471f]">Join the network where food businesses and creators meet with clarity, mutual respect, and better ideas. Other categories are welcome too.</p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link href="/signup?role=brand" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#173b2a] px-6 py-3.5 text-sm font-bold text-white">Join as a brand <ArrowRight className="size-4" /></Link>
             <Link href="/signup?role=creator" className="inline-flex items-center justify-center gap-2 rounded-full border border-[#173b2a]/25 bg-white/45 px-6 py-3.5 text-sm font-bold">Join as a creator <ArrowRight className="size-4" /></Link>
