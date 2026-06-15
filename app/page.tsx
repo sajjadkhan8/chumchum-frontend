@@ -1,984 +1,323 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import Link from "next/link";
+import { useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  Search,
-  TrendingUp,
-  Star,
   ArrowRight,
-  Loader2,
-  ChevronLeft,
+  BadgeCheck,
+  Camera,
   ChevronRight,
+  Instagram,
+  MapPin,
+  Menu,
+  Play,
+  Search,
+  ShieldCheck,
   Sparkles,
+  Star,
   Users,
-  Zap,
-  Shield,
-  Check,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Navbar } from "@/components/navbar";
-import { BottomNav } from "@/components/bottom-nav";
-import { CreatorCard } from "@/components/creator-card";
-import { EmptyState } from "@/components/empty-state";
-import { ErrorState } from "@/components/error-state";
-import { ZingZingLogo } from "@/src/components/ZingZingLogo";
-import { creatorsService } from "@/services/creators.service";
-import { packagesService } from "@/services/packages.service";
 import { useAuthStore } from "@/store/auth-store";
-import type { Creator, CreatorPackage } from "@/types";
 
 const categories = [
-  { id: "fashion", name: "Fashion", icon: "👗", count: 245 },
-  { id: "tech", name: "Tech", icon: "💻", count: 189 },
-  { id: "food", name: "Food", icon: "🍕", count: 312 },
-  { id: "beauty", name: "Beauty", icon: "💄", count: 278 },
-  { id: "fitness", name: "Fitness", icon: "💪", count: 156 },
-  { id: "travel", name: "Travel", icon: "✈️", count: 198 },
-  { id: "gaming", name: "Gaming", icon: "🎮", count: 167 },
-  { id: "lifestyle", name: "Lifestyle", icon: "🌟", count: 234 },
+  { label: "Fashion", icon: Camera },
+  { label: "Beauty", icon: Sparkles },
+  { label: "Food", icon: Star },
+  { label: "Lifestyle", icon: Users },
+  { label: "Lahore", icon: MapPin },
+  { label: "Karachi", icon: MapPin },
+  { label: "Islamabad", icon: MapPin },
 ];
 
-const stats = [
-  { label: "Active Creators", value: "5,000+", icon: Users },
-  { label: "Campaigns Completed", value: "25,000+", icon: Zap },
-  { label: "Brands Trust Us", value: "500+", icon: Shield },
+const creators = [
+  { name: "Areeba Khan", niche: "Beauty & lifestyle", followers: "184K", position: "50% 17%" },
+  { name: "Hamza Ali", niche: "Film & culture", followers: "92K", position: "84% 20%" },
+  { name: "Maham Noor", niche: "Food & home", followers: "128K", position: "51% 80%" },
+  { name: "Saad Raza", niche: "Fashion & travel", followers: "210K", position: "15% 58%" },
 ];
+
+const fadeUp = {
+  initial: false as const,
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-80px" },
+  transition: { duration: 0.55 },
+};
+
+function Wordmark({ light = false }: { light?: boolean }) {
+  return (
+    <Link href="/" className="flex items-center gap-2.5" aria-label="ZingZing home">
+      <span className={`grid size-8 place-items-center rounded-xl font-black ${light ? "bg-white text-[#185c39]" : "bg-[#185c39] text-white"}`}>
+        Z
+      </span>
+      <span className={`text-lg font-extrabold tracking-[-0.04em] ${light ? "text-white" : "text-[#163b2a]"}`}>
+        Zing<span className={light ? "text-[#f4bd55]" : "text-[#e3a52f]"}>Zing</span>
+      </span>
+    </Link>
+  );
+}
+
+function SectionIntro({ eyebrow, title, copy }: { eyebrow: string; title: string; copy: string }) {
+  return (
+    <motion.div {...fadeUp} className="max-w-xl">
+      <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#b77a12]">{eyebrow}</p>
+      <h2 className="text-3xl font-extrabold tracking-[-0.045em] text-[#173b2a] sm:text-4xl">{title}</h2>
+      <p className="mt-4 text-base leading-7 text-[#5e6c64]">{copy}</p>
+    </motion.div>
+  );
+}
 
 export default function Home() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const hasHydrated = useAuthStore((state) => state.hasHydrated);
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [featuredPagination, setFeaturedPagination] = useState({ page: 0, size: 12 });
-  const [featuredPackages, setFeaturedPackages] = useState<CreatorPackage[]>([]);
-  const [featuredTotalPages, setFeaturedTotalPages] = useState<number | undefined>(undefined);
-  const [featuredTotalElements, setFeaturedTotalElements] = useState<number | undefined>(undefined);
-  const [isFeaturedLoading, setIsFeaturedLoading] = useState(true);
-  const [isFeaturedLoadingMore, setIsFeaturedLoadingMore] = useState(false);
-  const [hasFeaturedError, setHasFeaturedError] = useState(false);
-  const [trendingCreators, setTrendingCreators] = useState<Creator[]>([]);
-  const [risingStars, setRisingStars] = useState<Creator[]>([]);
-  const [verifiedCreators, setVerifiedCreators] = useState<Creator[]>([]);
-  const trendingRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  const shouldRedirectAuthenticatedHome = hasHydrated && isAuthenticated && Boolean(user?.role);
-  const homeRedirectPath = user?.role === "creator" ? "/creator/dashboard" : "/brand/dashboard";
-
-  const fetchFeaturedPackages = async (
-    page = featuredPagination.page,
-    size = featuredPagination.size,
-    options?: { append?: boolean },
-  ) => {
-    const append = Boolean(options?.append);
-
-    if (append) {
-      setIsFeaturedLoadingMore(true);
-    } else {
-      setIsFeaturedLoading(true);
-      setHasFeaturedError(false);
-    }
-
-    try {
-      const response = await packagesService.getFeatured(page, size);
-      setFeaturedPackages((current) => (append ? [...current, ...response.items] : response.items));
-      setFeaturedPagination({ page: response.page, size: response.size });
-      setFeaturedTotalPages(response.totalPages);
-      setFeaturedTotalElements(response.totalElements);
-    } catch {
-      setHasFeaturedError(true);
-      if (!append) {
-        setFeaturedPackages([]);
-      }
-    } finally {
-      if (append) {
-        setIsFeaturedLoadingMore(false);
-      } else {
-        setIsFeaturedLoading(false);
-      }
-    }
-  };
+  const shouldRedirect = hasHydrated && isAuthenticated && Boolean(user?.role);
+  const redirectPath = user?.role === "creator" ? "/creator/dashboard" : "/brand/dashboard";
 
   useEffect(() => {
-    if (!shouldRedirectAuthenticatedHome) return;
-    router.replace(homeRedirectPath);
-  }, [homeRedirectPath, router, shouldRedirectAuthenticatedHome]);
+    if (shouldRedirect) router.replace(redirectPath);
+  }, [redirectPath, router, shouldRedirect]);
 
-  useEffect(() => {
-    if (shouldRedirectAuthenticatedHome) return;
-    void fetchFeaturedPackages(0, featuredPagination.size);
-    // Fetch on home load; keep page/size in state for future load more.
-  }, [featuredPagination.size, shouldRedirectAuthenticatedHome]);
-
-  useEffect(() => {
-    if (shouldRedirectAuthenticatedHome) return;
-
-    const loadCreators = async () => {
-      try {
-        const [trending, all] = await Promise.all([
-          creatorsService.getTrending(8),
-          creatorsService.getAll(),
-        ]);
-        const trendingList = trending.length ? trending : all.slice(0, 8);
-        setTrendingCreators(trendingList);
-        setRisingStars(all.filter((creator) => creator.isTrending).slice(0, 6));
-        setVerifiedCreators(all.filter((creator) => creator.isVerified).slice(0, 4));
-      } catch {
-        setTrendingCreators([]);
-        setRisingStars([]);
-        setVerifiedCreators([]);
-      }
-    };
-
-    void loadCreators();
-  }, [shouldRedirectAuthenticatedHome]);
-
-  const handleScroll = () => {
-    if (trendingRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = trendingRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-    }
-  };
-
-  const scroll = (direction: "left" | "right") => {
-    if (trendingRef.current) {
-      const scrollAmount = 320;
-      trendingRef.current.scrollBy({
-        left: direction === "left" ? -scrollAmount : scrollAmount,
-        behavior: "smooth",
-      });
-    }
-  };
-
-  const featuredPrimary = featuredPackages[0];
-  const featuredSecondary = featuredPackages.slice(1, 4);
-  const featuredMore = featuredPackages.slice(4);
-  const hasMoreFeatured =
-    featuredTotalPages !== undefined
-      ? featuredPagination.page + 1 < featuredTotalPages
-      : featuredPackages.length > 0 && featuredPackages.length % featuredPagination.size === 0;
-
-  const handleLoadMoreFeatured = () => {
-    if (isFeaturedLoadingMore || !hasMoreFeatured) return;
-    void fetchFeaturedPackages(featuredPagination.page + 1, featuredPagination.size, { append: true });
-  };
-
-  if (shouldRedirectAuthenticatedHome) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (shouldRedirect) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 pt-20 pb-16 md:pt-28 md:pb-24">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-accent/20 blur-3xl" />
-        </div>
-
-        <div className="container relative mx-auto px-4">
-          <div className="mx-auto max-w-4xl text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Badge
-                variant="secondary"
-                className="mb-4 bg-primary/10 text-primary hover:bg-primary/15"
-              >
-                <Sparkles className="mr-1 h-3 w-3" />
-                Pakistan&apos;s Influencer Marketplace
-              </Badge>
-            </motion.div>
-
-            <motion.h1
-              className="mb-6 text-4xl font-bold tracking-tight text-foreground md:text-6xl lg:text-7xl"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              Connect with{" "}
-              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                Top Creators
-              </span>
-              <br />
-              in Pakistan
-            </motion.h1>
-
-            <motion.p
-              className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground md:text-xl"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              Find the perfect influencer for your brand or showcase your talent
-              to thousands of businesses. Quick deals, instant messaging, and
-              secure payments.
-            </motion.p>
-
-            <motion.div
-              className="mx-auto mb-8 flex max-w-xl flex-col gap-3 sm:flex-row"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search creators, niches, or skills..."
-                  className="h-12 pl-10 pr-4 text-base"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+    <main className="min-h-screen bg-[#fbfaf5] text-[#173b2a]">
+      <header className="sticky top-0 z-50 border-b border-[#dfe5dd]/80 bg-[#fbfaf5]/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 lg:px-8">
+          <Wordmark />
+          <nav className="hidden items-center gap-7 text-sm font-semibold text-[#526259] md:flex">
+            <a href="#how-it-works" className="transition-colors hover:text-[#185c39]">How it works</a>
+            <a href="#opportunity" className="transition-colors hover:text-[#185c39]">Opportunities</a>
+            <a href="#creators" className="transition-colors hover:text-[#185c39]">Creators</a>
+            <Link href="/pricing" className="transition-colors hover:text-[#185c39]">Pricing</Link>
+          </nav>
+          <div className="hidden items-center gap-3 md:flex">
+            <Link href="/login" className="px-3 py-2 text-sm font-bold text-[#294b38]">Sign in</Link>
+            <Link href="/signup" className="rounded-full bg-[#185c39] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#104b2d]">
+              Join ZingZing
+            </Link>
+          </div>
+          <details className="group md:hidden">
+            <summary className="grid size-11 cursor-pointer list-none place-items-center rounded-full border border-[#d8dfd8]" aria-label="Toggle navigation">
+              <Menu className="size-5" />
+            </summary>
+            <nav className="absolute left-0 right-0 top-16 border-t border-[#dfe5dd] bg-[#fbfaf5] px-5 py-5 shadow-lg">
+              <div className="mx-auto flex max-w-7xl flex-col gap-1 font-semibold">
+                <a href="#how-it-works" className="rounded-xl px-3 py-3 hover:bg-[#eef2eb]">How it works</a>
+                <a href="#opportunity" className="rounded-xl px-3 py-3 hover:bg-[#eef2eb]">Opportunities</a>
+                <a href="#creators" className="rounded-xl px-3 py-3 hover:bg-[#eef2eb]">Creators</a>
+                <Link href="/pricing" className="rounded-xl px-3 py-3 hover:bg-[#eef2eb]">Pricing</Link>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Link href="/login" className="rounded-full border border-[#ccd7ce] px-4 py-3 text-center">Sign in</Link>
+                  <Link href="/signup" className="rounded-full bg-[#185c39] px-4 py-3 text-center text-white">Join</Link>
+                </div>
               </div>
-              <Button size="lg" className="h-12 px-8" asChild>
-                <Link href="/brand/explore">
-                  Explore Creators
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </motion.div>
+            </nav>
+          </details>
+        </div>
+      </header>
 
-            <motion.div
-              className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              {stats.map((stat) => (
-                <div key={stat.label} className="flex items-center gap-2">
-                  <stat.icon className="h-4 w-4 text-primary" />
-                  <span className="font-semibold text-foreground">
-                    {stat.value}
-                  </span>
-                  <span>{stat.label}</span>
+      <section className="overflow-hidden border-b border-[#e3e7e0]">
+        <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-14 sm:py-18 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:py-20">
+          <motion.div initial={false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65 }}>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#d5dfd5] bg-white px-3.5 py-2 text-xs font-bold text-[#3d5d49] shadow-sm">
+              <span className="size-2 rounded-full bg-[#e6aa38]" />
+              Pakistan&apos;s creator partnership network
+            </div>
+            <h1 className="max-w-2xl text-[clamp(2.75rem,7vw,5.4rem)] font-extrabold leading-[0.98] tracking-[-0.065em] text-[#173b2a]">
+              Good partnerships start with the right people.
+            </h1>
+            <p className="mt-6 max-w-xl text-lg leading-8 text-[#5a6b61]">
+              ZingZing brings brands and creators together for thoughtful campaigns, clear deliverables, and work people actually notice.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link href="/brand/explore" className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#185c39] px-6 py-3.5 text-sm font-bold text-white transition hover:bg-[#104b2d]">
+                Find creators <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <Link href="/signup?role=creator" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-[#cbd7cd] bg-white px-6 py-3.5 text-sm font-bold text-[#294b38] transition hover:border-[#185c39]">
+                I&apos;m a creator <ChevronRight className="size-4" />
+              </Link>
+            </div>
+            <div className="mt-10 grid max-w-lg grid-cols-3 border-t border-[#dce3dc] pt-6">
+              {[
+                ["5,000+", "creators"],
+                ["500+", "brands"],
+                ["25K+", "collaborations"],
+              ].map(([value, label]) => (
+                <div key={label}>
+                  <p className="text-xl font-extrabold tracking-tight text-[#173b2a]">{value}</p>
+                  <p className="mt-1 text-xs font-semibold text-[#718077]">{label}</p>
                 </div>
               ))}
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-muted/20 py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="mb-8 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground md:text-3xl">Featured Packages</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Handpicked offers ranked by backend curation.
-                {featuredTotalElements !== undefined ? ` ${featuredTotalElements} total offers.` : ""}
-              </p>
             </div>
-            <Badge variant="secondary" className="bg-primary/10 text-primary">
-              <Sparkles className="mr-1 h-3 w-3" />
-              Ranked Feed
-            </Badge>
-          </div>
-
-          {isFeaturedLoading ? (
-            <div className="grid gap-4 lg:grid-cols-3">
-              <div className="min-h-[360px] animate-pulse rounded-2xl border border-border bg-card lg:col-span-2" />
-              <div className="grid gap-4">
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="min-h-[112px] animate-pulse rounded-2xl border border-border bg-card" />
-                ))}
-              </div>
-            </div>
-          ) : hasFeaturedError ? (
-            <ErrorState
-              title="Unable to load featured packages"
-              description="Please check your connection and retry."
-              onRetry={() => {
-                void fetchFeaturedPackages(featuredPagination.page, featuredPagination.size);
-              }}
-            />
-          ) : featuredPackages.length === 0 || !featuredPrimary ? (
-            <EmptyState
-              title="No featured packages yet"
-              description="Featured offers will show up here once available."
-              action={{
-                label: "Refresh",
-                onClick: () => {
-                  void fetchFeaturedPackages(featuredPagination.page, featuredPagination.size);
-                },
-              }}
-            />
-          ) : (
-            <div className="space-y-4">
-              <div className="grid gap-4 lg:grid-cols-3">
-                <Link href={`/packages/${featuredPrimary.id}`} className="group lg:col-span-2">
-                  <Card className="overflow-hidden border-border/60 transition-shadow hover:shadow-lg">
-                    <div className="relative aspect-[16/9] w-full">
-                      <Image
-                        src={featuredPrimary.thumbnail || "https://picsum.photos/seed/featured-main/1200/675"}
-                        alt={featuredPrimary.title}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                      <div className="absolute left-4 top-4 flex items-center gap-2">
-                        {featuredPrimary.isFeatured && (
-                          <Badge className="bg-primary text-primary-foreground">Featured</Badge>
-                        )}
-                        {featuredPrimary.isPopular && (
-                          <Badge variant="secondary" className="bg-accent text-accent-foreground">Popular</Badge>
-                        )}
-                      </div>
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <h3 className="line-clamp-2 text-xl font-bold text-white md:text-2xl">{featuredPrimary.title}</h3>
-                        <p className="mt-2 line-clamp-2 text-sm text-white/85">
-                          {featuredPrimary.shortDescription || featuredPrimary.description}
-                        </p>
-                        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-white/90">
-                          <span className="font-semibold">
-                            {(featuredPrimary.currency || "PKR")} {featuredPrimary.price.toLocaleString()}
-                          </span>
-                          <span>•</span>
-                          <span>{featuredPrimary.ordersCompleted} orders completed</span>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-
-                <div className="grid gap-4">
-                  {featuredSecondary.map((pkg) => (
-                    <Link key={pkg.id} href={`/packages/${pkg.id}`} className="group">
-                      <Card className="overflow-hidden border-border/60 transition-shadow hover:shadow-lg">
-                        <CardContent className="p-0">
-                          <div className="flex min-h-[112px]">
-                            <div className="relative w-32 shrink-0">
-                              <Image
-                                src={pkg.thumbnail || `https://picsum.photos/seed/${pkg.id}/400/300`}
-                                alt={pkg.title}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                            <div className="flex-1 p-3">
-                              <div className="mb-1 flex flex-wrap items-center gap-1">
-                                {pkg.isFeatured && (
-                                  <Badge className="h-5 bg-primary/90 px-2 text-[10px] text-primary-foreground">Featured</Badge>
-                                )}
-                                {pkg.isPopular && (
-                                  <Badge variant="secondary" className="h-5 px-2 text-[10px]">Popular</Badge>
-                                )}
-                              </div>
-                              <p className="line-clamp-1 text-sm font-semibold text-foreground">{pkg.title}</p>
-                              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                                {pkg.shortDescription || pkg.description}
-                              </p>
-                              <p className="mt-2 text-xs font-medium text-primary">
-                                {(pkg.currency || "PKR")} {pkg.price.toLocaleString()} • {pkg.ordersCompleted} orders
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {featuredMore.length > 0 && (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  {featuredMore.map((pkg) => (
-                    <Link key={pkg.id} href={`/packages/${pkg.id}`} className="group">
-                      <Card className="overflow-hidden border-border/60 transition-shadow hover:shadow-lg">
-                        <div className="relative aspect-[4/3] w-full">
-                          <Image
-                            src={pkg.thumbnail || `https://picsum.photos/seed/${pkg.id}/640/480`}
-                            alt={pkg.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <CardContent className="p-3">
-                          <div className="mb-2 flex flex-wrap items-center gap-1">
-                            {pkg.isFeatured && (
-                              <Badge className="h-5 bg-primary/90 px-2 text-[10px] text-primary-foreground">Featured</Badge>
-                            )}
-                            {pkg.isPopular && <Badge variant="secondary" className="h-5 px-2 text-[10px]">Popular</Badge>}
-                          </div>
-                          <p className="line-clamp-1 text-sm font-semibold text-foreground">{pkg.title}</p>
-                          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                            {pkg.shortDescription || pkg.description}
-                          </p>
-                          <p className="mt-2 text-xs font-medium text-primary">
-                            {(pkg.currency || "PKR")} {pkg.price.toLocaleString()} • {pkg.ordersCompleted} orders
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-              {isFeaturedLoadingMore && (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <div key={index} className="min-h-[220px] animate-pulse rounded-2xl border border-border bg-card" />
-                  ))}
-                </div>
-              )}
-
-              {hasMoreFeatured && (
-                <div className="pt-2 text-center">
-                  <Button onClick={handleLoadMoreFeatured} variant="outline" className="rounded-full" disabled={isFeaturedLoadingMore}>
-                    {isFeaturedLoadingMore ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Loading...
-                      </>
-                    ) : (
-                      "Load more"
-                    )}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="mt-4 text-right text-xs text-muted-foreground">
-            Page {featuredPagination.page + 1}
-            {featuredTotalPages ? ` of ${featuredTotalPages}` : ""} • size {featuredPagination.size}
-          </div>
-        </div>
-      </section>
-
-      {/* Two-Tier Marketplace Section */}
-      <section className="py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-12 text-center"
-          >
-            <Badge
-              variant="secondary"
-              className="mb-4 bg-primary/10 text-primary"
-            >
-              <Sparkles className="mr-1 h-3 w-3" />
-              Two Ways to Collaborate
-            </Badge>
-            <h2 className="text-3xl font-bold text-foreground md:text-4xl">
-              Choose Your Creator Partner
-            </h2>
-            <p className="mt-4 text-muted-foreground">
-              Whether you need verified premium talent or diverse creator specialists, we have the perfect match for your campaign.
-            </p>
           </motion.div>
 
-          <div className="grid gap-8 md:grid-cols-2">
-            {/* Platform Ambassadors */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <Card className="overflow-hidden border-border/50 shadow-sm transition-shadow hover:shadow-lg">
-                <CardContent className="p-8">
-                  <div className="mb-6 flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                      <span className="text-2xl">👑</span>
-                    </div>
-                    <h3 className="text-2xl font-bold">Platform Ambassadors</h3>
-                  </div>
-                  
-                  <p className="mb-6 text-muted-foreground">
-                    Pakistan&apos;s most trusted creators, carefully verified and managed by our platform. Quality assurance guaranteed.
-                  </p>
-
-                  <ul className="mb-8 space-y-3">
-                    {[
-                      '✓ 100K+ followers minimum',
-                      '✓ 5%+ engagement rate verified',
-                      '✓ Dedicated platform support',
-                      '✓ Premium brand partnerships',
-                      '✓ Quality assured',
-                    ].map((item, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-sm">
-                        <span className="text-primary">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button className="w-full" asChild>
-                    <Link href="/brand/ambassadors">
-                      Browse Ambassadors
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Independent Creators */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Card className="overflow-hidden border-border/50 shadow-sm transition-shadow hover:shadow-lg">
-                <CardContent className="p-8">
-                  <div className="mb-6 flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                      <span className="text-2xl">🌟</span>
-                    </div>
-                    <h3 className="text-2xl font-bold">Independent Creators</h3>
-                  </div>
-
-                  <p className="mb-6 text-muted-foreground">
-                    Diverse talent across all niches and experience levels. Direct collaboration with creative professionals.
-                  </p>
-
-                  <ul className="mb-8 space-y-3">
-                    {[
-                      '✓ All experience levels',
-                      '✓ 10,000+ creators available',
-                      '✓ Flexible pricing & packages',
-                      '✓ Direct negotiation',
-                      '✓ Niche specialists',
-                    ].map((item, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-sm">
-                        <span className="text-muted-foreground">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link href="/brand/explore">
-                      Explore All Creators
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-
-          {/* For Creators Section */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mt-12 rounded-lg border border-border/50 bg-muted/30 p-8 text-center"
+            initial={false}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.75, delay: 0.1 }}
+            className="relative"
           >
-            <h3 className="mb-3 text-2xl font-bold">Ready to Level Up Your Influence?</h3>
-            <p className="mb-6 text-muted-foreground">
-              Join our Platform Ambassador program and earn guaranteed monthly income while working with premium brands.
-            </p>
-            <Button size="lg" asChild>
-              <Link href="/creator/ambassador-program">
-                Apply for Ambassador Program
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+            <div className="absolute -left-4 top-12 z-10 rounded-2xl border border-white/70 bg-white/95 p-3.5 shadow-xl shadow-[#173b2a]/10 backdrop-blur sm:left-0">
+              <div className="flex items-center gap-3">
+                <span className="grid size-9 place-items-center rounded-full bg-[#f7e8c8] text-[#9b6712]"><BadgeCheck className="size-5" /></span>
+                <div><p className="text-xs font-extrabold">Verified creators</p><p className="text-[11px] text-[#718077]">Real reach. Clear insights.</p></div>
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-[2rem] border border-[#d9e0d8] bg-[#f2efe5] shadow-[0_28px_80px_rgba(38,70,50,0.14)]">
+              <Image
+                src="/landing/hero-creator-collage.png"
+                alt="A collage of Pakistani creators working across fashion, film, food, and lifestyle"
+                width={1536}
+                height={1024}
+                loading="eager"
+                className="aspect-[1.08/1] h-auto w-full object-cover"
+              />
+            </div>
+            <div className="absolute -bottom-5 right-3 rounded-2xl bg-[#e6aa38] px-4 py-3 text-[#173b2a] shadow-lg sm:right-8">
+              <p className="text-xs font-bold">New collaboration</p>
+              <p className="mt-0.5 text-sm font-extrabold">Skincare launch · Lahore</p>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section id="categories" className="py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-                Browse Categories
-              </h2>
-              <p className="mt-1 text-muted-foreground">
-                Find creators in your industry
-              </p>
-            </div>
-            <Button variant="ghost" className="hidden md:flex" asChild>
-              <Link href="/brand/explore">
-                View All
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
-            {categories.map((category, index) => (
-              <motion.div
-                key={category.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-              >
-                <Link href={`/brand/explore?category=${category.id}`}>
-                  <Card className="group cursor-pointer border-border/50 transition-all hover:border-primary/30 hover:shadow-lg">
-                    <CardContent className="flex flex-col items-center p-4 text-center">
-                      <span className="mb-2 text-3xl">{category.icon}</span>
-                      <span className="font-medium text-foreground">
-                        {category.name}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {category.count} creators
-                      </span>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+      <section className="border-b border-[#e3e7e0] bg-white">
+        <div className="mx-auto flex max-w-7xl gap-8 overflow-x-auto px-5 py-5 lg:px-8">
+          {categories.map(({ label, icon: Icon }) => (
+            <Link key={label} href={`/brand/explore?search=${encodeURIComponent(label)}`} className="flex shrink-0 items-center gap-2 text-sm font-bold text-[#526259] transition hover:text-[#185c39]">
+              <Icon className="size-4 text-[#b47a18]" /> {label}
+            </Link>
+          ))}
         </div>
       </section>
 
-      {/* Trending Creators Carousel */}
-      <section className="bg-muted/30 py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="mb-8 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <TrendingUp className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-                  Trending Creators
-                </h2>
-                <p className="text-muted-foreground">
-                  Most booked this week
-                </p>
-              </div>
+      <section id="how-it-works" className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
+        <SectionIntro
+          eyebrow="One network, two paths"
+          title="Less chasing. Better collaborations."
+          copy="Whether you are building a brand or a creative career, ZingZing keeps discovery, offers, deliverables, and conversation in one calm place."
+        />
+        <div className="mt-12 grid gap-5 lg:grid-cols-2">
+          <motion.article {...fadeUp} className="rounded-[1.75rem] bg-[#185c39] p-7 text-white sm:p-9">
+            <div className="flex items-start justify-between">
+              <span className="grid size-11 place-items-center rounded-2xl bg-white/12"><Search className="size-5" /></span>
+              <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#b9d5c4]">For brands</span>
             </div>
-            <div className="hidden items-center gap-2 md:flex">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => scroll("left")}
-                disabled={!canScrollLeft}
-                className="h-9 w-9"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => scroll("right")}
-                disabled={!canScrollRight}
-                className="h-9 w-9"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+            <h3 className="mt-16 max-w-sm text-3xl font-extrabold tracking-[-0.04em]">Find people your audience already trusts.</h3>
+            <p className="mt-4 max-w-md leading-7 text-[#c9dace]">Explore verified talent, compare real profiles, send clear offers, and follow campaign progress without spreadsheet archaeology.</p>
+            <Link href="/brand/explore" className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-[#185c39]">
+              Explore creators <ArrowRight className="size-4" />
+            </Link>
+          </motion.article>
+          <motion.article {...fadeUp} transition={{ duration: 0.55, delay: 0.08 }} className="rounded-[1.75rem] border border-[#dce3dc] bg-[#f1eee3] p-7 sm:p-9">
+            <div className="flex items-start justify-between">
+              <span className="grid size-11 place-items-center rounded-2xl bg-white"><Camera className="size-5 text-[#b77a12]" /></span>
+              <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#7a6b4e]">For creators</span>
             </div>
-          </div>
-
-          <div
-            ref={trendingRef}
-            onScroll={handleScroll}
-            className="scrollbar-hide -mx-4 flex gap-4 overflow-x-auto px-4 pb-4"
-          >
-            {trendingCreators.map((creator, index) => (
-              <motion.div
-                key={creator.id}
-                className="w-[280px] flex-shrink-0"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <CreatorCard creator={creator} variant="compact" />
-              </motion.div>
-            ))}
-          </div>
+            <h3 className="mt-16 max-w-sm text-3xl font-extrabold tracking-[-0.04em]">Turn your point of view into better work.</h3>
+            <p className="mt-4 max-w-md leading-7 text-[#647168]">Show your strengths, package deliverables, discover fitting offers, and manage every agreement with confidence.</p>
+            <Link href="/signup?role=creator" className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#185c39] px-5 py-3 text-sm font-bold text-white">
+              Build your profile <ArrowRight className="size-4" />
+            </Link>
+          </motion.article>
         </div>
       </section>
 
-      {/* Rising Stars Section */}
-      <section className="py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="mb-8 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/30">
-                <Star className="h-5 w-5 text-accent-foreground" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-                  Rising Stars
-                </h2>
-                <p className="text-muted-foreground">
-                  Emerging talent with great potential
-                </p>
-              </div>
+      <section id="opportunity" className="bg-[#173b2a] px-5 py-20 text-white lg:px-8 lg:py-24">
+        <div className="mx-auto grid max-w-7xl overflow-hidden rounded-[2rem] bg-[#214b36] lg:grid-cols-[1.05fr_0.95fr]">
+          <motion.div {...fadeUp} className="flex flex-col justify-center p-7 sm:p-12">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#f0c56e]">Featured opportunity</p>
+            <h2 className="mt-4 max-w-lg text-4xl font-extrabold tracking-[-0.05em] sm:text-5xl">Help a local skincare story find its people.</h2>
+            <p className="mt-5 max-w-xl leading-7 text-[#c6d8cc]">A Lahore-based clean beauty brand is looking for warm, educational short-form content from beauty and lifestyle creators.</p>
+            <div className="mt-7 flex flex-wrap gap-2 text-xs font-bold">
+              {["PKR 45K–80K", "Instagram + TikTok", "3 deliverables", "Lahore preferred"].map((item) => (
+                <span key={item} className="rounded-full border border-white/15 bg-white/8 px-3 py-2">{item}</span>
+              ))}
             </div>
-            <Button variant="outline" asChild>
-              <Link href="/brand/explore?filter=rising">
-                Discover More
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {risingStars.map((creator, index) => (
-              <motion.div
-                key={creator.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <CreatorCard creator={creator} />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section id="how-it-works" className="scroll-mt-24 bg-muted/30 py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="mb-12 text-center">
-            <h2 className="mb-4 text-2xl font-bold text-foreground md:text-3xl">
-              How ZingZing Works
-            </h2>
-            <p className="mx-auto max-w-2xl text-muted-foreground">
-              Get started in minutes with our simple, streamlined process
-            </p>
-          </div>
-
-          <div className="grid gap-8 md:grid-cols-3">
-            {[
-              {
-                step: "01",
-                title: "Browse & Discover",
-                description:
-                  "Explore thousands of verified creators filtered by niche, location, price, and engagement rates.",
-                icon: Search,
-              },
-              {
-                step: "02",
-                title: "Connect & Negotiate",
-                description:
-                  "Send a Quick Deal offer or message creators directly. Discuss requirements and finalize terms.",
-                icon: Users,
-              },
-              {
-                step: "03",
-                title: "Execute & Pay",
-                description:
-                  "Track deliverables, approve content, and release secure payments upon completion.",
-                icon: Shield,
-              },
-            ].map((item, index) => (
-              <motion.div
-                key={item.step}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.15 }}
-              >
-                <Card className="relative overflow-hidden border-border/50">
-                  <CardContent className="p-6">
-                    <span className="absolute -right-4 -top-4 text-8xl font-bold text-primary/5">
-                      {item.step}
-                    </span>
-                    <div className="relative">
-                      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                        <item.icon className="h-6 w-6 text-primary" />
-                      </div>
-                      <h3 className="mb-2 text-xl font-semibold text-foreground">
-                        {item.title}
-                      </h3>
-                      <p className="text-muted-foreground">
-                        {item.description}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Verified Creators */}
-      <section className="py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="mb-8 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Check className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-                  Verified Creators
-                </h2>
-                <p className="text-muted-foreground">
-                  Trusted professionals with proven track records
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {verifiedCreators.map((creator, index) => (
-              <motion.div
-                key={creator.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <CreatorCard creator={creator} variant="compact" />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="bg-primary py-16 md:py-24 dark:bg-card">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="mb-4 text-3xl font-bold text-primary-foreground md:text-4xl">
-              Ready to Get Started?
-            </h2>
-            <p className="mb-8 text-lg text-primary-foreground/80">
-              Join thousands of brands and creators already using ZingZing to
-              grow their business.
-            </p>
-            <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <Button
-                size="lg"
-                variant="secondary"
-                asChild
-              >
-                <Link href="/signup">
-                  Sign Up as Creator
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
-                asChild
-              >
-                <Link href="/signup">Find Creators</Link>
-              </Button>
+            <Link href="/signup?role=creator" className="mt-8 inline-flex w-fit items-center gap-2 rounded-full bg-[#e8ad3c] px-5 py-3 text-sm font-extrabold text-[#173b2a]">
+              View opportunity <ArrowRight className="size-4" />
+            </Link>
+          </motion.div>
+          <div className="relative min-h-[340px]">
+            <Image src="/landing/skincare-opportunity.png" alt="Skincare serum photographed in warm natural light" fill className="object-cover" />
+            <div className="absolute bottom-5 left-5 rounded-2xl bg-white/95 p-4 text-[#173b2a] shadow-xl">
+              <p className="flex items-center gap-1 text-xs font-extrabold"><ShieldCheck className="size-4 text-[#185c39]" /> Brand verified</p>
+              <p className="mt-1 text-[11px] text-[#69766e]">Applications close in 6 days</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-background py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid gap-8 md:grid-cols-4">
-            <div>
-              <Link href="/" className="mb-4 inline-flex items-center">
-                <ZingZingLogo variant="light" className="h-9 w-[180px]" />
-              </Link>
-              <p className="text-sm text-muted-foreground">
-                Pakistan&apos;s influencer marketplace connecting brands
-                with verified creators.
-              </p>
-            </div>
-            <div>
-              <h4 className="mb-4 font-semibold text-foreground">For Brands</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link href="/brand/explore" className="hover:text-primary">
-                    Find Creators
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/brand/orders" className="hover:text-primary">
-                    Manage Campaigns
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/pricing" className="hover:text-primary">
-                    Pricing
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-4 font-semibold text-foreground">
-                For Creators
-              </h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link href="/signup" className="hover:text-primary">
-                    Join as Creator
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/creator/dashboard"
-                    className="hover:text-primary"
-                  >
-                    Creator Dashboard
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/resources" className="hover:text-primary">
-                    Resources
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-4 font-semibold text-foreground">Support</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link href="/about" className="hover:text-primary">
-                    About ZingZing
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/help" className="hover:text-primary">
-                    Help Center
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/resources" className="hover:text-primary">
-                    Resources
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="hover:text-primary">
-                    Contact Us
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/terms" className="hover:text-primary">
-                    Terms of Service
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/privacy" className="hover:text-primary">
-                    Privacy Policy
-                  </Link>
-                </li>
-              </ul>
-            </div>
+      <section id="creators" className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
+        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+          <SectionIntro eyebrow="People worth knowing" title="Creators with a point of view." copy="A small glimpse of the talent building trusted communities across Pakistan." />
+          <Link href="/brand/explore" className="inline-flex items-center gap-2 text-sm font-extrabold text-[#185c39]">Explore everyone <ArrowRight className="size-4" /></Link>
+        </div>
+        <div className="mt-10 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
+          {creators.map((creator, index) => (
+            <motion.article key={creator.name} {...fadeUp} transition={{ duration: 0.5, delay: index * 0.06 }} className="group overflow-hidden rounded-[1.5rem] border border-[#dce3dc] bg-white">
+              <div className="relative aspect-[0.88/1] overflow-hidden bg-[#e9ece5]">
+                <Image src="/landing/hero-creator-collage.png" alt={creator.name} fill className="scale-[2.2] object-cover transition duration-500 group-hover:scale-[2.28]" style={{ objectPosition: creator.position }} />
+                <span className="absolute right-3 top-3 rounded-full bg-white/90 p-1.5 text-[#185c39] shadow"><BadgeCheck className="size-4" /></span>
+              </div>
+              <div className="p-4">
+                <h3 className="text-base font-extrabold tracking-tight">{creator.name}</h3>
+                <p className="mt-1 text-xs font-semibold text-[#738078]">{creator.niche}</p>
+                <p className="mt-3 flex items-center gap-1 text-xs font-bold text-[#365442]"><Instagram className="size-3.5" /> {creator.followers}</p>
+              </div>
+            </motion.article>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-y border-[#e0e5df] bg-[#f0eee5] px-5 py-20 lg:px-8 lg:py-24">
+        <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.85fr_1.15fr]">
+          <div className="relative min-h-[430px] overflow-hidden rounded-[2rem]">
+            <Image src="/landing/case-study-marketing-manager.png" alt="A Pakistani marketing manager seated in a calm studio" fill className="object-cover" />
+            <span className="absolute bottom-5 left-5 grid size-12 place-items-center rounded-full bg-white text-[#185c39] shadow-lg"><Play className="ml-0.5 size-5 fill-current" /></span>
           </div>
-          <div className="mt-8 border-t border-border pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; 2026 ZingZing. All rights reserved.</p>
+          <motion.div {...fadeUp}>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#b77a12]">Built for real working relationships</p>
+            <blockquote className="mt-5 text-3xl font-extrabold leading-tight tracking-[-0.045em] text-[#173b2a] sm:text-5xl">
+              “We stopped treating creators like media slots and started building campaigns with them.”
+            </blockquote>
+            <p className="mt-6 max-w-xl text-base leading-7 text-[#637168]">With clear creator profiles and deliverables agreed up front, the team launched in half the usual time and built relationships they could return to.</p>
+            <div className="mt-8 flex items-center gap-4 border-t border-[#d3d9d2] pt-6">
+              <div><p className="font-extrabold">Maya Hassan</p><p className="text-sm text-[#738078]">Marketing Director, Nura</p></div>
+              <div className="ml-auto flex gap-5">
+                <div><p className="text-lg font-extrabold">2.4×</p><p className="text-xs text-[#738078]">engagement</p></div>
+                <div><p className="text-lg font-extrabold">12 days</p><p className="text-xs text-[#738078]">to launch</p></div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="px-5 py-20 lg:px-8 lg:py-24">
+        <motion.div {...fadeUp} className="mx-auto max-w-7xl rounded-[2rem] bg-[#e8ad3c] px-6 py-12 text-center text-[#173b2a] sm:px-12 sm:py-16">
+          <p className="text-xs font-bold uppercase tracking-[0.2em]">Ready when you are</p>
+          <h2 className="mx-auto mt-4 max-w-3xl text-4xl font-extrabold tracking-[-0.055em] sm:text-6xl">Find your next good collaboration.</h2>
+          <p className="mx-auto mt-5 max-w-xl leading-7 text-[#59471f]">Join the network where creators and brands meet with clarity, mutual respect, and better ideas.</p>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link href="/signup?role=brand" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#173b2a] px-6 py-3.5 text-sm font-bold text-white">Join as a brand <ArrowRight className="size-4" /></Link>
+            <Link href="/signup?role=creator" className="inline-flex items-center justify-center gap-2 rounded-full border border-[#173b2a]/25 bg-white/45 px-6 py-3.5 text-sm font-bold">Join as a creator <ArrowRight className="size-4" /></Link>
           </div>
+        </motion.div>
+      </section>
+
+      <footer className="bg-[#173b2a] px-5 py-10 text-white lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 sm:flex-row sm:items-center">
+          <Wordmark light />
+          <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-[#c3d4c8]">
+            <Link href="/about">About</Link><Link href="/help">Help</Link><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link><Link href="/contact">Contact</Link>
+          </div>
+          <p className="text-xs text-[#9fb4a6]">© 2026 ZingZing</p>
         </div>
       </footer>
-
-      <BottomNav />
-    </div>
+    </main>
   );
 }

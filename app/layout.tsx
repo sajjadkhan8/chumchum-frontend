@@ -1,19 +1,13 @@
 import type { Metadata, Viewport } from 'next'
-import { Manrope, Sora } from 'next/font/google'
+import { Geist } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Providers } from '@/components/providers'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
-const manrope = Manrope({
+const geist = Geist({
   subsets: ['latin'],
   variable: '--font-body',
-  display: 'swap',
-})
-
-const sora = Sora({
-  subsets: ['latin'],
-  variable: '--font-display',
   display: 'swap',
 })
 
@@ -46,7 +40,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-background" suppressHydrationWarning>
-      <body className={`${manrope.variable} ${sora.variable} font-sans antialiased`}>
+      <body className={`${geist.variable} font-sans antialiased`}>
         <Providers>
           {children}
           <Toaster position="top-center" richColors />

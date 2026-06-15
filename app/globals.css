@@ -96,7 +96,7 @@
 
 @theme inline {
   --font-sans: var(--font-body);
-  --font-heading: var(--font-display);
+  --font-heading: var(--font-body);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     'Liberation Mono', 'Courier New', monospace;
   --color-background: var(--background);
@@ -224,4 +224,3 @@
     min-width: 2.75rem;
   }
 }
-
