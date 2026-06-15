@@ -10,7 +10,6 @@ import { AuthShell } from '@/components/auth/auth-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthStore } from '@/store/auth-store';
 import type { UserRole } from '@/types';
 
@@ -25,8 +24,11 @@ const getPostLoginPath = (role?: string) => {
   return nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : getDashboardPath(role);
 };
 
-const inputClass = 'h-11 rounded-xl border-[#d6ded7] bg-[#fbfaf5] px-3.5 text-[#173b2a] shadow-none focus-visible:border-[#185c39] focus-visible:ring-[#185c39]/15';
-const primaryButtonClass = 'h-11 w-full rounded-full bg-[#185c39] font-bold text-white hover:bg-[#104b2d]';
+const inputClass =
+  'h-10 w-full rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#173b2a] placeholder:text-[#b0bfb8] shadow-none transition-colors duration-150 focus-visible:border-[#185c39] focus-visible:ring-4 focus-visible:ring-[#185c39]/8 focus-visible:ring-offset-0 [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset]';
+const primaryButtonClass =
+  'h-10 w-full rounded-full bg-[#185c39] text-sm font-bold text-white hover:bg-[#104b2d] transition-colors';
+const labelClass = 'text-[10px] font-bold uppercase tracking-widest text-[#7a8f82]';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -117,93 +119,193 @@ export default function LoginPage() {
       title="Good work starts with the right connection."
       description="Pick up conversations, opportunities, and collaborations without losing the thread."
     >
+      {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#b77a12]">Sign in</p>
-          <h2 className="mt-2 text-3xl font-extrabold tracking-[-0.045em] text-[#173b2a]">Welcome back.</h2>
-          <p className="mt-2 text-sm leading-6 text-[#69766e]">Continue to your ZingZing workspace.</p>
+          <h2 className="mt-1.5 text-3xl font-extrabold tracking-[-0.045em] text-[#173b2a]">Welcome back.</h2>
+          <p className="mt-1 text-sm text-[#69766e]">Continue to your ZingZing workspace.</p>
         </div>
-        <span className="mt-1 hidden rounded-full bg-[#f7e8c8] px-3 py-2 text-[11px] font-bold text-[#8b5e12] sm:inline-flex">Secure login</span>
+        <span className="mt-1 hidden rounded-full bg-[#f7e8c8] px-3 py-1.5 text-[11px] font-bold text-[#8b5e12] sm:inline-flex">Secure login</span>
       </div>
 
-      <Tabs value={authMethod} onValueChange={(value) => setAuthMethod(value as 'email' | 'phone')} className="mt-6">
-        <TabsList className="grid w-full grid-cols-2 rounded-full bg-[#eef2eb] p-1">
-          <TabsTrigger value="email" className="rounded-full font-bold data-[state=active]:bg-white data-[state=active]:text-[#185c39]"><Mail className="size-4" /> Email</TabsTrigger>
-          <TabsTrigger value="phone" className="rounded-full font-bold data-[state=active]:bg-white data-[state=active]:text-[#185c39]"><Phone className="size-4" /> Phone</TabsTrigger>
-        </TabsList>
+      {/* Auth method toggle — custom, no radix Tabs */}
+      <div className="mt-5 flex rounded-xl bg-[#e8ede9] p-1 gap-1">
+        {(['email', 'phone'] as const).map((method) => {
+          const Icon = method === 'email' ? Mail : Phone;
+          const active = authMethod === method;
+          return (
+            <button
+              key={method}
+              type="button"
+              onClick={() => setAuthMethod(method)}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg h-9 text-sm font-semibold transition-all duration-200 ${
+                active ? 'bg-[#185c39] text-white shadow-sm' : 'text-[#6b7c72] hover:text-[#2e5440]'
+              }`}
+            >
+              <Icon className="size-3.5" />
+              {method === 'email' ? 'Email' : 'Phone'}
+            </button>
+          );
+        })}
+      </div>
 
-        <TabsContent value="email" className="mt-5">
-          <form onSubmit={handleEmailLogin} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs font-bold text-[#3d5d49]">Email address</Label>
-              <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required className={inputClass} />
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-xs font-bold text-[#3d5d49]">Password</Label>
-                <Link href="/forgot-password" className="text-xs font-bold text-[#185c39] hover:underline">Forgot password?</Link>
-              </div>
-              <div className="relative">
-                <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={password} onChange={(event) => setPassword(event.target.value)} required className={`${inputClass} pr-11`} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-1.5 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full text-[#718077] hover:bg-[#eef2eb] hover:text-[#185c39]" aria-label={showPassword ? 'Hide password' : 'Show password'}>
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
-            </div>
-            <Button type="submit" disabled={isLoading} className={primaryButtonClass}>
-              {isLoading ? <><Loader2 className="size-4 animate-spin" /> Signing in...</> : <>Sign in <ArrowRight className="size-4" /></>}
-            </Button>
-          </form>
-        </TabsContent>
+      {/* Forms — min-h matches the taller email form so the card never shrinks on toggle */}
+      <div className="min-h-[196px]">
 
-        <TabsContent value="phone" className="mt-5">
-          <form onSubmit={handlePhoneLogin} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="phone" className="text-xs font-bold text-[#3d5d49]">Phone number</Label>
-              <div className="flex gap-2">
-                <span className="flex h-11 items-center rounded-xl border border-[#d6ded7] bg-[#eef2eb] px-3 text-sm font-bold text-[#3d5d49]">+92</span>
-                <Input id="phone" type="tel" placeholder="300 1234567" value={phone} onChange={(event) => setPhone(event.target.value)} required className={inputClass} />
-              </div>
+      {/* Email form */}
+      {authMethod === 'email' && (
+        <form onSubmit={handleEmailLogin} className="mt-4 space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className={labelClass}>Email address</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className={inputClass}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className={labelClass}>Password</Label>
+              <Link href="/forgot-password" className="text-xs font-bold text-[#185c39] hover:underline">
+                Forgot password?
+              </Link>
             </div>
-            {otpSent && (
-              <div className="space-y-1.5">
-                <Label htmlFor="otp" className="text-xs font-bold text-[#3d5d49]">One-time code</Label>
-                <Input id="otp" inputMode="numeric" placeholder="Enter 6-digit code" value={otp} onChange={(event) => setOtp(event.target.value)} maxLength={6} required className={inputClass} />
-                <button type="button" onClick={handleSendOtp} className="text-xs font-bold text-[#185c39] hover:underline">Resend code</button>
-              </div>
-            )}
-            <Button type={otpSent ? 'submit' : 'button'} onClick={otpSent ? undefined : handleSendOtp} disabled={isLoading} className={primaryButtonClass}>
-              {isLoading ? <Loader2 className="size-4 animate-spin" /> : otpSent ? <>Verify and sign in <ArrowRight className="size-4" /></> : 'Send one-time code'}
-            </Button>
-          </form>
-        </TabsContent>
-      </Tabs>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className={`${inputClass} pr-10`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-lg text-[#8fa89a] hover:bg-[#eef2eb] hover:text-[#185c39] transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+              </button>
+            </div>
+          </div>
+          <Button type="submit" disabled={isLoading} className={primaryButtonClass}>
+            {isLoading ? <><Loader2 className="size-4 animate-spin" /> Signing in...</> : <>Sign in <ArrowRight className="size-4" /></>}
+          </Button>
+        </form>
+      )}
 
-      <div className="my-5 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#87938b]">
+      {/* Phone form */}
+      {authMethod === 'phone' && (
+        <form onSubmit={handlePhoneLogin} className="mt-4 space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="phone" className={labelClass}>Phone number</Label>
+            <div className="flex gap-2">
+              <span className="flex h-10 shrink-0 items-center rounded-xl border-2 border-[#dce6df] bg-[#f0f5f1] px-3.5 text-sm font-bold text-[#3d5d49]">+92</span>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="300 1234567"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+                className={inputClass}
+              />
+            </div>
+          </div>
+          {otpSent && (
+            <div className="space-y-1.5">
+              <Label htmlFor="otp" className={labelClass}>One-time code</Label>
+              <Input
+                id="otp"
+                inputMode="numeric"
+                placeholder="Enter 6-digit code"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                maxLength={6}
+                required
+                className={inputClass}
+              />
+              <button type="button" onClick={handleSendOtp} className="text-xs font-bold text-[#185c39] hover:underline">
+                Resend code
+              </button>
+            </div>
+          )}
+          <Button
+            type={otpSent ? 'submit' : 'button'}
+            onClick={otpSent ? undefined : handleSendOtp}
+            disabled={isLoading}
+            className={primaryButtonClass}
+          >
+            {isLoading ? <Loader2 className="size-4 animate-spin" /> : otpSent ? <>Verify and sign in <ArrowRight className="size-4" /></> : 'Send one-time code'}
+          </Button>
+        </form>
+      )}
+
+      </div>{/* end min-h wrapper */}
+
+      {/* Divider */}
+      <div className="my-4 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#87938b]">
         <div className="h-px flex-1 bg-[#dce3dc]" /> or continue with <div className="h-px flex-1 bg-[#dce3dc]" />
       </div>
-      <div className="grid grid-cols-[1fr_1fr] gap-2">
+
+      {/* Google role selector */}
+      <div className="grid grid-cols-2 gap-2">
         {(['creator', 'brand'] as UserRole[]).map((role) => (
-          <button key={role} type="button" onClick={() => setGoogleRole(role)} className={`h-10 rounded-full border text-xs font-bold capitalize transition ${googleRole === role ? 'border-[#185c39] bg-[#eef2eb] text-[#185c39]' : 'border-[#d6ded7] text-[#69766e] hover:border-[#185c39]'}`}>
+          <button
+            key={role}
+            type="button"
+            onClick={() => setGoogleRole(role)}
+            className={`h-9 rounded-full border-2 text-xs font-bold capitalize transition-colors ${
+              googleRole === role
+                ? 'border-[#185c39] bg-[#eef2eb] text-[#185c39]'
+                : 'border-[#d6ded7] text-[#69766e] hover:border-[#185c39] hover:text-[#185c39]'
+            }`}
+          >
             {role}
           </button>
         ))}
       </div>
-      <Button type="button" variant="outline" onClick={handleGoogleLogin} disabled={isLoading} className="mt-2 h-11 w-full rounded-full border-[#ccd7ce] bg-white font-bold text-[#294b38] hover:border-[#185c39] hover:bg-[#fbfaf5]">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleGoogleLogin}
+        disabled={isLoading}
+        className="mt-2 h-10 w-full rounded-full border-2 border-[#d6ded7] bg-white text-sm font-bold text-[#294b38] hover:border-[#185c39] hover:bg-[#f4f8f4] transition-colors"
+      >
         Continue with Google
       </Button>
 
-      <div className="mt-5 rounded-2xl border border-[#dce3dc] bg-[#f4f2e9] p-3">
-        <button type="button" onClick={() => setShowDemoAccounts(!showDemoAccounts)} className="flex w-full items-center justify-between gap-3 text-left text-xs font-bold text-[#3d5d49]" aria-expanded={showDemoAccounts}>
+      {/* Demo accounts */}
+      <div className="mt-4 rounded-2xl border border-[#dce3dc] bg-[#f4f2e9] p-3">
+        <button
+          type="button"
+          onClick={() => setShowDemoAccounts(!showDemoAccounts)}
+          className="flex w-full items-center justify-between gap-3 text-left text-xs font-bold text-[#3d5d49]"
+          aria-expanded={showDemoAccounts}
+        >
           Explore with a demo account
-          {showDemoAccounts ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+          {showDemoAccounts ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
         </button>
         <AnimatePresence>
           {showDemoAccounts && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {demos.map(([label, demoEmail]) => (
-                  <button key={demoEmail} type="button" onClick={() => applyDemoCredentials(demoEmail)} className={`rounded-xl border p-2.5 text-left transition ${activeDemoEmail === demoEmail ? 'border-[#185c39] bg-white' : 'border-[#dce3dc] bg-white/70 hover:border-[#b8c8bb]'}`}>
+                  <button
+                    key={demoEmail}
+                    type="button"
+                    onClick={() => applyDemoCredentials(demoEmail)}
+                    className={`rounded-xl border p-2.5 text-left transition-colors ${
+                      activeDemoEmail === demoEmail ? 'border-[#185c39] bg-white' : 'border-[#dce3dc] bg-white/70 hover:border-[#b8c8bb]'
+                    }`}
+                  >
                     <span className="block text-[11px] font-extrabold text-[#173b2a]">{label}</span>
                     <span className="mt-0.5 block truncate text-[10px] text-[#718077]">{demoEmail}</span>
                   </button>
@@ -214,7 +316,12 @@ export default function LoginPage() {
         </AnimatePresence>
       </div>
 
-      <p className="mt-5 text-center text-sm text-[#69766e]">New to ZingZing? <Link href="/signup" className="font-extrabold text-[#185c39] hover:underline">Create an account</Link></p>
+      <p className="mt-4 text-center text-sm text-[#69766e]">
+        New to ZingZing?{' '}
+        <Link href="/signup" className="font-extrabold text-[#185c39] hover:underline">
+          Create an account
+        </Link>
+      </p>
     </AuthShell>
   );
 }

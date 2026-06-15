@@ -359,14 +359,14 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                 <>
                   {showCreatorUtilityTopbar && (
                     <Link href="/creator/help">
-                      <Button variant="ghost" size="icon" className={cn('hidden sm:flex', isCreator && 'h-10 w-10')} aria-label="Open help">
+                      <Button variant="ghost" size="icon" className={cn('hidden sm:flex', isCreator && 'h-10 w-10 text-[#3d5d49] hover:bg-[#eef2eb] hover:text-[#185c39]')} aria-label="Open help">
                         <CircleHelp className={cn('h-5 w-5', isCreator && 'h-[17px] w-[17px]')} />
                       </Button>
                     </Link>
                   )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className={cn('relative hidden sm:flex', isCreator && 'h-10 w-10')} aria-label="Open notifications">
+                      <Button variant="ghost" size="icon" className={cn('relative hidden sm:flex', isCreator && 'h-10 w-10 text-[#3d5d49] hover:bg-[#eef2eb] hover:text-[#185c39]')} aria-label="Open notifications">
                         <Bell className={cn('h-5 w-5', isCreator && 'h-[17px] w-[17px]')} />
                         {notificationCount > 0 && (
                           <Badge className="absolute -right-1 -top-1 h-5 min-w-5 rounded-full px-1 text-xs">
@@ -424,7 +424,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                   </DropdownMenu>
 
                   <Link href={messagesLink}>
-                    <Button variant="ghost" size="icon" className={cn('relative hidden sm:flex', isCreator && 'h-10 w-10')}>
+                    <Button variant="ghost" size="icon" className={cn('relative hidden sm:flex', isCreator && 'h-10 w-10 text-[#3d5d49] hover:bg-[#eef2eb] hover:text-[#185c39]')}>
                       <MessageCircle className={cn('h-5 w-5', isCreator && 'h-[17px] w-[17px]')} />
                       {unreadMessageCount > 0 && (
                         <Badge className="absolute -right-1 -top-1 h-5 min-w-5 rounded-full px-1 text-xs">

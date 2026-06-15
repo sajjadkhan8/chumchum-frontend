@@ -28,7 +28,7 @@ export function AuthWordmark({ light = false }: { light?: boolean }) {
 export function AuthShell({ children, eyebrow, title, description }: AuthShellProps) {
   return (
     <main className="min-h-screen bg-[#fbfaf5] text-[#173b2a]">
-      <div className="mx-auto grid min-h-screen max-w-[1600px] lg:grid-cols-[minmax(0,0.92fr)_minmax(480px,0.72fr)]">
+      <div className="mx-auto grid max-w-[1600px] lg:min-h-screen lg:grid-cols-[minmax(0,0.92fr)_minmax(480px,0.72fr)]">
         <section className="relative hidden overflow-hidden bg-[#173b2a] p-8 text-white lg:flex lg:flex-col xl:p-12">
           <div className="relative z-10 flex items-center justify-between">
             <AuthWordmark light />
@@ -89,8 +89,8 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
           </div>
         </section>
 
-        <section className="flex min-h-screen flex-col px-4 py-4 sm:px-6 sm:py-6 lg:justify-center lg:px-10 xl:px-16">
-          <div className="mx-auto flex w-full max-w-[540px] items-center justify-between px-1 py-2 lg:hidden">
+        <section className="flex flex-col px-4 pt-2 pb-6 sm:px-6 sm:pb-8 lg:min-h-screen lg:justify-center lg:px-10 lg:py-0 xl:px-16">
+          <div className="mx-auto flex w-full max-w-[540px] items-center justify-between px-1 py-1.5 lg:hidden">
             <AuthWordmark />
             <Link href="/" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5e6c64]">
               <ArrowLeft className="size-3.5" />
@@ -101,7 +101,7 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="mx-auto my-auto w-full max-w-[540px] rounded-[1.75rem] border border-[#dce3dc] bg-white p-5 shadow-[0_24px_70px_rgba(38,70,50,0.10)] sm:p-7 lg:p-8"
+            className="mx-auto w-full max-w-[540px] rounded-[1.75rem] border border-[#dce3dc] bg-white p-5 shadow-[0_24px_70px_rgba(38,70,50,0.10)] sm:p-7 lg:p-8"
           >
             {children}
           </motion.div>
