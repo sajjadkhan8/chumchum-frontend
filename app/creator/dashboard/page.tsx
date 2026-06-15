@@ -21,6 +21,7 @@ import {
   Target,
   Users,
   Wallet,
+  X,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { calculateCreatorAmbassadorMetrics } from "@/lib/ambassador-scoring";
@@ -51,18 +52,18 @@ const emptyEarningsSummary: EarningsSummary = {
   platformFees: 0,
 };
 
-const panelClass = "rounded-[1.6rem] border border-[#dce3dc] bg-white shadow-[0_18px_55px_rgba(38,70,50,0.07)]";
+const panelClass = "rounded-[1.6rem] border border-[#d1ddd6] bg-white shadow-[0_18px_55px_rgba(38,70,50,0.07)]";
 
 const getStatusStyle = (status: string) => {
   switch (status) {
     case "completed":
-      return { className: "bg-[#e4f1e8] text-[#185c39]", icon: CheckCircle };
+      return { className: "bg-[#e4f1e8] text-[#2d6b4e]", icon: CheckCircle };
     case "in_progress":
       return { className: "bg-[#e8eef4] text-[#365b78]", icon: Clock };
     case "pending":
       return { className: "bg-[#f7e8c8] text-[#8b5e12]", icon: AlertCircle };
     default:
-      return { className: "bg-[#eef2eb] text-[#526259]", icon: Clock };
+      return { className: "bg-[#e6eceb] text-[#526259]", icon: Clock };
   }
 };
 
@@ -71,10 +72,10 @@ function SectionHeading({ eyebrow, title, action, href }: { eyebrow: string; tit
     <div className="flex items-end justify-between gap-4">
       <div>
         <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">{eyebrow}</p>
-        <h2 className="mt-1.5 text-xl font-extrabold tracking-[-0.035em] text-[#173b2a]">{title}</h2>
+        <h2 className="mt-1.5 text-xl font-extrabold tracking-[-0.035em] text-[#1e3d2e]">{title}</h2>
       </div>
       {action && href ? (
-        <Link href={href} className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#185c39] hover:underline">
+        <Link href={href} className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#2d6b4e] hover:underline">
           {action} <ArrowRight className="size-3.5" />
         </Link>
       ) : null}
@@ -87,12 +88,12 @@ function MetricCard({ title, value, detail, icon: Icon, accent = false }: { titl
     <motion.article
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`rounded-[1.35rem] border p-4 sm:p-5 ${accent ? "border-[#185c39] bg-[#185c39] text-white" : "border-[#dce3dc] bg-white text-[#173b2a]"}`
+      className={`rounded-[1.35rem] border p-4 sm:p-5 ${accent ? "border-[#2d6b4e] bg-[#2d6b4e] text-white" : "border-[#d1ddd6] bg-white text-[#1e3d2e]"}`
       }
     >
       <div className="flex items-start justify-between gap-3">
-        <p className={`text-xs font-bold ${accent ? "text-[#c9dace]" : "text-[#69766e]"}`}>{title}</p>
-        <span className={`grid size-9 place-items-center rounded-xl ${accent ? "bg-white/10 text-[#f0c56e]" : "bg-[#eef2eb] text-[#185c39]"}`}>
+        <p className={`text-xs font-bold ${accent ? "text-[#c2d8cb]" : "text-[#6b7870]"}`}>{title}</p>
+        <span className={`grid size-9 place-items-center rounded-xl ${accent ? "bg-white/10 text-[#f0c56e]" : "bg-[#e6eceb] text-[#2d6b4e]"}`}>
           <Icon className="size-4" />
         </span>
       </div>
@@ -107,10 +108,10 @@ function GoalBar({ label, value, copy }: { label: string; value: number; copy: s
     <div>
       <div className="flex items-center justify-between gap-3 text-xs">
         <span className="font-bold text-[#526259]">{label}</span>
-        <span className="font-extrabold text-[#173b2a]">{copy}</span>
+        <span className="font-extrabold text-[#1e3d2e]">{copy}</span>
       </div>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#e5eae4]">
-        <motion.div initial={{ width: 0 }} animate={{ width: `${value}%` }} transition={{ duration: 0.65 }} className="h-full rounded-full bg-[#185c39]" />
+        <motion.div initial={{ width: 0 }} animate={{ width: `${value}%` }} transition={{ duration: 0.65 }} className="h-full rounded-full bg-[#2d6b4e]" />
       </div>
     </div>
   );
@@ -124,7 +125,16 @@ export default function CreatorDashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [heroDismissed, setHeroDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('creator-hero-dismissed') === 'true';
+  });
   const isActiveAmbassador = user?.creatorProgramStatus === "active_ambassador" || user?.email === "ambassador@test.com";
+
+  const dismissHero = () => {
+    setHeroDismissed(true);
+    localStorage.setItem('creator-hero-dismissed', 'true');
+  };
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -199,9 +209,18 @@ export default function CreatorDashboardPage() {
   ];
 
   return (
-    <div className="min-h-full bg-[#fbfaf5] px-4 pb-8 pt-2 text-[#173b2a] sm:px-6 lg:px-8 lg:pb-12">
+    <div className="min-h-full bg-[#fbfaf5] px-4 pb-8 pt-2 text-[#1e3d2e] sm:px-6 lg:px-8 lg:pb-12">
       <div className="mx-auto max-w-[1320px]">
-        <section className="overflow-hidden rounded-[1.8rem] bg-[#173b2a] p-5 text-white sm:p-7 lg:p-8">
+        {!heroDismissed && (
+        <section className="relative overflow-hidden rounded-[1.8rem] bg-[#1e3d2e] p-5 text-white sm:p-7 lg:p-8">
+          <button
+            type="button"
+            onClick={dismissHero}
+            aria-label="Dismiss banner"
+            className="absolute right-4 top-4 grid size-8 place-items-center rounded-full bg-white/10 text-white/60 transition hover:bg-white/20 hover:text-white sm:right-5 sm:top-5"
+          >
+            <X className="size-4" />
+          </button>
           <div className="grid gap-7 lg:grid-cols-[1.25fr_0.75fr] lg:items-end">
             <div>
               <div className="flex flex-wrap items-center gap-2">
@@ -209,19 +228,19 @@ export default function CreatorDashboardPage() {
                   {isActiveAmbassador ? <Crown className="size-3.5" /> : <Sparkles className="size-3.5" />}
                   {isActiveAmbassador ? "Active ambassador" : "Ambassador path"}
                 </span>
-                <span className="rounded-full border border-white/15 px-3 py-1.5 text-[10px] font-bold text-[#c9dace]">{ambassadorMetrics.tier} tier</span>
+                <span className="rounded-full border border-white/15 px-3 py-1.5 text-[10px] font-bold text-[#c2d8cb]">{ambassadorMetrics.tier} tier</span>
               </div>
               <p className="mt-7 text-xs font-bold text-[#a9c4b3]">Good to see you, {firstName}</p>
               <h1 className="mt-2 max-w-3xl text-[clamp(2.2rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-0.06em] text-white">
                 Keep the momentum moving.
               </h1>
-              <p className="mt-4 max-w-xl text-sm leading-6 text-[#c9dace]">
+              <p className="mt-4 max-w-xl text-sm leading-6 text-[#c2d8cb]">
                 {isActiveAmbassador
                   ? "Your priority queue is ready. Stay responsive and keep premium campaigns moving."
                   : "You are building a strong ambassador profile. Consistent delivery is your clearest next step."}
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
-                <Link href="/creator/offers" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#e6aa38] px-5 py-3 text-xs font-extrabold text-[#173b2a] transition hover:bg-[#f0bd58]">
+                <Link href="/creator/offers" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#e6aa38] px-5 py-3 text-xs font-extrabold text-[#1e3d2e] transition hover:bg-[#f0bd58]">
                   Discover offers <ArrowRight className="size-4" />
                 </Link>
                 <Link href="/creator/ambassador-program" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 bg-white/8 px-5 py-3 text-xs font-extrabold text-white transition hover:bg-white/12">
@@ -230,7 +249,7 @@ export default function CreatorDashboardPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.4rem] border border-white/12 bg-[#214b36] p-4 sm:p-5">
+            <div className="rounded-[1.4rem] border border-white/12 bg-[#244c39] p-4 sm:p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#f0c56e]">Readiness score</p>
@@ -247,6 +266,7 @@ export default function CreatorDashboardPage() {
             </div>
           </div>
         </section>
+        )}
 
         <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard title={isActiveAmbassador ? "Ambassador earnings" : "Total earnings"} value={isLoading ? "Loading..." : formatPrice(totalEarnings)} detail={`${formatPrice(earningsSummary.availableBalance)} available`} icon={DollarSign} accent />
@@ -264,17 +284,17 @@ export default function CreatorDashboardPage() {
                   const statusStyle = getStatusStyle(order.status);
                   const StatusIcon = statusStyle.icon;
                   return (
-                    <motion.div key={order.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.06 }} className="group flex items-center gap-3 rounded-2xl border border-[#e2e7e1] bg-[#fbfaf5] p-3.5 transition hover:border-[#b8c8bb] hover:bg-[#f5f6f1] sm:gap-4">
-                      <Avatar className="size-11 border border-[#dce3dc]">
+                    <motion.div key={order.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.06 }} className="group flex items-center gap-3 rounded-2xl border border-[#e2e7e1] bg-[#fbfaf5] p-3.5 transition hover:border-[#b0c5ba] hover:bg-[#f5f6f1] sm:gap-4">
+                      <Avatar className="size-11 border border-[#d1ddd6]">
                         <AvatarImage src={order.brand.logo} alt={order.brand.name} />
-                        <AvatarFallback className="bg-[#eef2eb] font-bold text-[#185c39]">{getInitials(order.brand.name)}</AvatarFallback>
+                        <AvatarFallback className="bg-[#e6eceb] font-bold text-[#2d6b4e]">{getInitials(order.brand.name)}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-extrabold text-[#173b2a]">{order.brand.name}</p>
+                        <p className="truncate text-sm font-extrabold text-[#1e3d2e]">{order.brand.name}</p>
                         <p className="mt-0.5 truncate text-xs text-[#718077]">{order.package.title}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs font-extrabold text-[#173b2a] sm:text-sm">{formatPrice(order.amount || 0)}</p>
+                        <p className="text-xs font-extrabold text-[#1e3d2e] sm:text-sm">{formatPrice(order.amount || 0)}</p>
                         <span className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-extrabold capitalize ${statusStyle.className}`}>
                           <StatusIcon className="size-3" /> {order.status.replace("_", " ")}
                         </span>
@@ -284,7 +304,7 @@ export default function CreatorDashboardPage() {
                 }) : (
                   <div className="rounded-2xl border border-dashed border-[#ccd7ce] bg-[#fbfaf5] px-5 py-10 text-center">
                     <Package className="mx-auto size-5 text-[#b77a12]" />
-                    <p className="mt-3 text-sm font-extrabold text-[#173b2a]">No orders yet</p>
+                    <p className="mt-3 text-sm font-extrabold text-[#1e3d2e]">No orders yet</p>
                     <p className="mt-1 text-xs text-[#718077]">New brand orders will appear here.</p>
                   </div>
                 )}
@@ -295,13 +315,13 @@ export default function CreatorDashboardPage() {
               <SectionHeading eyebrow="Make the next move" title="Quick actions" />
               <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
                 {quickActions.map(({ label, copy, href, icon: Icon }) => (
-                  <Link key={href} href={href} className="group flex items-center gap-3 rounded-2xl border border-[#dce3dc] bg-[#fbfaf5] p-3.5 transition hover:border-[#185c39] hover:bg-[#f4f6f1]">
-                    <span className="grid size-10 place-items-center rounded-xl bg-[#eef2eb] text-[#185c39] transition group-hover:bg-[#185c39] group-hover:text-white"><Icon className="size-4" /></span>
+                  <Link key={href} href={href} className="group flex items-center gap-3 rounded-2xl border border-[#d1ddd6] bg-[#fbfaf5] p-3.5 transition hover:border-[#2d6b4e] hover:bg-[#f4f6f1]">
+                    <span className="grid size-10 place-items-center rounded-xl bg-[#e6eceb] text-[#2d6b4e] transition group-hover:bg-[#2d6b4e] group-hover:text-white"><Icon className="size-4" /></span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-xs font-extrabold text-[#173b2a]">{label}</span>
+                      <span className="block text-xs font-extrabold text-[#1e3d2e]">{label}</span>
                       <span className="mt-0.5 block text-[10px] font-semibold text-[#87938b]">{copy}</span>
                     </span>
-                    <ArrowRight className="size-3.5 text-[#87938b] transition group-hover:translate-x-0.5 group-hover:text-[#185c39]" />
+                    <ArrowRight className="size-3.5 text-[#87938b] transition group-hover:translate-x-0.5 group-hover:text-[#2d6b4e]" />
                   </Link>
                 ))}
               </div>
@@ -330,11 +350,11 @@ export default function CreatorDashboardPage() {
                   <Link key={message.id} href="/creator/messages" className="flex items-center gap-3 rounded-xl p-2.5 transition hover:bg-[#f4f6f1]">
                     <Avatar className="size-9">
                       <AvatarImage src={message.avatar} alt={message.name} />
-                      <AvatarFallback className="bg-[#eef2eb] text-xs font-bold text-[#185c39]">{getInitials(message.name)}</AvatarFallback>
+                      <AvatarFallback className="bg-[#e6eceb] text-xs font-bold text-[#2d6b4e]">{getInitials(message.name)}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="truncate text-xs font-extrabold text-[#173b2a]">{message.name}</p>
+                        <p className="truncate text-xs font-extrabold text-[#1e3d2e]">{message.name}</p>
                         {message.unread ? <span className="size-1.5 rounded-full bg-[#e6aa38]" /> : null}
                       </div>
                       <p className="mt-0.5 truncate text-[10px] text-[#718077]">{message.message}</p>
@@ -351,7 +371,7 @@ export default function CreatorDashboardPage() {
             </section>
 
             {isActiveAmbassador ? (
-              <section className="rounded-[1.6rem] bg-[#185c39] p-5 text-white">
+              <section className="rounded-[1.6rem] bg-[#2d6b4e] p-5 text-white">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#f0c56e]">Ambassador edge</p>
@@ -359,7 +379,7 @@ export default function CreatorDashboardPage() {
                   </div>
                   <ShieldCheck className="size-5 text-[#f0c56e]" />
                 </div>
-                <p className="mt-3 text-[11px] leading-5 text-[#c9dace]">Keep response time low and close active campaigns to protect your premium position.</p>
+                <p className="mt-3 text-[11px] leading-5 text-[#c2d8cb]">Keep response time low and close active campaigns to protect your premium position.</p>
               </section>
             ) : null}
           </aside>

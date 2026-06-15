@@ -68,9 +68,11 @@ Single file for all shared types. Key domain types: `User`, `Creator`, `Brand`, 
 
 ### Brand colors (hardcoded, not CSS vars)
 The creator-facing UI uses hardcoded Tailwind arbitrary values — don't replace with CSS variables:
-- Dark green: `#173b2a`, `#185c39`, `#104b2d`
-- Cream background: `#fbfaf5`, `#f4f2e9`
-- Border: `#dce3dc`, `#d6ded7`
+- Dark green: `#1e3d2e`, `#2d6b4e`, `#1f5239` (primary dark / primary / hover)
+- Secondary text: `#496159`
+- Panel/card bg: `#244c39`
+- Cream background: `#fbfaf5`, `#f4f2e9`, `#e6eceb`
+- Border: `#d1ddd6`, `#cddad1`
 - Amber accent: `#e3a52f`, `#b77a12`, `#f7e8c8`
 
 ### Auth shell

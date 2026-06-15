@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -25,9 +25,9 @@ const getPostLoginPath = (role?: string) => {
 };
 
 const inputClass =
-  'h-10 w-full rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#173b2a] placeholder:text-[#b0bfb8] shadow-none transition-colors duration-150 focus-visible:border-[#185c39] focus-visible:ring-4 focus-visible:ring-[#185c39]/8 focus-visible:ring-offset-0 [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset]';
+  'h-10 w-full rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] placeholder:text-[#b0bfb8] shadow-none transition-colors duration-150 focus-visible:border-[#2d6b4e] focus-visible:ring-4 focus-visible:ring-[#2d6b4e]/8 focus-visible:ring-offset-0';
 const primaryButtonClass =
-  'h-10 w-full rounded-full bg-[#185c39] text-sm font-bold text-white hover:bg-[#104b2d] transition-colors';
+  'h-10 w-full rounded-full bg-[#2d6b4e] text-sm font-bold text-white hover:bg-[#1f5239] transition-colors';
 const labelClass = 'text-[10px] font-bold uppercase tracking-widest text-[#7a8f82]';
 
 export default function LoginPage() {
@@ -43,13 +43,15 @@ export default function LoginPage() {
   const [googleRole, setGoogleRole] = useState<UserRole>('creator');
   const [showDemoAccounts, setShowDemoAccounts] = useState(false);
   const [activeDemoEmail, setActiveDemoEmail] = useState('');
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (hasHydrated && isAuthenticated && user?.role) router.replace(getPostLoginPath(user.role));
   }, [hasHydrated, isAuthenticated, user, router]);
 
   if (hasHydrated && isAuthenticated && user?.role) {
-    return <div className="grid min-h-screen place-items-center bg-[#fbfaf5]"><Loader2 className="size-6 animate-spin text-[#185c39]" /></div>;
+    return <div className="grid min-h-screen place-items-center bg-[#fbfaf5]"><Loader2 className="size-6 animate-spin text-[#2d6b4e]" /></div>;
   }
 
   const applyDemoCredentials = (demoEmail: string) => {
@@ -123,8 +125,8 @@ export default function LoginPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#b77a12]">Sign in</p>
-          <h2 className="mt-1.5 text-3xl font-extrabold tracking-[-0.045em] text-[#173b2a]">Welcome back.</h2>
-          <p className="mt-1 text-sm text-[#69766e]">Continue to your ZingZing workspace.</p>
+          <h2 className="mt-1.5 text-3xl font-extrabold tracking-[-0.045em] text-[#1e3d2e]">Welcome back.</h2>
+          <p className="mt-1 text-sm text-[#6b7870]">Continue to your ZingZing workspace.</p>
         </div>
         <span className="mt-1 hidden rounded-full bg-[#f7e8c8] px-3 py-1.5 text-[11px] font-bold text-[#8b5e12] sm:inline-flex">Secure login</span>
       </div>
@@ -140,7 +142,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => setAuthMethod(method)}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg h-9 text-sm font-semibold transition-all duration-200 ${
-                active ? 'bg-[#185c39] text-white shadow-sm' : 'text-[#6b7c72] hover:text-[#2e5440]'
+                active ? 'bg-[#2d6b4e] text-white shadow-sm' : 'text-[#6b7c72] hover:text-[#2e5440]'
               }`}
             >
               <Icon className="size-3.5" />
@@ -159,11 +161,17 @@ export default function LoginPage() {
           <div className="space-y-1.5">
             <Label htmlFor="email" className={labelClass}>Email address</Label>
             <Input
+              ref={emailRef}
               id="email"
+              name="email"
               type="email"
+              autoComplete="email"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onAnimationStart={(e) => {
+                if (e.animationName === 'autofill-start') setEmail(emailRef.current?.value ?? '');
+              }}
               required
               className={inputClass}
             />
@@ -171,24 +179,30 @@ export default function LoginPage() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="password" className={labelClass}>Password</Label>
-              <Link href="/forgot-password" className="text-xs font-bold text-[#185c39] hover:underline">
+              <Link href="/forgot-password" className="text-xs font-bold text-[#2d6b4e] hover:underline">
                 Forgot password?
               </Link>
             </div>
             <div className="relative">
               <Input
+                ref={passwordRef}
                 id="password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onAnimationStart={(e) => {
+                  if (e.animationName === 'autofill-start') setPassword(passwordRef.current?.value ?? '');
+                }}
                 required
                 className={`${inputClass} pr-10`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-lg text-[#8fa89a] hover:bg-[#eef2eb] hover:text-[#185c39] transition-colors"
+                className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-lg text-[#8fa89a] hover:bg-[#e6eceb] hover:text-[#2d6b4e] transition-colors"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
@@ -207,7 +221,7 @@ export default function LoginPage() {
           <div className="space-y-1.5">
             <Label htmlFor="phone" className={labelClass}>Phone number</Label>
             <div className="flex gap-2">
-              <span className="flex h-10 shrink-0 items-center rounded-xl border-2 border-[#dce6df] bg-[#f0f5f1] px-3.5 text-sm font-bold text-[#3d5d49]">+92</span>
+              <span className="flex h-10 shrink-0 items-center rounded-xl border-2 border-[#dce6df] bg-[#f0f5f1] px-3.5 text-sm font-bold text-[#496159]">+92</span>
               <Input
                 id="phone"
                 type="tel"
@@ -232,7 +246,7 @@ export default function LoginPage() {
                 required
                 className={inputClass}
               />
-              <button type="button" onClick={handleSendOtp} className="text-xs font-bold text-[#185c39] hover:underline">
+              <button type="button" onClick={handleSendOtp} className="text-xs font-bold text-[#2d6b4e] hover:underline">
                 Resend code
               </button>
             </div>
@@ -252,7 +266,7 @@ export default function LoginPage() {
 
       {/* Divider */}
       <div className="my-4 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#87938b]">
-        <div className="h-px flex-1 bg-[#dce3dc]" /> or continue with <div className="h-px flex-1 bg-[#dce3dc]" />
+        <div className="h-px flex-1 bg-[#d1ddd6]" /> or continue with <div className="h-px flex-1 bg-[#d1ddd6]" />
       </div>
 
       {/* Google role selector */}
@@ -264,8 +278,8 @@ export default function LoginPage() {
             onClick={() => setGoogleRole(role)}
             className={`h-9 rounded-full border-2 text-xs font-bold capitalize transition-colors ${
               googleRole === role
-                ? 'border-[#185c39] bg-[#eef2eb] text-[#185c39]'
-                : 'border-[#d6ded7] text-[#69766e] hover:border-[#185c39] hover:text-[#185c39]'
+                ? 'border-[#2d6b4e] bg-[#e6eceb] text-[#2d6b4e]'
+                : 'border-[#cddad1] text-[#6b7870] hover:border-[#2d6b4e] hover:text-[#2d6b4e]'
             }`}
           >
             {role}
@@ -277,17 +291,17 @@ export default function LoginPage() {
         variant="outline"
         onClick={handleGoogleLogin}
         disabled={isLoading}
-        className="mt-2 h-10 w-full rounded-full border-2 border-[#d6ded7] bg-white text-sm font-bold text-[#294b38] hover:border-[#185c39] hover:bg-[#f4f8f4] transition-colors"
+        className="mt-2 h-10 w-full rounded-full border-2 border-[#cddad1] bg-white text-sm font-bold text-[#2f5243] hover:border-[#2d6b4e] hover:bg-[#f4f8f4] transition-colors"
       >
         Continue with Google
       </Button>
 
       {/* Demo accounts */}
-      <div className="mt-4 rounded-2xl border border-[#dce3dc] bg-[#f4f2e9] p-3">
+      <div className="mt-4 rounded-2xl border border-[#d1ddd6] bg-[#f4f2e9] p-3">
         <button
           type="button"
           onClick={() => setShowDemoAccounts(!showDemoAccounts)}
-          className="flex w-full items-center justify-between gap-3 text-left text-xs font-bold text-[#3d5d49]"
+          className="flex w-full items-center justify-between gap-3 text-left text-xs font-bold text-[#496159]"
           aria-expanded={showDemoAccounts}
         >
           Explore with a demo account
@@ -303,10 +317,10 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => applyDemoCredentials(demoEmail)}
                     className={`rounded-xl border p-2.5 text-left transition-colors ${
-                      activeDemoEmail === demoEmail ? 'border-[#185c39] bg-white' : 'border-[#dce3dc] bg-white/70 hover:border-[#b8c8bb]'
+                      activeDemoEmail === demoEmail ? 'border-[#2d6b4e] bg-white' : 'border-[#d1ddd6] bg-white/70 hover:border-[#b0c5ba]'
                     }`}
                   >
-                    <span className="block text-[11px] font-extrabold text-[#173b2a]">{label}</span>
+                    <span className="block text-[11px] font-extrabold text-[#1e3d2e]">{label}</span>
                     <span className="mt-0.5 block truncate text-[10px] text-[#718077]">{demoEmail}</span>
                   </button>
                 ))}
@@ -316,9 +330,9 @@ export default function LoginPage() {
         </AnimatePresence>
       </div>
 
-      <p className="mt-4 text-center text-sm text-[#69766e]">
+      <p className="mt-4 text-center text-sm text-[#6b7870]">
         New to ZingZing?{' '}
-        <Link href="/signup" className="font-extrabold text-[#185c39] hover:underline">
+        <Link href="/signup" className="font-extrabold text-[#2d6b4e] hover:underline">
           Create an account
         </Link>
       </p>

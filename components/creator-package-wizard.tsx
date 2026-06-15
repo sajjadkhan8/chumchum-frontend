@@ -24,11 +24,9 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -324,6 +322,19 @@ interface CreatorPackageWizardProps {
   initialPackage?: CreatorPackage;
 }
 
+const panelClass =
+  "rounded-[1.6rem] border border-[#d1ddd6] bg-white shadow-[0_18px_55px_rgba(38,70,50,0.07)]";
+
+const inputClass =
+  "h-10 w-full rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] placeholder:text-[#b0bfb8] shadow-none transition-colors duration-150 focus-visible:border-[#2d6b4e] focus-visible:ring-4 focus-visible:ring-[#2d6b4e]/8 focus-visible:ring-offset-0";
+
+const textareaClass =
+  "w-full rounded-xl border-2 border-[#dce6df] bg-white px-3.5 py-3 text-sm text-[#1e3d2e] placeholder:text-[#b0bfb8] shadow-none transition-colors duration-150 focus-visible:outline-none focus-visible:border-[#2d6b4e] focus-visible:ring-4 focus-visible:ring-[#2d6b4e]/8 resize-none";
+
+const labelClass = "text-[10px] font-bold uppercase tracking-widest text-[#7a8f82]";
+
+const sectionTitle = "text-base font-bold text-[#1e3d2e] tracking-tight";
+
 export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWizardProps) {
   const router = useRouter();
   const creatorProfile = useAuthStore((state) => state.creatorProfile);
@@ -336,7 +347,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   const [showTierForm, setShowTierForm] = useState(false);
   const [expandedTiers, setExpandedTiers] = useState<Set<number>>(new Set());
 
-  // Tier management state
   const [tiers, setTiers] = useState<PackageTier[]>(initialPackage?.tiers || []);
   const [tierForm, setTierForm] = useState<Partial<PackageTier>>({
     name: "",
@@ -344,7 +354,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     deliverables: [""],
     description: "",
     position: 0,
-    isPrimary: tiers.length === 0, // First tier is primary by default
+    isPrimary: tiers.length === 0,
   });
 
   const initialForm = useMemo<WizardFormData>(() => {
@@ -500,7 +510,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     if (mode !== "create") return;
     const raw = localStorage.getItem(DRAFT_KEY);
     setHasSavedDraft(Boolean(raw));
-    // Show modal on first load if draft exists
     if (raw) {
       setShowDraftModal(true);
     }
@@ -512,7 +521,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     const payload = {
       currentStep,
       formData,
-      tiers,  // Include tiers in draft
+      tiers,
     };
 
     localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
@@ -840,7 +849,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     }));
   };
 
-  // Tier management functions
   const addTier = () => {
     if (!tierForm.name || tierForm.price === undefined || !tierForm.deliverables?.length) {
       toast.error("Fill tier name, price, and at least one deliverable");
@@ -855,7 +863,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       description: tierForm.description,
       position: tierForm.position ?? tiers.length,
       isPrimary: tierForm.isPrimary ?? (tiers.length === 0),
-      currency: "PKR", // V1: Always PKR
+      currency: "PKR",
     };
 
     setTiers((prev) => [...prev, newTier]);
@@ -944,7 +952,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         formData.dealType === "barter"
           ? 0
           : Number(formData.dealType === "hybrid" ? formData.hybridCashAmount || 0 : formData.price || 0),
-      currency: "PKR",  // V1: PKR only
+      currency: "PKR",
       dealType: formData.dealType,
       barterValue:
         formData.dealType === "barter" || formData.dealType === "hybrid"
@@ -981,7 +989,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800",
       mediaUrls: formData.previousWorkUrls.map((url) => url.trim()).filter(Boolean),
       visibility: formData.visibility,
-      tiers: tiers.length > 0 ? tiers : undefined,  // V1: Include tiers in payload
+      tiers: tiers.length > 0 ? tiers : undefined,
       analytics: initialPackage?.analytics || {
         views: 0,
         clicks: 0,
@@ -1014,7 +1022,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       );
       router.push("/creator/packages");
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to save package';
+      const message = error instanceof Error ? error.message : "Failed to save package";
       toast.error(message);
     }
   };
@@ -1022,155 +1030,177 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   return (
     <div className="container mx-auto p-4 pb-6 md:p-6">
 
-      <Card className="sticky top-16 z-20 mb-8 border-border/80 bg-background/95 backdrop-blur">
-        <CardContent className="p-4">
-          {mode === "create" && hasSavedDraft && !showDraftModal && (
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-              <span>Draft saved locally.</span>
-              <div className="flex items-center gap-2">
-                <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={restoreDraft}>
-                  Restore
-                </Button>
-                <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={clearDraft}>
-                  Start fresh
-                </Button>
-              </div>
+      {/* Step progress */}
+      <div className={`sticky top-16 z-20 mb-6 ${panelClass} p-3`}>
+        {mode === "create" && hasSavedDraft && !showDraftModal && (
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e3c97a] bg-[#fdf3dc] px-3.5 py-2.5 text-xs text-[#8a6010]">
+            <span className="font-semibold">You have a saved draft.</span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={restoreDraft}
+                className="rounded-full bg-[#e3a52f] px-3 py-1 text-xs font-bold text-white transition-colors hover:bg-[#c98e22]"
+              >
+                Restore
+              </button>
+              <button
+                type="button"
+                onClick={clearDraft}
+                className="rounded-full border border-[#e3c97a] px-3 py-1 text-xs font-bold text-[#8a6010] transition-colors hover:bg-[#f7e8c8]"
+              >
+                Start fresh
+              </button>
             </div>
-          )}
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {steps.map((step) => (
-              (() => {
-                const isUnlocked = step.id <= maxUnlockedStep;
-                const isCurrent = currentStep === step.id;
-                const isCompleted = step.id < currentStep && isStepComplete(step.id);
-
-                return (
-                  <button
-                    key={step.id}
-                    type="button"
-                    aria-disabled={!isUnlocked}
-                    onClick={() => {
-                      if (!isUnlocked) {
-                        const previousStep = Math.max(1, step.id - 1);
-                        const missing = getStepMissingFields(previousStep);
-                        toast.error(
-                          missing.length
-                            ? `Complete Step ${previousStep}: ${missing.slice(0, 2).join(", ")}`
-                            : `Complete Step ${previousStep} first.`
-                        );
-                        return;
-                      }
-                      setCurrentStep(step.id);
-                    }}
-                    className={`inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm transition-all ${
-                      isCurrent
-                        ? "bg-primary text-primary-foreground"
-                        : isUnlocked
-                          ? "bg-muted text-muted-foreground hover:text-foreground"
-                          : "cursor-not-allowed bg-muted/60 text-muted-foreground/60"
-                    }`}
-                  >
-                    <span>{step.id}. {step.label}</span>
-                    {isCompleted && <Check className="h-3.5 w-3.5" />}
-                    {!isUnlocked && <Lock className="h-3.5 w-3.5" />}
-                  </button>
-                );
-              })()
-            ))}
           </div>
-        </CardContent>
-       </Card>
+        )}
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+          {steps.map((step) => {
+            const isUnlocked = step.id <= maxUnlockedStep;
+            const isCurrent = currentStep === step.id;
+            const isCompleted = step.id < currentStep && isStepComplete(step.id);
 
-      {/* Draft Recovery Modal */}
+            return (
+              <button
+                key={step.id}
+                type="button"
+                aria-disabled={!isUnlocked}
+                onClick={() => {
+                  if (!isUnlocked) {
+                    const previousStep = Math.max(1, step.id - 1);
+                    const missing = getStepMissingFields(previousStep);
+                    toast.error(
+                      missing.length
+                        ? `Complete Step ${previousStep}: ${missing.slice(0, 2).join(", ")}`
+                        : `Complete Step ${previousStep} first.`
+                    );
+                    return;
+                  }
+                  setCurrentStep(step.id);
+                }}
+                className={`inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200 ${
+                  isCurrent
+                    ? "bg-[#2d6b4e] text-white shadow-sm"
+                    : isCompleted
+                      ? "bg-[#e4f1e8] text-[#1e5c3e]"
+                      : isUnlocked
+                        ? "text-[#496159] hover:bg-[#f0f5f1] hover:text-[#1e3d2e]"
+                        : "cursor-not-allowed text-[#b0bfb8]"
+                }`}
+              >
+                {isCompleted ? (
+                  <span className="flex size-5 items-center justify-center rounded-full bg-[#2d6b4e] text-white">
+                    <Check className="size-3" />
+                  </span>
+                ) : !isUnlocked ? (
+                  <Lock className="size-3.5 text-[#b0bfb8]" />
+                ) : (
+                  <span className={`flex size-5 items-center justify-center rounded-full text-[11px] font-extrabold ${isCurrent ? "bg-white/20" : "bg-[#d1ddd6] text-[#496159]"}`}>
+                    {step.id}
+                  </span>
+                )}
+                {step.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Draft recovery modal */}
       {showDraftModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <Card className="w-full max-w-sm border-border/80">
-            <CardHeader>
-              <CardTitle>Unsaved Draft</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                You have an unsaved package draft. Would you like to restore it or start fresh?
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  className="flex-1"
-                  onClick={() => {
-                    restoreDraft();
-                    setShowDraftModal(false);
-                  }}
-                >
-                  Restore Draft
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => {
-                    clearDraft();
-                    setShowDraftModal(false);
-                  }}
-                >
-                  Start Fresh
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className={`w-full max-w-sm ${panelClass} overflow-hidden`}>
+            <div className="relative bg-[#2d6b4e] px-6 py-5">
+              <h3 className="text-base font-bold text-white">Unsaved draft found</h3>
+              <p className="mt-1 text-sm text-white/70">Restore where you left off, or start fresh.</p>
+              <button
+                type="button"
+                onClick={() => setShowDraftModal(false)}
+                className="absolute right-4 top-4 flex size-7 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white"
+                aria-label="Dismiss"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="flex gap-2 p-5">
+              <button
+                type="button"
+                onClick={() => { restoreDraft(); setShowDraftModal(false); }}
+                className="flex-1 rounded-full bg-[#2d6b4e] py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#1f5239]"
+              >
+                Restore Draft
+              </button>
+              <button
+                type="button"
+                onClick={() => { clearDraft(); setShowDraftModal(false); }}
+                className="flex-1 rounded-full border-2 border-[#dce6df] py-2.5 text-sm font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
+              >
+                Start Fresh
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
       <motion.div key={currentStep} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+
+        {/* ── Step 1: Basic Info ── */}
         {currentStep === 1 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Step 1 - Basic Info</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-5 p-4 sm:p-6">
+          <div className={`${panelClass} p-6 md:p-8`}>
+            <h2 className={`mb-6 ${sectionTitle}`}>Basic Info</h2>
+            <div className="space-y-6">
+
+              {/* Title */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label>Title</Label>
-                  <span className="text-xs text-muted-foreground">{formData.title.length}/100</span>
+                  <Label htmlFor="pkg-title" className={labelClass}>Title</Label>
+                  <span className="text-[11px] text-[#a0b4aa]">{formData.title.length}/100</span>
                 </div>
                 <Input
+                  id="pkg-title"
                   maxLength={100}
                   value={formData.title}
                   onChange={(e) => updateField("title", e.target.value)}
                   placeholder="Ramzan Food Reel Bundle"
+                  className={inputClass}
                 />
               </div>
 
+              {/* Description */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label>Description</Label>
-                  <span className="text-xs text-muted-foreground">{formData.fullDescription.length} chars</span>
+                  <Label htmlFor="pkg-desc" className={labelClass}>Description</Label>
+                  <span className="text-[11px] text-[#a0b4aa]">{formData.fullDescription.length} chars</span>
                 </div>
                 <Textarea
+                  id="pkg-desc"
                   rows={4}
                   value={formData.fullDescription}
                   onChange={(e) => updateField("fullDescription", e.target.value)}
                   placeholder="Add complete package details and collaboration scope"
+                  className={textareaClass}
                 />
               </div>
 
+              {/* Platform */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label>Platform</Label>
-                  <span className="text-xs text-muted-foreground">
-                    {formData.platform ? "1/1 selected" : "0/1 selected"}
+                  <Label className={labelClass}>Platform</Label>
+                  <span className="text-[11px] text-[#a0b4aa]">
+                    {formData.platform ? "1 selected" : "none selected"}
                   </span>
                 </div>
 
                 {isLoadingPlatformOptions && (
-                  <p className="rounded-lg border border-border/60 p-3 text-sm text-muted-foreground">
-                    Loading connected platforms...
+                  <p className="rounded-xl border border-[#dce6df] p-3 text-sm text-[#a0b4aa]">
+                    Loading connected platforms…
                   </p>
                 )}
 
-                <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                   {platforms.map((platform) => {
                     const isConnected = connectedPlatformSet.has(platform.id as Platform);
                     const isDisabled = isLoadingPlatformOptions || !isConnected;
+                    const isSelected = formData.platform === platform.id;
 
                     return (
                       <button
@@ -1179,10 +1209,9 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                         aria-disabled={isDisabled}
                         onClick={() => {
                           if (isDisabled) {
-                            toast.info(`Connect ${platform.label} in Settings -> Connected Accounts to enable.`);
+                            toast.info(`Connect ${platform.label} in Settings → Connected Accounts to enable.`);
                             return;
                           }
-
                           setFormData((prev) => ({
                             ...prev,
                             platform: platform.id,
@@ -1191,19 +1220,19 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                             serviceNotes: "",
                           }));
                         }}
-                        className={`rounded-lg border p-3 text-sm transition-colors ${
-                          formData.platform === platform.id
-                            ? "border-primary bg-primary/10 text-primary"
+                        className={`rounded-xl border-2 p-3 text-sm transition-all duration-200 ${
+                          isSelected
+                            ? "border-[#2d6b4e] bg-[#e4f1e8] text-[#1e5c3e]"
                             : isDisabled
-                              ? "cursor-not-allowed border-border/60 bg-muted/40 text-muted-foreground"
-                              : "border-border hover:border-border/80"
+                              ? "cursor-not-allowed border-[#eef1ef] bg-[#f4f7f5] text-[#b0bfb8]"
+                              : "border-[#dce6df] text-[#496159] hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
                         }`}
                       >
-                        <div className="flex items-center justify-center gap-2">
-                          <platform.icon className="h-4 w-4" />
+                        <div className="flex items-center justify-center gap-2 font-semibold">
+                          <platform.icon className="size-4" />
                           {platform.label}
                         </div>
-                        <p className="mt-1 text-center text-[11px] text-muted-foreground">
+                        <p className="mt-1 text-center text-[10px] font-medium text-[#a0b4aa]">
                           {isConnected ? "Connected" : "Connect to enable"}
                         </p>
                       </button>
@@ -1211,38 +1240,41 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                   })}
                 </div>
 
-                <p className="text-xs text-muted-foreground">Only connected accounts are selectable.</p>
-
-                <div className="rounded-lg border border-dashed border-border/70 p-3 text-sm">
-                  <p className="text-muted-foreground">
-                    Connected accounts: {connectedPlatforms.length}/{platforms.length}. Connect more platforms to unlock package creation for them.
+                <div className="flex items-center justify-between rounded-xl border border-[#dce6df] bg-[#f4f7f5] px-4 py-3">
+                  <p className="text-xs text-[#6b7870]">
+                    {connectedPlatforms.length}/{platforms.length} platforms connected
                   </p>
-                  <Button asChild variant="link" className="h-auto px-0 py-1 text-sm">
-                    <Link href="/creator/settings?tab=social">Manage Connected Accounts</Link>
-                  </Button>
+                  <Link
+                    href="/creator/settings?tab=social"
+                    className="text-xs font-bold text-[#2d6b4e] hover:underline"
+                  >
+                    Manage accounts
+                  </Link>
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="space-y-2">
+              {/* Category / Niche / Tags */}
+              <div className="grid gap-5 sm:grid-cols-3">
+                {/* Category */}
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <Label>Category</Label>
-                    <span className="text-xs text-muted-foreground">{categoriesList.length}/{MAX_CATEGORIES}</span>
+                    <Label className={labelClass}>Category</Label>
+                    <span className="text-[11px] text-[#a0b4aa]">{categoriesList.length}/{MAX_CATEGORIES}</span>
                   </div>
-                  <div className="rounded-lg border border-border/70 bg-background px-3 py-2 focus-within:border-primary/70 focus-within:ring-1 focus-within:ring-primary/30">
-                    <div className="flex flex-wrap items-center gap-2">
+                  <div className="min-h-10 rounded-xl border-2 border-[#dce6df] bg-white px-3 py-2 transition-colors focus-within:border-[#2d6b4e] focus-within:ring-4 focus-within:ring-[#2d6b4e]/8">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       {categoriesList.map((category) => (
-                        <Badge key={category} variant="secondary" className="gap-1 pr-1">
-                          <span>{category}</span>
+                        <span key={category} className="inline-flex items-center gap-1 rounded-full bg-[#e4f1e8] px-2.5 py-0.5 text-xs font-bold text-[#1e5c3e]">
+                          {category}
                           <button
                             type="button"
                             aria-label={`Remove ${category}`}
-                            className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
                             onClick={() => removeCategory(category)}
+                            className="rounded-full p-0.5 text-[#1e5c3e]/60 transition-colors hover:text-[#1e5c3e]"
                           >
-                            <X className="h-3 w-3" />
+                            <X className="size-2.5" />
                           </button>
-                        </Badge>
+                        </span>
                       ))}
                       <input
                         value={categoryInput}
@@ -1254,7 +1286,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                             addCategoriesFromRawInput(categoryInput);
                             return;
                           }
-
                           if (e.key === "Backspace" && !categoryInput.trim() && categoriesList.length) {
                             e.preventDefault();
                             removeCategory(categoriesList[categoriesList.length - 1]);
@@ -1267,33 +1298,34 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                           e.preventDefault();
                           addCategoriesFromRawInput(pasted);
                         }}
-                        placeholder={categoriesList.length ? "Add another category" : "Type category and press Enter"}
-                        className="min-w-[120px] flex-1 border-0 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground"
+                        placeholder={categoriesList.length ? "Add more…" : "e.g. Food & Beverage"}
+                        className="min-w-[80px] flex-1 border-0 bg-transparent py-0.5 text-sm text-[#1e3d2e] outline-none placeholder:text-[#b0bfb8]"
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground" aria-live="polite">Add up to {MAX_CATEGORIES}. Enter, comma, or Tab.</p>
+                  <p className="text-[10px] text-[#a0b4aa]">Up to {MAX_CATEGORIES}. Enter or comma to add.</p>
                 </div>
 
-                <div className="space-y-2">
+                {/* Niche */}
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <Label>Niche</Label>
-                    <span className="text-xs text-muted-foreground">{nichesList.length}/{MAX_NICHES}</span>
+                    <Label className={labelClass}>Niche</Label>
+                    <span className="text-[11px] text-[#a0b4aa]">{nichesList.length}/{MAX_NICHES}</span>
                   </div>
-                  <div className="rounded-lg border border-border/70 bg-background px-3 py-2 focus-within:border-primary/70 focus-within:ring-1 focus-within:ring-primary/30">
-                    <div className="flex flex-wrap items-center gap-2">
+                  <div className="min-h-10 rounded-xl border-2 border-[#dce6df] bg-white px-3 py-2 transition-colors focus-within:border-[#2d6b4e] focus-within:ring-4 focus-within:ring-[#2d6b4e]/8">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       {nichesList.map((niche) => (
-                        <Badge key={niche} variant="secondary" className="gap-1 pr-1">
-                          <span>{niche}</span>
+                        <span key={niche} className="inline-flex items-center gap-1 rounded-full bg-[#e4f1e8] px-2.5 py-0.5 text-xs font-bold text-[#1e5c3e]">
+                          {niche}
                           <button
                             type="button"
                             aria-label={`Remove ${niche}`}
-                            className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
                             onClick={() => removeNiche(niche)}
+                            className="rounded-full p-0.5 text-[#1e5c3e]/60 transition-colors hover:text-[#1e5c3e]"
                           >
-                            <X className="h-3 w-3" />
+                            <X className="size-2.5" />
                           </button>
-                        </Badge>
+                        </span>
                       ))}
                       <input
                         value={nicheInput}
@@ -1305,7 +1337,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                             addNichesFromRawInput(nicheInput);
                             return;
                           }
-
                           if (e.key === "Backspace" && !nicheInput.trim() && nichesList.length) {
                             e.preventDefault();
                             removeNiche(nichesList[nichesList.length - 1]);
@@ -1318,33 +1349,34 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                           e.preventDefault();
                           addNichesFromRawInput(pasted);
                         }}
-                        placeholder={nichesList.length ? "Add another niche" : "Type niche and press Enter"}
-                        className="min-w-[120px] flex-1 border-0 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground"
+                        placeholder={nichesList.length ? "Add more…" : "e.g. Travel"}
+                        className="min-w-[80px] flex-1 border-0 bg-transparent py-0.5 text-sm text-[#1e3d2e] outline-none placeholder:text-[#b0bfb8]"
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground" aria-live="polite">Add up to {MAX_NICHES}. Enter, comma, or Tab.</p>
+                  <p className="text-[10px] text-[#a0b4aa]">Up to {MAX_NICHES}. Enter or comma to add.</p>
                 </div>
 
-                <div className="space-y-2">
+                {/* Tags */}
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <Label>Tags</Label>
-                    <span className="text-xs text-muted-foreground">{tagsList.length}/{MAX_TAGS}</span>
+                    <Label className={labelClass}>Tags</Label>
+                    <span className="text-[11px] text-[#a0b4aa]">{tagsList.length}/{MAX_TAGS}</span>
                   </div>
-                  <div className="rounded-lg border border-border/70 bg-background px-3 py-2 focus-within:border-primary/70 focus-within:ring-1 focus-within:ring-primary/30">
-                    <div className="flex flex-wrap items-center gap-2">
+                  <div className="min-h-10 rounded-xl border-2 border-[#dce6df] bg-white px-3 py-2 transition-colors focus-within:border-[#2d6b4e] focus-within:ring-4 focus-within:ring-[#2d6b4e]/8">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       {tagsList.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="gap-1 pr-1">
-                          <span>{tag}</span>
+                        <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-[#fdf3dc] px-2.5 py-0.5 text-xs font-bold text-[#8a6010]">
+                          {tag}
                           <button
                             type="button"
                             aria-label={`Remove ${tag}`}
-                            className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
                             onClick={() => removeTag(tag)}
+                            className="rounded-full p-0.5 text-[#8a6010]/60 transition-colors hover:text-[#8a6010]"
                           >
-                            <X className="h-3 w-3" />
+                            <X className="size-2.5" />
                           </button>
-                        </Badge>
+                        </span>
                       ))}
                       <input
                         value={tagInput}
@@ -1356,7 +1388,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                             addTagsFromRawInput(tagInput);
                             return;
                           }
-
                           if (e.key === "Backspace" && !tagInput.trim() && tagsList.length) {
                             e.preventDefault();
                             removeTag(tagsList[tagsList.length - 1]);
@@ -1369,211 +1400,227 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                           e.preventDefault();
                           addTagsFromRawInput(pasted);
                         }}
-                        placeholder={tagsList.length ? "Add another tag" : "Type a tag and press Enter"}
-                        className="min-w-[120px] flex-1 border-0 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground"
+                        placeholder={tagsList.length ? "Add more…" : "e.g. ramzan"}
+                        className="min-w-[80px] flex-1 border-0 bg-transparent py-0.5 text-sm text-[#1e3d2e] outline-none placeholder:text-[#b0bfb8]"
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground" aria-live="polite">Add up to {MAX_TAGS}. Enter, comma, or Tab.</p>
+                  <p className="text-[10px] text-[#a0b4aa]">Up to {MAX_TAGS}. Enter or comma to add.</p>
                 </div>
               </div>
 
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
+        {/* ── Step 2: Services ── */}
         {currentStep === 2 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Step 2 - Services</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 p-4 sm:p-6">
-              {!formData.platform && (
-                <p className="rounded-lg border border-border/60 p-3 text-sm text-muted-foreground">
-                  Select a platform in Step 1 first to unlock service options.
-                </p>
-              )}
+          <div className={`${panelClass} p-6 md:p-8`}>
+            <h2 className={`mb-6 ${sectionTitle}`}>Services &amp; Deliverables</h2>
 
-              {formData.platform && (
-                <>
-                  {serviceSections.map((section) => (
-                    <div key={section.label} className="space-y-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        {section.label}
-                      </p>
-                      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-                        {section.items.map((option) => {
-                          const isSelected = selectedServiceSet.has(option.key);
-                          return (
-                            <button
-                              key={option.key}
-                              type="button"
-                              onClick={() => onToggleService(option.key)}
-                              className={`rounded-lg border p-3 text-left transition-colors ${
-                                isSelected
-                                  ? "border-primary bg-primary/10"
-                                  : "border-border hover:border-border/80 hover:bg-muted/40"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium">{option.label}</p>
-                                <span
-                                  className={`ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px] ${
-                                    isSelected
-                                      ? "border-primary bg-primary text-primary-foreground"
-                                      : "border-border text-transparent"
-                                  }`}
-                                >
-                                  <Check className="h-3 w-3" />
-                                </span>
-                              </div>
-                              <p className="mt-1 text-xs text-muted-foreground">{option.description}</p>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
+            {!formData.platform && (
+              <div className="rounded-xl border border-[#dce6df] bg-[#f4f7f5] p-4 text-sm text-[#6b7870]">
+                Select a platform in Step 1 to unlock service options.
+              </div>
+            )}
 
-                  <div className="space-y-2">
-                    <Label>Service Notes (Optional)</Label>
-                    <Textarea
-                      rows={3}
-                      value={formData.serviceNotes}
-                      onChange={(e) => updateField("serviceNotes", e.target.value)}
-                      placeholder="Example: 2 hooks for approval, Urdu voiceover, include campaign hashtag"
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 p-3 text-sm">
-                    <p className="text-muted-foreground">
-                      {formData.selectedServiceKeys.length > 0
-                        ? `${formData.selectedServiceKeys.length} selected (ready to add)`
-                        : "Select one or more deliverables for this package"}
+            {formData.platform && (
+              <div className="space-y-6">
+                {serviceSections.map((section) => (
+                  <div key={section.label}>
+                    <p className="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-[#7a8f82]">
+                      {section.label}
                     </p>
-                    <div className="flex items-center gap-2">
-                      {formData.selectedServiceKeys.length > 0 && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={addSelectedServicesToDeliverables}
-                        >
-                          <Plus className="mr-1 h-4 w-4" /> Add to deliverables
-                        </Button>
-                      )}
-                      {formData.selectedServiceKeys.length > 0 && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setFormData((prev) => ({ ...prev, selectedServiceKeys: [] }))}
-                        >
-                          Clear selection
-                        </Button>
-                      )}
+                    <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                      {section.items.map((option) => {
+                        const isSelected = selectedServiceSet.has(option.key);
+                        return (
+                          <button
+                            key={option.key}
+                            type="button"
+                            onClick={() => onToggleService(option.key)}
+                            className={`rounded-xl border-2 p-3.5 text-left transition-all duration-150 ${
+                              isSelected
+                                ? "border-[#2d6b4e] bg-[#e4f1e8]"
+                                : "border-[#dce6df] hover:border-[#b0c5ba] hover:bg-[#f4f7f5]"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <p className={`text-sm font-bold ${isSelected ? "text-[#1e5c3e]" : "text-[#1e3d2e]"}`}>
+                                {option.label}
+                              </p>
+                              <span
+                                className={`flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                                  isSelected
+                                    ? "border-[#2d6b4e] bg-[#2d6b4e]"
+                                    : "border-[#dce6df]"
+                                }`}
+                              >
+                                {isSelected && <Check className="size-3 text-white" />}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-xs text-[#6b7870]">{option.description}</p>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
+                ))}
 
-                  <div className="space-y-2 rounded-lg border border-border/60 p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium">Package Deliverables</p>
-                      <Badge variant="outline">
-                        {formData.deliverableItems.reduce((total, item) => total + item.quantity, 0)} total
-                      </Badge>
+                {/* Service notes */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="service-notes" className={labelClass}>Service Notes (optional)</Label>
+                  <Textarea
+                    id="service-notes"
+                    rows={3}
+                    value={formData.serviceNotes}
+                    onChange={(e) => updateField("serviceNotes", e.target.value)}
+                    placeholder="e.g. 2 hooks for approval, Urdu voiceover, include campaign hashtag"
+                    className={textareaClass}
+                  />
+                </div>
+
+                {/* Add to deliverables bar */}
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#dce6df] bg-[#f4f7f5] px-4 py-3">
+                  <p className="text-sm text-[#6b7870]">
+                    {formData.selectedServiceKeys.length > 0
+                      ? `${formData.selectedServiceKeys.length} service${formData.selectedServiceKeys.length > 1 ? "s" : ""} selected`
+                      : "Select services above to add to your package"}
+                  </p>
+                  {formData.selectedServiceKeys.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={addSelectedServicesToDeliverables}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[#2d6b4e] px-4 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#1f5239]"
+                      >
+                        <Plus className="size-3.5" /> Add to deliverables
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, selectedServiceKeys: [] }))}
+                        className="rounded-full border border-[#dce6df] px-3 py-1.5 text-xs font-bold text-[#6b7870] transition-colors hover:border-[#b0c5ba] hover:text-[#1e3d2e]"
+                      >
+                        Clear
+                      </button>
                     </div>
+                  )}
+                </div>
 
-                    {formData.deliverableItems.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        Nothing added yet. Select services above, then click "Add to deliverables".
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {formData.deliverableItems.map((item) => (
-                          <div
-                            key={item.serviceKey}
-                            className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/50 bg-muted/20 p-2"
-                          >
-                            <p className="text-sm font-medium">{item.label}</p>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="outline"
-                                className="h-8 w-8"
-                                onClick={() => updateDeliverableQuantity(item.serviceKey, -1)}
-                              >
-                                -
-                              </Button>
-                              <Badge variant="secondary">Qty {item.quantity}</Badge>
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="outline"
-                                className="h-8 w-8"
-                                onClick={() => updateDeliverableQuantity(item.serviceKey, 1)}
-                              >
-                                +
-                              </Button>
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8"
-                                onClick={() => removeDeliverableItem(item.serviceKey)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                {/* Deliverables list */}
+                <div className="rounded-xl border border-[#dce6df] bg-[#f4f7f5] p-4">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <p className="text-sm font-bold text-[#1e3d2e]">Package Deliverables</p>
+                    {formData.deliverableItems.length > 0 && (
+                      <span className="rounded-full bg-[#2d6b4e] px-2.5 py-0.5 text-[11px] font-bold text-white">
+                        {formData.deliverableItems.reduce((t, i) => t + i.quantity, 0)} total
+                      </span>
                     )}
                   </div>
-                </>
-              )}
 
-              <div className="space-y-2 rounded-lg border border-border/60 p-3">
-                <p className="text-sm font-medium">Deliverables preview (auto-generated)</p>
-                <div className="space-y-1 text-sm text-muted-foreground">
-                  {resolvedDeliverables.map((item, index) => (
-                    <p key={`${item}-${index}`}>- {item}</p>
-                  ))}
+                  {formData.deliverableItems.length === 0 ? (
+                    <p className="text-sm text-[#a0b4aa]">
+                      Nothing added yet. Select services above, then click "Add to deliverables".
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {formData.deliverableItems.map((item) => (
+                        <div
+                          key={item.serviceKey}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#d1ddd6] bg-white px-4 py-2.5"
+                        >
+                          <p className="text-sm font-semibold text-[#1e3d2e]">{item.label}</p>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => updateDeliverableQuantity(item.serviceKey, -1)}
+                              className="flex size-7 items-center justify-center rounded-full border-2 border-[#dce6df] text-sm font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#2d6b4e]"
+                            >
+                              −
+                            </button>
+                            <span className="min-w-[2rem] text-center text-sm font-bold text-[#1e3d2e]">
+                              {item.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => updateDeliverableQuantity(item.serviceKey, 1)}
+                              className="flex size-7 items-center justify-center rounded-full border-2 border-[#dce6df] text-sm font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#2d6b4e]"
+                            >
+                              +
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeDeliverableItem(item.serviceKey)}
+                              className="flex size-7 items-center justify-center rounded-full text-[#b0bfb8] transition-colors hover:bg-[#ffe8e8] hover:text-[#c0392b]"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            )}
+
+            {/* Deliverables preview */}
+            <div className="mt-6 rounded-xl border border-[#dce6df] bg-[#f4f7f5] p-4">
+              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[#7a8f82]">
+                Preview (auto-generated)
+              </p>
+              <div className="space-y-1">
+                {resolvedDeliverables.map((item, index) => (
+                  <p key={`${item}-${index}`} className="flex items-start gap-2 text-sm text-[#496159]">
+                    <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-[#2d6b4e]" />
+                    {item}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
 
+        {/* ── Step 3: Pricing ── */}
         {currentStep === 3 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Step 3 - Pricing</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 p-4 sm:p-6">
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div className={`${panelClass} p-6 md:p-8`}>
+            <h2 className={`mb-6 ${sectionTitle}`}>Pricing &amp; Deal Type</h2>
+            <div className="space-y-6">
+
+              {/* Deal type */}
+              <div className="grid grid-cols-3 gap-2">
                 {[
-                  { key: "paid", label: "Paid", icon: DollarSign },
-                  { key: "barter", label: "Barter", icon: Gift },
-                  { key: "hybrid", label: "Hybrid", icon: Sparkles },
+                  { key: "paid", label: "Paid", icon: DollarSign, desc: "Cash only" },
+                  { key: "barter", label: "Barter", icon: Gift, desc: "Products / services" },
+                  { key: "hybrid", label: "Hybrid", icon: Sparkles, desc: "Cash + barter" },
                 ].map((option) => (
                   <button
                     key={option.key}
                     type="button"
                     onClick={() => updateField("dealType", option.key)}
-                    className={`flex items-center justify-center gap-2 rounded-lg border p-3 text-sm ${
-                      formData.dealType === option.key ? "border-primary bg-primary/10 text-primary" : "border-border"
+                    className={`rounded-xl border-2 p-4 text-center transition-all duration-200 ${
+                      formData.dealType === option.key
+                        ? "border-[#2d6b4e] bg-[#2d6b4e] text-white shadow-sm"
+                        : "border-[#dce6df] text-[#496159] hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
                     }`}
                   >
-                    <option.icon className="h-4 w-4" /> {option.label}
+                    <option.icon className={`mx-auto mb-1.5 size-5 ${formData.dealType === option.key ? "text-white" : "text-[#6b7870]"}`} />
+                    <p className="text-sm font-bold">{option.label}</p>
+                    <p className={`mt-0.5 text-[10px] ${formData.dealType === option.key ? "text-white/70" : "text-[#a0b4aa]"}`}>
+                      {option.desc}
+                    </p>
                   </button>
                 ))}
               </div>
 
+              {/* Paid/hybrid cash amount */}
               {(formData.dealType === "paid" || formData.dealType === "hybrid") && (
-                <div className="space-y-2">
-                  <Label>{formData.dealType === "hybrid" ? "Cash Amount (PKR)" : "Price (PKR)"}</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="pkg-price" className={labelClass}>
+                    {formData.dealType === "hybrid" ? "Cash Amount (PKR)" : "Price (PKR)"}
+                  </Label>
                   <Input
+                    id="pkg-price"
                     type="number"
                     value={formData.dealType === "hybrid" ? formData.hybridCashAmount : formData.price}
                     onChange={(e) =>
@@ -1582,21 +1629,35 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                         : updateField("price", e.target.value)
                     }
                     placeholder="15000"
+                    className={inputClass}
                   />
                 </div>
               )}
 
+              {/* Barter / hybrid details */}
               {(formData.dealType === "barter" || formData.dealType === "hybrid") && (
-                <div className="space-y-3 rounded-lg border border-border/60 p-3">
-                  <div className="space-y-2">
-                    <Label>Barter Expectations</Label>
-                    <Textarea rows={3} value={formData.barterExpectations} onChange={(e) => updateField("barterExpectations", e.target.value)} placeholder="Hotel stay, salon service, product gifting, or event invite expectations" />
+                <div className="space-y-4 rounded-2xl border border-[#d1ddd6] bg-[#f4f7f5] p-5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a8f82]">Barter Details</p>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="barter-exp" className={labelClass}>Barter Expectations</Label>
+                    <Textarea
+                      id="barter-exp"
+                      rows={3}
+                      value={formData.barterExpectations}
+                      onChange={(e) => updateField("barterExpectations", e.target.value)}
+                      placeholder="Hotel stay, salon service, product gifting, or event invite expectations"
+                      className={textareaClass}
+                    />
                   </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>Acceptable Barter Category</Label>
-                      <Select value={formData.barterCategory} onValueChange={(value) => updateField("barterCategory", value)}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label className={labelClass}>Acceptable Barter Category</Label>
+                      <Select value={formData.barterCategory} onValueChange={(v) => updateField("barterCategory", v)}>
+                        <SelectTrigger className="h-10 rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] focus:border-[#2d6b4e] focus:ring-4 focus:ring-[#2d6b4e]/8">
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="food">Restaurant Meal</SelectItem>
                           <SelectItem value="hotel">Hotel Stay</SelectItem>
@@ -1606,293 +1667,408 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Estimated Barter Value (PKR)</Label>
-                      <Input type="number" value={formData.estimatedBarterValue} onChange={(e) => updateField("estimatedBarterValue", e.target.value)} placeholder="45000" />
+                    <div className="space-y-1.5">
+                      <Label htmlFor="est-barter-val" className={labelClass}>Estimated Barter Value (PKR)</Label>
+                      <Input
+                        id="est-barter-val"
+                        type="number"
+                        value={formData.estimatedBarterValue}
+                        onChange={(e) => updateField("estimatedBarterValue", e.target.value)}
+                        placeholder="45000"
+                        className={inputClass}
+                      />
                     </div>
                   </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>Preferred Brands</Label>
-                      <Input value={formData.preferredBrands} onChange={(e) => updateField("preferredBrands", e.target.value)} placeholder="Noon Food, Oud Royale, Noura Abaya House" />
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="pref-brands" className={labelClass}>Preferred Brands</Label>
+                      <Input
+                        id="pref-brands"
+                        value={formData.preferredBrands}
+                        onChange={(e) => updateField("preferredBrands", e.target.value)}
+                        placeholder="Noon Food, Oud Royale, Noura Abaya House"
+                        className={inputClass}
+                      />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Minimum Barter Value (PKR)</Label>
-                      <Input type="number" value={formData.minimumBarterValue} onChange={(e) => updateField("minimumBarterValue", e.target.value)} placeholder="20000" />
+                    <div className="space-y-1.5">
+                      <Label htmlFor="min-barter-val" className={labelClass}>Minimum Barter Value (PKR)</Label>
+                      <Input
+                        id="min-barter-val"
+                        type="number"
+                        value={formData.minimumBarterValue}
+                        onChange={(e) => updateField("minimumBarterValue", e.target.value)}
+                        placeholder="20000"
+                        className={inputClass}
+                      />
                     </div>
                   </div>
                 </div>
               )}
 
-               <div className="grid gap-3 md:grid-cols-2">
-                 <div className="space-y-2">
-                   <Label>Delivery Time (Days)</Label>
-                   <Input value={formData.deliveryDays} onChange={(e) => updateField("deliveryDays", e.target.value)} />
-                 </div>
-                 <div className="space-y-2">
-                   <Label>Revisions</Label>
-                   <Input value={formData.revisions} onChange={(e) => updateField("revisions", e.target.value)} />
-                 </div>
-               </div>
+              {/* Delivery / revisions */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="delivery-days" className={labelClass}>Delivery Time (Days)</Label>
+                  <Input
+                    id="delivery-days"
+                    type="number"
+                    value={formData.deliveryDays}
+                    onChange={(e) => updateField("deliveryDays", e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="revisions" className={labelClass}>Revisions Included</Label>
+                  <Input
+                    id="revisions"
+                    type="number"
+                    value={formData.revisions}
+                    onChange={(e) => updateField("revisions", e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
 
-               {/* V1: Package Tiers Section */}
-               <div className="space-y-3 rounded-lg border border-border/60 p-4">
-                 <div className="flex items-center justify-between">
-                   <div>
-                     <h3 className="font-semibold">Package Tiers (Optional)</h3>
-                     <p className="text-sm text-muted-foreground">Add Lite/Standard/Premium options or other variants for your package</p>
-                   </div>
-                   {!showTierForm && (
-                     <Button size="sm" variant="outline" onClick={() => setShowTierForm(true)}>
-                       <Plus className="mr-2 h-4 w-4" /> Add Tier
-                     </Button>
-                   )}
-                 </div>
+              {/* Package tiers */}
+              <div className="rounded-2xl border border-[#d1ddd6] bg-[#f4f7f5] p-5">
+                <div className="mb-4 flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-bold text-[#1e3d2e]">Package Tiers</p>
+                    <p className="mt-0.5 text-xs text-[#6b7870]">Optional — add Lite / Standard / Premium options</p>
+                  </div>
+                  {!showTierForm && (
+                    <button
+                      type="button"
+                      onClick={() => setShowTierForm(true)}
+                      className="inline-flex items-center gap-1.5 rounded-full border-2 border-[#dce6df] bg-white px-3.5 py-1.5 text-xs font-bold text-[#2d6b4e] transition-colors hover:border-[#2d6b4e]"
+                    >
+                      <Plus className="size-3.5" /> Add Tier
+                    </button>
+                  )}
+                </div>
 
-                 {/* Add Tier Form */}
-                 {showTierForm && (
-                   <Card className="bg-muted/30">
-                     <CardContent className="space-y-3 p-3">
-                       <div className="space-y-2">
-                         <Label className="text-sm">Tier Name</Label>
-                         <Input
-                           value={tierForm.name || ""}
-                           onChange={(e) => setTierForm((prev) => ({ ...prev, name: e.target.value }))}
-                           placeholder="e.g., Lite, Standard, Premium"
-                         />
-                       </div>
+                {/* Add tier form */}
+                {showTierForm && (
+                  <div className="mb-4 space-y-4 rounded-2xl border border-[#d1ddd6] bg-white p-4">
+                    <p className="text-xs font-bold uppercase tracking-widest text-[#7a8f82]">New Tier</p>
 
-                       <div className="grid gap-3 md:grid-cols-2">
-                         <div className="space-y-2">
-                           <Label className="text-sm">Price (PKR)</Label>
-                           <Input
-                             type="number"
-                             value={tierForm.price || ""}
-                             onChange={(e) => setTierForm((prev) => ({ ...prev, price: Number(e.target.value) || undefined }))}
-                             placeholder="15000"
-                           />
-                         </div>
-                         <div className="space-y-2">
-                           <Label className="text-sm">Position</Label>
-                           <Input
-                             type="number"
-                             value={tierForm.position || tiers.length}
-                             onChange={(e) => setTierForm((prev) => ({ ...prev, position: Number(e.target.value) }))}
-                             placeholder="0"
-                           />
-                         </div>
-                       </div>
+                    <div className="space-y-1.5">
+                      <Label className={labelClass}>Tier Name</Label>
+                      <Input
+                        value={tierForm.name || ""}
+                        onChange={(e) => setTierForm((prev) => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g. Lite, Standard, Premium"
+                        className={inputClass}
+                      />
+                    </div>
 
-                       <div className="space-y-2">
-                         <Label className="text-sm">Description</Label>
-                         <Textarea
-                           rows={2}
-                           value={tierForm.description || ""}
-                           onChange={(e) => setTierForm((prev) => ({ ...prev, description: e.target.value }))}
-                           placeholder="Best for small campaigns..."
-                         />
-                       </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <Label className={labelClass}>Price (PKR)</Label>
+                        <Input
+                          type="number"
+                          value={tierForm.price || ""}
+                          onChange={(e) => setTierForm((prev) => ({ ...prev, price: Number(e.target.value) || undefined }))}
+                          placeholder="15000"
+                          className={inputClass}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className={labelClass}>Position</Label>
+                        <Input
+                          type="number"
+                          value={tierForm.position ?? tiers.length}
+                          onChange={(e) => setTierForm((prev) => ({ ...prev, position: Number(e.target.value) }))}
+                          placeholder="0"
+                          className={inputClass}
+                        />
+                      </div>
+                    </div>
 
-                       <div className="space-y-2">
-                         <Label className="text-sm">Deliverables for this Tier</Label>
-                         {(tierForm.deliverables || []).map((del, idx) => (
-                           <div key={idx} className="flex items-center gap-2">
-                             <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                             <Input
-                               value={del}
-                               onChange={(e) =>
-                                 setTierForm((prev) => ({
-                                   ...prev,
-                                   deliverables: (prev.deliverables || []).map((d, i) => (i === idx ? e.target.value : d)),
-                                 }))
-                               }
-                               placeholder="1 Instagram Reel"
-                             />
-                             {(tierForm.deliverables?.length || 0) > 1 && (
-                               <Button
-                                 variant="ghost"
-                                 size="icon"
-                                 onClick={() =>
-                                   setTierForm((prev) => ({
-                                     ...prev,
-                                     deliverables: (prev.deliverables || []).filter((_, i) => i !== idx),
-                                   }))
-                                 }
-                               >
-                                 <Trash2 className="h-4 w-4" />
-                               </Button>
-                             )}
-                           </div>
-                         ))}
-                         <Button
-                           size="sm"
-                           variant="outline"
-                           onClick={() =>
-                             setTierForm((prev) => ({
-                               ...prev,
-                               deliverables: [...(prev.deliverables || []), ""],
-                             }))
-                           }
-                         >
-                           <Plus className="mr-1 h-3 w-3" /> Add Deliverable
-                         </Button>
-                       </div>
+                    <div className="space-y-1.5">
+                      <Label className={labelClass}>Description</Label>
+                      <Textarea
+                        rows={2}
+                        value={tierForm.description || ""}
+                        onChange={(e) => setTierForm((prev) => ({ ...prev, description: e.target.value }))}
+                        placeholder="Best for small campaigns…"
+                        className={textareaClass}
+                      />
+                    </div>
 
-                       <div className="flex gap-2">
-                         <Button size="sm" onClick={addTier} className="flex-1">
-                           Add Tier
-                         </Button>
-                         <Button size="sm" variant="outline" onClick={() => setShowTierForm(false)} className="flex-1">
-                           Cancel
-                         </Button>
-                       </div>
-                     </CardContent>
-                   </Card>
-                 )}
+                    <div className="space-y-2">
+                      <Label className={labelClass}>Deliverables for this Tier</Label>
+                      {(tierForm.deliverables || []).map((del, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <Check className="size-4 shrink-0 text-[#2d6b4e]" />
+                          <Input
+                            value={del}
+                            onChange={(e) =>
+                              setTierForm((prev) => ({
+                                ...prev,
+                                deliverables: (prev.deliverables || []).map((d, i) => (i === idx ? e.target.value : d)),
+                              }))
+                            }
+                            placeholder="1 Instagram Reel"
+                            className={inputClass}
+                          />
+                          {(tierForm.deliverables?.length || 0) > 1 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setTierForm((prev) => ({
+                                  ...prev,
+                                  deliverables: (prev.deliverables || []).filter((_, i) => i !== idx),
+                                }))
+                              }
+                              className="flex size-8 shrink-0 items-center justify-center rounded-full text-[#b0bfb8] transition-colors hover:bg-[#ffe8e8] hover:text-[#c0392b]"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setTierForm((prev) => ({
+                            ...prev,
+                            deliverables: [...(prev.deliverables || []), ""],
+                          }))
+                        }
+                        className="inline-flex items-center gap-1.5 rounded-full border border-[#dce6df] px-3 py-1.5 text-xs font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#2d6b4e]"
+                      >
+                        <Plus className="size-3" /> Add Deliverable
+                      </button>
+                    </div>
 
-                 {/* Tiers List */}
-                 {tiers.length > 0 && (
-                   <div className="space-y-2">
-                     {tiers.map((tier, idx) => (
-                       <Card key={idx} className="bg-muted/20">
-                         <CardContent className="p-0">
-                           <button
-                             type="button"
-                             onClick={() => toggleTierExpand(idx)}
-                             className="flex w-full items-center justify-between gap-2 p-3 hover:bg-muted/30"
-                           >
-                             <div className="text-left">
-                               <p className="font-semibold">{tier.name}</p>
-                               <p className="text-sm text-muted-foreground">PKR {Number(tier.price).toLocaleString()} • {tier.deliverables.length} deliverables</p>
-                             </div>
-                             <div className="flex items-center gap-2">
-                               {tier.isPrimary && <Badge variant="outline" className="text-xs">Primary</Badge>}
-                               {expandedTiers.has(idx) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                             </div>
-                           </button>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={addTier}
+                        className="flex-1 rounded-full bg-[#2d6b4e] py-2 text-sm font-bold text-white transition-colors hover:bg-[#1f5239]"
+                      >
+                        Add Tier
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowTierForm(false)}
+                        className="flex-1 rounded-full border-2 border-[#dce6df] py-2 text-sm font-bold text-[#496159] transition-colors hover:border-[#2d6b4e]"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-                           {expandedTiers.has(idx) && (
-                             <div className="space-y-2 border-t border-border/20 p-3">
-                               {tier.deliverables.map((del, delIdx) => (
-                                 <div key={delIdx} className="flex items-center gap-2 text-sm">
-                                   <Check className="h-3 w-3 text-muted-foreground" />
-                                   <span>{del}</span>
-                                 </div>
-                               ))}
-                               {tier.description && (
-                                 <p className="text-sm text-muted-foreground">{tier.description}</p>
-                               )}
-                               <Button size="sm" variant="destructive" onClick={() => removeTier(idx)}>
-                                 <Trash2 className="mr-1 h-3 w-3" /> Remove
-                               </Button>
-                             </div>
-                           )}
-                         </CardContent>
-                       </Card>
-                     ))}
-                   </div>
-                 )}
-               </div>
-            </CardContent>
-          </Card>
+                {/* Tiers list */}
+                {tiers.length > 0 && (
+                  <div className="space-y-2">
+                    {tiers.map((tier, idx) => (
+                      <div key={idx} className="overflow-hidden rounded-xl border border-[#d1ddd6] bg-white">
+                        <button
+                          type="button"
+                          onClick={() => toggleTierExpand(idx)}
+                          className="flex w-full items-center justify-between gap-2 px-4 py-3 transition-colors hover:bg-[#f4f7f5]"
+                        >
+                          <div className="text-left">
+                            <p className="text-sm font-bold text-[#1e3d2e]">{tier.name}</p>
+                            <p className="text-xs text-[#6b7870]">
+                              PKR {Number(tier.price).toLocaleString()} · {tier.deliverables.length} deliverables
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {tier.isPrimary && (
+                              <span className="rounded-full bg-[#e4f1e8] px-2 py-0.5 text-[10px] font-bold text-[#1e5c3e]">
+                                Primary
+                              </span>
+                            )}
+                            {expandedTiers.has(idx) ? (
+                              <ChevronUp className="size-4 text-[#6b7870]" />
+                            ) : (
+                              <ChevronDown className="size-4 text-[#6b7870]" />
+                            )}
+                          </div>
+                        </button>
+
+                        {expandedTiers.has(idx) && (
+                          <div className="space-y-2 border-t border-[#d1ddd6] px-4 py-3">
+                            {tier.deliverables.map((del, delIdx) => (
+                              <div key={delIdx} className="flex items-center gap-2 text-sm text-[#496159]">
+                                <Check className="size-3.5 shrink-0 text-[#2d6b4e]" />
+                                {del}
+                              </div>
+                            ))}
+                            {tier.description && (
+                              <p className="mt-1 text-xs text-[#6b7870]">{tier.description}</p>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => removeTier(idx)}
+                              className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#ffe8e8] px-3 py-1.5 text-xs font-bold text-[#c0392b] transition-colors hover:bg-[#ffd0d0]"
+                            >
+                              <Trash2 className="size-3" /> Remove
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </div>
         )}
 
+        {/* ── Step 4: Media ── */}
         {currentStep === 4 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Step 4 - Media</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 p-4 sm:p-6">
-              <div className="space-y-2">
-                <Label>Package Thumbnail URL</Label>
+          <div className={`${panelClass} p-6 md:p-8`}>
+            <h2 className={`mb-6 ${sectionTitle}`}>Media &amp; Preview</h2>
+            <div className="space-y-6">
+
+              {/* Thumbnail */}
+              <div className="space-y-1.5">
+                <Label className={labelClass}>Package Thumbnail</Label>
                 <div className="flex flex-col gap-2 sm:flex-row">
-                  <Input value={formData.thumbnailUrl} onChange={(e) => updateField("thumbnailUrl", e.target.value)} placeholder="https://..." />
-                  <Button variant="outline" className="shrink-0" disabled={isUploadingThumbnail} asChild>
-                    <Label htmlFor="package-thumbnail-upload" className="cursor-pointer">
-                      <Upload className="mr-2 h-4 w-4" />
-                      {isUploadingThumbnail ? "Uploading..." : "Upload"}
-                    </Label>
-                  </Button>
                   <Input
+                    value={formData.thumbnailUrl}
+                    onChange={(e) => updateField("thumbnailUrl", e.target.value)}
+                    placeholder="https://…"
+                    className={inputClass}
+                  />
+                  <label
+                    htmlFor="package-thumbnail-upload"
+                    className={`inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border-2 border-[#dce6df] bg-white px-4 text-sm font-bold text-[#2d6b4e] transition-colors hover:border-[#2d6b4e] ${isUploadingThumbnail ? "cursor-not-allowed opacity-60" : ""}`}
+                  >
+                    <Upload className="size-4" />
+                    {isUploadingThumbnail ? "Uploading…" : "Upload"}
+                  </label>
+                  <input
                     id="package-thumbnail-upload"
                     type="file"
                     accept="image/jpeg,image/png,image/webp,image/gif"
                     className="hidden"
                     disabled={isUploadingThumbnail}
-                    onChange={(event) => void uploadThumbnail(event.target.files?.[0])}
+                    onChange={(e) => void uploadThumbnail(e.target.files?.[0])}
                   />
                 </div>
+                {formData.thumbnailUrl && (
+                  <div className="mt-2 overflow-hidden rounded-xl border border-[#d1ddd6]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={formData.thumbnailUrl}
+                      alt="Thumbnail preview"
+                      className="h-40 w-full object-cover"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    />
+                  </div>
+                )}
               </div>
 
+              {/* Work samples */}
               <div className="space-y-2">
-                <Label>Previous Work / Preview Gallery URLs</Label>
+                <Label className={labelClass}>Previous Work / Preview Gallery</Label>
                 {formData.previousWorkUrls.map((url, index) => (
                   <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                    <Input value={url} onChange={(e) => updateWorkSample(index, e.target.value)} placeholder="https://..." />
-                    <Button variant="outline" className="shrink-0" disabled={uploadingSampleIndex !== null} asChild>
-                      <Label htmlFor={`work-sample-upload-${index}`} className="cursor-pointer">
-                        <Upload className="mr-2 h-4 w-4" />
-                        {uploadingSampleIndex === index ? "Uploading..." : "Upload"}
-                      </Label>
-                    </Button>
                     <Input
+                      value={url}
+                      onChange={(e) => updateWorkSample(index, e.target.value)}
+                      placeholder="https://…"
+                      className={inputClass}
+                    />
+                    <label
+                      htmlFor={`work-sample-upload-${index}`}
+                      className={`inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border-2 border-[#dce6df] bg-white px-4 text-sm font-bold text-[#2d6b4e] transition-colors hover:border-[#2d6b4e] ${uploadingSampleIndex !== null ? "cursor-not-allowed opacity-60" : ""}`}
+                    >
+                      <Upload className="size-4" />
+                      {uploadingSampleIndex === index ? "Uploading…" : "Upload"}
+                    </label>
+                    <input
                       id={`work-sample-upload-${index}`}
                       type="file"
                       accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/x-msvideo"
                       className="hidden"
                       disabled={uploadingSampleIndex !== null}
-                      onChange={(event) => void uploadWorkSample(index, event.target.files?.[0])}
+                      onChange={(e) => void uploadWorkSample(index, e.target.files?.[0])}
                     />
                     {formData.previousWorkUrls.length > 1 && (
-                      <Button variant="ghost" size="icon" onClick={() => removeWorkSample(index)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => removeWorkSample(index)}
+                        className="flex size-10 shrink-0 items-center justify-center rounded-full text-[#b0bfb8] transition-colors hover:bg-[#ffe8e8] hover:text-[#c0392b]"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
                     )}
                   </div>
                 ))}
-                <Button variant="outline" onClick={addWorkSample}><Plus className="mr-2 h-4 w-4" />Add Sample</Button>
+                <button
+                  type="button"
+                  onClick={addWorkSample}
+                  className="inline-flex items-center gap-1.5 rounded-full border-2 border-dashed border-[#b0c5ba] px-4 py-2 text-sm font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#2d6b4e]"
+                >
+                  <Plus className="size-4" /> Add Sample
+                </button>
               </div>
-            </CardContent>
-          </Card>
+
+            </div>
+          </div>
         )}
 
+        {/* ── Step 5: Publish ── */}
         {currentStep === 5 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Step 5 - Publish</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 p-4 sm:p-6">
-              <div className="rounded-lg border border-border/60 p-4">
-                <p className="font-semibold">{formData.title || "Untitled Package"}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{formData.fullDescription || "No description yet"}</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Badge variant="outline" className="capitalize">{formData.platform || "platform"}</Badge>
-                  <Badge variant="outline" className="capitalize">{formData.dealType}</Badge>
-                  <Badge variant="outline">{resolvedDeliverables.length} deliverables</Badge>
+          <div className={`${panelClass} p-6 md:p-8`}>
+            <h2 className={`mb-6 ${sectionTitle}`}>Review &amp; Publish</h2>
+            <div className="space-y-6">
+
+              {/* Preview card */}
+              <div className="rounded-2xl border border-[#d1ddd6] bg-[#f4f7f5] p-5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a8f82]">Package Preview</p>
+                <p className="mt-3 text-base font-bold text-[#1e3d2e]">{formData.title || "Untitled Package"}</p>
+                <p className="mt-1 text-sm text-[#6b7870]">{formData.fullDescription || "No description yet"}</p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {formData.platform && (
+                    <span className="rounded-full bg-[#e4f1e8] px-2.5 py-0.5 text-xs font-bold capitalize text-[#1e5c3e]">
+                      {formData.platform}
+                    </span>
+                  )}
+                  <span className="rounded-full bg-[#e4f1e8] px-2.5 py-0.5 text-xs font-bold capitalize text-[#1e5c3e]">
+                    {formData.dealType}
+                  </span>
+                  <span className="rounded-full bg-[#e8eae8] px-2.5 py-0.5 text-xs font-bold text-[#5a6a62]">
+                    {resolvedDeliverables.length} deliverable{resolvedDeliverables.length !== 1 ? "s" : ""}
+                  </span>
                 </div>
-                <p className="mt-3 font-semibold text-primary">
+                <p className="mt-4 text-lg font-extrabold text-[#2d6b4e]">
                   {formData.dealType === "paid" && (formData.price ? `PKR ${Number(formData.price).toLocaleString()}` : "PKR 0")}
-                  {formData.dealType === "barter" && `Barter (Min PKR ${Number(formData.minimumBarterValue || 0).toLocaleString()})`}
+                  {formData.dealType === "barter" && `Barter · Min PKR ${Number(formData.minimumBarterValue || 0).toLocaleString()}`}
                   {formData.dealType === "hybrid" &&
                     `PKR ${Number(formData.hybridCashAmount || 0).toLocaleString()} + barter (Min PKR ${Number(formData.minimumBarterValue || 0).toLocaleString()})`}
                 </p>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label>Visibility</Label>
-                  <Select value={formData.visibility} onValueChange={(value) => updateField("visibility", value as "public" | "private")}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+              {/* Visibility / status / response time */}
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-1.5">
+                  <Label className={labelClass}>Visibility</Label>
+                  <Select value={formData.visibility} onValueChange={(v) => updateField("visibility", v as "public" | "private")}>
+                    <SelectTrigger className="h-10 rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] focus:border-[#2d6b4e] focus:ring-4 focus:ring-[#2d6b4e]/8">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="public">Public</SelectItem>
                       <SelectItem value="private">Private</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Publish Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => updateField("status", value as "active" | "draft" | "under_review")}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                <div className="space-y-1.5">
+                  <Label className={labelClass}>Publish Status</Label>
+                  <Select value={formData.status} onValueChange={(v) => updateField("status", v as "active" | "draft" | "under_review")}>
+                    <SelectTrigger className="h-10 rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] focus:border-[#2d6b4e] focus:ring-4 focus:ring-[#2d6b4e]/8">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="active">Publish Active</SelectItem>
                       <SelectItem value="draft">Save Draft</SelectItem>
@@ -1900,35 +2076,37 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Response Time</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="response-time" className={labelClass}>Response Time</Label>
                   <Input
+                    id="response-time"
                     value={formData.responseTime}
                     onChange={(e) => updateField("responseTime", e.target.value)}
                     placeholder="Within 3 hours"
+                    className={inputClass}
                   />
                 </div>
               </div>
 
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
+
       </motion.div>
 
-      <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-20 flex gap-2 rounded-xl border border-border bg-background/95 p-3 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0">
+      {/* ── Bottom navigation ── */}
+      <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-20 mt-4 flex gap-3 rounded-[1.6rem] border border-[#d1ddd6] bg-white/95 p-3 shadow-[0_18px_55px_rgba(38,70,50,0.07)] backdrop-blur md:static md:mt-6 md:border-0 md:bg-transparent md:shadow-none md:p-0">
         <Button
           type="button"
-          variant="outline"
-          className="flex-1"
           disabled={currentStep === 1}
           onClick={() => setCurrentStep((step) => Math.max(1, step - 1))}
+          className="flex-1 h-11 rounded-full border-2 border-[#dce6df] bg-white text-sm font-bold text-[#496159] shadow-none transition-colors hover:border-[#2d6b4e] hover:text-[#1e3d2e] disabled:opacity-40"
         >
           Back
         </Button>
         {currentStep < steps.length ? (
           <Button
             type="button"
-            className="flex-1"
             onClick={() => {
               if (!canMoveNext) {
                 const missing = getStepMissingFields(currentStep);
@@ -1941,11 +2119,16 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
               }
               setCurrentStep((step) => Math.min(steps.length, step + 1));
             }}
+            className="flex-1 h-11 rounded-full bg-[#2d6b4e] text-sm font-bold text-white shadow-none transition-colors hover:bg-[#1f5239]"
           >
-            Next <ArrowRight className="ml-2 h-4 w-4" />
+            Next <ArrowRight className="ml-2 size-4" />
           </Button>
         ) : (
-          <Button type="button" className="flex-1" onClick={submitPackage}>
+          <Button
+            type="button"
+            onClick={submitPackage}
+            className="flex-1 h-11 rounded-full bg-[#2d6b4e] text-sm font-bold text-white shadow-none transition-colors hover:bg-[#1f5239]"
+          >
             {mode === "edit"
               ? "Update Package"
               : formData.status === "draft"

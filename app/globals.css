@@ -209,6 +209,19 @@
   }
 }
 
+/* Autofill — fix invisible text/caret and sync React state via animationstart */
+@keyframes autofill-start { from {} to {} }
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  animation-name: autofill-start;
+  animation-duration: 1ms;
+  -webkit-text-fill-color: #1e3d2e !important;
+  caret-color: #1e3d2e !important;
+  box-shadow: 0 0 0 1000px white inset !important;
+}
+
 @layer utilities {
   .pb-safe {
     padding-bottom: max(1rem, var(--safe-bottom));

@@ -295,17 +295,17 @@ function CreatorPaymentsContent() {
   if (isLoading) {
     return (
       <div className="min-h-full bg-[#fbfaf5] px-4 py-8">
-        <div className="mx-auto max-w-6xl rounded-[1.6rem] border border-[#dce3dc] bg-white px-6 py-16 text-center shadow-[0_18px_55px_rgba(38,70,50,0.07)]">
-          <p className="text-sm font-bold text-[#69766e]">Loading payment settings...</p>
+        <div className="mx-auto max-w-6xl rounded-[1.6rem] border border-[#d1ddd6] bg-white px-6 py-16 text-center shadow-[0_18px_55px_rgba(38,70,50,0.07)]">
+          <p className="text-sm font-bold text-[#6b7870]">Loading payment settings...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-full bg-[#fbfaf5] px-4 pb-24 pt-2 text-[#173b2a] sm:px-6 lg:px-8 lg:pb-12">
+    <div className="min-h-full bg-[#fbfaf5] px-4 pb-24 pt-2 text-[#1e3d2e] sm:px-6 lg:px-8 lg:pb-12">
       <div className="mx-auto max-w-[1320px]">
-        <section className="overflow-hidden rounded-[1.8rem] bg-[#173b2a] p-5 text-white sm:p-7 lg:p-8">
+        <section className="overflow-hidden rounded-[1.8rem] bg-[#1e3d2e] p-5 text-white sm:p-7 lg:p-8">
           <div className="grid gap-7 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
             <div>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#f0c56e]">
@@ -315,12 +315,12 @@ function CreatorPaymentsContent() {
               <h1 className="mt-2 max-w-3xl text-[clamp(2.3rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-0.06em] text-white">
                 Move earnings with confidence.
               </h1>
-              <p className="mt-4 max-w-xl text-sm leading-6 text-[#c9dace]">
+              <p className="mt-4 max-w-xl text-sm leading-6 text-[#c2d8cb]">
                 Withdraw your available balance, manage trusted payout methods, and keep every payment preference in one calm place.
               </p>
             </div>
             <div className="grid gap-2.5 sm:grid-cols-2">
-              <div className="rounded-[1.3rem] border border-white/12 bg-[#214b36] p-4">
+              <div className="rounded-[1.3rem] border border-white/12 bg-[#244c39] p-4">
                 <div className="flex items-start justify-between">
                   <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#f0c56e]">Available</p>
                   <Wallet className="size-4 text-[#f0c56e]" />
@@ -341,10 +341,10 @@ function CreatorPaymentsContent() {
         </section>
 
       <Tabs value={activeTab} onValueChange={updateTabInUrl} className="mt-5 space-y-5">
-        <TabsList className="grid h-auto w-full grid-cols-3 rounded-[1.25rem] border border-[#dce3dc] bg-[#f4f2e9] p-1">
-          <TabsTrigger value="withdraw" className="min-h-11 gap-2 rounded-xl px-2 text-xs font-extrabold text-[#69766e] data-[state=active]:bg-[#185c39] data-[state=active]:text-white"><ArrowDownToLine className="size-4" /> <span className="hidden sm:inline">Withdraw</span></TabsTrigger>
-          <TabsTrigger value="methods" className="min-h-11 gap-2 rounded-xl px-2 text-xs font-extrabold text-[#69766e] data-[state=active]:bg-[#185c39] data-[state=active]:text-white"><CreditCard className="size-4" /> <span className="hidden sm:inline">Payout Methods</span><span className="sm:hidden">Methods</span></TabsTrigger>
-          <TabsTrigger value="schedule" className="min-h-11 gap-2 rounded-xl px-2 text-xs font-extrabold text-[#69766e] data-[state=active]:bg-[#185c39] data-[state=active]:text-white"><Clock3 className="size-4" /> <span className="hidden sm:inline">Schedule & Preferences</span><span className="sm:hidden">Preferences</span></TabsTrigger>
+        <TabsList className="grid h-auto w-full grid-cols-3 rounded-[1.25rem] border border-[#d1ddd6] bg-[#f4f2e9] p-1">
+          <TabsTrigger value="withdraw" className="min-h-11 gap-2 rounded-xl px-2 text-xs font-extrabold text-[#6b7870] data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white"><ArrowDownToLine className="size-4" /> <span className="hidden sm:inline">Withdraw</span></TabsTrigger>
+          <TabsTrigger value="methods" className="min-h-11 gap-2 rounded-xl px-2 text-xs font-extrabold text-[#6b7870] data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white"><CreditCard className="size-4" /> <span className="hidden sm:inline">Payout Methods</span><span className="sm:hidden">Methods</span></TabsTrigger>
+          <TabsTrigger value="schedule" className="min-h-11 gap-2 rounded-xl px-2 text-xs font-extrabold text-[#6b7870] data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white"><Clock3 className="size-4" /> <span className="hidden sm:inline">Schedule & Preferences</span><span className="sm:hidden">Preferences</span></TabsTrigger>
         </TabsList>
 
         <TabsContent value="withdraw" className="space-y-4">

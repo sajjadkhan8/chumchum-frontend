@@ -22,9 +22,9 @@ export function SchedulePreferencesTab({
   isSaving,
   onSavePreferences,
 }: SchedulePreferencesTabProps) {
-  const panelClass = "rounded-[1.6rem] border border-[#dce3dc] bg-white shadow-[0_18px_55px_rgba(38,70,50,0.07)]";
-  const inputClass = "h-11 rounded-xl border-[#d6ded7] bg-[#fbfaf5] shadow-none focus-visible:border-[#185c39] focus-visible:ring-[#185c39]/15";
-  const sectionTitle = "text-xl font-extrabold tracking-[-0.035em] text-[#173b2a]";
+  const panelClass = "rounded-[1.6rem] border border-[#d1ddd6] bg-white shadow-[0_18px_55px_rgba(38,70,50,0.07)]";
+  const inputClass = "h-11 rounded-xl border-[#cddad1] bg-[#fbfaf5] shadow-none focus-visible:border-[#2d6b4e] focus-visible:ring-[#2d6b4e]/15";
+  const sectionTitle = "text-xl font-extrabold tracking-[-0.035em] text-[#1e3d2e]";
 
   return (
     <>
@@ -159,9 +159,9 @@ export function SchedulePreferencesTab({
           <CardTitle className={sectionTitle}>Payout preferences</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#dce3dc] bg-[#fbfaf5] p-3.5">
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#d1ddd6] bg-[#fbfaf5] p-3.5">
             <div>
-              <p className="text-sm font-extrabold text-[#173b2a]">Instant withdrawal</p>
+              <p className="text-sm font-extrabold text-[#1e3d2e]">Instant withdrawal</p>
               <p className="mt-0.5 text-xs text-[#718077]">
                 Use mobile wallet for immediate transfers (daily limits apply)
               </p>
@@ -176,9 +176,9 @@ export function SchedulePreferencesTab({
               }
             />
           </div>
-          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#dce3dc] bg-[#fbfaf5] p-3.5">
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#d1ddd6] bg-[#fbfaf5] p-3.5">
             <div>
-              <p className="text-sm font-extrabold text-[#173b2a]">Earnings notifications</p>
+              <p className="text-sm font-extrabold text-[#1e3d2e]">Earnings notifications</p>
               <p className="mt-0.5 text-xs text-[#718077]">
                 SMS + push when a payment clears into your balance
               </p>
@@ -193,9 +193,9 @@ export function SchedulePreferencesTab({
               }
             />
           </div>
-          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#dce3dc] bg-[#fbfaf5] p-3.5">
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#d1ddd6] bg-[#fbfaf5] p-3.5">
             <div>
-              <p className="text-sm font-extrabold text-[#173b2a]">Weekly earnings digest</p>
+              <p className="text-sm font-extrabold text-[#1e3d2e]">Weekly earnings digest</p>
               <p className="mt-0.5 text-xs text-[#718077]">
                 Email summary every Sunday with your week's earnings
               </p>
@@ -213,7 +213,7 @@ export function SchedulePreferencesTab({
         </CardContent>
       </Card>
 
-      <Button onClick={onSavePreferences} disabled={isSaving} className="h-11 w-full rounded-full bg-[#185c39] font-extrabold text-white hover:bg-[#104b2d]">
+      <Button onClick={onSavePreferences} disabled={isSaving} className="h-11 w-full rounded-full bg-[#2d6b4e] font-extrabold text-white hover:bg-[#1f5239]">
         {isSaving ? (
           "Saving..."
         ) : (

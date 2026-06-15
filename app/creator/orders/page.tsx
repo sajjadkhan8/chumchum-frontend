@@ -18,8 +18,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
@@ -28,7 +26,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatPrice, formatDate, getInitials } from "@/lib/utils";
@@ -40,25 +37,28 @@ import { downloadFile } from "@/lib/download-file";
 import { useAuthStore } from "@/store/auth-store";
 import type { Order, OrderDeliverable, OrderStatus } from "@/types";
 
+const panelClass =
+  "rounded-[1.6rem] border border-[#d1ddd6] bg-white shadow-[0_18px_55px_rgba(38,70,50,0.07)]";
+
 const getStatusColor = (status: string) => {
   switch (status) {
     case "completed":
-      return "bg-green-100 text-green-700";
+      return "bg-[#e4f1e8] text-[#1e5c3e]";
     case "in_progress":
-      return "bg-blue-100 text-blue-700";
+      return "bg-[#e0edff] text-[#1e4db7]";
     case "accepted":
-      return "bg-cyan-100 text-cyan-700";
+      return "bg-[#e0f5f0] text-[#0f7564]";
     case "pending":
-      return "bg-yellow-100 text-yellow-700";
+      return "bg-[#fdf3dc] text-[#8a6010]";
     case "delivered":
     case "review":
-      return "bg-purple-100 text-purple-700";
+      return "bg-[#ede0f5] text-[#6b2497]";
     case "revision":
-      return "bg-orange-100 text-orange-700";
+      return "bg-[#fde8d5] text-[#8a4a10]";
     case "cancelled":
-      return "bg-red-100 text-red-700";
+      return "bg-[#fce8e6] text-[#8b2a22]";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "bg-[#e8eae8] text-[#5a6a62]";
   }
 };
 
@@ -150,13 +150,11 @@ function CreatorOrdersPageContent() {
   }, []);
 
   useEffect(() => {
-    // Legacy status-specific routes were removed; status state now lives in ?status=... for one canonical Orders page.
     const status = searchParams.get('status');
     if (!status) {
       setStatusFilter('all');
       return;
     }
-
     const allowed = new Set(['all', 'pending', 'accepted', 'in_progress', 'delivered', 'review', 'revision', 'completed', 'cancelled']);
     if (allowed.has(status)) {
       setStatusFilter(status);
@@ -293,113 +291,127 @@ function CreatorOrdersPageContent() {
     }
   };
 
-   return (
-     <div className="container mx-auto p-4 md:p-6">
-       {/* Filters */}
-       <div className="mb-4 flex flex-wrap gap-2">
-        {statusTabs.map((tab) => (
-          <Button
-            key={tab.key}
-            size="sm"
-            variant={statusFilter === tab.key ? "default" : "outline"}
-            onClick={() => updateStatusFilterWithUrl(tab.key)}
-          >
-            {tab.label}
-          </Button>
-        ))}
-      </div>
+  return (
+    <div className="min-h-full bg-[#fbfaf5] px-4 pb-8 pt-2 text-[#1e3d2e] sm:px-6 lg:px-8 lg:pb-12">
+      <div className="mx-auto max-w-[1320px] space-y-4">
 
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="relative flex-1 md:max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search orders..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        {/* Filter panel */}
+        <div className={`${panelClass} p-4`}>
+          {/* Status pill tabs */}
+          <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {statusTabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => updateStatusFilterWithUrl(tab.key)}
+                className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold transition-colors ${
+                  statusFilter === tab.key
+                    ? "bg-[#2d6b4e] text-white"
+                    : "bg-[#f4f7f5] text-[#6b7870] hover:bg-[#e6eceb]"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Search input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#87938b]" />
+            <Input
+              type="text"
+              placeholder="Search orders..."
+              className="h-10 rounded-xl border-[#d1ddd6] bg-[#f4f7f5] pl-9 text-[#1e3d2e] placeholder:text-[#87938b] focus-visible:ring-[#2d6b4e]"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Orders List */}
-      <div className="space-y-4">
+        {/* Loading skeletons */}
         {isLoading && (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">Loading orders...</CardContent>
-          </Card>
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className={`${panelClass} animate-pulse p-4 sm:p-5`}>
+                <div className="flex items-center gap-4">
+                  <div className="h-11 w-11 shrink-0 rounded-xl bg-[#e8eae8]" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-1/3 rounded-full bg-[#e8eae8]" />
+                    <div className="h-3 w-1/2 rounded-full bg-[#e8eae8]" />
+                    <div className="h-3 w-1/4 rounded-full bg-[#e8eae8]" />
+                  </div>
+                  <div className="space-y-2 text-right">
+                    <div className="h-4 w-16 rounded-full bg-[#e8eae8]" />
+                    <div className="h-3 w-12 rounded-full bg-[#e8eae8]" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
 
-        {!isLoading && filteredOrders.map((order, index) => {
-          const StatusIcon = getStatusIcon(order.status);
-          const deadline = getFallbackDeadline(order);
-          const daysRemaining = getDaysRemaining(deadline);
-          const isExpanded = selectedOrder === order.id;
-          const progress = order.progress ?? (order.status === "completed" ? 100 : order.status === "pending" ? 0 : 50);
-          const deliverables = getOrderDeliverables(order);
+        {/* Order cards */}
+        {!isLoading && filteredOrders.length > 0 && (
+          <div className="space-y-3">
+            {filteredOrders.map((order, index) => {
+              const StatusIcon = getStatusIcon(order.status);
+              const deadline = getFallbackDeadline(order);
+              const daysRemaining = getDaysRemaining(deadline);
+              const isExpanded = selectedOrder === order.id;
+              const progress = order.progress ?? (order.status === "completed" ? 100 : order.status === "pending" ? 0 : 50);
+              const deliverables = getOrderDeliverables(order);
 
-          return (
-            <motion.div
-              key={order.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <Card
-                className={`cursor-pointer transition-all ${isExpanded ? "ring-2 ring-primary" : ""}`}
-                onClick={() =>
-                  setSelectedOrder(isExpanded ? null : order.id)
-                }
-              >
-                <CardContent className="p-4 md:p-6">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-start gap-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage
-                          src={order.brand.logo}
-                          alt={order.brand.name}
-                        />
-                        <AvatarFallback>
-                          {getInitials(order.brand.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{order.brand.name}</h3>
-                          <Badge
-                            variant="secondary"
-                            className={getStatusColor(order.status)}
-                          >
-                            <StatusIcon className="mr-1 h-3 w-3" />
-                            {order.status.replace("_", " ")}
-                          </Badge>
+              return (
+                <motion.div
+                  key={order.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className={`${panelClass} cursor-pointer transition-all ${isExpanded ? "ring-2 ring-[#2d6b4e]" : ""}`}
+                  onClick={() => setSelectedOrder(isExpanded ? null : order.id)}
+                >
+                  {/* Card header */}
+                  <div className="p-4 sm:p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      {/* Left side */}
+                      <div className="flex min-w-0 items-start gap-3">
+                        <Avatar className="h-11 w-11 shrink-0 rounded-xl">
+                          <AvatarImage src={order.brand.logo} alt={order.brand.name} />
+                          <AvatarFallback className="rounded-xl bg-[#e0ede6] text-[#2d6b4e] text-xs font-bold">
+                            {getInitials(order.brand.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-extrabold text-[#1e3d2e]">{order.brand.name}</span>
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-extrabold ${getStatusColor(order.status)}`}>
+                              <StatusIcon className="h-3 w-3" />
+                              {order.status.replace("_", " ")}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 truncate text-xs text-[#87938b]">{order.package.title}</p>
+                          <p className="mt-0.5 text-xs text-[#b0bcb5]">
+                            Order {order.orderNumber || order.id} &bull; {formatDate(order.createdAt)}
+                          </p>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {order.package.title}
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Order {order.orderNumber || order.id} • Created {formatDate(order.createdAt)}
-                        </p>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-4 md:gap-6">
-                      <div className="text-right">
-                        <p className="font-semibold text-primary">
+                      {/* Right side */}
+                      <div className="shrink-0 text-right">
+                        <p className="font-extrabold text-[#2d6b4e]">
                           {formatPrice(order.amount ?? order.package.price ?? 0)}
                         </p>
                         {daysRemaining !== null && (
                           <p
-                            className={`text-xs ${
+                            className={`mt-0.5 text-xs font-medium ${
                               daysRemaining <= 1
-                                ? "text-destructive"
+                                ? "text-[#c0392b]"
                                 : daysRemaining <= 3
-                                  ? "text-yellow-600"
-                                  : "text-muted-foreground"
+                                  ? "text-[#e6aa38]"
+                                  : "text-[#87938b]"
                             }`}
                           >
                             {daysRemaining > 0
-                              ? `${daysRemaining} days left`
+                              ? `${daysRemaining}d left`
                               : daysRemaining === 0
                                 ? "Due today"
                                 : "Overdue"}
@@ -407,169 +419,224 @@ function CreatorOrdersPageContent() {
                         )}
                       </div>
                     </div>
-                  </div>
 
-                  {/* Expanded Details */}
-                  {isExpanded && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="mt-6 border-t border-border pt-6"
-                    >
-                      <div className="mb-4">
-                        <p className="mb-2 text-sm font-medium">Description</p>
-                        <p className="text-sm text-muted-foreground">
-                          {order.message || order.package.description}
-                        </p>
-                      </div>
+                    {/* Expanded content */}
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-4 border-t border-[#e8eeeb] pt-4"
+                      >
+                        {/* Description */}
+                        {(order.message || order.package.description) && (
+                          <div className="mb-4">
+                            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[#87938b]">Description</p>
+                            <p className="text-sm text-[#6b7870]">
+                              {order.message || order.package.description}
+                            </p>
+                          </div>
+                        )}
 
-                      <div className="mb-4">
-                        <div className="mb-2 flex items-center justify-between text-sm">
-                          <span className="font-medium">Progress</span>
-                          <span>{progress}%</span>
+                        {/* Progress bar */}
+                        <div className="mb-4">
+                          <div className="mb-1.5 flex items-center justify-between">
+                            <p className="text-xs font-bold uppercase tracking-wide text-[#87938b]">Progress</p>
+                            <span className="text-xs font-bold text-[#2d6b4e]">{progress}%</span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-[#e6eceb] overflow-hidden">
+                            <motion.div
+                              className="h-full rounded-full bg-[#2d6b4e]"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${progress}%` }}
+                              transition={{ duration: 0.6, ease: "easeOut" }}
+                            />
+                          </div>
                         </div>
-                        <Progress value={progress} className="h-2" />
-                      </div>
 
-                      <div>
-                        <p className="mb-3 text-sm font-medium">Deliverables</p>
-                        <div className="space-y-2">
-                          {deliverables.map((deliverable) => {
-                            const deliverableStatus = deliverable.status;
-                            const DeliverableIcon = getStatusIcon(
-                              deliverableStatus
-                            );
-                            return (
-                              <div
-                                key={deliverable.id}
-                                className="flex flex-col gap-3 rounded-lg bg-muted/50 p-3 sm:flex-row sm:items-center sm:justify-between"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <DeliverableIcon
-                                    className={`h-4 w-4 ${
-                                      deliverableStatus === "completed"
-                                        ? "text-green-600"
-                                        : deliverableStatus === "in_progress"
-                                          ? "text-blue-600"
-                                          : deliverableStatus === "revision"
-                                            ? "text-orange-600"
-                                            : "text-muted-foreground"
-                                    }`}
-                                  />
-                                  <span className="text-sm">{deliverable.name}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {deliverable.fileUrl && (
-                                    <Button variant="outline" size="sm" onClick={(e) => {
-                                      e.stopPropagation();
-                                      void downloadFile(deliverable.fileUrl!, deliverable.name).catch((error) =>
-                                        toast.error(error instanceof Error ? error.message : "Could not download file"),
-                                      );
-                                    }}>
-                                      View
-                                    </Button>
-                                  )}
-                                  {(order.status === "in_progress" || order.status === "revision") &&
-                                    (deliverableStatus === "pending" || deliverableStatus === "in_progress" || deliverableStatus === "revision") &&
-                                    !deliverable.id.startsWith("fallback-") && (
-                                      <Button size="sm" onClick={(e) => { e.stopPropagation(); openSubmitDialog(order, deliverable); }}>
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        Submit Deliverable
+                        {/* Deliverables */}
+                        <div className="mb-4">
+                          <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#87938b]">Deliverables</p>
+                          <div className="space-y-2">
+                            {deliverables.map((deliverable) => {
+                              const deliverableStatus = deliverable.status;
+                              const DeliverableIcon = getStatusIcon(deliverableStatus);
+                              return (
+                                <div
+                                  key={deliverable.id}
+                                  className="flex flex-col gap-3 rounded-xl bg-[#f4f7f5] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <DeliverableIcon
+                                      className={`h-4 w-4 shrink-0 ${
+                                        deliverableStatus === "completed"
+                                          ? "text-[#1e5c3e]"
+                                          : deliverableStatus === "in_progress"
+                                            ? "text-[#1e4db7]"
+                                            : deliverableStatus === "revision"
+                                              ? "text-[#8a4a10]"
+                                              : "text-[#87938b]"
+                                      }`}
+                                    />
+                                    <span className="text-sm text-[#1e3d2e]">{deliverable.name}</span>
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    {deliverable.fileUrl && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="rounded-full border-[#d1ddd6] text-[#2d6b4e] hover:bg-[#e6eceb]"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          void downloadFile(deliverable.fileUrl!, deliverable.name).catch((error) =>
+                                            toast.error(error instanceof Error ? error.message : "Could not download file"),
+                                          );
+                                        }}
+                                      >
+                                        View
                                       </Button>
                                     )}
-                                  <Badge
-                                    variant="secondary"
-                                    className={getStatusColor(deliverableStatus)}
-                                  >
-                                    {deliverableStatus.replace("_", " ")}
-                                  </Badge>
+                                    {(order.status === "in_progress" || order.status === "revision") &&
+                                      (deliverableStatus === "pending" || deliverableStatus === "in_progress" || deliverableStatus === "revision") &&
+                                      !deliverable.id.startsWith("fallback-") && (
+                                        <Button
+                                          size="sm"
+                                          className="rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]"
+                                          onClick={(e) => { e.stopPropagation(); openSubmitDialog(order, deliverable); }}
+                                        >
+                                          <Upload className="mr-1.5 h-3.5 w-3.5" />
+                                          Submit
+                                        </Button>
+                                      )}
+                                    <span className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold ${getStatusColor(deliverableStatus)}`}>
+                                      {deliverableStatus.replace("_", " ")}
+                                    </span>
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="mt-4 flex gap-2">
-                        <Button variant="outline" className="flex-1" onClick={(e) => { e.stopPropagation(); void openBrandMessages(order); }}>
-                          <MessageCircle className="mr-2 h-4 w-4" />
-                          Message Brand
-                        </Button>
-                        {order.status === "pending" ? (
-                          <Button className="flex-1" onClick={(e) => { e.stopPropagation(); void updateOrderStatus(order.id, "accepted"); }}>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Accept
+                        {/* Action buttons */}
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            variant="outline"
+                            className="flex-1 rounded-full border-[#d1ddd6] font-bold text-[#2d6b4e] hover:bg-[#e6eceb]"
+                            onClick={(e) => { e.stopPropagation(); void openBrandMessages(order); }}
+                          >
+                            <MessageCircle className="mr-2 h-4 w-4" />
+                            Message Brand
                           </Button>
-                        ) : order.status === "accepted" ? (
-                          <Button className="flex-1" onClick={(e) => { e.stopPropagation(); void updateOrderStatus(order.id, "in_progress"); }}>
-                            <Clock className="mr-2 h-4 w-4" />
-                            Start Work
-                          </Button>
-                        ) : order.status === "in_progress" ? (
-                          <Button className="flex-1" onClick={(e) => { e.stopPropagation(); openSubmitDialog(order); }}>
-                            <Upload className="mr-2 h-4 w-4" />
-                            Submit Deliverable
-                          </Button>
-                        ) : null}
-                      </div>
-                    </motion.div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-          );
-        })}
+                          {order.status === "pending" ? (
+                            <Button
+                              className="flex-1 rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]"
+                              onClick={(e) => { e.stopPropagation(); void updateOrderStatus(order.id, "accepted"); }}
+                            >
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Accept
+                            </Button>
+                          ) : order.status === "accepted" ? (
+                            <Button
+                              className="flex-1 rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]"
+                              onClick={(e) => { e.stopPropagation(); void updateOrderStatus(order.id, "in_progress"); }}
+                            >
+                              <Clock className="mr-2 h-4 w-4" />
+                              Start Work
+                            </Button>
+                          ) : order.status === "in_progress" ? (
+                            <Button
+                              className="flex-1 rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]"
+                              onClick={(e) => { e.stopPropagation(); openSubmitDialog(order); }}
+                            >
+                              <Upload className="mr-2 h-4 w-4" />
+                              Submit Deliverable
+                            </Button>
+                          ) : null}
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
+        {/* Empty state */}
         {!isLoading && filteredOrders.length === 0 && (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Package className="mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">No orders found</h3>
-              <p className="text-center text-muted-foreground">
-                No orders match your current filters.
-              </p>
-            </CardContent>
-          </Card>
+          <div className={`${panelClass} flex flex-col items-center justify-center py-16 text-center`}>
+            <Package className="mb-4 h-12 w-12 text-[#87938b]" />
+            <h3 className="mb-1 text-lg font-extrabold text-[#1e3d2e]">No orders found</h3>
+            <p className="text-sm text-[#87938b]">No orders match your current filters.</p>
+          </div>
         )}
       </div>
+
+      {/* Submit deliverable dialog */}
       <Dialog open={Boolean(submissionTarget)} onOpenChange={(open) => !open && setSubmissionTarget(null)}>
-        <DialogContent className="max-w-[calc(100%-1rem)] sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Submit deliverable</DialogTitle>
-            <DialogDescription>
-              {submissionTarget?.deliverable.name || "Deliverable"} will be sent to the brand for review.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
+        <DialogContent className="max-w-lg overflow-hidden rounded-[1.6rem] p-0">
+          {/* Dark header strip */}
+          <div className="bg-[#1e3d2e] px-6 py-5">
+            <DialogHeader>
+              <DialogTitle className="text-white">Submit Deliverable</DialogTitle>
+              <DialogDescription className="text-[#87c4a3]">
+                {submissionTarget?.deliverable.name || "Deliverable"} will be sent to the brand for review.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+
+          {/* Body */}
+          <div className="space-y-4 px-6 py-5">
             <div className="space-y-2">
-              <Label htmlFor="deliverable-file">Upload file</Label>
-              <Input
-                id="deliverable-file"
-                type="file"
-                onChange={(event) => setSubmissionFile(event.target.files?.[0] || null)}
-              />
-              {submissionFile && (
-                <p className="text-xs text-muted-foreground">
-                  {submissionFile.name}
-                </p>
-              )}
+              <Label htmlFor="deliverable-file" className="text-sm font-bold text-[#1e3d2e]">
+                Upload file
+              </Label>
+              <label
+                htmlFor="deliverable-file"
+                className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-[#cddad1] bg-[#fbfaf5] p-4 text-center transition-colors hover:bg-[#f0f5f2]"
+              >
+                <Upload className="h-6 w-6 text-[#87938b]" />
+                <span className="text-sm text-[#6b7870]">
+                  {submissionFile ? submissionFile.name : "Click to choose a file"}
+                </span>
+                <input
+                  id="deliverable-file"
+                  type="file"
+                  className="sr-only"
+                  onChange={(event) => setSubmissionFile(event.target.files?.[0] || null)}
+                />
+              </label>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="deliverable-note">Note</Label>
+              <Label htmlFor="deliverable-note" className="text-sm font-bold text-[#1e3d2e]">
+                Note
+              </Label>
               <Textarea
                 id="deliverable-note"
                 rows={4}
                 value={submissionNote}
                 onChange={(event) => setSubmissionNote(event.target.value)}
                 placeholder="Add context for the brand"
+                className="resize-none rounded-xl border-[#cddad1] bg-[#fbfaf5] text-[#1e3d2e] placeholder:text-[#87938b] focus-visible:ring-[#2d6b4e]"
               />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setSubmissionTarget(null)} disabled={isSubmitting}>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <Button
+                variant="outline"
+                className="rounded-full border-[#d1ddd6] font-bold text-[#6b7870] hover:bg-[#f4f7f5]"
+                onClick={() => setSubmissionTarget(null)}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
-              <Button onClick={submitDeliverable} disabled={isSubmitting}>
+              <Button
+                className="rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]"
+                onClick={() => void submitDeliverable()}
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "Submitting..." : "Submit"}
               </Button>
             </div>
@@ -582,7 +649,7 @@ function CreatorOrdersPageContent() {
 
 export default function CreatorOrdersPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto p-4 md:p-6" />}>
+    <Suspense fallback={<div className="min-h-full bg-[#fbfaf5] px-4 pb-8 pt-2 sm:px-6 lg:px-8 lg:pb-12" />}>
       <CreatorOrdersPageContent />
     </Suspense>
   );

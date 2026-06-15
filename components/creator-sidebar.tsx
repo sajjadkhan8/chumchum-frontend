@@ -128,14 +128,14 @@ function CreatorSidebarNav({ compact = false, closeOnNavigate = false, onNavigat
                     'flex items-center gap-3 rounded-xl border border-transparent px-3 text-sm font-bold transition-all',
                     compact ? 'min-h-11 py-2.5' : 'py-2.5',
                     isActive
-                      ? 'border-[#185c39] bg-[#185c39] text-white shadow-sm'
-                      : 'text-[#69766e] hover:border-[#dce3dc] hover:bg-white hover:text-[#185c39]'
+                      ? 'border-[#2d6b4e] bg-[#2d6b4e] text-white shadow-sm'
+                      : 'text-[#6b7870] hover:border-[#d1ddd6] hover:bg-white hover:text-[#2d6b4e]'
                   )}
                 >
                   <Icon className={cn('h-4 w-4 shrink-0', isActive && 'text-[#f0c56e]')} />
                   <span className="flex-1">{item.label}</span>
                   {item.href === '/creator/orders' && ordersBadgeCount > 0 && (
-                    <span className="rounded-full bg-[#e6aa38] px-2.5 py-0.5 text-[10px] font-extrabold text-[#173b2a]">
+                    <span className="rounded-full bg-[#e6aa38] px-2.5 py-0.5 text-[10px] font-extrabold text-[#1e3d2e]">
                       {ordersBadgeCount > 99 ? '99+' : ordersBadgeCount}
                     </span>
                   )}
@@ -161,7 +161,7 @@ function CreatorSidebarNav({ compact = false, closeOnNavigate = false, onNavigat
 
 export function CreatorSidebar() {
   return (
-    <aside className="sticky top-[5.25rem] hidden h-[calc(100vh-5.25rem)] w-[17rem] shrink-0 overflow-y-auto overscroll-contain border-r border-[#dce3dc] bg-[#f4f2e9] px-4 py-6 xl:w-[18rem] lg:block">
+    <aside className="sticky top-[5.25rem] hidden h-[calc(100vh-5.25rem)] w-[17rem] shrink-0 overflow-y-auto overscroll-contain border-r border-[#d1ddd6] bg-[#f4f2e9] px-4 py-6 xl:w-[18rem] lg:block">
       <CreatorSidebarNav />
     </aside>
   );
@@ -176,7 +176,7 @@ export function CreatorSidebarDrawer() {
           Menu
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[90vw] max-w-sm overflow-y-auto border-[#dce3dc] bg-[#f4f2e9] p-0">
+      <SheetContent side="left" className="w-[90vw] max-w-sm overflow-y-auto border-[#d1ddd6] bg-[#f4f2e9] p-0">
         <div className="p-4 pb-safe pt-5">
           <CreatorSidebarNav compact closeOnNavigate />
         </div>

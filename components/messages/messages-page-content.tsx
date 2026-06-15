@@ -356,20 +356,20 @@ export function MessagesPageContent() {
   };
 
   return (
-    <div className="flex h-[calc(100dvh-10.5rem)] min-h-[32rem] flex-col overflow-hidden rounded-2xl border border-border bg-background">
+    <div className="flex h-[calc(100dvh-10.5rem)] min-h-[32rem] flex-col overflow-hidden rounded-[1.6rem] border border-[#d1ddd6] bg-white">
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div
           className={`w-full border-r border-border md:w-80 lg:w-96 ${showMobileChat ? "hidden md:block" : "block"}`}
         >
           <div className="flex h-full min-h-0 flex-col">
             <div className="border-b border-border p-4">
-              <h1 className="mb-4 text-xl font-bold">Messages</h1>
+              <h1 className="mb-4 text-xl font-extrabold text-[#1e3d2e]">Messages</h1>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder="Search conversations..."
-                  className="pl-9"
+                  className="rounded-xl border-[#cddad1] bg-[#fbfaf5] pl-9"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -394,7 +394,7 @@ export function MessagesPageContent() {
                       key={conv.id}
                       onClick={() => selectConversation(conv)}
                       className={`flex w-full items-start gap-3 p-3.5 text-left transition-colors hover:bg-muted/50 sm:p-4 ${
-                        selectedConversation?.id === conv.id ? "bg-muted" : ""
+                        selectedConversation?.id === conv.id ? "bg-[#e6eceb]" : ""
                       }`}
                     >
                       <Avatar className="h-12 w-12">
@@ -413,7 +413,7 @@ export function MessagesPageContent() {
                       {conv.unreadCount > 0 && (
                         <Badge
                           variant="default"
-                          className="h-5 min-w-5 justify-center rounded-full bg-primary px-1.5 text-xs"
+                          className="h-5 min-w-5 justify-center rounded-full bg-[#2d6b4e] px-1.5 text-xs"
                         >
                           {conv.unreadCount}
                         </Badge>
@@ -520,7 +520,7 @@ export function MessagesPageContent() {
                           {message.type === "text" && (
                             <div
                               className={`rounded-2xl px-4 py-2 ${
-                                isOwn ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
+                                isOwn ? "bg-[#2d6b4e] text-white" : "bg-[#f4f7f5] text-[#1e3d2e]"
                               }`}
                             >
                               <p className="text-sm">{message.content}</p>
@@ -536,8 +536,8 @@ export function MessagesPageContent() {
                               ).catch((error) => toast.error(error instanceof Error ? error.message : "Could not download attachment"))}
                               className={`flex min-w-0 items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition-colors ${
                                 isOwn
-                                  ? "border-primary/20 bg-primary text-primary-foreground hover:bg-primary/90"
-                                  : "border-border bg-muted text-foreground hover:bg-muted/80"
+                                  ? "border-[#2d6b4e]/20 bg-[#2d6b4e] text-white hover:bg-[#1f5239]"
+                                  : "border-border bg-[#f4f7f5] text-[#1e3d2e] hover:bg-[#f4f7f5]/80"
                               } ${!message.attachmentUrl ? "pointer-events-none opacity-70" : ""}`}
                             >
                               <FileText className="h-5 w-5 shrink-0" />
@@ -633,7 +633,7 @@ export function MessagesPageContent() {
                             {isOwn && (
                               <>
                                 {!message.isRead && <Check className="h-3 w-3" />}
-                                {message.isRead && <CheckCheck className="h-3 w-3 text-primary" />}
+                                {message.isRead && <CheckCheck className="h-3 w-3 text-[#e6aa38]" />}
                               </>
                             )}
                           </div>
@@ -682,7 +682,7 @@ export function MessagesPageContent() {
                   <Input
                     type="text"
                     placeholder="Type a message..."
-                    className="h-11 flex-1"
+                    className="h-11 flex-1 rounded-xl border-[#cddad1] bg-[#fbfaf5]"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
@@ -700,8 +700,8 @@ export function MessagesPageContent() {
             </>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-              <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-                <Send className="h-10 w-10 text-muted-foreground" />
+              <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[#e6eceb]">
+                <Send className="h-10 w-10 text-[#2d6b4e]" />
               </div>
               <h2 className="mb-2 text-xl font-semibold">Your Messages</h2>
               <p className="mb-4 max-w-md text-muted-foreground">
