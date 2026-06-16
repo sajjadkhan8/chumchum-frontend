@@ -41,7 +41,7 @@ import {
   type WithdrawalRequest,
 } from "@/services/earnings.service";
 
-type ActivityType = "earning" | "withdrawal" | "fee" | "refund";
+type ActivityType = "earning" | "affiliate" | "withdrawal" | "fee" | "refund";
 
 interface Activity {
   id: string;
@@ -63,6 +63,7 @@ const emptySummary: EarningsSummary = {
 const toActivityType = (type: EarningTransaction["type"]): ActivityType => {
   if (type === "platform_fee") return "fee";
   if (type === "refund") return "refund";
+  if (type === "affiliate_commission") return "affiliate";
   return type;
 };
 
@@ -138,13 +139,13 @@ export default function CreatorEarningsPage() {
       .sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [methodMap, timeRange, transactions, withdrawals]);
 
-  const earningActivities = activities.filter((activity) => activity.type === "earning" || activity.type === "refund");
+  const earningActivities = activities.filter((activity) => activity.type === "earning" || activity.type === "affiliate" || activity.type === "refund");
   const withdrawalActivities = activities.filter((activity) => activity.type === "withdrawal" || activity.type === "fee");
 
   const thisMonth = useMemo(() => {
     const now = new Date();
     return transactions
-      .filter((tx) => tx.type === "earning" && tx.status === "completed")
+      .filter((tx) => (tx.type === "earning" || tx.type === "affiliate_commission") && tx.status === "completed")
       .filter((tx) => {
         const date = new Date(tx.createdAt);
         return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
@@ -156,7 +157,7 @@ export default function CreatorEarningsPage() {
     const now = new Date();
     const previous = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     return transactions
-      .filter((tx) => tx.type === "earning" && tx.status === "completed")
+      .filter((tx) => (tx.type === "earning" || tx.type === "affiliate_commission") && tx.status === "completed")
       .filter((tx) => {
         const date = new Date(tx.createdAt);
         return date.getMonth() === previous.getMonth() && date.getFullYear() === previous.getFullYear();

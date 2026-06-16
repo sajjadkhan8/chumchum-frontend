@@ -15,6 +15,7 @@ import {
   Search,
   ClipboardList,
   Eye,
+  BadgePercent,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -63,6 +64,7 @@ const navGroups: NavGroup[] = [
       { href: '/creator/orders', label: 'Orders', icon: ClipboardList },
       { href: '/creator/messages', label: 'Messages', icon: MessageCircle },
       { href: '/creator/payments', label: 'Payments', icon: CreditCard },
+      { href: '/creator/affiliate', label: 'Affiliate', icon: BadgePercent },
     ],
   },
 ];

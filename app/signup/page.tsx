@@ -46,6 +46,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState<PasswordStrengthResult | null>(null);
+  const [affiliateCode, setAffiliateCode] = useState<string | undefined>();
 
   useEffect(() => {
     if (hasHydrated && isAuthenticated && user?.role) {
@@ -53,6 +54,10 @@ export default function SignupPage() {
       return;
     }
     const requestedRole = new URLSearchParams(window.location.search).get('role');
+    const requestedAffiliate = new URLSearchParams(window.location.search).get('affiliate')?.trim();
+    if (requestedAffiliate) {
+      setAffiliateCode(requestedAffiliate);
+    }
     if (!role && (requestedRole === 'creator' || requestedRole === 'brand')) {
       setRole(requestedRole);
       setStep('details');
@@ -72,7 +77,7 @@ export default function SignupPage() {
     event.preventDefault();
     if (!role) return;
     try {
-      await signup(email, password, role, name);
+      await signup(email, password, role, name, affiliateCode);
       toast.success('Account created successfully!');
       router.push(role === 'creator' ? '/creator/dashboard' : '/brand/dashboard');
     } catch (error) {
@@ -83,7 +88,7 @@ export default function SignupPage() {
   const handleGoogleSignup = async () => {
     if (!role) return;
     try {
-      await signupWithGoogle(role, name);
+      await signupWithGoogle(role, name, affiliateCode);
       toast.success('Account created successfully!');
       router.push(role === 'creator' ? '/creator/dashboard' : '/brand/dashboard');
     } catch (error) {
@@ -156,6 +161,11 @@ export default function SignupPage() {
             </div>
             <span className="mt-1 hidden rounded-full bg-[#f7e8c8] px-3 py-2 text-[11px] font-bold capitalize text-[#8b5e12] sm:inline-flex">{role}</span>
           </div>
+          {affiliateCode && (
+            <div className="mt-4 rounded-xl border border-[#d1ddd6] bg-[#e6eceb] px-3 py-2.5 text-[11px] font-bold text-[#496159]">
+              Affiliate code applied: <span className="text-[#2d6b4e]">{affiliateCode}</span>
+            </div>
+          )}
 
           <Button type="button" variant="outline" onClick={handleGoogleSignup} disabled={isLoading || !role} className="mt-5 h-11 w-full rounded-full border-[#ccd7ce] bg-white font-bold text-[#2f5243] hover:border-[#2d6b4e] hover:bg-[#fbfaf5]">
             Continue with Google

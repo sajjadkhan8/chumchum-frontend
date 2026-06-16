@@ -23,11 +23,15 @@ import {
   Wallet,
   Zap,
   AlertCircle,
+  BadgePercent,
+  Copy,
+  Check,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { calculateCreatorAmbassadorMetrics } from "@/lib/ambassador-scoring";
 import { formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
 import { analyticsService, type CreatorDashboardAnalytics } from "@/services/analytics.service";
+import { affiliateService, type AffiliateOverview } from "@/services/affiliate.service";
 import { creatorsService } from "@/services/creators.service";
 import { earningsService, type EarningsSummary } from "@/services/earnings.service";
 import { messagesService } from "@/services/messages.service";
@@ -45,6 +49,7 @@ function abbrevPKR(v: number): string {
 /* ─── empty states ─── */
 const emptyAnalytics: CreatorDashboardAnalytics = { totalOrders: 0, activeOrders: 0, completedOrders: 0, totalEarnings: 0, avgRating: 0, totalReviews: 0, repeatBrands: 0 };
 const emptyEarnings: EarningsSummary = { totalEarned: 0, availableBalance: 0, pendingBalance: 0, totalWithdrawn: 0, platformFees: 0 };
+const emptyAffiliate: AffiliateOverview = { code: "", shareUrl: "", rateBasisPoints: 100, totalCommission: 0, referredCreators: 0, commissionCount: 0 };
 
 /* ─── sparkline ─── */
 function Sparkline({ data, color = "#e6aa38" }: { data: number[]; color?: string }) {
@@ -241,24 +246,28 @@ export default function CreatorDashboardPage() {
   const [earnings, setEarnings] = useState<EarningsSummary>(emptyEarnings);
   const [orders, setOrders] = useState<Order[]>([]);
   const [convos, setConvos] = useState<Conversation[]>([]);
+  const [affiliate, setAffiliate] = useState<AffiliateOverview>(emptyAffiliate);
+  const [affiliateCopied, setAffiliateCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const isAmbassador = user?.creatorProgramStatus === "active_ambassador" || user?.email === "ambassador@test.com";
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const [profile, anal, earn, ords, msgs] = await Promise.all([
+      const [profile, anal, earn, ords, msgs, aff] = await Promise.all([
         creatorsService.getMe().catch(() => null),
         analyticsService.getCreatorDashboard().catch(() => emptyAnalytics),
         earningsService.getSummary().catch(() => emptyEarnings),
         ordersService.getAll().catch(() => []),
         messagesService.getConversations(user?.id || "", "creator").catch(() => []),
+        affiliateService.getOverview().catch(() => emptyAffiliate),
       ]);
       setCreatorProfile(profile);
       setAnalytics(anal);
       setEarnings(earn);
       setOrders(ords);
       setConvos(msgs);
+      setAffiliate(aff);
       setLoading(false);
     };
     void load();
@@ -299,9 +308,21 @@ export default function CreatorDashboardPage() {
   const actions = [
     { label: "New Package",    copy: "Create a service",      href: "/creator/packages/new",        Icon: Plus },
     { label: "Withdraw",       copy: "Access your earnings",  href: "/creator/payments",            Icon: Wallet },
+    { label: "Affiliate",      copy: "Share your link",       href: "/creator/affiliate",           Icon: BadgePercent },
     { label: "Edit Profile",   copy: "Keep it fresh",         href: "/creator/profile/public",      Icon: Users },
     { label: "View Insights",  copy: "Know your audience",    href: "/creator/insights",            Icon: BarChart3 },
   ];
+
+  const copyAffiliateLink = async () => {
+    if (!affiliate.shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(affiliate.shareUrl);
+      setAffiliateCopied(true);
+      window.setTimeout(() => setAffiliateCopied(false), 1600);
+    } catch {
+      setAffiliateCopied(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -469,6 +490,47 @@ export default function CreatorDashboardPage() {
                   {Math.max(earningsPct, ordersPct)}% toward this month&apos;s milestone.
                 </p>
               </div>
+            </section>
+
+            {/* ── affiliate snapshot ── */}
+            <section className="dash-panel rounded-2xl border border-[#e2e7e1] bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Affiliate</p>
+                  <h2 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">Referral Earnings</h2>
+                </div>
+                <span className="grid size-9 place-items-center rounded-xl bg-[#e8f0ec] text-[#2d6b4e]">
+                  <BadgePercent className="size-4" />
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-[#edf1ed] bg-[#fbfaf5] p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a9a87]">Commission</p>
+                    <p className="mt-1 text-lg font-extrabold text-[#1e3d2e]">{formatPrice(affiliate.totalCommission)}</p>
+                  </div>
+                  <div className="rounded-xl border border-[#edf1ed] bg-[#fbfaf5] p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a9a87]">Creators</p>
+                    <p className="mt-1 text-lg font-extrabold text-[#1e3d2e]">{affiliate.referredCreators}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 sm:flex-col">
+                  <button
+                    type="button"
+                    onClick={copyAffiliateLink}
+                    className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#2d6b4e] px-4 text-[12px] font-extrabold text-white transition hover:bg-[#1f5239]"
+                  >
+                    {affiliateCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                    {affiliateCopied ? "Copied" : "Copy"}
+                  </button>
+                  <Link href="/creator/affiliate" className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#d1ddd6] bg-white px-4 text-[12px] font-extrabold text-[#2d6b4e] transition hover:bg-[#e6eceb]">
+                    Details <ArrowRight className="size-3.5" />
+                  </Link>
+                </div>
+              </div>
+              <p className="mt-3 truncate rounded-xl bg-[#fdf4e1] px-3 py-2 text-[11px] font-semibold text-[#9a6b00]">
+                {affiliate.shareUrl || "Your affiliate link is being prepared."}
+              </p>
             </section>
 
             {/* ── messages ── */}
