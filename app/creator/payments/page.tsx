@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowDownToLine, Clock3, CreditCard, TrendingUp, Wallet } from "lucide-react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
+import { CreatorMetricCard } from "@/components/creator-metric-card";
 import { TabsContent } from "@/components/ui/tabs";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -314,50 +315,10 @@ function CreatorPaymentsContent() {
 
         {/* ── Stat strip ── */}
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-          <div className="rounded-[1.35rem] border border-[#2d6b4e] bg-[#2d6b4e] p-5 text-white">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-white/70">Available</p>
-                <p className="mt-1.5 text-2xl font-extrabold leading-none">{formatPrice(earnings?.availableBalance || 0)}</p>
-              </div>
-              <div className="grid size-9 place-items-center rounded-xl bg-white/15">
-                <Wallet className="size-4" />
-              </div>
-            </div>
-          </div>
-          <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-[#87938b]">Pending</p>
-                <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{formatPrice(earnings?.pendingBalance || 0)}</p>
-              </div>
-              <div className="grid size-9 place-items-center rounded-xl bg-[#f4f7f5]">
-                <Clock3 className="size-4 text-[#6b7870]" />
-              </div>
-            </div>
-          </div>
-          <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-[#87938b]">Total Earned</p>
-                <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{formatPrice(earnings?.totalEarned || 0)}</p>
-              </div>
-              <div className="grid size-9 place-items-center rounded-xl bg-[#f4f7f5]">
-                <TrendingUp className="size-4 text-[#6b7870]" />
-              </div>
-            </div>
-          </div>
-          <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-[#b77a12]">Withdrawn</p>
-                <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{formatPrice(earnings?.totalWithdrawn || 0)}</p>
-              </div>
-              <div className="grid size-9 place-items-center rounded-xl bg-[#fdf8ec]">
-                <ArrowDownToLine className="size-4 text-[#e6aa38]" />
-              </div>
-            </div>
-          </div>
+          <CreatorMetricCard dark title="Available" value={formatPrice(earnings?.availableBalance || 0)} sub="ready to withdraw" Icon={Wallet} />
+          <CreatorMetricCard title="Pending" value={formatPrice(earnings?.pendingBalance || 0)} sub="escrow or release queue" Icon={Clock3} />
+          <CreatorMetricCard title="Total Earned" value={formatPrice(earnings?.totalEarned || 0)} sub="lifetime creator earnings" Icon={TrendingUp} />
+          <CreatorMetricCard gold title="Withdrawn" value={formatPrice(earnings?.totalWithdrawn || 0)} sub="paid out so far" Icon={ArrowDownToLine} />
         </div>
 
       <TabsPrimitive.Root value={activeTab} onValueChange={updateTabInUrl} className="mt-5 space-y-5">

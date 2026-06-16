@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle, Clock, MessageSquare, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { CreatorMetricCard } from '@/components/creator-metric-card';
 import { campaignsService } from '@/services/campaigns.service';
 import type { BrandCampaignReaction } from '@/types';
 import { formatPrice, formatRelativeTime } from '@/lib/utils';
@@ -101,50 +102,10 @@ export default function CreatorOfferReactionsPage() {
           const accepted = reactions.filter((r) => r.status?.toLowerCase() === 'accepted').length;
           return (
             <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-              <div className="rounded-[1.35rem] border border-[#2d6b4e] bg-[#2d6b4e] p-5 text-white">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-white/70">Total</p>
-                    <p className="mt-1.5 text-2xl font-extrabold leading-none">{totalElements}</p>
-                  </div>
-                  <div className="grid size-9 place-items-center rounded-xl bg-white/15">
-                    <MessageSquare className="size-4" />
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-[#87938b]">Pending</p>
-                    <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{pending}</p>
-                  </div>
-                  <div className="grid size-9 place-items-center rounded-xl bg-[#f4f7f5]">
-                    <Clock className="size-4 text-[#6b7870]" />
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-[#87938b]">Shortlisted</p>
-                    <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{shortlisted}</p>
-                  </div>
-                  <div className="grid size-9 place-items-center rounded-xl bg-[#f4f7f5]">
-                    <Star className="size-4 text-[#6b7870]" />
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-[#b77a12]">Accepted</p>
-                    <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{accepted}</p>
-                  </div>
-                  <div className="grid size-9 place-items-center rounded-xl bg-[#fdf8ec]">
-                    <CheckCircle className="size-4 text-[#e6aa38]" />
-                  </div>
-                </div>
-              </div>
+              <CreatorMetricCard dark title="Total" value={totalElements} sub="responses sent" Icon={MessageSquare} />
+              <CreatorMetricCard title="Pending" value={pending} sub="submitted or in review" Icon={Clock} />
+              <CreatorMetricCard title="Shortlisted" value={shortlisted} sub="brand is considering" Icon={Star} />
+              <CreatorMetricCard gold title="Accepted" value={accepted} sub="approved reactions" Icon={CheckCircle} />
             </div>
           );
         })()}

@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { StatsCard } from "@/components/stats-card";
+import { CreatorMetricCard } from "@/components/creator-metric-card";
 import { formatDate, formatPrice } from "@/lib/utils";
 import {
   earningsService,
@@ -243,20 +243,10 @@ export default function CreatorEarningsPage() {
       </div>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Total Earnings" value={formatPrice(summary.totalEarned)} icon={DollarSign} />
-        <StatsCard
-          title="Available Balance"
-          value={formatPrice(summary.availableBalance)}
-          icon={Wallet}
-        />
-        <StatsCard title="Pending Balance" value={formatPrice(summary.pendingBalance)} icon={Clock} subtitle="In escrow or pending release" />
-        <StatsCard
-          title="This Month"
-          value={formatPrice(thisMonth)}
-          change={monthlyChange}
-          icon={TrendingUp}
-          trend={monthlyChange >= 0 ? "up" : "down"}
-        />
+        <CreatorMetricCard dark title="Total Earnings" value={formatPrice(summary.totalEarned)} sub="lifetime creator revenue" Icon={DollarSign} />
+        <CreatorMetricCard title="Available Balance" value={formatPrice(summary.availableBalance)} sub="ready to withdraw" Icon={Wallet} />
+        <CreatorMetricCard title="Pending Balance" value={formatPrice(summary.pendingBalance)} sub="in escrow or pending release" Icon={Clock} />
+        <CreatorMetricCard gold title="This Month" value={formatPrice(thisMonth)} sub={`${monthlyChange >= 0 ? "+" : "-"}${Math.abs(monthlyChange).toFixed(1)}% vs last month`} Icon={TrendingUp} />
       </div>
 
       <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">

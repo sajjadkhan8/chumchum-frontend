@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, BadgePercent, Check, Clipboard, Copy, Link2, Loader2, Share2, Sparkles, Users, WalletCards } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { CreatorMetricCard } from "@/components/creator-metric-card";
 import { affiliateService, type AffiliateCommission, type AffiliateOverview } from "@/services/affiliate.service";
 import { formatPrice, formatRelativeTime } from "@/lib/utils";
 
@@ -141,17 +142,11 @@ export function AffiliatePageContent({ role }: { role: "creator" | "brand" }) {
 
         <section className="grid gap-3 sm:grid-cols-3">
           {[
-            { label: "Total commission", value: formatPrice(overview.totalCommission), Icon: WalletCards },
-            { label: "Referred creators", value: overview.referredCreators.toLocaleString(), Icon: Users },
-            { label: "Commission rate", value: rateLabel(overview.rateBasisPoints), Icon: Sparkles },
-          ].map(({ label, value, Icon }) => (
-            <div key={label} className="rounded-[1.5rem] border border-[#d9e0d8] bg-white p-5 shadow-[0_14px_45px_rgba(38,70,50,0.055)]">
-              <span className="grid size-9 place-items-center rounded-xl bg-[#e7f0ea] text-[#185c39]">
-                <Icon className="size-4" />
-              </span>
-              <p className="mt-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#b77a12]">{label}</p>
-              <p className="mt-1 text-2xl font-black tracking-[-0.035em] text-[#173b2a]">{value}</p>
-            </div>
+            { label: "Total commission", value: formatPrice(overview.totalCommission), sub: "earned from referrals", Icon: WalletCards },
+            { label: "Referred creators", value: overview.referredCreators.toLocaleString(), sub: "joined from your link", Icon: Users },
+            { label: "Commission rate", value: rateLabel(overview.rateBasisPoints), sub: "per eligible earning", Icon: Sparkles, gold: true },
+          ].map(({ label, value, sub, Icon, gold }) => (
+            <CreatorMetricCard key={label} title={label} value={value} sub={sub} Icon={Icon} gold={gold} />
           ))}
         </section>
 

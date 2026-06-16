@@ -184,6 +184,19 @@ export default function SignupPage() {
               <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required className={inputClass} />
             </div>
             <div className="space-y-1.5">
+              <Label htmlFor="affiliateCode" className="text-xs font-bold text-[#496159]">Referral code <span className="font-semibold text-[#87938b]">(optional)</span></Label>
+              <Input
+                id="affiliateCode"
+                type="text"
+                placeholder="Enter a referral code"
+                value={affiliateCode || ''}
+                onChange={(event) => setAffiliateCode(event.target.value.trim() || undefined)}
+                className={`${inputClass} uppercase`}
+                autoCapitalize="characters"
+                spellCheck={false}
+              />
+            </div>
+            <div className="space-y-1.5">
               <Label htmlFor="password" className="text-xs font-bold text-[#496159]">Password</Label>
               <div className="relative">
                 <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Create a strong password" value={password} onChange={(event) => handlePasswordChange(event.target.value)} required className={`${inputClass} pr-11`} />

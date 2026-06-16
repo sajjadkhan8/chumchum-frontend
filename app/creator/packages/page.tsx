@@ -25,7 +25,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { CreatorMetricCard } from "@/components/creator-metric-card";
 import {
   Select,
   SelectContent,
@@ -307,57 +307,10 @@ function CreatorPackagesPageContent() {
 
         {/* ── Stat strip ── */}
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-          {/* Active */}
-          <div className="rounded-[1.35rem] border border-[#2d6b4e] bg-[#2d6b4e] p-5 text-white">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-white/70">Active</p>
-                <p className="mt-1.5 text-2xl font-extrabold leading-none">{summary.active}</p>
-              </div>
-              <div className="grid size-9 place-items-center rounded-xl bg-white/15">
-                <Play className="size-4" />
-              </div>
-            </div>
-          </div>
-
-          {/* Drafts */}
-          <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-[#87938b]">Drafts</p>
-                <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{summary.drafts}</p>
-              </div>
-              <div className="grid size-9 place-items-center rounded-xl bg-[#f4f7f5]">
-                <FileText className="size-4 text-[#6b7870]" />
-              </div>
-            </div>
-          </div>
-
-          {/* Archived */}
-          <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-[#87938b]">Archived</p>
-                <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{summary.archived}</p>
-              </div>
-              <div className="grid size-9 place-items-center rounded-xl bg-[#f4f7f5]">
-                <Archive className="size-4 text-[#6b7870]" />
-              </div>
-            </div>
-          </div>
-
-          {/* Monthly Value */}
-          <div className="rounded-[1.35rem] border border-[#d1ddd6] bg-white p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-[#b77a12]">Monthly Value</p>
-                <p className="mt-1.5 text-2xl font-extrabold leading-none text-[#1e3d2e]">{formatPrice(summary.monthlyProjection)}</p>
-              </div>
-              <div className="grid size-9 place-items-center rounded-xl bg-[#fdf8ec]">
-                <Wallet className="size-4 text-[#e6aa38]" />
-              </div>
-            </div>
-          </div>
+          <CreatorMetricCard dark title="Active" value={summary.active} sub="live packages" Icon={Play} />
+          <CreatorMetricCard title="Drafts" value={summary.drafts} sub="not published yet" Icon={FileText} />
+          <CreatorMetricCard title="Archived" value={summary.archived} sub="stored packages" Icon={Archive} />
+          <CreatorMetricCard gold title="Monthly Value" value={formatPrice(summary.monthlyProjection)} sub="active package total" Icon={Wallet} />
         </div>
 
         {/* ── Filter bar ── */}

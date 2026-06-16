@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -28,6 +28,7 @@ import {
   Check,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CreatorMetricCard } from "@/components/creator-metric-card";
 import { calculateCreatorAmbassadorMetrics } from "@/lib/ambassador-scoring";
 import { formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
 import { analyticsService, type CreatorDashboardAnalytics } from "@/services/analytics.service";
@@ -51,30 +52,6 @@ const emptyAnalytics: CreatorDashboardAnalytics = { totalOrders: 0, activeOrders
 const emptyEarnings: EarningsSummary = { totalEarned: 0, availableBalance: 0, pendingBalance: 0, totalWithdrawn: 0, platformFees: 0 };
 const emptyAffiliate: AffiliateOverview = { code: "", shareUrl: "", rateBasisPoints: 100, totalCommission: 0, referredCreators: 0, commissionCount: 0 };
 
-/* ─── sparkline ─── */
-function Sparkline({ data, color = "#e6aa38" }: { data: number[]; color?: string }) {
-  const W = 64, H = 24;
-  if (data.length < 2) return null;
-  const min = Math.min(...data), max = Math.max(...data), rng = max - min || 1;
-  const xs = data.map((_, i) => (i / (data.length - 1)) * W);
-  const ys = data.map((v) => H - ((v - min) / rng) * (H - 2) - 1);
-  const points = xs.map((x, i) => `${x},${ys[i]}`).join(" ");
-  const area = `M${xs[0]},${H} ` + xs.map((x, i) => `L${x},${ys[i]}`).join(" ") + ` L${xs[xs.length - 1]},${H} Z`;
-  const id = `sg-${color.replace("#", "")}`;
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-16 overflow-visible" aria-hidden>
-      <defs>
-        <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill={`url(#${id})`} />
-      <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 /* ─── ring progress ─── */
 function RingProgress({ value, size = 72, stroke = 6 }: { value: number; size?: number; stroke?: number }) {
   const r = (size - stroke) / 2;
@@ -87,31 +64,6 @@ function RingProgress({ value, size = 72, stroke = 6 }: { value: number; size?: 
       <circle cx={c} cy={c} r={r} fill="none" stroke="#e6aa38" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${filled} ${circ}`} />
     </svg>
   );
-}
-
-/* ─── counter hook ─── */
-function useCounter(target: number, fmt?: (n: number) => string) {
-  const el = useRef<HTMLSpanElement>(null);
-  useEffect(() => {
-    if (!el.current) return;
-    if (target === 0) {
-      el.current.textContent = fmt ? fmt(0) : "0";
-      return;
-    }
-    const duration = 1300;
-    const start = performance.now();
-    let raf: number;
-    const tick = (now: number) => {
-      const t = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - t, 3);
-      const v = eased * target;
-      if (el.current) el.current.textContent = fmt ? fmt(v) : Math.round(v).toLocaleString();
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, fmt]);
-  return el;
 }
 
 /* ─── status chip ─── */
@@ -127,78 +79,6 @@ function StatusChip({ status }: { status: string }) {
       <Icon className="size-2.5" />
       {label}
     </span>
-  );
-}
-
-/* ─── metric card ─── */
-interface MetricProps {
-  title: string;
-  value: number;
-  sub: string;
-  Icon: React.ElementType;
-  spark?: number[];
-  fmt?: (n: number) => string;
-  trend?: number;
-}
-function MetricCard({ title, value, sub, Icon, spark, fmt, trend, dark }: MetricProps & { dark?: boolean }) {
-  const ref = useCounter(value, fmt);
-
-  if (dark) {
-    return (
-      <article className="metric-card relative overflow-hidden rounded-2xl border border-[#2d6b4e] bg-[#1e3d2e] p-4 transition-all duration-300 hover:scale-[1.015] hover:shadow-xl sm:p-5">
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-2/3 opacity-25"
-          style={{ background: "radial-gradient(ellipse at 100% 0%, #2d6b4e, transparent 70%)" }} aria-hidden />
-        <div className="relative flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#6fa688]">{title}</p>
-            <p className="mt-2 text-2xl font-extrabold leading-none tracking-tight text-[#f0c56e]">
-              <span ref={ref} className="block truncate">{fmt ? fmt(0) : "0"}</span>
-            </p>
-            <p className="mt-1.5 truncate text-[10px] font-medium text-[#5a8a72] sm:text-[11px]">{sub}</p>
-            {trend !== undefined && (
-              <p className="mt-2 flex items-center gap-1 text-[10px] font-bold text-emerald-400">
-                <TrendingUp className="size-3" />
-                {Math.abs(trend)}% this month
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col items-end gap-2 shrink-0">
-            <span className="grid size-8 place-items-center rounded-xl bg-white/10 text-[#f0c56e] sm:size-9">
-              <Icon className="size-3.5 sm:size-4" />
-            </span>
-            {spark && <div className="hidden opacity-80 sm:block"><Sparkline data={spark} color="#f0c56e" /></div>}
-          </div>
-        </div>
-      </article>
-    );
-  }
-
-  return (
-    <article className="metric-card group relative overflow-hidden rounded-2xl border-2 border-[#dce8e2] bg-white p-4 transition-all duration-300 hover:scale-[1.015] hover:border-[#2d6b4e]/50 hover:shadow-lg sm:p-5"
-      style={{ boxShadow: "0 2px 8px rgba(30,61,46,0.07), 0 1px 2px rgba(30,61,46,0.04)" }}>
-      <div className="absolute left-0 top-0 h-[3px] w-full rounded-t-2xl bg-gradient-to-r from-[#2d6b4e]/40 to-transparent" />
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a9a87]">{title}</p>
-          <p className="mt-2 text-2xl font-extrabold leading-none tracking-tight text-[#1e3d2e]">
-            <span ref={ref} className="block truncate">{fmt ? fmt(0) : "0"}</span>
-          </p>
-          <p className="mt-1.5 truncate text-[10px] font-medium text-[#7a9a87] sm:text-[11px]">{sub}</p>
-          {trend !== undefined && (
-            <p className="mt-2 flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-              <TrendingUp className="size-3" />
-              {Math.abs(trend)}% this month
-            </p>
-          )}
-        </div>
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          <span className="grid size-8 place-items-center rounded-xl bg-[#e8f0ec] text-[#2d6b4e] sm:size-9">
-            <Icon className="size-3.5 sm:size-4" />
-          </span>
-          {spark && <div className="hidden opacity-80 sm:block"><Sparkline data={spark} color="#2d6b4e" /></div>}
-        </div>
-      </div>
-    </article>
   );
 }
 
@@ -341,10 +221,10 @@ export default function CreatorDashboardPage() {
 
         {/* ── metric cards ── */}
         <section className="grid grid-cols-2 gap-3 xl:grid-cols-4" aria-label="Key metrics">
-          <MetricCard dark  title="Total Earnings" value={totalEarned}            fmt={abbrevPKR}             sub={`${formatPrice(earnings.availableBalance)} available`}         Icon={DollarSign} spark={sparkE} trend={12} />
-          <MetricCard       title="Active Orders"  value={analytics.activeOrders}                            sub={`${analytics.completedOrders} completed`}                      Icon={Package}    spark={sparkO} trend={8}  />
-          <MetricCard       title="Profile Views"  value={views}                                             sub={`${analytics.repeatBrands} repeat brands`}                     Icon={Eye}        spark={sparkV} trend={5}  />
-          <MetricCard       title="Avg Rating"     value={rating}                 fmt={(v) => v.toFixed(1)} sub={`${analytics.totalReviews || creator.totalReviews} reviews`}    Icon={Star}       spark={sparkR} trend={3}  />
+          <CreatorMetricCard dark title="Total Earnings" animatedValue={totalEarned} fmt={abbrevPKR} sub={`${formatPrice(earnings.availableBalance)} available`} Icon={DollarSign} spark={sparkE} trend={12} />
+          <CreatorMetricCard title="Active Orders" animatedValue={analytics.activeOrders} sub={`${analytics.completedOrders} completed`} Icon={Package} spark={sparkO} trend={8} />
+          <CreatorMetricCard title="Profile Views" animatedValue={views} sub={`${analytics.repeatBrands} repeat brands`} Icon={Eye} spark={sparkV} trend={5} />
+          <CreatorMetricCard title="Avg Rating" animatedValue={rating} fmt={(v) => v.toFixed(1)} sub={`${analytics.totalReviews || creator.totalReviews} reviews`} Icon={Star} spark={sparkR} trend={3} />
         </section>
 
         {/* ── main layout ── */}
