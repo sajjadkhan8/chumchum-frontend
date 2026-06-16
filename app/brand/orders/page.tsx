@@ -369,10 +369,12 @@ export default function BrandOrdersPage() {
                   isExpanded ? "border-[#185c39] ring-4 ring-[#185c39]/10" : "border-[#d9e0d8]",
                 )}
               >
-                <button
-                  type="button"
-                  className="block w-full p-4 text-left sm:p-5"
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="block w-full cursor-pointer p-4 text-left sm:p-5"
                   onClick={() => setSelectedOrder(isExpanded ? null : order.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedOrder(isExpanded ? null : order.id); } }}
                 >
                   <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
                     <div className="min-w-0">
@@ -458,7 +460,7 @@ export default function BrandOrdersPage() {
                       <p className="text-xs font-bold text-[#718077]">Tap row for delivery details</p>
                     </div>
                   </div>
-                </button>
+                </div>
 
                 {isExpanded && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="border-t border-[#edf0eb] px-4 pb-4 pt-4 sm:px-5 sm:pb-5">

@@ -7,13 +7,11 @@ import {
   Bell,
   Lock,
   CreditCard,
-  Building2,
   Save,
   Mail,
   Phone,
   Users,
   CheckCircle,
-  ChevronRight,
   Settings,
   ShieldCheck,
   Layers,
@@ -326,23 +324,6 @@ function BrandSettingsPageContent() {
       </div>
 
       <div className="mx-auto -mt-8 max-w-7xl space-y-3 px-4 pb-24 sm:px-6 lg:px-8">
-        {/* Company Profile shortcut */}
-        <Link
-          href="/brand/profile"
-          className="flex items-center justify-between gap-4 rounded-[1.75rem] border border-[#d9e0d8] bg-white px-5 py-4 shadow-[0_18px_60px_rgba(38,70,50,0.07)] transition hover:bg-[#f9faf8]"
-        >
-          <div className="flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded-xl bg-[#e7f0ea]">
-              <Building2 className="size-4 text-[#185c39]" />
-            </span>
-            <div>
-              <p className="text-sm font-extrabold text-[#1a2e22]">Company Profile</p>
-              <p className="text-[11px] text-[#8fa098]">Logo, company info, primary contact</p>
-            </div>
-          </div>
-          <ChevronRight className="size-4 shrink-0 text-[#b0bdb6]" />
-        </Link>
-
         {/* Tab strip */}
         <div className="flex gap-1 overflow-x-auto rounded-xl bg-[#e8ede9] p-1">
           {TABS.map(({ id, label }) => (

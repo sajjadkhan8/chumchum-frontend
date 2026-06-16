@@ -9,9 +9,7 @@ import {
   Mail,
   Phone,
   User,
-  ArrowLeft,
 } from "lucide-react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -144,15 +142,7 @@ export default function BrandProfilePage() {
     <div className="min-h-screen bg-[#f4f2e9]">
       {/* Hero */}
       <div className="bg-[#173b2a] px-4 pb-16 pt-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Link
-            href="/brand/settings"
-            className="mb-6 inline-flex items-center gap-1.5 text-xs font-semibold text-[#8fb09a] transition hover:text-white"
-          >
-            <ArrowLeft className="size-3.5" />
-            Back to Settings
-          </Link>
-
+        <div className="mx-auto max-w-7xl">
           <div className="flex items-center gap-4">
             {/* Logo with upload trigger */}
             <div className="relative shrink-0">

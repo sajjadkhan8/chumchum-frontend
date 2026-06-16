@@ -45,6 +45,7 @@ export default function LoginPage() {
   const [activeDemoEmail, setActiveDemoEmail] = useState('');
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     if (hasHydrated && isAuthenticated && user?.role) router.replace(getPostLoginPath(user.role));
@@ -67,11 +68,14 @@ export default function LoginPage() {
 
   const handleEmailLogin = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     try {
       await login(email, password);
-      toast.success('Welcome back!');
+      toast.success('Welcome back!', { id: 'login-success' });
       router.push(getPostLoginPath(useAuthStore.getState().user?.role));
     } catch (error) {
+      submittingRef.current = false;
       toast.error(error instanceof Error ? error.message : 'Invalid credentials');
     }
   };
@@ -89,21 +93,27 @@ export default function LoginPage() {
 
   const handlePhoneLogin = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     try {
       await loginWithPhone(phone, otp);
-      toast.success('Welcome back!');
+      toast.success('Welcome back!', { id: 'login-success' });
       router.push(getPostLoginPath(useAuthStore.getState().user?.role));
     } catch (error) {
+      submittingRef.current = false;
       toast.error(error instanceof Error ? error.message : 'Invalid OTP');
     }
   };
 
   const handleGoogleLogin = async () => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     try {
       await loginWithGoogle(googleRole);
-      toast.success('Welcome back!');
+      toast.success('Welcome back!', { id: 'login-success' });
       router.push(getPostLoginPath(useAuthStore.getState().user?.role));
     } catch (error) {
+      submittingRef.current = false;
       toast.error(error instanceof Error ? error.message : 'Google login failed');
     }
   };

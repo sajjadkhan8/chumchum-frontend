@@ -397,48 +397,69 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                         )}
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[22rem] p-1">
-                      <div className="flex items-center justify-between gap-2 px-2 py-1.5">
-                        <span className="text-sm font-semibold">Notifications</span>
+                    <DropdownMenuContent
+                      align="end"
+                      className={cn(
+                        'w-[22rem] p-1',
+                        isBrand && 'w-[22rem] rounded-2xl border-[#d9e0d8] bg-[#fbfaf5] p-1.5 shadow-[0_18px_50px_rgba(38,70,50,0.14)]'
+                      )}
+                    >
+                      <div className={cn(
+                        'flex items-center justify-between gap-2 px-2 py-1.5',
+                        isBrand && 'rounded-xl bg-[#173b2a] px-3 py-2.5'
+                      )}>
+                        <span className={cn('text-sm font-semibold', isBrand && 'text-xs font-extrabold uppercase tracking-[0.12em] text-white')}>
+                          Notifications
+                        </span>
                         {notificationCount > 0 && (
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="h-7 px-2 text-xs"
+                            className={cn('h-7 px-2 text-xs', isBrand && 'h-6 rounded-lg px-2 text-[10px] font-bold text-[#f0c56e] hover:bg-white/10 hover:text-white')}
                             onClick={(event) => {
                               event.preventDefault();
                               markAllNotificationsSeen();
                             }}
                           >
-                            Mark all as seen
+                            Mark all seen
                           </Button>
                         )}
                       </div>
-                      <DropdownMenuSeparator />
+                      <DropdownMenuSeparator className={cn(isBrand && 'mx-1.5 my-1.5 bg-[#d9e0d8]')} />
                       {notificationCount === 0 ? (
-                        <div className="px-2 py-5 text-center text-sm text-muted-foreground">
+                        <div className={cn('px-2 py-5 text-center text-sm text-muted-foreground', isBrand && 'py-6 text-xs font-semibold text-[#8fa098]')}>
                           You are all caught up.
                         </div>
                       ) : (
                         notifications.map((item) => (
-                          <DropdownMenuItem asChild key={item.id} className="items-start py-2">
+                          <DropdownMenuItem
+                            asChild
+                            key={item.id}
+                            className={cn(
+                              'items-start py-2',
+                              isBrand && 'rounded-lg px-2 py-2 data-[highlighted]:bg-[#e7f0ea]'
+                            )}
+                          >
                             <Link href={item.href} className="flex w-full flex-col gap-1" onClick={() => markNotificationSeen(item.id)}>
                               <span className="flex items-center justify-between gap-2">
                                 <span className="flex min-w-0 items-center gap-2">
-                                  <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true" />
-                                  <span className="line-clamp-1 text-sm font-medium">{item.title}</span>
+                                  <span className={cn('h-2 w-2 shrink-0 rounded-full bg-primary', isBrand && 'bg-[#2d6b4e]')} aria-hidden="true" />
+                                  <span className={cn('line-clamp-1 text-sm font-medium', isBrand && 'text-xs font-bold text-[#1a2e22]')}>{item.title}</span>
                                 </span>
-                                <span className="shrink-0 text-[11px] text-muted-foreground">{formatRelativeTime(item.createdAt)}</span>
+                                <span className={cn('shrink-0 text-[11px] text-muted-foreground', isBrand && 'text-[10px] text-[#8fa098]')}>{formatRelativeTime(item.createdAt)}</span>
                               </span>
-                              <span className="line-clamp-1 text-xs text-muted-foreground">{item.description}</span>
+                              <span className={cn('line-clamp-1 text-xs text-muted-foreground', isBrand && 'pl-4 text-[11px] text-[#8fa098]')}>{item.description}</span>
                             </Link>
                           </DropdownMenuItem>
                         ))
                       )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link href={user.role === 'creator' ? '/creator/notifications' : '/brand/notifications'} className="justify-center text-sm font-medium text-primary">
+                      <DropdownMenuSeparator className={cn(isBrand && 'mx-1.5 my-1.5 bg-[#d9e0d8]')} />
+                      <DropdownMenuItem asChild className={cn(isBrand && 'rounded-lg data-[highlighted]:bg-[#e7f0ea]')}>
+                        <Link
+                          href={user.role === 'creator' ? '/creator/notifications' : '/brand/notifications'}
+                          className={cn('justify-center text-sm font-medium text-primary', isBrand && 'justify-center text-xs font-bold text-[#185c39]')}
+                        >
                           View all notifications
                         </Link>
                       </DropdownMenuItem>

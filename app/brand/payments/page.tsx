@@ -231,9 +231,6 @@ export default function BrandPaymentsPage() {
                   <Wallet className="size-3.5" />
                   Payment workspace
                 </div>
-                <h1 className="mt-2 text-xl font-extrabold tracking-[-0.04em] sm:text-2xl">
-                  Payments &amp; Disbursements
-                </h1>
               </div>
               <Dialog open={isTopupOpen} onOpenChange={setIsTopupOpen}>
                 <DialogTrigger asChild>
