@@ -1,6 +1,5 @@
-import { BrandOfferWizard } from '@/components/brand-offer-wizard';
+import { redirect } from 'next/navigation';
 
-export default function BrandOfferCreatePage() {
-  return <BrandOfferWizard />;
+export default function BrandOffersNewRedirect() {
+  redirect('/brand/campaigns/new');
 }
-

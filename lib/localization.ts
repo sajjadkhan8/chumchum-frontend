@@ -26,6 +26,7 @@ export const pakistanCities = [
   'Larkana',
   'Mardan',
   'Abbottabad',
+  'Haripur',
   'Swat',
   'Gujrat',
   'Kasur',
@@ -68,6 +69,7 @@ export const cityToRegionMap: Partial<Record<(typeof pakistanCities)[number], (t
   Peshawar: 'Khyber Pakhtunkhwa',
   Mardan: 'Khyber Pakhtunkhwa',
   Abbottabad: 'Khyber Pakhtunkhwa',
+  Haripur: 'Khyber Pakhtunkhwa',
   Swat: 'Khyber Pakhtunkhwa',
   Quetta: 'Balochistan',
 };

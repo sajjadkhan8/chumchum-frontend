@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Building2, CalendarClock, CreditCard, Plus, ReceiptText, ShieldCheck, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { StatsCard } from "@/components/stats-card";
 import { formatDate, formatPrice } from "@/lib/utils";
 import {
   paymentsService,
@@ -54,18 +52,30 @@ const methodTypeLabels: Record<BrandPaymentMethodType, string> = {
   nayapay: "NayaPay",
 };
 
-const statusVariant = (status: string) => {
-  if (status === "paid" || status === "completed" || status === "active") {
-    return "bg-green-100 text-green-700";
-  }
-  if (status === "processing" || status === "scheduled" || status === "pending_verification") {
-    return "bg-blue-100 text-blue-700";
-  }
-  if (status === "failed" || status === "overdue" || status === "disabled") {
-    return "bg-red-100 text-red-700";
-  }
-  return "bg-yellow-100 text-yellow-700";
+const statusColors: Record<string, string> = {
+  paid: "bg-[#e7f0ea] text-[#185c39]",
+  completed: "bg-[#e7f0ea] text-[#185c39]",
+  active: "bg-[#e7f0ea] text-[#185c39]",
+  processing: "bg-[#e8f0fb] text-[#2563b0]",
+  scheduled: "bg-[#e8f0fb] text-[#2563b0]",
+  pending_verification: "bg-[#e8f0fb] text-[#2563b0]",
+  failed: "bg-[#fce4e4] text-[#c13a3a]",
+  overdue: "bg-[#fce4e4] text-[#c13a3a]",
+  disabled: "bg-[#fce4e4] text-[#c13a3a]",
 };
+const statusColor = (status: string) => statusColors[status] ?? "bg-[#fef9ec] text-[#8b5e12]";
+
+function HeroStat({ label, value, icon: Icon }: { label: string; value: string; icon: React.ComponentType<{ className?: string }> }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-white/50">
+        <Icon className="size-3" />
+        {label}
+      </div>
+      <p className="text-base font-black text-white">{value}</p>
+    </div>
+  );
+}
 
 export default function BrandPaymentsPage() {
   const [summary, setSummary] = useState<BrandPaymentSummary>(emptySummary);
@@ -109,11 +119,9 @@ export default function BrandPaymentsPage() {
     }
   };
 
-  useEffect(() => {
-    void load();
-  }, []);
+  useEffect(() => { void load(); }, []);
 
-  const defaultMethod = useMemo(() => methods.find((method) => method.isDefault), [methods]);
+  const defaultMethod = useMemo(() => methods.find((m) => m.isDefault), [methods]);
 
   const handleSaveControls = async () => {
     setIsSavingControls(true);
@@ -139,7 +147,6 @@ export default function BrandPaymentsPage() {
       toast.error("Enter a valid top-up amount (minimum PKR 1,000)");
       return;
     }
-
     setIsTopupSubmitting(true);
     try {
       const next = await paymentsService.topUpBrandWallet(amount);
@@ -160,7 +167,6 @@ export default function BrandPaymentsPage() {
       toast.error("Payment details and account holder are required");
       return;
     }
-
     setIsSavingMethod(true);
     try {
       const created = await paymentsService.addBrandPaymentMethod({
@@ -185,7 +191,7 @@ export default function BrandPaymentsPage() {
   const setDefaultMethod = async (methodId: string) => {
     try {
       await paymentsService.setBrandDefaultMethod(methodId);
-      setMethods((current) => current.map((method) => ({ ...method, isDefault: method.id === methodId })));
+      setMethods((current) => current.map((m) => ({ ...m, isDefault: m.id === methodId })));
       toast.success("Default payment method updated");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not set default method";
@@ -195,14 +201,11 @@ export default function BrandPaymentsPage() {
 
   const removeMethod = async (methodId: string) => {
     if (!window.confirm("Remove this payment method?")) return;
-
     try {
       await paymentsService.removeBrandMethod(methodId);
       setMethods((current) => {
-        const next = current.filter((method) => method.id !== methodId);
-        if (next.length > 0 && !next.some((method) => method.isDefault)) {
-          next[0] = { ...next[0], isDefault: true };
-        }
+        const next = current.filter((m) => m.id !== methodId);
+        if (next.length > 0 && !next.some((m) => m.isDefault)) next[0] = { ...next[0], isDefault: true };
         return next;
       });
       toast.success("Payment method removed");
@@ -212,273 +215,266 @@ export default function BrandPaymentsPage() {
     }
   };
 
+  const inputCls = "bg-white border-[#d1ddd6] text-[#173b2a] placeholder:text-[#a0b0aa] focus-visible:border-[#185c39] focus-visible:ring-2 focus-visible:ring-[#185c39]/20";
+  const labelCls = "text-xs font-bold text-[#526259]";
+
   return (
-    <div className="container mx-auto p-4 md:p-6">
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground md:text-3xl">Payments & Disbursements</h1>
-          <p className="text-muted-foreground">Fund campaigns, manage payment rails, and control creator payout governance</p>
-        </div>
-        <Dialog open={isTopupOpen} onOpenChange={setIsTopupOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Wallet Funds
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Top up campaign wallet</DialogTitle>
-              <DialogDescription>Use your default payment method to add funds instantly.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3 py-3">
-              <div className="space-y-2">
-                <Label htmlFor="topup-amount">Amount (PKR)</Label>
-                <Input
-                  id="topup-amount"
-                  type="number"
-                  min={1000}
-                  value={topupAmount}
-                  onChange={(event) => setTopupAmount(event.target.value)}
+    <div className="min-h-screen bg-[#fbfaf5]">
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+
+        {/* Hero header */}
+        <section className="overflow-hidden rounded-[2rem] border border-[#d9e0d8] bg-[#173b2a] text-white shadow-[0_24px_80px_rgba(23,59,42,0.14)]">
+          <div className="p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-[#f0c56e]">
+                  <Wallet className="size-3.5" />
+                  Payment workspace
+                </div>
+                <h1 className="mt-2 text-xl font-extrabold tracking-[-0.04em] sm:text-2xl">
+                  Payments &amp; Disbursements
+                </h1>
+              </div>
+              <Dialog open={isTopupOpen} onOpenChange={setIsTopupOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="mt-1 h-8 shrink-0 rounded-full bg-[#e6aa38] text-xs font-black text-[#173b2a] hover:bg-[#f0bb55]">
+                    <Plus className="size-3.5" />
+                    Add Funds
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Top up campaign wallet</DialogTitle>
+                    <DialogDescription>Use your default payment method to add funds instantly.</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-3 py-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="topup-amount" className={labelCls}>Amount (PKR)</Label>
+                      <Input id="topup-amount" type="number" min={1000} value={topupAmount} onChange={(e) => setTopupAmount(e.target.value)} className={inputCls} />
+                    </div>
+                    <p className="text-xs text-[#718077]">
+                      Charged to: {defaultMethod ? `${defaultMethod.label} (${defaultMethod.accountMask})` : "No default payment method"}
+                    </p>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsTopupOpen(false)}>Cancel</Button>
+                    <Button onClick={() => void handleTopup()} disabled={isTopupSubmitting || !defaultMethod}>
+                      {isTopupSubmitting ? "Processing…" : "Top Up"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {/* Stats row */}
+            <div className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-white/10 pt-4 sm:grid-cols-4">
+              <HeroStat label="Wallet balance" value={formatPrice(summary.walletBalance)} icon={Wallet} />
+              <HeroStat label="Monthly spend" value={formatPrice(summary.monthlySpend)} icon={CreditCard} />
+              <HeroStat label="Pending escrow" value={formatPrice(summary.pendingEscrow)} icon={CalendarClock} />
+              <HeroStat label="Processing" value={formatPrice(summary.processingPayouts)} icon={Building2} />
+            </div>
+          </div>
+        </section>
+
+        {/* Payment Methods + Governance */}
+        <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_300px]">
+
+          {/* Payment Methods */}
+          <div className="rounded-[1.75rem] border border-[#d9e0d8] bg-white p-5 shadow-[0_18px_60px_rgba(38,70,50,0.07)]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-[#173b2a]">Payment Methods</p>
+                <p className="text-xs text-[#718077]">Primary rails for funding and disbursements</p>
+              </div>
+              <Dialog open={methodDialogOpen} onOpenChange={setMethodDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="h-8 gap-1.5 rounded-lg border-[#d9e0d8] text-xs font-semibold text-[#526259] hover:bg-[#f4f2e9]">
+                    <Plus className="size-3.5" />
+                    Add
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add payment method</DialogTitle>
+                    <DialogDescription>Add a compliant payment rail for Pakistan disbursements.</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-1.5">
+                      <Label className={labelCls}>Type</Label>
+                      <Select value={newMethodType} onValueChange={(v) => { const next = v as BrandPaymentMethodType; setNewMethodType(next); setNewMethodLabel(methodTypeLabels[next]); }}>
+                        <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(methodTypeLabels).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>{label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className={labelCls}>Display Name</Label>
+                      <Input value={newMethodLabel} onChange={(e) => setNewMethodLabel(e.target.value)} className={inputCls} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className={labelCls}>Account Mask / Identifier</Label>
+                      <Input value={newMethodMask} onChange={(e) => setNewMethodMask(e.target.value)} placeholder="**** **** **** 4242 or PK36ABCD…" className={inputCls} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className={labelCls}>Account Holder</Label>
+                      <Input value={newMethodHolder} onChange={(e) => setNewMethodHolder(e.target.value)} className={inputCls} />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setMethodDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={() => void handleAddMethod()} disabled={isSavingMethod}>
+                      {isSavingMethod ? "Saving…" : "Save Method"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              {methods.length > 0 ? methods.map((m) => (
+                <div key={m.id} className="flex flex-wrap items-center justify-between gap-3 rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] px-3.5 py-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="text-sm font-semibold text-[#173b2a]">{m.label}</p>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColor(m.status)}`}>{m.status.replaceAll("_", " ")}</span>
+                      {m.isDefault && <span className="rounded-full bg-[#e7f0ea] px-2 py-0.5 text-[10px] font-bold text-[#185c39]">Default</span>}
+                    </div>
+                    <p className="mt-0.5 text-xs text-[#718077]">{methodTypeLabels[m.type]} · {m.accountMask} · {m.holderName}</p>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {!m.isDefault && (
+                      <Button variant="ghost" size="sm" className="h-7 rounded-lg px-2.5 text-xs font-semibold text-[#526259] hover:bg-[#e7f0ea] hover:text-[#185c39]" onClick={() => void setDefaultMethod(m.id)}>
+                        Set default
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="sm" className="h-7 rounded-lg px-2.5 text-xs font-semibold text-[#c13a3a] hover:bg-[#fce4e4]" onClick={() => void removeMethod(m.id)}>
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              )) : (
+                <div className="rounded-[1.15rem] border border-dashed border-[#d9e0d8] p-6 text-center text-xs text-[#718077]">
+                  No payment methods configured yet.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Payout Governance */}
+          <div className="rounded-[1.75rem] border border-[#d9e0d8] bg-white p-5 shadow-[0_18px_60px_rgba(38,70,50,0.07)]">
+            <p className="text-sm font-bold text-[#173b2a]">Payout Governance</p>
+            <p className="text-xs text-[#718077]">Approval and risk controls</p>
+
+            <div className="mt-4 space-y-4">
+              <div className="flex items-center justify-between gap-3 rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] px-3.5 py-3">
+                <div>
+                  <p className="text-xs font-semibold text-[#173b2a]">Two-level approval</p>
+                  <p className="text-[11px] text-[#718077]">Require two approvers before release</p>
+                </div>
+                <Switch
+                  checked={controls.requireTwoApprovals}
+                  onCheckedChange={(checked) => setControls((c) => ({ ...c, requireTwoApprovals: checked }))}
                 />
               </div>
-              <p className="text-sm text-muted-foreground">
-                Charged to: {defaultMethod ? `${defaultMethod.label} (${defaultMethod.accountMask})` : "No default payment method"}
-              </p>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsTopupOpen(false)}>Cancel</Button>
-              <Button onClick={() => void handleTopup()} disabled={isTopupSubmitting || !defaultMethod}>
-                {isTopupSubmitting ? "Processing..." : "Top Up"}
+
+              <div className="space-y-1.5">
+                <Label className={labelCls}>Auto-release after approval (days)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={controls.autoReleaseAfterDays}
+                  onChange={(e) => setControls((c) => ({ ...c, autoReleaseAfterDays: Number(e.target.value) || 1 }))}
+                  className={inputCls}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className={labelCls}>Low balance alert (PKR)</Label>
+                <Input
+                  type="number"
+                  min={50000}
+                  value={controls.lowBalanceAlertThreshold}
+                  onChange={(e) => setControls((c) => ({ ...c, lowBalanceAlertThreshold: Number(e.target.value) || 50000 }))}
+                  className={inputCls}
+                />
+              </div>
+
+              <div className="flex items-start gap-2 rounded-[1.15rem] border border-[#c8e0d0] bg-[#eef6f1] px-3.5 py-3 text-xs text-[#185c39]">
+                <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
+                <p><span className="font-bold">Enhanced controls active</span> for your workspace.</p>
+              </div>
+
+              <Button onClick={() => void handleSaveControls()} disabled={isSavingControls} className="w-full rounded-xl bg-[#185c39] text-xs font-bold text-white hover:bg-[#173b2a]">
+                {isSavingControls ? "Saving…" : "Save Controls"}
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </div>
+          </div>
+        </div>
+
+        {/* Invoices + Disbursements */}
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+
+          {/* Invoices */}
+          <div className="rounded-[1.75rem] border border-[#d9e0d8] bg-white p-5 shadow-[0_18px_60px_rgba(38,70,50,0.07)]">
+            <p className="text-sm font-bold text-[#173b2a]">Recent Invoices</p>
+            <p className="text-xs text-[#718077]">Billing cycles and payable status</p>
+            <div className="mt-4 space-y-2">
+              {invoices.map((inv) => (
+                <div key={inv.id} className="flex items-center justify-between gap-3 rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] px-3.5 py-3">
+                  <div>
+                    <p className="text-xs font-semibold text-[#173b2a]">{inv.periodLabel}</p>
+                    <p className="text-[11px] text-[#718077]">Due {formatDate(new Date(inv.dueAt))}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-[#173b2a]">{formatPrice(inv.amount)}</p>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColor(inv.status)}`}>{inv.status}</span>
+                  </div>
+                </div>
+              ))}
+              {!isLoading && invoices.length === 0 && (
+                <div className="rounded-[1.15rem] border border-dashed border-[#d9e0d8] p-6 text-center text-xs text-[#718077]">No invoices yet.</div>
+              )}
+            </div>
+          </div>
+
+          {/* Disbursements */}
+          <div className="rounded-[1.75rem] border border-[#d9e0d8] bg-white p-5 shadow-[0_18px_60px_rgba(38,70,50,0.07)]">
+            <p className="text-sm font-bold text-[#173b2a]">Creator Disbursements</p>
+            <p className="text-xs text-[#718077]">Pending and scheduled creator releases</p>
+            <div className="mt-4 space-y-2">
+              {disbursements.map((d) => (
+                <div key={d.id} className="rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] px-3.5 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-[#173b2a]">{d.creatorName}</p>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColor(d.status)}`}>{d.status}</span>
+                  </div>
+                  <p className="mt-0.5 text-[11px] text-[#718077]">{d.campaignName}</p>
+                  <div className="mt-1.5 flex items-center justify-between text-xs">
+                    <p className="font-bold text-[#173b2a]">{formatPrice(d.amount)}</p>
+                    <p className="text-[#718077]">{formatDate(new Date(d.releaseDate))}</p>
+                  </div>
+                </div>
+              ))}
+              {!isLoading && disbursements.length === 0 && (
+                <div className="rounded-[1.15rem] border border-dashed border-[#d9e0d8] p-6 text-center text-xs text-[#718077]">No scheduled disbursements.</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Compliance note */}
+        <div className="mt-3 flex items-start gap-3 rounded-[1.35rem] border border-[#d9e0d8] bg-white px-4 py-3.5">
+          <ReceiptText className="mt-0.5 size-4 shrink-0 text-[#718077]" />
+          <p className="text-xs text-[#718077]">
+            <span className="font-semibold text-[#526259]">Compliance: </span>
+            For Pakistan payouts, keep business details current, maintain sufficient wallet balance, and use approved payout rails.
+          </p>
+        </div>
+
       </div>
-
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Wallet Balance" value={formatPrice(summary.walletBalance)} icon={Wallet} />
-        <StatsCard title="Monthly Spend" value={formatPrice(summary.monthlySpend)} icon={CreditCard} />
-        <StatsCard title="Pending Escrow" value={formatPrice(summary.pendingEscrow)} icon={CalendarClock} />
-        <StatsCard title="Processing Payouts" value={formatPrice(summary.processingPayouts)} icon={Building2} />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Payment Methods</CardTitle>
-              <CardDescription>Primary rails for campaign funding and creator disbursements</CardDescription>
-            </div>
-            <Dialog open={methodDialogOpen} onOpenChange={setMethodDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Method
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add payment method</DialogTitle>
-                  <DialogDescription>Add a compliant payment rail for Pakistan disbursements.</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label>Type</Label>
-                    <Select
-                      value={newMethodType}
-                      onValueChange={(value) => {
-                        const next = value as BrandPaymentMethodType;
-                        setNewMethodType(next);
-                        setNewMethodLabel(methodTypeLabels[next]);
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(methodTypeLabels).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Display Name</Label>
-                    <Input value={newMethodLabel} onChange={(event) => setNewMethodLabel(event.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Account Mask / Identifier</Label>
-                    <Input
-                      value={newMethodMask}
-                      onChange={(event) => setNewMethodMask(event.target.value)}
-                      placeholder="**** **** **** 4242 or PK36ABCD..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Account Holder</Label>
-                    <Input value={newMethodHolder} onChange={(event) => setNewMethodHolder(event.target.value)} />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setMethodDialogOpen(false)}>Cancel</Button>
-                  <Button onClick={() => void handleAddMethod()} disabled={isSavingMethod}>
-                    {isSavingMethod ? "Saving..." : "Save Method"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {methods.length > 0 ? (
-              methods.map((method) => (
-                <div key={method.id} className="rounded-lg border border-border/60 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{method.label}</p>
-                        <Badge variant="secondary" className={statusVariant(method.status)}>{method.status.replaceAll("_", " ")}</Badge>
-                        {method.isDefault && <Badge className="bg-primary/10 text-primary">Default</Badge>}
-                      </div>
-                      <p className="text-sm text-muted-foreground">{methodTypeLabels[method.type]} - {method.accountMask}</p>
-                      <p className="text-xs text-muted-foreground">Holder: {method.holderName}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      {!method.isDefault && (
-                        <Button variant="outline" size="sm" onClick={() => void setDefaultMethod(method.id)}>
-                          Set Default
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="sm" onClick={() => void removeMethod(method.id)}>
-                        Remove
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                No payment methods configured yet.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Payout Governance</CardTitle>
-            <CardDescription>Industry-standard controls for approval and risk</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <p className="font-medium">Two-level approval</p>
-                <p className="text-sm text-muted-foreground">Require two approvers before release.</p>
-              </div>
-              <Switch
-                checked={controls.requireTwoApprovals}
-                onCheckedChange={(checked) => setControls((current) => ({ ...current, requireTwoApprovals: checked }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Auto-release after deliverable approval (days)</Label>
-              <Input
-                type="number"
-                min={1}
-                value={controls.autoReleaseAfterDays}
-                onChange={(event) => setControls((current) => ({ ...current, autoReleaseAfterDays: Number(event.target.value) || 1 }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Low balance alert threshold (PKR)</Label>
-              <Input
-                type="number"
-                min={50000}
-                value={controls.lowBalanceAlertThreshold}
-                onChange={(event) =>
-                  setControls((current) => ({
-                    ...current,
-                    lowBalanceAlertThreshold: Number(event.target.value) || 50000,
-                  }))
-                }
-              />
-            </div>
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-              <div className="mb-1 flex items-center gap-2 font-medium">
-                <ShieldCheck className="h-4 w-4" />
-                Security posture
-              </div>
-              Enhanced payout controls are active for your workspace.
-            </div>
-            <Button onClick={() => void handleSaveControls()} disabled={isSavingControls} className="w-full">
-              {isSavingControls ? "Saving..." : "Save Controls"}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Invoices</CardTitle>
-            <CardDescription>Billing cycles and payable status</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {invoices.map((invoice) => (
-              <div key={invoice.id} className="flex items-center justify-between rounded-lg border p-3">
-                <div>
-                  <p className="font-medium">{invoice.periodLabel}</p>
-                  <p className="text-xs text-muted-foreground">Due {formatDate(new Date(invoice.dueAt))}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold">{formatPrice(invoice.amount)}</p>
-                  <Badge variant="secondary" className={statusVariant(invoice.status)}>{invoice.status}</Badge>
-                </div>
-              </div>
-            ))}
-            {!isLoading && invoices.length === 0 && (
-              <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">No invoices yet.</div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Upcoming Creator Disbursements</CardTitle>
-            <CardDescription>Pipeline of pending and scheduled creator releases</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {disbursements.map((disbursement) => (
-              <div key={disbursement.id} className="rounded-lg border p-3">
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <p className="font-medium">{disbursement.creatorName}</p>
-                  <Badge variant="secondary" className={statusVariant(disbursement.status)}>{disbursement.status}</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">{disbursement.campaignName}</p>
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <p>{formatPrice(disbursement.amount)}</p>
-                  <p className="text-muted-foreground">{formatDate(new Date(disbursement.releaseDate))}</p>
-                </div>
-              </div>
-            ))}
-            {!isLoading && disbursements.length === 0 && (
-              <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">No scheduled disbursements.</div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><ReceiptText className="h-5 w-5" /> Compliance Notes</CardTitle>
-          <CardDescription>
-            For Pakistan payouts: keep business details current, maintain sufficient wallet balance, and use approved payout rails.
-          </CardDescription>
-        </CardHeader>
-      </Card>
     </div>
   );
 }
-

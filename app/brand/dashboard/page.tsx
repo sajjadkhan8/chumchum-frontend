@@ -162,8 +162,8 @@ export default function BrandDashboardPage() {
                 Track active tastings, discover local food creators, and launch campaigns for restaurants, cafes, hotels, fast food, and dessert shops.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Link href="/brand/offers/new" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#e6aa38] px-5 py-3 text-sm font-extrabold text-[#173b2a]">
-                  Launch an offer <ArrowRight className="size-4" />
+                <Link href="/brand/campaigns/new" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#e6aa38] px-5 py-3 text-sm font-extrabold text-[#173b2a]">
+                  Launch a campaign <ArrowRight className="size-4" />
                 </Link>
                 <Link href="/brand/explore?search=food" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/8 px-5 py-3 text-sm font-bold text-white hover:bg-white/12">
                   Find food creators <Search className="size-4" />
@@ -246,9 +246,9 @@ export default function BrandDashboardPage() {
                 }) : (
                   <EmptyPanel
                     title="No active tastings yet"
-                    copy="Once a creator accepts your offer, the campaign timeline and deliverables will show up here."
-                    href="/brand/offers/new"
-                    action="Create first offer"
+                    copy="Once a creator accepts your campaign, the timeline and deliverables will show up here."
+                    href="/brand/campaigns/new"
+                    action="Create first campaign"
                   />
                 )}
               </div>
@@ -314,7 +314,7 @@ export default function BrandDashboardPage() {
               <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.04em] text-[#173b2a]">Move faster</h2>
               <div className="mt-5 grid gap-2">
                 {[
-                  { href: "/brand/offers/new", label: "Post a tasting offer", icon: Utensils },
+                  { href: "/brand/campaigns/new", label: "Post a tasting campaign", icon: Utensils },
                   { href: "/brand/explore?search=food", label: "Find food vloggers", icon: Search },
                   { href: "/brand/messages", label: "Open conversations", icon: MessageCircle },
                   { href: "/brand/analytics", label: "Review performance", icon: TrendingUp },

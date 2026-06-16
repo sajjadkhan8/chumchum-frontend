@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Search, TrendingUp, Star, Wallet, MapPin, Crown, Heart, Grid, List, BadgeCheck, Sparkles, SlidersHorizontal, Users } from 'lucide-react';
+import { Search, TrendingUp, Star, Wallet, MapPin, Crown, Heart, Grid, List, Sparkles, SlidersHorizontal, Users, ArrowRight, CalendarClock } from 'lucide-react';
+import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CreatorCard } from '@/components/creator-card';
 import { FilterPanel } from '@/components/filter-panel';
 import { QuickDealModal } from '@/components/quick-deal-modal';
@@ -25,8 +27,9 @@ import { useFilterStore } from '@/store/filter-store';
 import { useAuthStore } from '@/store/auth-store';
 import { creatorsService } from '@/services/creators.service';
 import { savedCreatorsService } from '@/services/saved-creators.service';
-import type { Creator, DealType } from '@/types';
-import { cn, formatPrice } from '@/lib/utils';
+import { ambassadorService } from '@/services/ambassador.service';
+import type { Creator, DealType, PlatformAmbassador } from '@/types';
+import { cn, formatFollowers, formatPrice } from '@/lib/utils';
 import Link from 'next/link';
 
 const sortOptions = [
@@ -52,6 +55,104 @@ function HeroStat({ label, value, icon: Icon }: { label: string; value: string; 
   );
 }
 
+function profileImageUrl(person: Creator) {
+  return person.contentPreviews[0]?.thumbnail || person.coverImage || person.avatar;
+}
+
+function AmbassadorRow({ ambassador }: { ambassador: PlatformAmbassador }) {
+  return (
+    <article className="group overflow-hidden rounded-[1.45rem] border border-[#d9e0d8] bg-white shadow-[0_14px_45px_rgba(38,70,50,0.055)] transition hover:-translate-y-0.5 hover:border-[#b7c8bd] hover:shadow-[0_22px_70px_rgba(38,70,50,0.10)]">
+      <div className="grid gap-0 md:grid-cols-[220px_minmax(0,1fr)_190px]">
+        <div className="relative min-h-[190px] overflow-hidden md:min-h-full">
+          <Image
+            src={profileImageUrl(ambassador)}
+            alt={ambassador.name}
+            fill
+            className="object-cover transition duration-500 group-hover:scale-105"
+            sizes="(min-width: 768px) 220px, 100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#173b2a]/80 via-transparent to-transparent" />
+          <Badge className="absolute left-3 top-3 rounded-full bg-[#e6aa38] text-[11px] font-black text-[#173b2a]">
+            <Crown className="mr-1 size-3" />
+            Ambassador
+          </Badge>
+          {ambassador.isExclusive && (
+            <Badge className="absolute bottom-3 left-3 rounded-full bg-white/90 text-[11px] font-black text-[#185c39]">
+              Exclusive partner
+            </Badge>
+          )}
+        </div>
+
+        <div className="min-w-0 p-4 sm:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <Avatar className="size-12 border border-[#d9e0d8]">
+                <AvatarImage src={ambassador.avatar} alt={ambassador.name} />
+                <AvatarFallback className="bg-[#185c39] font-black text-white">{ambassador.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <h2 className="line-clamp-1 text-xl font-black tracking-[-0.04em] text-[#173b2a]">{ambassador.name}</h2>
+                <p className="mt-1 flex items-center gap-1.5 text-sm font-bold text-[#718077]">
+                  <MapPin className="size-3.5 text-[#b77a12]" />
+                  {ambassador.city}
+                </p>
+              </div>
+            </div>
+            <div className="rounded-full bg-[#fff1cd] px-3 py-1.5 text-sm font-black text-[#8b5e12]">
+              {ambassador.rating} rating
+            </div>
+          </div>
+
+          <p className="mt-4 line-clamp-2 text-sm leading-6 text-[#647168]">{ambassador.bio}</p>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {ambassador.categories.slice(0, 4).map((category) => (
+              <span key={category} className="rounded-full bg-[#f4f2e9] px-2.5 py-1 text-[11px] font-black text-[#607168]">
+                {category}
+              </span>
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-2 text-sm font-bold text-[#607168] sm:grid-cols-3">
+            <span className="inline-flex items-center gap-2 rounded-2xl bg-[#fbfaf5] px-3 py-2">
+              <Users className="size-4 text-[#185c39]" />
+              {formatFollowers(ambassador.totalFollowers)}
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-2xl bg-[#fbfaf5] px-3 py-2">
+              <TrendingUp className="size-4 text-[#185c39]" />
+              {ambassador.avgEngagementRate}% engagement
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-2xl bg-[#fbfaf5] px-3 py-2">
+              <CalendarClock className="size-4 text-[#185c39]" />
+              {ambassador.responseTime}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col justify-between gap-3 border-t border-[#edf0eb] bg-[#fbfaf5] p-4 md:border-l md:border-t-0">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#b77a12]">Managed from</p>
+            <p className="mt-1 text-2xl font-black tracking-[-0.05em] text-[#173b2a]">
+              {formatPrice(ambassador.monthlyBase || ambassador.minPrice || 50000)}
+            </p>
+            <p className="mt-1 text-xs font-bold text-[#718077]">Platform support included</p>
+          </div>
+          <div className="grid gap-2">
+            <Button asChild className="rounded-full bg-[#185c39] font-black text-white hover:bg-[#12462b]">
+              <Link href={`/creator/${ambassador.username}`}>
+                View profile <ArrowRight className="ml-2 size-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-full border-[#d9e0d8] bg-white font-black text-[#185c39] hover:bg-[#e7f0ea]">
+              <Link href="/brand/campaigns/new">Start campaign</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function ExplorePageContent() {
   const pathname = usePathname();
   const router = useRouter();
@@ -59,13 +160,17 @@ function ExplorePageContent() {
   const { filters, setFilters } = useFilterStore();
   const { loadSavedCreators } = useAuthStore();
 
-  const creatorView = searchParams.get('view') === 'saved' ? 'saved' : 'all';
+  const rawView = searchParams.get('view');
+  const creatorView: 'all' | 'ambassadors' | 'saved' =
+    rawView === 'saved' ? 'saved' : rawView === 'ambassadors' ? 'ambassadors' : 'all';
 
   const [creators, setCreators] = useState<Creator[]>([]);
   const [isLoadingCreators, setIsLoadingCreators] = useState(true);
   const [hasCreatorsError, setHasCreatorsError] = useState(false);
   const [savedCreatorsList, setSavedCreatorsList] = useState<Creator[]>([]);
   const [isLoadingSaved, setIsLoadingSaved] = useState(true);
+  const [ambassadors, setAmbassadors] = useState<PlatformAmbassador[]>([]);
+  const [isLoadingAmbassadors, setIsLoadingAmbassadors] = useState(false);
 
   const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
   const [isQuickDealOpen, setIsQuickDealOpen] = useState(false);
@@ -73,10 +178,12 @@ function ExplorePageContent() {
   const [savedSortBy, setSavedSortBy] = useState('recent');
   const [savedViewMode, setSavedViewMode] = useState<'grid' | 'list'>('grid');
 
-  const setCreatorView = (nextView: 'all' | 'saved') => {
+  const setCreatorView = (nextView: 'all' | 'ambassadors' | 'saved') => {
     const params = new URLSearchParams(searchParams.toString());
     if (nextView === 'saved') {
       params.set('view', 'saved');
+    } else if (nextView === 'ambassadors') {
+      params.set('view', 'ambassadors');
     } else {
       params.delete('view');
     }
@@ -133,6 +240,16 @@ function ExplorePageContent() {
 
     void fetchSavedCreators();
   }, [loadSavedCreators]);
+
+  useEffect(() => {
+    const fetchAmbassadors = async () => {
+      setIsLoadingAmbassadors(true);
+      const data = await ambassadorService.listAmbassadors(24).catch(() => []);
+      setAmbassadors(data);
+      setIsLoadingAmbassadors(false);
+    };
+    void fetchAmbassadors();
+  }, []);
 
   const handleQuickDeal = (creator: Creator) => {
     setSelectedCreator(creator);
@@ -195,12 +312,6 @@ function ExplorePageContent() {
                   <Sparkles className="size-3.5" />
                   Creator discovery desk
                 </div>
-                <h1 className="mt-4 text-[clamp(2rem,4.4vw,4rem)] font-black leading-[0.98] tracking-[-0.06em]">
-                  Find food creators without the browsing sprawl.
-                </h1>
-                <p className="mt-4 max-w-2xl text-sm leading-6 text-[#c7d8ce] sm:text-base">
-                  Search restaurant reviewers, cafe storytellers, hotel creators, fast-food voices, and dessert specialists from one tighter workspace.
-                </p>
               </div>
 
               <div className="inline-flex w-full rounded-full border border-white/12 bg-white/8 p-1 lg:w-auto">
@@ -215,10 +326,22 @@ function ExplorePageContent() {
                 <Button
                   variant="ghost"
                   size="sm"
+                  className={cn('flex-1 rounded-full font-black text-[#d4e0d8] hover:bg-white/10 hover:text-white lg:flex-none', creatorView === 'ambassadors' && 'bg-[#e6aa38] text-[#173b2a] hover:bg-[#e6aa38] hover:text-[#173b2a]')}
+                  onClick={() => setCreatorView('ambassadors')}
+                >
+                  <Crown className="mr-1.5 size-3.5" />
+                  Platform Ambassadors
+                  <Badge className="ml-2 h-5 rounded-full bg-white/16 px-1.5 text-[10px] text-current">
+                    {ambassadors.length}
+                  </Badge>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className={cn('flex-1 rounded-full font-black text-[#d4e0d8] hover:bg-white/10 hover:text-white lg:flex-none', creatorView === 'saved' && 'bg-[#e6aa38] text-[#173b2a] hover:bg-[#e6aa38] hover:text-[#173b2a]')}
                   onClick={() => setCreatorView('saved')}
                 >
-                  Saved
+                  Saved Creators
                   <Badge className="ml-2 h-5 rounded-full bg-white/16 px-1.5 text-[10px] text-current">
                     {savedCreatorsList.length}
                   </Badge>
@@ -228,8 +351,8 @@ function ExplorePageContent() {
 
             <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
               <HeroStat label="Creators" value={isLoadingCreators ? '...' : String(creators.length)} icon={Users} />
+              <HeroStat label="Ambassadors" value={isLoadingAmbassadors ? '...' : String(ambassadors.length)} icon={Crown} />
               <HeroStat label="Saved" value={String(savedCreatorsList.length)} icon={Heart} />
-              <HeroStat label="Filters" value={String(activeFilterCount)} icon={SlidersHorizontal} />
             </div>
           </div>
         </section>
@@ -245,10 +368,6 @@ function ExplorePageContent() {
                 <div>
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b77a12]">Search creators</p>
-                    <Link href="/brand/ambassadors" className="hidden items-center gap-1.5 rounded-full bg-[#e7f0ea] px-3 py-1.5 text-xs font-black text-[#185c39] sm:inline-flex">
-                      <Crown className="size-3.5" />
-                      Ambassadors
-                    </Link>
                   </div>
                   <div className="relative">
                     <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#7b867f]" />
@@ -368,26 +487,6 @@ function ExplorePageContent() {
               </aside>
 
               <div className="min-w-0">
-                <div className="mb-3 rounded-[1.35rem] border border-[#d9e0d8] bg-white p-3 shadow-[0_12px_38px_rgba(38,70,50,0.05)]">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="grid size-10 place-items-center rounded-2xl bg-[#f4f2e9] text-[#b77a12]">
-                        <Crown className="size-5" />
-                      </span>
-                      <div>
-                        <p className="inline-flex items-center gap-2 text-sm font-black text-[#173b2a]">
-                          Need safer first picks?
-                          <Badge className="rounded-full bg-[#e7f0ea] text-[10px] font-black text-[#185c39]">Managed</Badge>
-                        </p>
-                        <p className="text-xs font-bold text-[#718077]">Use Platform Ambassadors for high-trust food launches.</p>
-                      </div>
-                    </div>
-                    <Button asChild variant="outline" className="rounded-full border-[#d9e0d8] bg-[#fbfaf5] font-black text-[#185c39] hover:bg-[#e7f0ea]">
-                      <Link href="/brand/ambassadors">View Ambassadors</Link>
-                    </Button>
-                  </div>
-                </div>
-
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-sm font-black text-[#173b2a]">
                     {isLoadingCreators ? 'Loading creators...' : `${creators.length} creators found`}
@@ -439,6 +538,61 @@ function ExplorePageContent() {
               </div>
             </section>
           </>
+        ) : creatorView === 'ambassadors' ? (
+          <motion.section
+            key="ambassadors"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4"
+          >
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b77a12]">Curated roster</p>
+                <h2 className="mt-1 flex items-center gap-2 text-2xl font-black tracking-[-0.05em] text-[#173b2a]">
+                  <Crown className="size-6 text-[#b77a12]" />
+                  Platform Ambassadors
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-[#647168]">
+                  Pre-vetted creators managed by ZingZing. Ideal for high-trust launches, tasting nights, and premium food campaigns.
+                </p>
+              </div>
+              {!isLoadingAmbassadors && ambassadors.length > 0 && (
+                <Button asChild className="rounded-full bg-[#185c39] font-black text-white hover:bg-[#12462b]">
+                  <Link href="/brand/campaigns/new">
+                    Start campaign <ArrowRight className="ml-2 size-4" />
+                  </Link>
+                </Button>
+              )}
+            </div>
+
+            {isLoadingAmbassadors ? (
+              <div className="rounded-[1.5rem] border border-[#d9e0d8] bg-white p-8 text-center">
+                <p className="text-sm font-bold text-[#647168]">Loading ambassadors...</p>
+              </div>
+            ) : ambassadors.length === 0 ? (
+              <div className="rounded-[1.45rem] border border-dashed border-[#cdd7ce] bg-white p-6 text-center shadow-[0_14px_45px_rgba(38,70,50,0.055)]">
+                <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#f4f2e9] text-[#b77a12]">
+                  <Crown className="size-5" />
+                </div>
+                <h2 className="mt-4 text-xl font-black tracking-[-0.04em] text-[#173b2a]">Ambassadors are being curated.</h2>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#647168]">
+                  You can still browse food creators and start a campaign while the ambassador roster grows.
+                </p>
+                <Button
+                  className="mt-5 rounded-full bg-[#185c39] font-black text-white hover:bg-[#12462b]"
+                  onClick={() => setCreatorView('all')}
+                >
+                  Browse all creators
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {ambassadors.map((ambassador) => (
+                  <AmbassadorRow key={ambassador.id} ambassador={ambassador} />
+                ))}
+              </div>
+            )}
+          </motion.section>
         ) : (
           <section className="mt-4">
             <div className="rounded-[1.5rem] border border-[#d9e0d8] bg-white p-3 shadow-[0_16px_54px_rgba(38,70,50,0.06)] sm:p-4">

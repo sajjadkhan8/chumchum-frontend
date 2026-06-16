@@ -16,7 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { cn, formatFollowers, formatPrice, formatRelativeTime } from '@/lib/utils';
 import { getCreatorGlobalSearchResults, type CreatorGlobalSearchResults as CreatorGlobalSearchPayload, type CreatorSearchBrandResult } from '@/lib/search/creator-search';
-import type { BrandOffer, Creator } from '@/types';
+import type { BrandCampaign, Creator } from '@/types';
 
 type SearchTab = 'brands' | 'offers' | 'creators';
 type SortOption = 'relevant' | 'top-rated' | 'budget-high';
@@ -55,7 +55,7 @@ const formatShortRs = (amount: number) => {
 
 const titleCase = (value: string) => value.replace(/[-_]/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 
-const contentTypeTokens = (offer: BrandOffer) => {
+const contentTypeTokens = (offer: BrandCampaign) => {
   const combined = [offer.offerType, offer.contentFormats, offer.targetPlatforms].flatMap((value) => splitList(value));
   const values = new Set<string>();
   for (const token of combined) {
@@ -69,7 +69,7 @@ const contentTypeTokens = (offer: BrandOffer) => {
   return Array.from(values);
 };
 
-const offerIndustryTokens = (offer: BrandOffer) => {
+const offerIndustryTokens = (offer: BrandCampaign) => {
   const tokens = [...splitList(offer.categories), ...splitList(offer.niches)];
   return tokens.length > 0 ? tokens : ['Brand collaborations'];
 };
@@ -102,7 +102,7 @@ const creatorMatchesContentType = (creator: Creator, contentTypes: string[]) => 
   });
 };
 
-const offerDaysLeft = (offer: BrandOffer) => {
+const offerDaysLeft = (offer: BrandCampaign) => {
   if (!offer.deadlineDate) return null;
   const deadline = new Date(offer.deadlineDate);
   if (Number.isNaN(deadline.getTime())) return null;
@@ -114,12 +114,12 @@ const offerDaysLeft = (offer: BrandOffer) => {
   return `${days} days left`;
 };
 
-const compactOfferBudget = (offer: BrandOffer) => {
+const compactOfferBudget = (offer: BrandCampaign) => {
   const average = Math.round((offer.budgetMin + offer.budgetMax) / 2);
   return average > 0 ? formatShortRs(average) : formatPrice(offer.budgetMax || offer.budgetMin || 0);
 };
 
-const dedupeOffers = (offers: BrandOffer[]) => {
+const dedupeOffers = (offers: BrandCampaign[]) => {
   const seen = new Set<string>();
   return offers.filter((offer) => {
     if (seen.has(offer.id)) return false;
@@ -308,7 +308,7 @@ function BrandResultCard({
   );
 }
 
-function OfferResultCard({ offer, brand, compact = false }: { offer: BrandOffer; brand?: CreatorSearchBrandResult; compact?: boolean }) {
+function OfferResultCard({ offer, brand, compact = false }: { offer: BrandCampaign; brand?: CreatorSearchBrandResult; compact?: boolean }) {
   const deadlineLabel = offerDaysLeft(offer);
   const contentTypes = contentTypeTokens(offer);
   const brandInitials = brand?.initials ?? offer.brandName.slice(0, 2).toUpperCase();

@@ -1,13 +1,13 @@
 import { apiClient } from '@/lib/api/client';
 import type {
-  BrandOffer,
-  BrandOfferReaction,
-  BrandOfferReactionStatus,
-  BrandOfferReactionType,
-  BrandOfferStatus,
+  BrandCampaign,
+  BrandCampaignReaction,
+  BrandCampaignReactionStatus,
+  BrandCampaignReactionType,
+  BrandCampaignStatus,
 } from '@/types';
 
-interface BackendBrandOffer {
+interface BackendBrandCampaign {
    id: string;
    brandId: string;
    brandName?: string;
@@ -64,10 +64,10 @@ interface BackendBrandOffer {
    reactionCount?: number;
  }
 
-interface BackendOfferReaction {
+interface BackendCampaignReaction {
   id: string;
-  offerId: string;
-  offerTitle?: string;
+  campaignId: string;
+  campaignTitle?: string;
   brandName?: string;
   creatorId: string;
   creatorName?: string;
@@ -91,25 +91,25 @@ const toDate = (value?: string) => {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 };
 
-const normalizeOfferStatus = (value?: string): BrandOfferStatus => {
+const normalizeCampaignStatus = (value?: string): BrandCampaignStatus => {
   const next = (value || '').toLowerCase();
   if (next === 'published' || next === 'paused' || next === 'closed' || next === 'archived') return next;
   return 'draft';
 };
 
-const normalizeReactionType = (value?: string): BrandOfferReactionType => {
+const normalizeReactionType = (value?: string): BrandCampaignReactionType => {
   const next = (value || '').toLowerCase();
   if (next === 'proposal' || next === 'question' || next === 'decline') return next;
   return 'interested';
 };
 
-const normalizeReactionStatus = (value?: string): BrandOfferReactionStatus => {
+const normalizeReactionStatus = (value?: string): BrandCampaignReactionStatus => {
   const next = (value || '').toLowerCase();
   if (next === 'shortlisted' || next === 'in_review' || next === 'accepted' || next === 'rejected' || next === 'withdrawn') return next;
   return 'submitted';
 };
 
-const mapOffer = (input: BackendBrandOffer): BrandOffer => ({
+const mapCampaign = (input: BackendBrandCampaign): BrandCampaign => ({
    id: input.id,
    brandId: input.brandId,
    brandName: input.brandName || 'Brand',
@@ -158,7 +158,7 @@ const mapOffer = (input: BackendBrandOffer): BrandOffer => ({
    contentSubmissionDeadline: input.contentSubmissionDeadline,
    goLiveDate: input.goLiveDate,
    campaignDuration: input.campaignDuration,
-   status: normalizeOfferStatus(input.status),
+   status: normalizeCampaignStatus(input.status),
    publishedAt: toDate(input.publishedAt),
    closedAt: toDate(input.closedAt),
    createdAt: toDate(input.createdAt) || new Date(),
@@ -166,10 +166,10 @@ const mapOffer = (input: BackendBrandOffer): BrandOffer => ({
    reactionCount: input.reactionCount || 0,
  });
 
-const mapReaction = (input: BackendOfferReaction): BrandOfferReaction => ({
+const mapReaction = (input: BackendCampaignReaction): BrandCampaignReaction => ({
   id: input.id,
-  offerId: input.offerId,
-  offerTitle: input.offerTitle,
+  campaignId: input.campaignId,
+  campaignTitle: input.campaignTitle,
   brandName: input.brandName,
   creatorId: input.creatorId,
   creatorName: input.creatorName || 'Creator',
@@ -187,8 +187,8 @@ const mapReaction = (input: BackendOfferReaction): BrandOfferReaction => ({
   updatedAt: toDate(input.updatedAt) || new Date(),
 });
 
-export const offersService = {
-   async createOffer(payload: {
+export const campaignsService = {
+   async createCampaign(payload: {
      title: string;
      brief: string;
      offerType: string;
@@ -234,12 +234,12 @@ export const offersService = {
      contentSubmissionDeadline?: string;
      goLiveDate?: string;
      campaignDuration?: number;
-   }): Promise<BrandOffer> {
-     const response = await apiClient.post<BackendBrandOffer>('/api/v1/brand/offers', payload);
-     return mapOffer(response);
+   }): Promise<BrandCampaign> {
+     const response = await apiClient.post<BackendBrandCampaign>('/api/v1/brand/campaigns', payload);
+     return mapCampaign(response);
    },
 
-   async updateOffer(offerId: string, payload: Partial<{
+   async updateCampaign(campaignId: string, payload: Partial<{
      title: string;
      brief: string;
      offerType: string;
@@ -285,38 +285,38 @@ export const offersService = {
      contentSubmissionDeadline: string;
      goLiveDate: string;
      campaignDuration: number;
-   }>): Promise<BrandOffer> {
-     const response = await apiClient.patch<BackendBrandOffer>(`/api/v1/brand/offers/${offerId}`, payload);
-     return mapOffer(response);
+   }>): Promise<BrandCampaign> {
+     const response = await apiClient.patch<BackendBrandCampaign>(`/api/v1/brand/campaigns/${campaignId}`, payload);
+     return mapCampaign(response);
    },
 
-  async updateOfferStatus(offerId: string, status: Uppercase<BrandOfferStatus>): Promise<BrandOffer> {
-    const response = await apiClient.patch<BackendBrandOffer>(`/api/v1/brand/offers/${offerId}/status`, { status });
-    return mapOffer(response);
+  async updateCampaignStatus(campaignId: string, status: Uppercase<BrandCampaignStatus>): Promise<BrandCampaign> {
+    const response = await apiClient.patch<BackendBrandCampaign>(`/api/v1/brand/campaigns/${campaignId}/status`, { status });
+    return mapCampaign(response);
   },
 
-  async getBrandOffers(page = 0, size = 20): Promise<{ content: BrandOffer[]; totalElements: number; totalPages: number; last: boolean }> {
-    const response = await apiClient.get<{ content: BackendBrandOffer[]; totalElements: number; totalPages: number; last: boolean }>('/api/v1/brand/offers', { query: { page, size } });
+  async getBrandCampaigns(page = 0, size = 20): Promise<{ content: BrandCampaign[]; totalElements: number; totalPages: number; last: boolean }> {
+    const response = await apiClient.get<{ content: BackendBrandCampaign[]; totalElements: number; totalPages: number; last: boolean }>('/api/v1/brand/campaigns', { query: { page, size } });
     return {
-      content: (response.content || []).map(mapOffer),
+      content: (response.content || []).map(mapCampaign),
       totalElements: response.totalElements || 0,
       totalPages: response.totalPages || 1,
       last: response.last ?? true,
     };
   },
 
-  async getBrandOffer(offerId: string): Promise<BrandOffer> {
-    const response = await apiClient.get<BackendBrandOffer>(`/api/v1/brand/offers/${offerId}`);
-    return mapOffer(response);
+  async getBrandCampaign(campaignId: string): Promise<BrandCampaign> {
+    const response = await apiClient.get<BackendBrandCampaign>(`/api/v1/brand/campaigns/${campaignId}`);
+    return mapCampaign(response);
   },
 
-  async getOfferReactions(offerId: string, filters?: {
+  async getCampaignReactions(campaignId: string, filters?: {
     status?: string;
     reactionType?: string;
     page?: number;
     size?: number;
-  }): Promise<{ content: BrandOfferReaction[]; totalElements: number; totalPages: number; last: boolean }> {
-    const response = await apiClient.get<{ content: BackendOfferReaction[]; totalElements: number; totalPages: number; last: boolean }>(`/api/v1/brand/offers/${offerId}/reactions`, {
+  }): Promise<{ content: BrandCampaignReaction[]; totalElements: number; totalPages: number; last: boolean }> {
+    const response = await apiClient.get<{ content: BackendCampaignReaction[]; totalElements: number; totalPages: number; last: boolean }>(`/api/v1/brand/campaigns/${campaignId}/reactions`, {
       query: {
         status: filters?.status,
         reactionType: filters?.reactionType,
@@ -332,15 +332,15 @@ export const offersService = {
     };
   },
 
-  async actionReaction(offerId: string, reactionId: string, action: 'SHORTLIST' | 'REVIEW' | 'ACCEPT' | 'REJECT', brandNote?: string): Promise<BrandOfferReaction> {
-    const response = await apiClient.patch<BackendOfferReaction>(`/api/v1/brand/offers/${offerId}/reactions/${reactionId}`, {
+  async actionReaction(campaignId: string, reactionId: string, action: 'SHORTLIST' | 'REVIEW' | 'ACCEPT' | 'REJECT', brandNote?: string): Promise<BrandCampaignReaction> {
+    const response = await apiClient.patch<BackendCampaignReaction>(`/api/v1/brand/campaigns/${campaignId}/reactions/${reactionId}`, {
       action,
       brandNote,
     });
     return mapReaction(response);
   },
 
-  async getCreatorOfferFeed(filters?: {
+  async getCreatorCampaignFeed(filters?: {
     search?: string;
     city?: string;
     offerType?: string;
@@ -350,8 +350,8 @@ export const offersService = {
     budgetMax?: number;
     page?: number;
     size?: number;
-  }): Promise<{ content: BrandOffer[]; totalElements: number; totalPages: number; last: boolean }> {
-    const response = await apiClient.get<{ content: BackendBrandOffer[]; totalElements: number; totalPages: number; last: boolean }>('/api/v1/creator/offers', {
+  }): Promise<{ content: BrandCampaign[]; totalElements: number; totalPages: number; last: boolean }> {
+    const response = await apiClient.get<{ content: BackendBrandCampaign[]; totalElements: number; totalPages: number; last: boolean }>('/api/v1/creator/campaigns', {
       query: {
         search: filters?.search,
         city: filters?.city,
@@ -365,44 +365,44 @@ export const offersService = {
       },
     });
     return {
-      content: (response.content || []).map(mapOffer),
+      content: (response.content || []).map(mapCampaign),
       totalElements: response.totalElements || 0,
       totalPages: response.totalPages || 1,
       last: response.last ?? true,
     };
   },
 
-  async getCreatorOffer(offerId: string): Promise<BrandOffer> {
-    const response = await apiClient.get<BackendBrandOffer>(`/api/v1/creator/offers/${offerId}`);
-    return mapOffer(response);
+  async getCreatorCampaign(campaignId: string): Promise<BrandCampaign> {
+    const response = await apiClient.get<BackendBrandCampaign>(`/api/v1/creator/campaigns/${campaignId}`);
+    return mapCampaign(response);
   },
 
-  async reactToOffer(offerId: string, payload: {
-    reactionType: Uppercase<BrandOfferReactionType>;
+  async reactToCampaign(campaignId: string, payload: {
+    reactionType: Uppercase<BrandCampaignReactionType>;
     message?: string;
     proposedPrice?: number;
     proposedCurrency?: string;
     proposedDeliveryDays?: number;
     creatorNote?: string;
-  }): Promise<BrandOfferReaction> {
-    const response = await apiClient.post<BackendOfferReaction>(`/api/v1/creator/offers/${offerId}/reactions`, payload);
+  }): Promise<BrandCampaignReaction> {
+    const response = await apiClient.post<BackendCampaignReaction>(`/api/v1/creator/campaigns/${campaignId}/reactions`, payload);
     return mapReaction(response);
   },
 
-  async updateCreatorReaction(offerId: string, reactionId: string, payload: {
+  async updateCreatorReaction(campaignId: string, reactionId: string, payload: {
     message?: string;
     proposedPrice?: number;
     proposedCurrency?: string;
     proposedDeliveryDays?: number;
     creatorNote?: string;
-    status?: Uppercase<BrandOfferReactionStatus>;
-  }): Promise<BrandOfferReaction> {
-    const response = await apiClient.patch<BackendOfferReaction>(`/api/v1/creator/offers/${offerId}/reactions/${reactionId}`, payload);
+    status?: Uppercase<BrandCampaignReactionStatus>;
+  }): Promise<BrandCampaignReaction> {
+    const response = await apiClient.patch<BackendCampaignReaction>(`/api/v1/creator/campaigns/${campaignId}/reactions/${reactionId}`, payload);
     return mapReaction(response);
   },
 
-  async getMyReactions(page = 0, size = 20): Promise<{ content: BrandOfferReaction[]; totalElements: number; totalPages: number; last: boolean }> {
-    const response = await apiClient.get<{ content: BackendOfferReaction[]; totalElements: number; totalPages: number; last: boolean }>('/api/v1/creator/offers/reactions/mine', { query: { page, size } });
+  async getMyReactions(page = 0, size = 20): Promise<{ content: BrandCampaignReaction[]; totalElements: number; totalPages: number; last: boolean }> {
+    const response = await apiClient.get<{ content: BackendCampaignReaction[]; totalElements: number; totalPages: number; last: boolean }>('/api/v1/creator/campaigns/reactions/mine', { query: { page, size } });
     return {
       content: (response.content || []).map(mapReaction),
       totalElements: response.totalElements || 0,
@@ -411,4 +411,3 @@ export const offersService = {
     };
   },
 };
-

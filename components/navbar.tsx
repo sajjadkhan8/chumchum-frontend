@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Menu, Bell, MessageCircle, User, LogOut, Bookmark, Building2, Moon, Sun, Shield, Settings, Share2, Star, CircleHelp, X, ChevronRight } from 'lucide-react';
+import { Search, Menu, Bell, MessageCircle, User, LogOut, Building2, Moon, Sun, Shield, Settings, Share2, Star, CircleHelp, X, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -173,9 +173,8 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
 
   const brandNavLinks = [
     { href: '/brand/dashboard', label: 'Dashboard' },
-    { href: '/brand/offers', label: 'Offers' },
-    { href: '/brand/ambassadors', label: 'Platform Ambassadors' },
     { href: '/brand/explore', label: 'Creators' },
+    { href: '/brand/campaigns', label: 'Campaigns' },
     { href: '/brand/orders', label: 'Orders' },
     { href: '/brand/payments', label: 'Payments' },
   ];
@@ -203,9 +202,8 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
         { href: '/creator/settings/preferences', label: 'Preferences', icon: Settings },
       ]
     : [
-        { href: '/brand/settings?tab=profile', label: 'Company Profile', icon: Building2 },
-        { href: '/brand/explore?view=saved', label: 'Saved Creators', icon: Bookmark },
-        { href: '/brand/settings?tab=notifications', label: 'Settings', icon: User },
+        { href: '/brand/profile', label: 'Company Profile', icon: Building2 },
+        { href: '/brand/settings', label: 'Settings', icon: Settings },
       ];
 
   const messagesLink = isSignedIn && !isAdmin ? `/${user.role}/messages` : '/messages';
@@ -235,7 +233,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const runCreatorGlobalSearch = () => {
     const term = creatorGlobalSearch.trim();
     if (!term) {
-      router.push('/creator/offers');
+      router.push('/creator/campaigns');
       return;
     }
 
@@ -310,8 +308,8 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               <input
                 type="text"
                 role="searchbox"
-                aria-label="Search offers, brands, or creators"
-                placeholder="Search offers, brands, or creators..."
+                aria-label="Search campaigns, brands, or creators"
+                placeholder="Search campaigns, brands, or creators..."
                 className="h-10 w-full rounded-full border-0 bg-transparent pl-11 pr-11 text-sm font-semibold text-[#1e3d2e] outline-none placeholder:font-medium placeholder:text-[#87938b]"
                 value={creatorGlobalSearch}
                 onChange={(e) => setCreatorGlobalSearch(e.target.value)}

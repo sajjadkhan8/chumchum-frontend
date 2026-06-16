@@ -207,11 +207,11 @@ export interface Brand {
   activeOrders: number;
 }
 
-export type BrandOfferStatus = 'draft' | 'published' | 'paused' | 'closed' | 'archived';
-export type BrandOfferReactionType = 'interested' | 'proposal' | 'question' | 'decline';
-export type BrandOfferReactionStatus = 'submitted' | 'shortlisted' | 'in_review' | 'accepted' | 'rejected' | 'withdrawn';
+export type BrandCampaignStatus = 'draft' | 'published' | 'paused' | 'closed' | 'archived';
+export type BrandCampaignReactionType = 'interested' | 'proposal' | 'question' | 'decline';
+export type BrandCampaignReactionStatus = 'submitted' | 'shortlisted' | 'in_review' | 'accepted' | 'rejected' | 'withdrawn';
 
-export interface BrandOffer {
+export interface BrandCampaign {
    id: string;
    brandId: string;
    brandName: string;
@@ -261,7 +261,7 @@ export interface BrandOffer {
    contentSubmissionDeadline?: string;
    goLiveDate?: string;
    campaignDuration?: number;
-   status: BrandOfferStatus;
+   status: BrandCampaignStatus;
    publishedAt?: Date;
    closedAt?: Date;
    createdAt: Date;
@@ -269,16 +269,16 @@ export interface BrandOffer {
    reactionCount: number;
  }
 
-export interface BrandOfferReaction {
+export interface BrandCampaignReaction {
   id: string;
-  offerId: string;
-  offerTitle?: string;
+  campaignId: string;
+  campaignTitle?: string;
   brandName?: string;
   creatorId: string;
   creatorName: string;
   creatorAvatar?: string;
-  reactionType: BrandOfferReactionType;
-  status: BrandOfferReactionStatus;
+  reactionType: BrandCampaignReactionType;
+  status: BrandCampaignReactionStatus;
   message?: string;
   proposedPrice?: number;
   proposedCurrency?: string;

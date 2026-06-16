@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle, Clock, MessageSquare, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { offersService } from '@/services/offers.service';
-import type { BrandOfferReaction } from '@/types';
+import { campaignsService } from '@/services/campaigns.service';
+import type { BrandCampaignReaction } from '@/types';
 import { formatPrice, formatRelativeTime } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -38,7 +38,7 @@ const canWithdraw = (status: string) =>
   ['submitted', 'shortlisted', 'in_review'].includes(status?.toLowerCase());
 
 export default function CreatorOfferReactionsPage() {
-  const [reactions, setReactions] = useState<BrandOfferReaction[]>([]);
+  const [reactions, setReactions] = useState<BrandCampaignReaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -46,7 +46,7 @@ export default function CreatorOfferReactionsPage() {
 
   const load = useCallback(async (nextPage = 0, append = false) => {
     setIsLoading(true);
-    const result = await offersService
+    const result = await campaignsService
       .getMyReactions(nextPage, 20)
       .catch(() => ({ content: [], totalElements: 0, totalPages: 1, last: true }));
     setReactions(append ? (prev) => [...prev, ...result.content] : result.content);
@@ -60,9 +60,9 @@ export default function CreatorOfferReactionsPage() {
     void load(0);
   }, [load]);
 
-  const withdraw = async (reaction: BrandOfferReaction) => {
+  const withdraw = async (reaction: BrandCampaignReaction) => {
     try {
-      const updated = await offersService.updateCreatorReaction(reaction.offerId, reaction.id, {
+      const updated = await campaignsService.updateCreatorReaction(reaction.campaignId, reaction.id, {
         status: 'WITHDRAWN',
       });
       setReactions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
@@ -210,7 +210,7 @@ export default function CreatorOfferReactionsPage() {
                   <div className="flex items-start justify-between gap-3 border-b border-[#e8eeeb] px-5 py-4">
                     <div className="min-w-0">
                       <p className="font-extrabold leading-snug text-[#1e3d2e]">
-                        {reaction.offerTitle || 'Offer'}
+                        {reaction.campaignTitle || 'Campaign'}
                       </p>
                       <p className="mt-0.5 text-xs text-[#87938b]">{reaction.brandName || 'Brand'}</p>
                     </div>

@@ -9,11 +9,11 @@ export const notificationHref = (notification: AppNotification, role?: string): 
   if (entityType === 'order') {
     return role === 'brand' ? '/brand/orders' : '/creator/orders';
   }
-  if (entityType === 'brand_offer') {
-    return role === 'brand' ? `/brand/offers/${notification.entityId ?? ''}` : '/creator/offers';
+  if (entityType === 'brand_campaign') {
+    return role === 'brand' ? `/brand/campaigns/${notification.entityId ?? ''}` : '/creator/offers';
   }
-  if (entityType === 'brand_offer_reaction') {
-    return role === 'brand' ? '/brand/offers' : '/creator/offers/reactions';
+  if (entityType === 'brand_campaign_reaction') {
+    return role === 'brand' ? '/brand/campaigns' : '/creator/offers/reactions';
   }
   return role === 'brand' ? '/brand/dashboard' : '/creator/dashboard';
 };

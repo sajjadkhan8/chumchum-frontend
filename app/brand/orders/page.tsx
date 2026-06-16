@@ -264,12 +264,6 @@ export default function BrandOrdersPage() {
                 <Sparkles className="size-3.5" />
                 Collaboration pipeline
               </div>
-              <h1 className="mt-4 max-w-3xl text-[clamp(2rem,4.4vw,4rem)] font-black leading-[0.98] tracking-[-0.06em]">
-                Track creator orders without the dashboard sprawl.
-              </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-[#c7d8ce] sm:text-base">
-                Follow tastings, reels, stories, hotel stays, cafe launches, approvals, revisions, and reviews from one compact brand workspace.
-              </p>
               <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
                 <HeroStat label="Active" value={String(activeOrders)} icon={TrendingUp} />
                 <HeroStat label="Review" value={String(orderCounts.review)} icon={Eye} />

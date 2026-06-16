@@ -3,11 +3,10 @@
 import { type ComponentType, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Camera, Check, Instagram, Lock, MessageCircle, Music2, Plus, Trash2, Upload, X, Youtube } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertCircle, ArrowLeft, ArrowRight, Camera, Check, Instagram, Lock, MessageCircle, Music2, Plus, Sparkles, Trash2, Upload, X, Youtube } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,9 +14,10 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { CAMPAIGN_GOAL_SECTIONS, getCampaignGoalDescription } from '@/lib/offer-campaign-goals';
 import { pakistanCities, pakistanLanguages, pakistanRegions } from '@/lib/localization';
-import { offersService } from '@/services/offers.service';
+import { campaignsService } from '@/services/campaigns.service';
 import { uploadsService } from '@/services/uploads.service';
-import type { BrandOffer } from '@/types';
+import type { BrandCampaign } from '@/types';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const DRAFT_KEY = 'brand-offer-wizard-draft-v1';
@@ -442,7 +442,7 @@ const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
       });
   };
 
-  const mapOfferToForm = (offer: BrandOffer): OfferForm =>
+  const mapOfferToForm = (offer: BrandCampaign): OfferForm =>
     normalizeDraftForm({
       title: offer.title || '',
       brief: offer.brief || '',
@@ -550,7 +550,7 @@ function ChipInput({ label, chips, onAdd, onRemove, placeholder, max, helperText
         {chips.map((chip, idx) => (
           <span
             key={idx}
-            className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+            className="inline-flex items-center gap-0.5 rounded-full bg-[#e7f0ea] px-2.5 py-0.5 text-xs font-medium text-[#185c39]"
           >
             {chip}
             <button
@@ -579,6 +579,14 @@ function ChipInput({ label, chips, onAdd, onRemove, placeholder, max, helperText
 }
 
 // ─── Section row (label + right-side counter / hint) ─────────────────────────
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <p className="text-[#607168]">
+      <span className="font-semibold text-[#526259]">{label}:</span> {value}
+    </p>
+  );
+}
 
 function SectionRow({ label, count, max, hint }: { label: string; count?: number; max?: number; hint?: string }) {
   return (
@@ -617,6 +625,9 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [nextShake, setNextShake] = useState(false);
+  const [slideDirection, setSlideDirection] = useState(1);
 
   const serviceSections = useMemo(
     () => {
@@ -730,6 +741,9 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
      window.scrollTo({ top: 0, behavior: 'smooth' });
    }, [step]);
 
+   // Clear validation errors whenever form changes or step changes
+   useEffect(() => { setValidationErrors([]); }, [form, step]);
+
   // Clear incompatible deliverables when primary platform changes
   useEffect(() => {
     const platformChanged = prevOfferTypeRef.current !== form.offerType;
@@ -775,7 +789,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
     if (!offerId) return;
     let isMounted = true;
     setIsHydratingOffer(true);
-    offersService.getBrandOffer(offerId)
+    campaignsService.getBrandCampaign(offerId)
       .then((offer) => {
         if (!isMounted) return;
         setForm(mapOfferToForm(offer));
@@ -783,8 +797,8 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
       })
       .catch(() => {
         if (!isMounted) return;
-        toast.error('Failed to load offer for editing');
-        router.push('/brand/offers');
+        toast.error('Failed to load campaign for editing');
+        router.push('/brand/campaigns');
       })
       .finally(() => {
         if (!isMounted) return;
@@ -932,23 +946,23 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
          campaignDuration: form.campaignDuration ? Number(form.campaignDuration) : undefined,
        };
        const savedOffer = isEditMode && offerId
-         ? await offersService.updateOffer(offerId, payload)
-         : await offersService.createOffer(payload);
+         ? await campaignsService.updateCampaign(offerId, payload)
+         : await campaignsService.createCampaign(payload);
 
        if (publish) {
-         await offersService.updateOfferStatus(savedOffer.id, 'PUBLISHED');
-         toast.success(isEditMode ? 'Offer updated and published' : 'Offer published');
+         await campaignsService.updateCampaignStatus(savedOffer.id, 'PUBLISHED');
+         toast.success(isEditMode ? 'Campaign updated and published' : 'Campaign published');
        } else {
-         toast.success(isEditMode ? 'Offer updated successfully' : 'Offer saved as draft');
+         toast.success(isEditMode ? 'Campaign updated successfully' : 'Campaign saved as draft');
        }
 
        if (typeof window !== 'undefined') {
          window.localStorage.removeItem(draftKey);
        }
        setHasSavedDraft(false);
-       router.push(`/brand/offers/${savedOffer.id}`);
+       router.push(`/brand/campaigns/${savedOffer.id}`);
      } catch (error) {
-       toast.error(error instanceof Error ? error.message : `Failed to ${isEditMode ? 'update' : 'create'} offer`);
+       toast.error(error instanceof Error ? error.message : `Failed to ${isEditMode ? 'update' : 'create'} campaign`);
      } finally {
        setIsSaving(false);
      }
@@ -980,88 +994,135 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
 
   if (isEditMode && isHydratingOffer) {
     return (
-      <div className="mx-auto w-full max-w-4xl space-y-4 px-1 pb-6 sm:space-y-6">
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">Loading offer for editing…</CardContent>
-        </Card>
+      <div className="min-h-screen bg-[#fbfaf5]">
+        <div className="mx-auto max-w-4xl px-4 py-5 sm:px-6">
+          <p className="py-16 text-center text-sm font-semibold text-[#718077]">Loading offer for editing…</p>
+        </div>
       </div>
     );
   }
 
+  const handleTabChange = (id: number) => {
+    if (id > maxUnlockedStep) {
+      const previousStep = Math.max(1, id - 1);
+      const missing = getMissingFields(previousStep);
+      toast.error(missing.length ? `Complete Step ${previousStep}: ${missing.slice(0, 2).join(', ')}` : `Complete Step ${previousStep} first.`);
+      return;
+    }
+    setSlideDirection(id > step ? 1 : -1);
+    setStep(id);
+    persistDraft(form, id);
+  };
+
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-4 px-1 pb-6 sm:space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/brand/offers">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold md:text-3xl">{isEditMode ? 'Edit Offer' : 'Create Offer'}</h1>
-            <p className="text-muted-foreground">Build a detailed brand requirement in six guided steps.</p>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#fbfaf5]">
+      <div className="mx-auto max-w-4xl px-4 py-5 sm:px-6">
 
-      {hasSavedDraft && (
-        <Card>
-          <CardContent className="flex flex-wrap items-center justify-between gap-2 p-4">
-            <p className="text-sm text-muted-foreground">A local draft is available for this offer form.</p>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={restoreDraft}>Restore Draft</Button>
-              <Button size="sm" variant="ghost" onClick={clearDraft}>Clear Draft</Button>
+        {/* Header */}
+        <section className="overflow-hidden rounded-[2rem] border border-[#d9e0d8] bg-[#173b2a] text-white shadow-[0_24px_80px_rgba(23,59,42,0.14)]">
+          <div className="p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <Button variant="ghost" size="icon" className="mt-0.5 h-8 w-8 shrink-0 text-white/70 hover:bg-white/10 hover:text-white" asChild>
+                  <Link href="/brand/campaigns">
+                    <ArrowLeft className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-[#f0c56e]">
+                    <Sparkles className="size-3.5" />
+                    Food campaign desk
+                  </div>
+                </div>
+              </div>
+              <div className="flex shrink-0 gap-2">
+                <Button size="sm" variant="ghost" className="h-8 border border-white/20 text-xs font-bold text-white hover:bg-white/10 hover:text-white" disabled={isSaving} onClick={() => void submit(false)}>
+                  {isSaving ? 'Saving…' : isEditMode ? 'Save' : 'Save Draft'}
+                </Button>
+                <Button size="sm" className="h-8 rounded-full bg-[#e6aa38] text-xs font-black text-[#173b2a] hover:bg-[#f0bb55]" disabled={isSaving} onClick={() => void submit(true)}>
+                  {isSaving ? 'Publishing…' : isEditMode ? 'Save & Publish' : 'Publish'}
+                </Button>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card className="sticky top-16 z-20 border-border/80 bg-background/95 backdrop-blur">
-        <CardContent className="p-4">
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {steps.map((label, idx) => {
-              const id = idx + 1;
-              const unlocked = id <= maxUnlockedStep;
-              const isCurrent = id === step;
-              const isCompleted = id < step && getMissingFields(id).length === 0;
-              return (
-                <button
-                  key={label}
-                  type="button"
-                  aria-disabled={!unlocked}
-                  onClick={() => {
-                    if (!unlocked) {
-                      const previousStep = Math.max(1, id - 1);
-                      const missing = getMissingFields(previousStep);
-                      toast.error(missing.length ? `Complete Step ${previousStep}: ${missing.slice(0, 2).join(', ')}` : `Complete Step ${previousStep} first.`);
-                      return;
-                    }
-                    setStep(id);
-                    persistDraft(form, id);
-                  }}
-                  className={`inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm transition-all ${
-                    isCurrent
-                      ? 'bg-primary text-primary-foreground'
-                      : unlocked
-                        ? 'bg-muted text-muted-foreground hover:text-foreground'
-                        : 'cursor-not-allowed bg-muted/60 text-muted-foreground/60'
-                  }`}
-                >
-                  {id}. {label}
-                  {isCompleted && <Check className="h-3.5 w-3.5" />}
-                  {!unlocked && <Lock className="h-3 w-3" />}
-                </button>
-              );
-            })}
           </div>
-        </CardContent>
-      </Card>
+        </section>
 
-      <motion.div key={step} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-      {step === 1 && (
-        <Card>
-          <CardHeader><CardTitle>Step 1 — Basics</CardTitle></CardHeader>
-          <CardContent className="space-y-5">
+        {/* Draft banner */}
+        {hasSavedDraft && (
+          <div className="mt-3 flex items-center justify-between gap-2 rounded-[1.35rem] border border-[#e3a52f]/30 bg-[#fff9ee] px-4 py-2.5">
+            <p className="text-xs font-semibold text-[#8b5e12]">Local draft available.</p>
+            <div className="flex gap-1">
+              <Button size="sm" variant="ghost" className="h-6 px-2 text-xs font-bold text-[#8b5e12] hover:bg-[#f7e8c8]" onClick={restoreDraft}>Restore</Button>
+              <Button size="sm" variant="ghost" className="h-6 px-2 text-xs font-bold text-[#718077] hover:bg-[#f4f2e9]" onClick={clearDraft}>Clear</Button>
+            </div>
+          </div>
+        )}
+
+        {/* Tab bar */}
+        <div className="mt-3 flex gap-1 overflow-x-auto rounded-xl bg-[#e8ede9] p-1">
+          {steps.map((label, idx) => {
+            const id = idx + 1;
+            const unlocked = id <= maxUnlockedStep;
+            const isCurrent = id === step;
+            const isCompleted = getMissingFields(id).length === 0 && id !== step;
+            return (
+              <button
+                key={label}
+                type="button"
+                onClick={() => handleTabChange(id)}
+                className={cn(
+                  'inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-xs font-semibold transition-all duration-200',
+                  isCurrent
+                    ? 'bg-[#2d6b4e] text-white shadow-sm'
+                    : unlocked
+                      ? 'text-[#6b7c72] hover:text-[#2e5440]'
+                      : 'text-[#6b7c72] opacity-40'
+                )}
+              >
+                {isCompleted && <Check className="size-3 shrink-0" />}
+                {!unlocked && <Lock className="size-3 shrink-0" />}
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tab content */}
+        <div
+          className="mt-3 overflow-hidden rounded-[1.75rem] border border-[#d9e0d8] bg-white p-5 shadow-[0_18px_60px_rgba(38,70,50,0.07)] sm:p-6"
+          style={{
+            '--background': 'oklch(1 0 0)',
+            '--foreground': 'oklch(0.1 0 0)',
+            '--card': 'oklch(1 0 0)',
+            '--card-foreground': 'oklch(0.1 0 0)',
+            '--muted': 'oklch(0.96 0 0)',
+            '--muted-foreground': 'oklch(0.45 0 0)',
+            '--border': 'oklch(0.91 0 0)',
+            '--input': 'oklch(0.91 0 0)',
+            '--ring': 'oklch(0.55 0.17 145)',
+            '--secondary': 'oklch(0.97 0 0)',
+            '--secondary-foreground': 'oklch(0.1 0 0)',
+            '--accent': 'oklch(0.85 0.18 85)',
+            '--accent-foreground': 'oklch(0.1 0 0)',
+          } as React.CSSProperties}
+        >
+        <AnimatePresence mode="wait" initial={false} custom={slideDirection}>
+        <motion.div
+          key={step}
+          custom={slideDirection}
+          variants={{
+            enter: (dir: number) => ({ opacity: 0, x: dir * 32 }),
+            center: { opacity: 1, x: 0 },
+            exit: (dir: number) => ({ opacity: 0, x: dir * -32 }),
+          }}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+        >
+
+        {step === 1 && (
+        <div className="space-y-4">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label>Offer title <span className="text-destructive">*</span></Label>
@@ -1102,8 +1163,8 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                       })}
                       className={`inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded-lg border px-3 py-2 text-sm transition-colors ${
                         form.offerType === platform
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-border hover:border-primary/50'
+                          ? 'border-[#185c39]/50 bg-[#e7f0ea] text-[#185c39]'
+                          : 'border-[#e1e6df] hover:border-[#185c39]/50'
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -1116,7 +1177,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
              </div>
             <div className="space-y-3">
               <SectionRow label="Campaign goal (optional)" count={form.campaignGoal ? 1 : 0} max={1} hint="selected" />
-              <div className="rounded-xl border border-border/70 bg-muted/20 p-3 sm:p-4">
+              <div className="rounded-[1.25rem] border border-[#e8ede8] bg-[#fbfaf5] p-3 sm:p-4">
                 <div className="flex flex-col gap-1">
                   <p className="text-sm font-semibold">Pick a campaign goal</p>
                   <p className="text-xs text-muted-foreground">Select a category, then pick one specific goal below.</p>
@@ -1136,8 +1197,8 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                         }}
                         className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm ${
                           isActive
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-border bg-background hover:border-primary/40 hover:bg-primary/5'
+                            ? 'border-[#185c39]/50 bg-[#e7f0ea] text-[#185c39]'
+                            : 'border-[#e1e6df] bg-white hover:border-[#185c39]/40 hover:bg-[#e7f0ea]/40'
                         }`}
                       >
                         {section.label}
@@ -1147,7 +1208,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                   })}
                 </div>
 
-                <div className="mt-3 rounded-lg border border-border/60 bg-background p-3">
+                <div className="mt-3 rounded-[1.15rem] border border-[#e8ede8] bg-white p-3">
                   <p className="mb-2 text-xs font-semibold text-muted-foreground">{activeCampaignGoalSection}</p>
                   <div className="flex flex-wrap gap-2">
                     {activeCampaignGoalOptions.map((goal) => {
@@ -1161,12 +1222,12 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                           }}
                           className={`rounded-xl border px-3 py-2 text-left text-xs font-medium transition-colors sm:text-sm ${
                             isSelected
-                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                              : 'border-border bg-background hover:border-primary/40 hover:bg-primary/5'
+                              ? 'border-[#185c39] bg-[#185c39] text-white shadow-sm'
+                              : 'border-[#e1e6df] bg-white hover:border-[#185c39]/40 hover:bg-[#e7f0ea]/40'
                           }`}
                         >
                           <p>{goal}</p>
-                          <p className={`mt-1 text-[11px] leading-snug ${isSelected ? 'text-primary-foreground/90' : 'text-muted-foreground'}`}>
+                          <p className={`mt-1 text-[11px] leading-snug ${isSelected ? 'text-white/80' : 'text-[#718077]'}`}>
                             {getCampaignGoalDescription(goal)}
                           </p>
                         </button>
@@ -1176,7 +1237,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                 </div>
 
                 {form.campaignGoal ? (
-                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-[#185c39]/20 bg-[#e7f0ea]/40 px-3 py-2">
                     <CampaignGoalBadge goal={form.campaignGoal} />
                     <span className="text-xs text-muted-foreground">{getCampaignGoalDescription(form.campaignGoal)}</span>
                     <Button
@@ -1194,7 +1255,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
               </div>
               <p className="text-xs text-muted-foreground">Choose the main business outcome you want this creator campaign to optimize for.</p>
             </div>
-            <div className="rounded-lg border p-3">
+            <div className="rounded-[1.15rem] border border-[#e8ede8] p-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
                   <Label>Visibility</Label>
@@ -1233,16 +1294,13 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                 helperText="Press Enter, comma, or Tab to add"
               />
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-       {step === 2 && (
-         <Card>
-           <CardHeader><CardTitle>Step 2 — Deliverables</CardTitle></CardHeader>
-           <CardContent className="space-y-4 p-4 sm:p-6">
+        {step === 2 && (
+        <div className="space-y-4">
              {serviceSections.length === 0 ? (
-               <p className="rounded-lg border border-border/60 p-3 text-sm text-muted-foreground">
+               <p className="rounded-[1.15rem] border border-[#e8ede8] p-3 text-sm text-muted-foreground">
                  Please select a primary platform in Step 1 (Basics) to see available deliverable options here.
                </p>
             ) : (
@@ -1272,10 +1330,10 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                                 key={serviceKey}
                                 type="button"
                                 onClick={() => toggleServiceSelection(serviceKey)}
-                                className={`rounded-lg border p-3 text-left transition-colors ${
+                                className={`rounded-[1.15rem] border border-[#e8ede8] p-3 text-left transition-colors ${
                                   isSelected
-                                    ? 'border-primary bg-primary/10'
-                                    : 'border-border hover:border-border/80 hover:bg-muted/40'
+                                    ? 'border-[#185c39]/50 bg-[#e7f0ea]'
+                                    : 'border-[#e1e6df] hover:border-[#185c39]/40 hover:bg-white'
                                 }`}
                               >
                                 <div className="flex items-center gap-2">
@@ -1283,8 +1341,8 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                                   <span
                                     className={`ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px] ${
                                       isSelected
-                                        ? 'border-primary bg-primary text-primary-foreground'
-                                        : 'border-border text-transparent'
+                                        ? 'border-[#185c39] bg-[#185c39] text-white'
+                                        : 'border-[#e1e6df] text-transparent'
                                     }`}
                                   >
                                     <Check className="h-3 w-3" />
@@ -1310,7 +1368,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                   />
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 p-3 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-[1.15rem] border border-[#e8ede8] p-3 text-sm">
                   <p className="text-muted-foreground">
                     {form.selectedServiceKeys.length > 0
                       ? `${form.selectedServiceKeys.length} selected (ready to add)`
@@ -1340,7 +1398,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                   </div>
                 </div>
 
-                <div className="space-y-2 rounded-lg border border-border/60 p-3">
+                <div className="space-y-2 rounded-[1.15rem] border border-[#e8ede8] p-3">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium">Offer Deliverables</p>
                     <Badge variant="outline">
@@ -1357,7 +1415,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                       {form.deliverableItems.map((item) => (
                         <div
                           key={item.id}
-                          className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/50 bg-muted/20 p-2"
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[#e8ede8] bg-[#fbfaf5] p-2"
                         >
                           <p className="text-sm font-medium">{item.label}</p>
                           <div className="flex items-center gap-2">
@@ -1398,7 +1456,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
               </>
             )}
 
-            <div className="space-y-2 rounded-lg border border-border/60 p-3">
+            <div className="space-y-2 rounded-[1.15rem] border border-[#e8ede8] p-3">
               <p className="text-sm font-medium">Deliverables preview (auto-generated)</p>
               <div className="space-y-1 text-sm text-muted-foreground">
                 {(buildDeliverablesText() || 'No deliverables added yet.').split('\n').filter(Boolean).map((item, index) => (
@@ -1406,14 +1464,11 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                 ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {step === 3 && (
-        <Card>
-          <CardHeader><CardTitle>Step 3 — Budget & Payment</CardTitle></CardHeader>
-          <CardContent className="space-y-5">
+        {step === 3 && (
+        <div className="space-y-4">
 
             {/* Budget type */}
             <div className="space-y-2">
@@ -1431,8 +1486,8 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                     onClick={() => updateForm({ budgetType: value })}
                     className={`rounded-xl border p-3 text-left transition-colors ${
                       form.budgetType === value
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/40 hover:bg-muted/30'
+                        ? 'border-[#185c39]/50 bg-[#e7f0ea]'
+                        : 'border-[#e1e6df] hover:border-[#185c39]/40 hover:bg-white'
                     }`}
                   >
                     <p className="text-sm font-medium">{label}</p>
@@ -1459,7 +1514,8 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                 {form.budgetType === 'fixed' ? (
                   <Input
                     type="number"
-                    min={0}
+                    min={100}
+                    max={1000000}
                     value={form.budgetMin}
                     onChange={(e) => updateForm({ budgetMin: e.target.value, budgetMax: e.target.value })}
                     placeholder="e.g. 25000"
@@ -1495,8 +1551,8 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                       onClick={() => updateForm({ paymentStructure: value })}
                       className={`rounded-xl border p-3 text-left transition-colors ${
                         form.paymentStructure === value
-                          ? 'border-primary bg-primary/10'
-                          : 'border-border hover:border-primary/40 hover:bg-muted/30'
+                          ? 'border-[#185c39]/50 bg-[#e7f0ea]'
+                          : 'border-[#e1e6df] hover:border-[#185c39]/40 hover:bg-white'
                       }`}
                     >
                       <p className="text-sm font-medium">{label}</p>
@@ -1536,7 +1592,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
             )}
 
             {/* Travel & extra costs */}
-            <div className="rounded-lg border p-3">
+            <div className="rounded-[1.15rem] border border-[#e8ede8] p-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="space-y-0.5">
                   <Label>Travelling & extra costs covered</Label>
@@ -1554,18 +1610,14 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
               </div>
             </div>
 
-            {/* Targeting and requirements moved to Control / References & Legal for cleaner separation */}
-           </CardContent>
-         </Card>
-       )}
+          </div>
+        )}
 
-       {step === 4 && (
-         <Card>
-           <CardHeader><CardTitle>Step 4 — Creator Control & Timeline</CardTitle></CardHeader>
-           <CardContent className="space-y-5">
+        {step === 4 && (
+        <div className="space-y-4">
 
              {/* Creator Profile Requirements */}
-             <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+             <div className="rounded-[1.25rem] border border-[#e8ede8] bg-[#fbfaf5] p-4">
                <p className="mb-4 text-sm font-semibold">Creator Profile Requirements</p>
 
                <div className="space-y-4">
@@ -1582,10 +1634,10 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                          key={value}
                          type="button"
                          onClick={() => updateForm({ creatorType: value })}
-                         className={`rounded-lg border p-3 text-left text-sm transition-colors ${
+                         className={`rounded-[1.15rem] border border-[#e8ede8] p-3 text-left text-sm transition-colors ${
                            form.creatorType === value
-                             ? 'border-primary bg-primary/10'
-                             : 'border-border hover:border-primary/40 hover:bg-muted/30'
+                             ? 'border-[#185c39]/50 bg-[#e7f0ea]'
+                             : 'border-[#e1e6df] hover:border-[#185c39]/40 hover:bg-white'
                          }`}
                        >
                          <p className="font-medium">{label}</p>
@@ -1637,7 +1689,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                    </div>
                  </div>
 
-                  <div className="space-y-3 rounded-xl border border-border/70 bg-background p-3">
+                  <div className="space-y-3 rounded-[1.15rem] border border-[#e8ede8] bg-white p-3">
                     <div className="space-y-1">
                       <Label>Location scope</Label>
                       <p className="text-xs text-muted-foreground">Choose how creators are geographically targeted for this campaign.</p>
@@ -1651,10 +1703,10 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                             key={option.value}
                             type="button"
                             onClick={() => updateForm({ locationTargetingMode: option.value })}
-                            className={`rounded-lg border p-3 text-left transition-colors ${
+                            className={`rounded-[1.15rem] border border-[#e8ede8] p-3 text-left transition-colors ${
                               isActive
-                                ? 'border-primary bg-primary/10'
-                                : 'border-border hover:border-primary/40 hover:bg-muted/40'
+                                ? 'border-[#185c39]/50 bg-[#e7f0ea]'
+                                : 'border-[#e1e6df] hover:border-[#185c39]/40 hover:bg-white'
                             }`}
                           >
                             <p className="text-sm font-medium">{option.label}</p>
@@ -1675,8 +1727,8 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                               onClick={() => updateForm({ targetRegion: region })}
                               className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                                 form.targetRegion === region
-                                  ? 'border-primary bg-primary/10 text-primary'
-                                  : 'border-border bg-background hover:border-primary/40'
+                                  ? 'border-[#185c39]/50 bg-[#e7f0ea] text-[#185c39]'
+                                  : 'border-[#e1e6df] bg-white hover:border-[#185c39]/40'
                               }`}
                             >
                               {region}
@@ -1704,8 +1756,8 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                                 }}
                                 className={`rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
                                   isSelected
-                                    ? 'border-primary bg-primary/10 text-primary'
-                                    : 'border-border bg-background hover:border-primary/40'
+                                    ? 'border-[#185c39]/50 bg-[#e7f0ea] text-[#185c39]'
+                                    : 'border-[#e1e6df] bg-white hover:border-[#185c39]/40'
                                 }`}
                               >
                                 {city}
@@ -1717,7 +1769,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                       </div>
                     )}
 
-                    <div className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                    <div className="rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] px-3 py-2 text-xs text-muted-foreground">
                       Location summary: <span className="font-medium text-foreground">{formatLocationSummary(form.locationTargetingMode, form.targetCities, form.targetRegion)}</span>
                     </div>
                   </div>
@@ -1739,7 +1791,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
              </div>
 
              {/* Application Settings */}
-             <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+             <div className="rounded-[1.25rem] border border-[#e8ede8] bg-[#fbfaf5] p-4">
                <p className="mb-4 text-sm font-semibold">Application Settings</p>
 
                <div className="space-y-4">
@@ -1756,10 +1808,10 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                          key={value}
                          type="button"
                          onClick={() => updateForm({ applicationType: value })}
-                         className={`rounded-lg border p-3 text-left text-sm transition-colors ${
+                         className={`rounded-[1.15rem] border border-[#e8ede8] p-3 text-left text-sm transition-colors ${
                            form.applicationType === value
-                             ? 'border-primary bg-primary/10'
-                             : 'border-border hover:border-primary/40 hover:bg-muted/30'
+                             ? 'border-[#185c39]/50 bg-[#e7f0ea]'
+                             : 'border-[#e1e6df] hover:border-[#185c39]/40 hover:bg-white'
                          }`}
                        >
                          <p className="font-medium">{label}</p>
@@ -1793,7 +1845,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                   </div>
 
                  <div className="grid gap-3 sm:grid-cols-2">
-                   <div className="rounded-lg border p-3 flex items-center justify-between">
+                   <div className="rounded-[1.15rem] border border-[#e8ede8] p-3 flex items-center justify-between">
                      <div className="space-y-0.5">
                        <Label className="text-sm">Proposal required</Label>
                        <p className="text-xs text-muted-foreground">Creators pitch before applying</p>
@@ -1804,7 +1856,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                        aria-label="Require proposal"
                      />
                    </div>
-                   <div className="rounded-lg border p-3 flex items-center justify-between">
+                   <div className="rounded-[1.15rem] border border-[#e8ede8] p-3 flex items-center justify-between">
                      <div className="space-y-0.5">
                        <Label className="text-sm">Portfolio required</Label>
                        <p className="text-xs text-muted-foreground">Creators submit past work samples</p>
@@ -1865,7 +1917,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
              </div>
 
              {/* Timeline & Campaign Duration */}
-             <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+             <div className="rounded-[1.25rem] border border-[#e8ede8] bg-[#fbfaf5] p-4">
                <p className="mb-4 text-sm font-semibold">Timeline & Duration</p>
 
                <div className="space-y-3">
@@ -1914,16 +1966,13 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                </div>
              </div>
 
-           </CardContent>
-         </Card>
-       )}
+          </div>
+        )}
 
-       {step === 5 && (
-         <Card>
-           <CardHeader><CardTitle>Step 5 — References</CardTitle></CardHeader>
-          <CardContent className="space-y-5">
+        {step === 5 && (
+        <div className="space-y-4">
 
-              <div className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-4">
+              <div className="rounded-[1.25rem] border border-[#e8ede8] bg-[#fbfaf5] p-4 space-y-4">
                 <p className="text-sm font-semibold">Messaging & brand guidelines</p>
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
@@ -2002,7 +2051,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
               )}
             </div>
 
-            <div className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-4">
+            <div className="rounded-[1.25rem] border border-[#e8ede8] bg-[#fbfaf5] p-4 space-y-4">
               <p className="text-sm font-semibold">Rights, terms & outcomes</p>
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
@@ -2041,57 +2090,91 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-       {step === 6 && (
-         <Card>
-           <CardHeader><CardTitle>Step 6 — Review & Publish</CardTitle></CardHeader>
-          <CardContent className="space-y-4 text-sm">
+        {step === 6 && (
+        <div className="space-y-4 text-sm">
             {form.coverImageUrl && (
-              <img src={form.coverImageUrl} alt="Cover" className="h-40 w-full rounded-lg object-cover" />
+              <img src={form.coverImageUrl} alt="Cover" className="h-40 w-full rounded-[1.15rem] object-cover" />
             )}
             <div>
-              <p className="text-lg font-semibold">{form.title || 'Untitled offer'}</p>
-              <p className="mt-1 text-muted-foreground">{form.brief || 'No brief yet.'}</p>
+              <p className="text-lg font-bold text-[#173b2a]">{form.title || 'Untitled offer'}</p>
+              {form.brief && <p className="mt-1 text-[#607168]">{form.brief}</p>}
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 text-sm">
-              <div className="rounded-lg border p-3 space-y-1">
-                <p className="font-medium text-xs text-muted-foreground uppercase tracking-wide">Offer details</p>
-                <p>Primary platform: <span className="font-medium capitalize">{form.offerType || 'Not selected'}</span></p>
-                <p>Campaign goal: <span className="font-medium">{form.campaignGoal || 'Not selected'}</span></p>
-                <p>Visibility: <span className="font-medium capitalize">{form.visibility}</span></p>
-                {form.deadlineDate && <p>Deadline: <span className="font-medium">{form.deadlineDate}</span></p>}
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {/* Offer details */}
+              <div className="rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] p-3 space-y-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#8fa898]">Offer details</p>
+                <Row label="Platform" value={form.offerType || '—'} />
+                <Row label="Campaign goal" value={form.campaignGoal || '—'} />
+                <Row label="Visibility" value={form.visibility} />
+                {form.deadlineDate && <Row label="Application deadline" value={form.deadlineDate} />}
+                {form.targetLanguage && <Row label="Language" value={form.targetLanguage} />}
               </div>
-              <div className="rounded-lg border p-3 space-y-1">
-                <p className="font-medium text-xs text-muted-foreground uppercase tracking-wide">Budget & Payment</p>
+
+              {/* Budget */}
+              <div className="rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] p-3 space-y-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#8fa898]">Budget & Payment</p>
                 {form.budgetType === 'barter_only' ? (
-                  <p>Budget type: <span className="font-medium">Barter only</span></p>
+                  <Row label="Type" value="Barter only" />
                 ) : (
                   <>
-                    <p>Budget type: <span className="font-medium capitalize">{(form.budgetType || 'fixed').replace('_', ' ')}</span></p>
-                    <p className="text-base font-semibold">
+                    <Row label="Type" value={(form.budgetType || 'fixed').replace('_', ' ')} />
+                    <p className="font-bold text-[#173b2a]">
                       PKR {Number(form.budgetMin || 0).toLocaleString()}
                       {form.budgetType !== 'fixed' ? ` – ${Number(form.budgetMax || 0).toLocaleString()}` : ''}
                     </p>
-                    {form.paymentStructure && (
-                      <p>Payment: <span className="font-medium">{form.paymentStructure === 'split_50_50' ? '50% upfront + 50% on delivery' : 'Full upfront into escrow'}</span></p>
-                    )}
+                    {form.paymentStructure && <Row label="Payment" value={form.paymentStructure === 'split_50_50' ? '50% upfront + 50% on delivery' : 'Full upfront into escrow'} />}
                   </>
                 )}
                 {(form.budgetType === 'barter_only' || form.budgetType === 'paid_and_barter') && form.barterProductDesc && (
-                  <p>Barter: <span className="font-medium">{form.barterProductDesc}</span></p>
+                  <Row label="Barter item" value={form.barterProductDesc} />
                 )}
-                {form.barterEstimatedValue && (
-                  <p>Barter value: <span className="font-medium">PKR {Number(form.barterEstimatedValue).toLocaleString()}</span></p>
+                {form.barterEstimatedValue && <Row label="Barter value" value={`PKR ${Number(form.barterEstimatedValue).toLocaleString()}`} />}
+                <Row label="Travel costs" value={form.travelCostsCovered ? 'Covered by brand' : 'Not covered'} />
+                <Row label="Location" value={formatLocationSummary(form.locationTargetingMode, form.targetCities, form.targetRegion)} />
+              </div>
+
+              {/* Creator requirements */}
+              <div className="rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] p-3 space-y-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#8fa898]">Creator requirements</p>
+                {form.creatorType && <Row label="Creator type" value={form.creatorType} />}
+                {form.followerRange && <Row label="Follower range" value={form.followerRange} />}
+                {form.creatorGenderPreference && <Row label="Gender" value={form.creatorGenderPreference} />}
+                {(form.minAge || form.maxAge) && (
+                  <Row label="Age range" value={[form.minAge, form.maxAge].filter(Boolean).join(' – ')} />
                 )}
-                <p>Travel costs: <span className="font-medium">{form.travelCostsCovered ? 'Covered by brand' : 'Not covered'}</span></p>
-                <p>Location: <span className="font-medium">{formatLocationSummary(form.locationTargetingMode, form.targetCities, form.targetRegion)}</span></p>
+                {!form.creatorType && !form.followerRange && !form.creatorGenderPreference && !form.minAge && !form.maxAge && (
+                  <p className="text-[#a0b0aa]">No requirements set</p>
+                )}
+              </div>
+
+              {/* Application & scheduling */}
+              <div className="rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] p-3 space-y-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#8fa898]">Application & Scheduling</p>
+                {form.applicationType && <Row label="Application type" value={form.applicationType} />}
+                {form.maxApplicants && <Row label="Max applicants" value={form.maxApplicants} />}
+                <Row label="Proposal required" value={form.proposalRequired ? 'Yes' : 'No'} />
+                <Row label="Portfolio required" value={form.portfolioRequired ? 'Yes' : 'No'} />
+                {form.goLiveDate && <Row label="Go-live date" value={form.goLiveDate} />}
+                {form.contentSubmissionDeadline && <Row label="Content deadline" value={form.contentSubmissionDeadline} />}
+                {form.campaignDuration && <Row label="Campaign duration" value={form.campaignDuration} />}
+                {form.customScreeningQuestions.filter(Boolean).length > 0 && (
+                  <div className="space-y-0.5">
+                    <p className="text-[11px] font-semibold text-[#526259]">Screening questions</p>
+                    {form.customScreeningQuestions.filter(Boolean).map((q, i) => (
+                      <p key={i} className="text-[#607168]">• {q}</p>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Platforms & formats</p>
+
+            {/* Platforms & formats */}
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#8fa898]">Platforms & Formats</p>
               <div className="flex flex-wrap gap-1.5">
                 {form.targetPlatforms.map((p) => {
                   if (!isSupportedPlatform(p)) {
@@ -2099,85 +2182,162 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                   }
                   const { icon: Icon, label } = platformMeta[p];
                   return (
-                    <Badge key={p} variant="secondary" className="inline-flex items-center gap-1.5">
-                      <Icon className="h-3.5 w-3.5" />
-                      {label}
+                    <Badge key={p} variant="secondary" className="inline-flex items-center gap-1.5 bg-[#e7f0ea] text-[#185c39] hover:bg-[#e7f0ea]">
+                      <Icon className="h-3.5 w-3.5" />{label}
                     </Badge>
                   );
                 })}
-                {form.contentFormats.map((f) => <Badge key={f} variant="outline">{f.replace('_', ' ')}</Badge>)}
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Deliverables ({form.deliverableItems.length} types · {form.deliverableItems.reduce((t, i) => t + i.quantity, 0)} units)
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {form.deliverableItems.map((item) => (
-                  <Badge key={item.id} variant="outline">{item.quantity}× {item.label}</Badge>
+                {form.contentFormats.map((f) => (
+                  <Badge key={f} variant="outline" className="border-[#d9e0d8] text-[#526259]">{f.replace('_', ' ')}</Badge>
                 ))}
               </div>
             </div>
+
+            {/* Deliverables */}
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#8fa898]">
+                Deliverables — {form.deliverableItems.length} type{form.deliverableItems.length !== 1 ? 's' : ''} · {form.deliverableItems.reduce((t, i) => t + i.quantity, 0)} units
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {form.deliverableItems.map((item) => (
+                  <Badge key={item.id} variant="outline" className="border-[#d9e0d8] text-[#526259]">{item.quantity}× {item.label}</Badge>
+                ))}
+              </div>
+              {form.deliverableNotes && <p className="text-xs text-[#607168]">{form.deliverableNotes}</p>}
+            </div>
+
+            {/* Categories / Niches */}
             {(form.categories.length > 0 || form.niches.length > 0) && (
-              <div className="space-y-1">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Categories / Niches</p>
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#8fa898]">Categories & Niches</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {form.categories.map((c) => <Badge key={c} className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">{c}</Badge>)}
-                  {form.niches.map((n) => <Badge key={n} className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">{n}</Badge>)}
+                  {form.categories.map((c) => <Badge key={c} className="bg-[#e7f0ea] text-[#185c39] hover:bg-[#e7f0ea]">{c}</Badge>)}
+                  {form.niches.map((n) => <Badge key={n} variant="outline" className="border-[#d9e0d8] text-[#526259]">{n}</Badge>)}
                 </div>
               </div>
             )}
+
+            {/* References & Legal */}
             {(form.keyMessage || form.dosAndDonts || form.hashtagsMentions || form.usageRights || form.termsAndConditions || form.expectedOutcomes || form.referenceUrls.some(Boolean)) && (
-              <div className="space-y-1">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">References & Guidelines</p>
-                <div className="space-y-1 text-muted-foreground">
-                  {form.keyMessage && <p><span className="font-medium text-foreground">Key message:</span> {form.keyMessage}</p>}
-                  {form.dosAndDonts && <p><span className="font-medium text-foreground">Do's/Don'ts:</span> {form.dosAndDonts}</p>}
-                  {form.hashtagsMentions && <p><span className="font-medium text-foreground">Hashtags & mentions:</span> {form.hashtagsMentions}</p>}
-                  {form.usageRights && <p><span className="font-medium text-foreground">Usage rights:</span> {form.usageRights}</p>}
-                  {form.termsAndConditions && <p><span className="font-medium text-foreground">Terms:</span> {form.termsAndConditions}</p>}
-                  {form.expectedOutcomes && <p><span className="font-medium text-foreground">Expected outcomes:</span> {form.expectedOutcomes}</p>}
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#8fa898]">References & Legal</p>
+                <div className="space-y-1 text-[#607168]">
+                  {form.keyMessage && <p><span className="font-semibold text-[#526259]">Key message:</span> {form.keyMessage}</p>}
+                  {form.dosAndDonts && <p><span className="font-semibold text-[#526259]">Do's/Don'ts:</span> {form.dosAndDonts}</p>}
+                  {form.hashtagsMentions && <p><span className="font-semibold text-[#526259]">Hashtags:</span> {form.hashtagsMentions}</p>}
+                  {form.usageRights && <p><span className="font-semibold text-[#526259]">Usage rights:</span> {form.usageRights}</p>}
+                  {form.termsAndConditions && <p><span className="font-semibold text-[#526259]">Terms:</span> {form.termsAndConditions}</p>}
+                  {form.expectedOutcomes && <p><span className="font-semibold text-[#526259]">Expected outcomes:</span> {form.expectedOutcomes}</p>}
                   {form.referenceUrls.filter(Boolean).length > 0 && (
-                    <p><span className="font-medium text-foreground">Reference links:</span> {form.referenceUrls.filter(Boolean).join(', ')}</p>
+                    <p><span className="font-semibold text-[#526259]">Reference links:</span> {form.referenceUrls.filter(Boolean).join(', ')}</p>
                   )}
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
-      )}
-      </motion.div>
-
-      <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 flex gap-2 rounded-xl border border-border bg-background/95 p-3 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0">
-        <Button type="button" variant="outline" className="flex-1" disabled={step === 1} onClick={() => {
-          const nextStep = Math.max(1, step - 1);
-          setStep(nextStep);
-          persistDraft(form, nextStep);
-        }}>
-          Back
-        </Button>
-         {step < 6 ? (
-           <Button type="button" className="flex-1" onClick={() => {
-             if (!canContinue) {
-               toast.error(`Please complete: ${getMissingFields(step).join(', ')}`);
-               return;
-             }
-             const nextStep = Math.min(6, step + 1);
-             setStep(nextStep);
-             persistDraft(form, nextStep);
-           }}>
-             Next <ArrowRight className="ml-2 h-4 w-4" />
-           </Button>
-         ) : (
-          <div className="flex flex-1 gap-2">
-            <Button type="button" variant="outline" className="flex-1" disabled={isSaving} onClick={() => void submit(false)}>
-              {isSaving ? 'Saving...' : isEditMode ? 'Save Changes' : 'Save Draft'}
-            </Button>
-            <Button type="button" className="flex-1" disabled={isSaving} onClick={() => void submit(true)}>
-              {isSaving ? 'Publishing...' : isEditMode ? 'Save & Publish' : 'Publish Offer'}
-            </Button>
           </div>
         )}
+
+        </motion.div>
+        </AnimatePresence>
+
+        {/* Validation error panel */}
+        <AnimatePresence>
+          {validationErrors.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 4, scale: 0.98 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="mt-4 rounded-2xl border border-[#fbc9c9] bg-[#fff5f5] px-4 py-3"
+            >
+              <div className="mb-2 flex items-center gap-2">
+                <AlertCircle className="size-3.5 shrink-0 text-[#d94f4f]" />
+                <p className="text-xs font-bold text-[#c13a3a]">Almost there — a few things need attention</p>
+                <button
+                  type="button"
+                  onClick={() => setValidationErrors([])}
+                  className="ml-auto rounded-full p-0.5 text-[#c13a3a]/50 transition hover:bg-[#fce4e4] hover:text-[#c13a3a]"
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {validationErrors.map((err) => (
+                  <span
+                    key={err}
+                    className="inline-flex items-center gap-1 rounded-full border border-[#f5c2c2] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#c13a3a]"
+                  >
+                    <span className="size-1.5 rounded-full bg-[#d94f4f]" />
+                    {err}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Step navigation */}
+        <div className="mt-4 flex items-center justify-between border-t border-[#edf0ec] pt-4">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-9 gap-1.5 px-3 text-xs font-semibold text-[#6b7c72] hover:bg-[#f0f5f1] hover:text-[#2d6b4e] disabled:opacity-0"
+            disabled={step === 1}
+            onClick={() => { setSlideDirection(-1); setStep(s => s - 1); }}
+          >
+            <ArrowLeft className="size-3.5" />
+            Back
+          </Button>
+          {step < steps.length ? (
+            <motion.div
+              animate={nextShake ? { x: [0, -6, 6, -4, 4, -2, 2, 0] } : { x: 0 }}
+              transition={{ duration: 0.4, ease: 'easeInOut' }}
+              onAnimationComplete={() => setNextShake(false)}
+            >
+              <Button
+                type="button"
+                size="sm"
+                className="h-9 gap-1.5 rounded-lg bg-[#2d6b4e] px-4 text-xs font-semibold text-white shadow-sm hover:bg-[#185c39]"
+                onClick={() => {
+                  const missing = getMissingFields(step);
+                  if (missing.length > 0) {
+                    setValidationErrors(missing);
+                    setNextShake(true);
+                  } else {
+                    setSlideDirection(1); setStep(s => s + 1);
+                  }
+                }}
+              >
+                Next
+                <ArrowRight className="size-3.5" />
+              </Button>
+            </motion.div>
+          ) : (
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-9 gap-1.5 rounded-lg border border-[#d9e0d8] px-4 text-xs font-semibold text-[#526259] hover:bg-[#f4f2e9] hover:text-[#2d6b4e] disabled:opacity-50"
+                disabled={isSaving}
+                onClick={() => void submit(false)}
+              >
+                {isSaving ? 'Saving…' : isEditMode ? 'Save' : 'Save Draft'}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="h-9 gap-1.5 rounded-lg bg-[#e6aa38] px-4 text-xs font-black text-[#173b2a] shadow-sm hover:bg-[#f0bb55] disabled:opacity-50"
+                disabled={isSaving}
+                onClick={() => void submit(true)}
+              >
+                {isSaving ? 'Publishing…' : isEditMode ? 'Save & Publish' : 'Publish'}
+              </Button>
+            </div>
+          )}
+        </div>
+        </div>
       </div>
     </div>
   );

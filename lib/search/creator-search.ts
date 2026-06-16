@@ -3,8 +3,8 @@
 import { mockBrands } from '@/data/brands';
 import { getInitials } from '@/lib/utils';
 import { creatorsService } from '@/services/creators.service';
-import { offersService } from '@/services/offers.service';
-import type { Brand, BrandOffer, Creator } from '@/types';
+import { campaignsService } from '@/services/campaigns.service';
+import type { Brand, BrandCampaign, Creator } from '@/types';
 
 export interface CreatorSearchBrandResult {
   id: string;
@@ -21,14 +21,14 @@ export interface CreatorSearchBrandResult {
   replyTimeLabel: string;
   campaignCount: number;
   tags: string[];
-  activeOffers: BrandOffer[];
+  activeOffers: BrandCampaign[];
   website?: string;
   matchScore: number;
 }
 
 export interface CreatorGlobalSearchResults {
   brands: CreatorSearchBrandResult[];
-  offers: BrandOffer[];
+  offers: BrandCampaign[];
   creators: Creator[];
 }
 
@@ -68,7 +68,7 @@ const calculateMatchScore = (searchTerm: string, values: Array<string | undefine
   return score;
 };
 
-const rankOffers = (offers: BrandOffer[], searchTerm: string) =>
+const rankOffers = (offers: BrandCampaign[], searchTerm: string) =>
   [...offers].sort((left, right) => {
     const rightScore = calculateMatchScore(searchTerm, [
       right.title,
@@ -121,7 +121,7 @@ const rankCreators = (creators: Creator[], searchTerm: string) =>
     return right.totalFollowers - left.totalFollowers;
   });
 
-const deriveBrandTags = (offers: BrandOffer[]) => {
+const deriveBrandTags = (offers: BrandCampaign[]) => {
   const values = new Set<string>();
 
   for (const offer of offers) {
@@ -138,14 +138,14 @@ const deriveBrandTags = (offers: BrandOffer[]) => {
   return Array.from(values).slice(0, 4);
 };
 
-const inferBrandDescription = (brand: Brand | undefined, offers: BrandOffer[]) => {
+const inferBrandDescription = (brand: Brand | undefined, offers: BrandCampaign[]) => {
   if (brand?.description) return brand.description;
   const topOffer = offers[0];
   if (!topOffer) return 'Active brand looking for creator partnerships.';
   return topOffer.brief.length > 120 ? `${topOffer.brief.slice(0, 117)}...` : topOffer.brief;
 };
 
-const inferBrandIndustry = (brand: Brand | undefined, offers: BrandOffer[]) => {
+const inferBrandIndustry = (brand: Brand | undefined, offers: BrandCampaign[]) => {
   if (brand?.industry) return brand.industry;
 
   const counts = new Map<string, number>();
@@ -158,7 +158,7 @@ const inferBrandIndustry = (brand: Brand | undefined, offers: BrandOffer[]) => {
   return Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'Brand collaborations';
 };
 
-const inferBrandCity = (brand: Brand | undefined, offers: BrandOffer[]) => {
+const inferBrandCity = (brand: Brand | undefined, offers: BrandCampaign[]) => {
   if (brand?.city) return brand.city;
   return offers.find((offer) => offer.targetCity)?.targetCity
     ?? offers.find((offer) => offer.targetRegion)?.targetRegion
@@ -166,7 +166,7 @@ const inferBrandCity = (brand: Brand | undefined, offers: BrandOffer[]) => {
     ?? 'Pakistan';
 };
 
-const inferBrandVerification = (brand: Brand | undefined, offers: BrandOffer[]) => {
+const inferBrandVerification = (brand: Brand | undefined, offers: BrandCampaign[]) => {
   if (brand?.businessVerificationStatus) {
     return brand.businessVerificationStatus.toLowerCase() === 'verified';
   }
@@ -174,26 +174,26 @@ const inferBrandVerification = (brand: Brand | undefined, offers: BrandOffer[]) 
   return Boolean(brand ?? offers.find((offer) => (offer.reactionCount ?? 0) > 0));
 };
 
-const inferBrandRating = (brand: Brand | undefined, offers: BrandOffer[]) => {
+const inferBrandRating = (brand: Brand | undefined, offers: BrandCampaign[]) => {
   const baseline = brand ? 4.1 : 3.9;
   const activityBonus = Math.min(0.7, offers.length * 0.14);
   const reactionBonus = Math.min(0.25, average(offers.map((offer) => offer.reactionCount || 0)) / 40);
   return Number(Math.min(4.9, baseline + activityBonus + reactionBonus).toFixed(1));
 };
 
-const inferPaysOnTime = (brand: Brand | undefined, offers: BrandOffer[]) => {
+const inferPaysOnTime = (brand: Brand | undefined, offers: BrandCampaign[]) => {
   if (brand?.monthlyBudget && brand.monthlyBudget > 0) return true;
   return average(offers.map((offer) => (offer.budgetMin + offer.budgetMax) / 2)) >= 50000 || offers.length >= 2;
 };
 
-const inferReplyTimeLabel = (brand: Brand | undefined, offers: BrandOffer[]) => {
+const inferReplyTimeLabel = (brand: Brand | undefined, offers: BrandCampaign[]) => {
   if (brand?.activeOrders && brand.activeOrders >= 6) return '~2 hrs';
   if (offers.length >= 3) return '~3 hrs';
   if (offers.length === 2) return '~8 hrs';
   return '~1 day';
 };
 
-const mergeBrandOffers = (offers: BrandOffer[], brand: Brand | undefined, searchTerm: string): CreatorSearchBrandResult | null => {
+const mergeBrandCampaigns = (offers: BrandCampaign[], brand: Brand | undefined, searchTerm: string): CreatorSearchBrandResult | null => {
   const primaryOffer = offers[0];
   const name = brand?.name ?? primaryOffer?.brandName;
   if (!name) return null;
@@ -243,7 +243,7 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
   }
 
   const [offersResult, creatorsResult] = await Promise.allSettled([
-    offersService.getCreatorOfferFeed({ search: term, page: 0, size: 48 }),
+    campaignsService.getCreatorCampaignFeed({ search: term, page: 0, size: 48 }),
     creatorsService.getAll({ search: term }),
   ]);
 
@@ -251,7 +251,7 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
   const creators = creatorsResult.status === 'fulfilled' ? rankCreators(creatorsResult.value, term) : [];
 
   const staticBrands = mockBrands.filter((brand) => calculateMatchScore(term, [brand.name, brand.industry, brand.description, brand.city]) > 0);
-  const offersByBrand = new Map<string, BrandOffer[]>();
+  const offersByBrand = new Map<string, BrandCampaign[]>();
 
   for (const offer of offers) {
     const key = offer.brandId || normalize(offer.brandName);
@@ -266,7 +266,7 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
     const relatedOffers = offers.filter(
       (offer) => offer.brandId === brand.id || normalize(offer.brandName) === normalize(brand.name),
     );
-    const merged = mergeBrandOffers(relatedOffers, brand, term);
+    const merged = mergeBrandCampaigns(relatedOffers, brand, term);
     if (merged) {
       brandResults.set(merged.id, merged);
     } else {
@@ -298,7 +298,7 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
     const matchingStaticBrand = mockBrands.find(
       (brand) => brand.id === firstOffer.brandId || normalize(brand.name) === normalize(firstOffer.brandName),
     );
-    const merged = mergeBrandOffers(brandOffers, matchingStaticBrand, term);
+    const merged = mergeBrandCampaigns(brandOffers, matchingStaticBrand, term);
     if (merged) {
       brandResults.set(merged.id, merged);
     } else if (firstOffer.brandName) {

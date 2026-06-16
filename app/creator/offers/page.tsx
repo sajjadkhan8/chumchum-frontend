@@ -10,8 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { CAMPAIGN_GOAL_OPTIONS } from '@/lib/offer-campaign-goals';
-import { offersService } from '@/services/offers.service';
-import type { BrandOffer, BrandOfferReactionType } from '@/types';
+import { campaignsService } from '@/services/campaigns.service';
+import type { BrandCampaign, BrandCampaignReactionType } from '@/types';
 import { formatPrice, formatRelativeTime } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -27,7 +27,7 @@ const panelClass =
 const inputClass =
   'h-10 w-full rounded-xl border-[#cddad1] bg-[#fbfaf5] px-3.5 text-sm text-[#1e3d2e] placeholder:text-[#b0bfb8] shadow-none focus-visible:border-[#2d6b4e] focus-visible:ring-4 focus-visible:ring-[#2d6b4e]/8 focus-visible:ring-offset-0';
 
-const referencesScore = (offer: BrandOffer) => {
+const referencesScore = (offer: BrandCampaign) => {
   const checks = [
     offer.keyMessage,
     offer.dosAndDonts,
@@ -40,7 +40,7 @@ const referencesScore = (offer: BrandOffer) => {
   return checks.filter((value) => Boolean(value && value.trim().length > 0)).length;
 };
 
-const locationLabel = (offer: BrandOffer) => {
+const locationLabel = (offer: BrandCampaign) => {
   if (offer.locationTargetingMode === 'remote_only') return 'Remote / Online only';
   if (offer.locationTargetingMode === 'region') return offer.targetRegion || offer.targetCity || 'Region';
   if (offer.locationTargetingMode === 'cities') return offer.targetCities || offer.targetCity || 'Selected cities';
@@ -90,17 +90,17 @@ function CreatorOffersFeedPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   // data
-  const [offers, setOffers] = useState<BrandOffer[]>([]);
+  const [offers, setOffers] = useState<BrandCampaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
 
   // react dialog
-  const [selectedOffer, setSelectedOffer] = useState<BrandOffer | null>(null);
+  const [selectedOffer, setSelectedOffer] = useState<BrandCampaign | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [reactionType, setReactionType] = useState<BrandOfferReactionType>('interested');
+  const [reactionType, setReactionType] = useState<BrandCampaignReactionType>('interested');
   const [message, setMessage] = useState('');
   const [proposedPrice, setProposedPrice] = useState('');
   const [proposedDays, setProposedDays] = useState('');
@@ -120,7 +120,7 @@ function CreatorOffersFeedPage() {
         size: 20,
       };
 
-      const result = await offersService.getCreatorOfferFeed(feedFilters);
+      const result = await campaignsService.getCreatorCampaignFeed(feedFilters);
       const normalized = Array.isArray(result)
         ? { content: result, totalElements: result.length, totalPages: 1, last: true }
         : result;
@@ -165,7 +165,7 @@ function CreatorOffersFeedPage() {
     setBudgetMax('');
   };
 
-  const openReaction = (offer: BrandOffer) => {
+  const openReaction = (offer: BrandCampaign) => {
     setSelectedOffer(offer);
     setReactionType('interested');
     setMessage('');
@@ -178,8 +178,8 @@ function CreatorOffersFeedPage() {
     if (!selectedOffer) return;
     setIsSubmitting(true);
     try {
-      await offersService.reactToOffer(selectedOffer.id, {
-        reactionType: reactionType.toUpperCase() as Uppercase<BrandOfferReactionType>,
+      await campaignsService.reactToCampaign(selectedOffer.id, {
+        reactionType: reactionType.toUpperCase() as Uppercase<BrandCampaignReactionType>,
         message: message || undefined,
         proposedPrice: proposedPrice ? Number(proposedPrice) : undefined,
         proposedDeliveryDays: proposedDays ? Number(proposedDays) : undefined,

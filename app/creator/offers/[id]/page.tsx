@@ -5,11 +5,11 @@ import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
-import { offersService } from '@/services/offers.service';
-import type { BrandOffer } from '@/types';
+import { campaignsService } from '@/services/campaigns.service';
+import type { BrandCampaign } from '@/types';
 import { formatPrice } from '@/lib/utils';
 
-const locationLabel = (offer: BrandOffer) => {
+const locationLabel = (offer: BrandCampaign) => {
   const locationMode = offer.locationTargetingMode;
   const targetRegion = offer.targetRegion;
   const targetCities = offer.targetCities;
@@ -22,10 +22,10 @@ const locationLabel = (offer: BrandOffer) => {
 
 export default function CreatorOfferDetailPage() {
   const params = useParams<{ id: string }>();
-  const [offer, setOffer] = useState<BrandOffer | null>(null);
+  const [offer, setOffer] = useState<BrandCampaign | null>(null);
 
   useEffect(() => {
-    void offersService.getCreatorOffer(params.id).then(setOffer).catch(() => setOffer(null));
+    void campaignsService.getCreatorCampaign(params.id).then(setOffer).catch(() => setOffer(null));
   }, [params.id]);
 
   if (!offer) {

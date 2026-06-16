@@ -35,7 +35,7 @@ export function BottomNav() {
 
   const brandNavItems: NavItem[] = [
     { href: '/brand/dashboard', icon: Home, label: 'Home' },
-    { href: '/brand/offers', icon: Search, label: 'Offers' },
+    { href: '/brand/campaigns', icon: Search, label: 'Campaigns' },
     { href: '/brand/orders', icon: ShoppingBag, label: 'Orders' },
     { href: '/brand/messages', icon: MessageCircle, label: 'Messages' },
     { href: '/brand/settings', icon: User, label: 'Profile' },
