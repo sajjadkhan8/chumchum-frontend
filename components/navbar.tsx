@@ -60,6 +60,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const isSignedIn = hasHydrated && isAuthenticated && !!user;
   const isCreator = isSignedIn && user.role === 'creator';
   const isAdmin = isSignedIn && user.role === 'platform_admin';
+  const isBrand = isSignedIn && user.role === 'brand';
 
   useEffect(() => {
     const syncHash = () => setCurrentHash(window.location.hash || '');
@@ -247,7 +248,11 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
       animate={{ y: 0 }}
       className={cn(
         "sticky top-0 z-50 w-full border-b backdrop-blur",
-        isCreator ? "border-[#d1ddd6] bg-[#fbfaf5]/95" : "border-border bg-background/95 supports-[backdrop-filter]:bg-background/60"
+        isCreator
+          ? "border-[#d1ddd6] bg-[#fbfaf5]/95"
+          : isBrand
+          ? "border-[#d9e0d8] bg-[#fbfaf5]/95 shadow-[0_10px_34px_rgba(38,70,50,0.06)] supports-[backdrop-filter]:bg-[#fbfaf5]/88"
+          : "border-border bg-background/95 supports-[backdrop-filter]:bg-background/60"
       )}
     >
       <div className={cn(
@@ -255,22 +260,38 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
         isCreator ? 'h-[5.25rem] w-full max-w-none' : 'h-16 max-w-7xl'
       )}>
         {/* Logo */}
-        <Link href="/" className="flex min-h-11 items-center gap-3">
-          <ZingZingLogo variant="icon" size={40} className="h-10 w-10" />
-          {isCreator && <span className="hidden text-xl font-extrabold tracking-[-0.04em] text-[#1e3d2e] lg:inline">Zing<span className="text-[#e3a52f]">Zing</span></span>}
-        </Link>
+        {isBrand ? (
+          <Link href="/brand/dashboard" className="flex min-h-11 items-center gap-2.5">
+            <ZingZingLogo variant="icon" size={36} className="h-9 w-9 rounded-2xl shadow-[0_8px_20px_rgba(24,92,57,0.18)]" />
+            <span className="hidden text-xl font-black tracking-[-0.055em] text-[#173b2a] sm:inline">
+              Zing<span className="text-[#e6aa38]">Zing</span>
+            </span>
+          </Link>
+        ) : (
+          <Link href="/" className="flex min-h-11 items-center gap-3">
+            <ZingZingLogo variant="icon" size={40} className="h-10 w-10" />
+            {isCreator && <span className="hidden text-xl font-extrabold tracking-[-0.04em] text-[#1e3d2e] lg:inline">Zing<span className="text-[#e3a52f]">Zing</span></span>}
+          </Link>
+        )}
 
         {/* Desktop Navigation */}
         {!showCreatorUtilityTopbar && (
-          <nav className={cn('hidden flex-1 items-center justify-center md:flex', isCreator ? 'gap-12' : 'gap-5 lg:gap-6')}>
+          <nav className={cn('hidden flex-1 items-center justify-center md:flex', isCreator ? 'gap-12' : isBrand ? 'gap-1.5 lg:gap-2' : 'gap-5 lg:gap-6')}>
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  'font-medium transition-colors hover:text-primary',
+                  'font-medium transition-colors',
+                  isBrand && 'rounded-full px-3 py-2 font-bold tracking-[-0.01em] hover:bg-[#f2efe4] hover:text-[#173b2a]',
                   isCreator ? 'text-lg font-normal tracking-[-0.01em]' : 'text-sm',
-                  isLinkActive(link.href) ? 'text-primary' : 'text-muted-foreground'
+                  isLinkActive(link.href)
+                    ? isBrand
+                      ? 'bg-[#e7f0ea] text-[#185c39] shadow-[inset_0_0_0_1px_rgba(24,92,57,0.08)]'
+                      : 'text-primary'
+                    : isBrand
+                    ? 'text-[#607168]'
+                    : 'text-muted-foreground hover:text-primary'
                 )}
               >
                 {link.label}
@@ -326,7 +347,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
               <Input
                 type="search"
                 placeholder="Search food vloggers in Karachi or TikTok tech creators"
-                className="w-full rounded-full bg-muted pl-10"
+                className={cn(
+                  "w-full rounded-full bg-muted pl-10",
+                  isBrand && "border-[#d9e0d8] bg-[#f4f2e9] text-[#173b2a] placeholder:text-[#7c8a82] focus-visible:ring-[#185c39]/20"
+                )}
                 value={searchValue}
                 onChange={(e) => onSearchChange?.(e.target.value)}
               />
@@ -341,6 +365,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
             <Button
               variant="ghost"
               size="icon"
+              className={cn(isBrand && 'h-10 w-10 rounded-full text-[#385046] hover:bg-[#f2efe4] hover:text-[#185c39]')}
               onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
               title={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
@@ -365,10 +390,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                   )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className={cn('relative hidden sm:flex', isCreator && 'h-10 w-10 text-[#496159] hover:bg-[#e6eceb] hover:text-[#2d6b4e]')} aria-label="Open notifications">
-                        <Bell className={cn('h-5 w-5', isCreator && 'h-[17px] w-[17px]')} />
+                      <Button variant="ghost" size="icon" className={cn('relative hidden sm:flex', isCreator && 'h-10 w-10 text-[#496159] hover:bg-[#e6eceb] hover:text-[#2d6b4e]', isBrand && 'h-10 w-10 rounded-full text-[#385046] hover:bg-[#f2efe4] hover:text-[#185c39]')} aria-label="Open notifications">
+                        <Bell className={cn('h-5 w-5', (isCreator || isBrand) && 'h-[17px] w-[17px]')} />
                         {notificationCount > 0 && (
-                          <Badge className="absolute -right-1 -top-1 h-5 min-w-5 rounded-full px-1 text-xs">
+                          <Badge className={cn("absolute -right-1 -top-1 h-5 min-w-5 rounded-full px-1 text-xs", isBrand && "border-[#fbfaf5] bg-[#e6aa38] text-[#173b2a]")}>
                             {notificationCount > 99 ? '99+' : notificationCount}
                           </Badge>
                         )}
@@ -423,10 +448,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                   </DropdownMenu>
 
                   <Link href={messagesLink}>
-                    <Button variant="ghost" size="icon" className={cn('relative hidden sm:flex', isCreator && 'h-10 w-10 text-[#496159] hover:bg-[#e6eceb] hover:text-[#2d6b4e]')}>
-                      <MessageCircle className={cn('h-5 w-5', isCreator && 'h-[17px] w-[17px]')} />
+                    <Button variant="ghost" size="icon" className={cn('relative hidden sm:flex', isCreator && 'h-10 w-10 text-[#496159] hover:bg-[#e6eceb] hover:text-[#2d6b4e]', isBrand && 'h-10 w-10 rounded-full text-[#385046] hover:bg-[#f2efe4] hover:text-[#185c39]')}>
+                      <MessageCircle className={cn('h-5 w-5', (isCreator || isBrand) && 'h-[17px] w-[17px]')} />
                       {unreadMessageCount > 0 && (
-                        <Badge className="absolute -right-1 -top-1 h-5 min-w-5 rounded-full px-1 text-xs">
+                        <Badge className={cn("absolute -right-1 -top-1 h-5 min-w-5 rounded-full px-1 text-xs", isBrand && "border-[#fbfaf5] bg-[#e6aa38] text-[#173b2a]")}>
                           {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
                         </Badge>
                       )}
@@ -442,13 +467,14 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                     variant="ghost"
                     className={cn(
                       'relative h-10 w-10 rounded-full',
-                      isCreator && 'border border-transparent bg-[#e6eceb] p-0 transition hover:border-[#b0c5ba] hover:bg-white data-[state=open]:border-[#2d6b4e] data-[state=open]:bg-white data-[state=open]:shadow-[0_0_0_4px_rgba(24,92,57,0.10)]'
+                      isCreator && 'border border-transparent bg-[#e6eceb] p-0 transition hover:border-[#b0c5ba] hover:bg-white data-[state=open]:border-[#2d6b4e] data-[state=open]:bg-white data-[state=open]:shadow-[0_0_0_4px_rgba(24,92,57,0.10)]',
+                      isBrand && 'border border-[#d9e0d8] bg-[#f2efe4] p-0 transition hover:border-[#b7c8bd] hover:bg-white data-[state=open]:border-[#185c39] data-[state=open]:bg-white data-[state=open]:shadow-[0_0_0_4px_rgba(24,92,57,0.10)]'
                     )}
-                    aria-label="Open creator profile menu"
+                    aria-label="Open profile menu"
                   >
-                    <Avatar className={cn('h-9 w-9', isCreator && 'h-8 w-8')}>
+                    <Avatar className={cn('h-9 w-9', (isCreator || isBrand) && 'h-8 w-8')}>
                       <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback className={cn(isCreator && 'bg-[#2d6b4e] text-sm font-extrabold text-white')}>{user.name.charAt(0)}</AvatarFallback>
+                      <AvatarFallback className={cn(isCreator && 'bg-[#2d6b4e] text-sm font-extrabold text-white', isBrand && 'bg-[#185c39] text-sm font-extrabold text-white')}>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     {isCreator && <span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-[#fbfaf5] bg-[#e6aa38]" aria-hidden="true" />}
                   </Button>
@@ -456,25 +482,26 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                 <DropdownMenuContent
                   className={cn(
                     'w-56',
-                    isCreator && 'w-[18rem] rounded-2xl border-[#d1ddd6] bg-[#fbfaf5] p-1.5 shadow-[0_18px_50px_rgba(38,70,50,0.16)]'
+                    isCreator && 'w-[18rem] rounded-2xl border-[#d1ddd6] bg-[#fbfaf5] p-1.5 shadow-[0_18px_50px_rgba(38,70,50,0.16)]',
+                    isBrand && 'w-[18rem] rounded-2xl border-[#d9e0d8] bg-[#fbfaf5] p-1.5 shadow-[0_18px_50px_rgba(38,70,50,0.14)]'
                   )}
                   align="end"
                   sideOffset={8}
                 >
-                  <div className={cn('flex items-center gap-2 p-2', isCreator && 'rounded-xl bg-[#1e3d2e] px-3 py-2.5 text-white')}>
-                    <Avatar className={cn('h-10 w-10', isCreator && 'size-9 border border-white/15')}>
+                  <div className={cn('flex items-center gap-2 p-2', isCreator && 'rounded-xl bg-[#1e3d2e] px-3 py-2.5 text-white', isBrand && 'rounded-xl bg-[#173b2a] px-3 py-2.5 text-white')}>
+                    <Avatar className={cn('h-10 w-10', (isCreator || isBrand) && 'size-9 border border-white/15')}>
                       <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback className={cn(isCreator && 'bg-[#244c39] text-sm font-extrabold text-white')}>{user.name.charAt(0)}</AvatarFallback>
+                      <AvatarFallback className={cn(isCreator && 'bg-[#244c39] text-sm font-extrabold text-white', isBrand && 'bg-[#185c39] text-sm font-extrabold text-white')}>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className={cn('text-sm font-medium', isCreator && 'truncate text-sm font-extrabold tracking-[-0.01em] text-white')}>{user.name}</p>
-                      <p className={cn('text-xs text-muted-foreground capitalize', isCreator && 'text-[9px] font-bold uppercase tracking-[0.12em] text-[#f0c56e]')}>{creatorRoleLabel}</p>
+                      <p className={cn('text-sm font-medium', (isCreator || isBrand) && 'truncate text-sm font-extrabold tracking-[-0.01em] text-white')}>{user.name}</p>
+                      <p className={cn('text-xs text-muted-foreground capitalize', (isCreator || isBrand) && 'text-[9px] font-bold uppercase tracking-[0.12em] text-[#f0c56e]')}>{creatorRoleLabel}</p>
                     </div>
                     {isCreator && (
                       <span className="size-2 rounded-full bg-[#e6aa38]" title="Online" aria-label="Online" />
                     )}
                   </div>
-                  <DropdownMenuSeparator className={cn(isCreator && 'mx-1.5 my-1.5 bg-[#d1ddd6]')} />
+                  <DropdownMenuSeparator className={cn((isCreator || isBrand) && 'mx-1.5 my-1.5 bg-[#d1ddd6]')} />
                   {profileMenu.map((item) => {
                     const Icon = item.icon;
                     const isAmbassadorEntry = isCreator && item.accent === 'amber';
@@ -484,12 +511,13 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                         key={item.label}
                         className={cn(
                           isCreator && 'rounded-lg px-2 py-1.5 text-xs font-bold text-[#526259] data-[highlighted]:bg-[#e6eceb] data-[highlighted]:text-[#2d6b4e]',
+                          isBrand && 'rounded-lg px-2 py-1.5 text-xs font-bold text-[#526259] data-[highlighted]:bg-[#e7f0ea] data-[highlighted]:text-[#185c39]',
                           isAmbassadorEntry && 'bg-[#f7e8c8]/65 text-[#8b5e12] data-[highlighted]:bg-[#f7e8c8] data-[highlighted]:text-[#73541e]'
                         )}
                       >
                         <Link href={item.href} className="flex w-full items-center justify-between gap-2">
                           <span className="flex min-w-0 items-center gap-2">
-                            <span className={cn('grid size-7 shrink-0 place-items-center rounded-lg', isAmbassadorEntry ? 'bg-white/75 text-[#9b6712]' : 'bg-white text-[#2d6b4e]')}>
+                            <span className={cn('grid size-7 shrink-0 place-items-center rounded-lg', isAmbassadorEntry ? 'bg-white/75 text-[#9b6712]' : 'bg-white text-[#2d6b4e]', isBrand && !isAmbassadorEntry && 'bg-[#e7f0ea] text-[#185c39]')}>
                               <Icon className="size-3.5" />
                             </span>
                             <span className="truncate">{item.label}</span>
@@ -504,10 +532,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                       </DropdownMenuItem>
                     );
                   })}
-                  <DropdownMenuSeparator className={cn(isCreator && 'mx-1.5 my-1.5 bg-[#d1ddd6]')} />
-                  <DropdownMenuItem onClick={handleLogout} className={cn('text-destructive', isCreator && 'rounded-lg px-2 py-1.5 text-xs font-bold text-[#9d3c36] data-[highlighted]:bg-[#f9ebe8] data-[highlighted]:text-[#8b302b]')}>
-                    <span className={cn(isCreator && 'grid size-7 place-items-center rounded-lg bg-[#f9ebe8]')}>
-                      <LogOut className={cn('h-3.5 w-3.5', !isCreator && 'mr-2')} />
+                  <DropdownMenuSeparator className={cn((isCreator || isBrand) && 'mx-1.5 my-1.5 bg-[#d1ddd6]')} />
+                  <DropdownMenuItem onClick={handleLogout} className={cn('text-destructive', isCreator && 'rounded-lg px-2 py-1.5 text-xs font-bold text-[#9d3c36] data-[highlighted]:bg-[#f9ebe8] data-[highlighted]:text-[#8b302b]', isBrand && 'rounded-lg px-2 py-1.5 text-xs font-bold text-[#9d3c36] data-[highlighted]:bg-[#f9ebe8] data-[highlighted]:text-[#8b302b]')}>
+                    <span className={cn((isCreator || isBrand) && 'grid size-7 place-items-center rounded-lg bg-[#f9ebe8]')}>
+                      <LogOut className={cn('h-3.5 w-3.5', !(isCreator || isBrand) && 'mr-2')} />
                     </span>
                     Logout
                   </DropdownMenuItem>
@@ -529,15 +557,15 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
           )}
 
           {/* Mobile Menu */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="min-tap md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className={cn("min-tap md:hidden", isBrand && "rounded-full text-[#385046] hover:bg-[#f2efe4] hover:text-[#185c39]")}>
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[88vw] max-w-sm p-0">
-              <div className="border-b p-4">
-                <p className="text-base font-semibold">Menu</p>
+            <SheetContent side="right" className={cn("w-[88vw] max-w-sm p-0", isBrand && "border-[#d9e0d8] bg-[#fbfaf5]")}>
+              <div className={cn("border-b p-4", isBrand && "border-[#d9e0d8]")}>
+                <p className={cn("text-base font-semibold", isBrand && "text-[#173b2a]")}>Menu</p>
               </div>
               <nav className="flex flex-col gap-1 p-4 pb-safe">
                 {navLinks.map((link) => (
@@ -546,7 +574,14 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                       href={link.href}
                       className={cn(
                         'min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary',
-                        isLinkActive(link.href) ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
+                        isBrand && 'rounded-xl font-bold hover:bg-[#f2efe4] hover:text-[#173b2a]',
+                        isLinkActive(link.href)
+                          ? isBrand
+                            ? 'bg-[#e7f0ea] text-[#185c39]'
+                            : 'bg-primary/10 text-primary'
+                          : isBrand
+                          ? 'text-[#607168]'
+                          : 'text-muted-foreground'
                       )}
                     >
                       {link.label}
@@ -557,20 +592,20 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                   <>
                     {!isCreator && (
                       <SheetClose asChild>
-                        <Link href={messagesLink} className={cn('min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary', isLinkActive(messagesLink) ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>
+                        <Link href={messagesLink} className={cn('min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary', isBrand && 'rounded-xl font-bold hover:bg-[#f2efe4] hover:text-[#173b2a]', isLinkActive(messagesLink) ? isBrand ? 'bg-[#e7f0ea] text-[#185c39]' : 'bg-primary/10 text-primary' : isBrand ? 'text-[#607168]' : 'text-muted-foreground')}>
                           Messages
                         </Link>
                       </SheetClose>
                     )}
                     {profileMenu.map((item) => (
                       <SheetClose asChild key={item.label}>
-                        <Link href={item.href} className={cn('min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary', isLinkActive(item.href) ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>
+                        <Link href={item.href} className={cn('min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary', isBrand && 'rounded-xl font-bold hover:bg-[#f2efe4] hover:text-[#173b2a]', isLinkActive(item.href) ? isBrand ? 'bg-[#e7f0ea] text-[#185c39]' : 'bg-primary/10 text-primary' : isBrand ? 'text-[#607168]' : 'text-muted-foreground')}>
                           {item.label}
                         </Link>
                       </SheetClose>
                     ))}
                     <SheetClose asChild>
-                      <Button variant="ghost" className="min-h-11 justify-start px-3 text-destructive hover:text-destructive" onClick={handleLogout}>
+                      <Button variant="ghost" className={cn("min-h-11 justify-start px-3 text-destructive hover:text-destructive", isBrand && "rounded-xl font-bold hover:bg-[#f9ebe8]")} onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         Logout
                       </Button>

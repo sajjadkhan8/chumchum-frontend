@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Search, TrendingUp, Star, Wallet, MapPin, Crown, Heart, Grid, List } from 'lucide-react';
+import { Search, TrendingUp, Star, Wallet, MapPin, Crown, Heart, Grid, List, BadgeCheck, Sparkles, SlidersHorizontal, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +35,22 @@ const sortOptions = [
   { value: 'top_rated', label: 'Top Rated', icon: Star },
   { value: 'near_you', label: 'Near You', icon: MapPin },
 ];
+
+function HeroStat({ label, value, icon: Icon }: { label: string; value: string; icon: React.ElementType }) {
+  return (
+    <div className="rounded-[1.15rem] border border-white/12 bg-white/8 px-2.5 py-2.5 backdrop-blur sm:px-4 sm:py-3">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <span className="hidden size-9 shrink-0 place-items-center rounded-2xl bg-[#e6aa38] text-[#173b2a] sm:grid">
+          <Icon className="size-4" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#d4e0d8] sm:text-[10px] sm:tracking-[0.15em]">{label}</p>
+          <p className="mt-0.5 truncate text-base font-black tracking-[-0.04em] text-white sm:text-lg">{value}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ExplorePageContent() {
   const pathname = usePathname();
@@ -169,379 +185,326 @@ function ExplorePageContent() {
   }, [filteredSavedCreators, savedSortBy]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground md:text-3xl">Creators</h1>
-          <p className="text-sm text-muted-foreground">Discover new creators and manage your saved shortlist in one place.</p>
-        </div>
-        <div className="inline-flex rounded-full border border-border bg-muted p-1">
-          <Button
-            variant={creatorView === 'all' ? 'default' : 'ghost'}
-            size="sm"
-            className="rounded-full"
-            onClick={() => setCreatorView('all')}
-          >
-            All Creators
-          </Button>
-          <Button
-            variant={creatorView === 'saved' ? 'default' : 'ghost'}
-            size="sm"
-            className="rounded-full"
-            onClick={() => setCreatorView('saved')}
-          >
-            Saved Creators
-            <Badge className="ml-2 h-5 rounded-full bg-primary/10 px-1.5 text-[10px] text-primary">
-              {savedCreatorsList.length}
-            </Badge>
-          </Button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#fbfaf5]">
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-[2rem] border border-[#d9e0d8] bg-[#173b2a] text-white shadow-[0_24px_80px_rgba(23,59,42,0.14)]">
+          <div className="p-5 sm:p-6 lg:p-7">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-3xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-[#f0c56e]">
+                  <Sparkles className="size-3.5" />
+                  Creator discovery desk
+                </div>
+                <h1 className="mt-4 text-[clamp(2rem,4.4vw,4rem)] font-black leading-[0.98] tracking-[-0.06em]">
+                  Find food creators without the browsing sprawl.
+                </h1>
+                <p className="mt-4 max-w-2xl text-sm leading-6 text-[#c7d8ce] sm:text-base">
+                  Search restaurant reviewers, cafe storytellers, hotel creators, fast-food voices, and dessert specialists from one tighter workspace.
+                </p>
+              </div>
 
-      {creatorView === 'all' ? (
-        <>
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6 space-y-4"
-      >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          {/* Search Bar */}
-          <div className="flex-1 lg:max-w-xl">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">Search creators by niche, city, or platform</p>
-              <Link href="/brand/ambassadors" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                Ambassador search
-                <Badge className="h-4 rounded-full bg-primary/10 px-1.5 text-[10px] font-semibold text-primary">New</Badge>
-              </Link>
+              <div className="inline-flex w-full rounded-full border border-white/12 bg-white/8 p-1 lg:w-auto">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn('flex-1 rounded-full font-black text-[#d4e0d8] hover:bg-white/10 hover:text-white lg:flex-none', creatorView === 'all' && 'bg-[#e6aa38] text-[#173b2a] hover:bg-[#e6aa38] hover:text-[#173b2a]')}
+                  onClick={() => setCreatorView('all')}
+                >
+                  All Creators
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn('flex-1 rounded-full font-black text-[#d4e0d8] hover:bg-white/10 hover:text-white lg:flex-none', creatorView === 'saved' && 'bg-[#e6aa38] text-[#173b2a] hover:bg-[#e6aa38] hover:text-[#173b2a]')}
+                  onClick={() => setCreatorView('saved')}
+                >
+                  Saved
+                  <Badge className="ml-2 h-5 rounded-full bg-white/16 px-1.5 text-[10px] text-current">
+                    {savedCreatorsList.length}
+                  </Badge>
+                </Button>
+              </div>
             </div>
-            <div className="relative">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search food vloggers in Karachi or TikTok tech creators"
-              className="h-12 rounded-full bg-muted pl-12 text-base"
-              value={filters.search || ''}
-              onChange={(e) => setFilters({ search: e.target.value })}
-            />
+
+            <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+              <HeroStat label="Creators" value={isLoadingCreators ? '...' : String(creators.length)} icon={Users} />
+              <HeroStat label="Saved" value={String(savedCreatorsList.length)} icon={Heart} />
+              <HeroStat label="Filters" value={String(activeFilterCount)} icon={SlidersHorizontal} />
             </div>
           </div>
+        </section>
 
-          {/* Sort & Filter Controls */}
-          <div className="flex w-full items-center gap-2 sm:gap-3 lg:w-auto">
-            {/* Mobile Filter Button */}
-            <div className="lg:hidden">
-              <FilterPanel isMobile />
-            </div>
-
-            {/* Sort Dropdown */}
-            <Select
-              value={filters.sortBy || 'trending'}
-              onValueChange={(value) => setFilters({ sortBy: value as typeof filters.sortBy })}
+        {creatorView === 'all' ? (
+          <>
+            <motion.section
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 rounded-[1.5rem] border border-[#d9e0d8] bg-white p-3 shadow-[0_16px_54px_rgba(38,70,50,0.06)] sm:p-4"
             >
-              <SelectTrigger className="h-11 w-full rounded-full sm:w-[180px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                {sortOptions.map((option) => {
-                  const Icon = option.icon;
-                  return (
-                    <SelectItem key={option.value} value={option.value}>
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4" />
-                        {option.label}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Active Filters Display */}
-        {activeFilterCount > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="flex flex-wrap items-center gap-2"
-          >
-            <span className="text-sm text-muted-foreground">Active filters:</span>
-            {filters.categories?.map((cat) => (
-              <Badge
-                key={cat}
-                variant="secondary"
-                className="cursor-pointer"
-                onClick={() =>
-                  setFilters({
-                    categories: filters.categories?.filter((c) => c !== cat),
-                  })
-                }
-              >
-                {cat} &times;
-              </Badge>
-            ))}
-            {filters.cities?.map((city) => (
-              <Badge
-                key={city}
-                variant="secondary"
-                className="cursor-pointer"
-                onClick={() =>
-                  setFilters({
-                    cities: filters.cities?.filter((c) => c !== city),
-                  })
-                }
-              >
-                {city} &times;
-              </Badge>
-            ))}
-            {filters.dealTypes?.map((type) => (
-              <Badge
-                key={type}
-                variant="secondary"
-                className={cn('cursor-pointer', type === 'barter' && 'bg-accent text-accent-foreground')}
-                onClick={() =>
-                  setFilters({
-                    dealTypes: filters.dealTypes?.filter((t) => t !== type),
-                  })
-                }
-              >
-                {type === 'barter' && '🎁 '}
-                {type} &times;
-              </Badge>
-            ))}
-            {filters.badgeLevel && (
-              <Badge variant="secondary" className="cursor-pointer capitalize" onClick={() => setFilters({ badgeLevel: undefined })}>
-                {filters.badgeLevel.replace('_', ' ')} &times;
-              </Badge>
-            )}
-            {filters.availabilityStatus && (
-              <Badge variant="secondary" className="cursor-pointer capitalize" onClick={() => setFilters({ availabilityStatus: undefined })}>
-                {filters.availabilityStatus} &times;
-              </Badge>
-            )}
-            {(filters.minPrice || filters.maxPrice) && (
-              <Badge variant="secondary" className="cursor-pointer" onClick={() => setFilters({ minPrice: undefined, maxPrice: undefined })}>
-                {filters.minPrice ? formatPrice(filters.minPrice) : 'Any'} - {filters.maxPrice ? formatPrice(filters.maxPrice) : 'Any'} &times;
-              </Badge>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                setFilters({
-                  categories: [],
-                  cities: [],
-                  dealTypes: [],
-                  platforms: [],
-                  barterTypes: [],
-                  minFollowers: undefined,
-                  maxFollowers: undefined,
-                  minRating: undefined,
-                  minPrice: undefined,
-                  maxPrice: undefined,
-                  badgeLevel: undefined,
-                  availabilityStatus: undefined,
-                })
-              }
-            >
-              Clear all
-            </Button>
-          </motion.div>
-        )}
-      </motion.div>
-
-      <div className="flex gap-6 lg:gap-8">
-        <aside className="hidden w-[280px] shrink-0 lg:block">
-          <div className="sticky top-24">
-            <FilterPanel />
-          </div>
-        </aside>
-
-        <div className="flex-1">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <Card className="border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Crown className="h-5 w-5 text-primary" />
-                  <div>
-                      <p className="font-semibold text-foreground inline-flex items-center gap-2">
-                        Looking for verified premium creators?
-                        <Badge className="h-4 rounded-full bg-primary/10 px-1.5 text-[10px] font-semibold text-primary">New</Badge>
-                      </p>
-                    <p className="text-sm text-muted-foreground">Check out our curated Platform Ambassadors with guaranteed quality.</p>
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                <div>
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b77a12]">Search creators</p>
+                    <Link href="/brand/ambassadors" className="hidden items-center gap-1.5 rounded-full bg-[#e7f0ea] px-3 py-1.5 text-xs font-black text-[#185c39] sm:inline-flex">
+                      <Crown className="size-3.5" />
+                      Ambassadors
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#7b867f]" />
+                    <Input
+                      type="search"
+                      placeholder="Search food vloggers in Karachi, cafes, TikTok, reels..."
+                      className="h-12 rounded-full border-[#d9e0d8] bg-[#f4f2e9] pl-12 text-base font-bold text-[#173b2a] placeholder:text-[#7c8a82] focus-visible:ring-[#185c39]/20"
+                      value={filters.search || ''}
+                      onChange={(e) => setFilters({ search: e.target.value })}
+                    />
                   </div>
                 </div>
-                <Link href="/brand/ambassadors">
-                  <Button size="sm" variant="outline" className="rounded-full">
-                    View Ambassadors
+
+                <div className="flex items-center gap-2">
+                  <div className="lg:hidden">
+                    <FilterPanel isMobile />
+                  </div>
+                  <Select
+                    value={filters.sortBy || 'trending'}
+                    onValueChange={(value) => setFilters({ sortBy: value as typeof filters.sortBy })}
+                  >
+                    <SelectTrigger className="h-11 flex-1 rounded-full border-[#d9e0d8] bg-[#fbfaf5] font-black text-[#185c39] sm:w-[190px] sm:flex-none">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sortOptions.map((option) => {
+                        const Icon = option.icon;
+                        return (
+                          <SelectItem key={option.value} value={option.value}>
+                            <div className="flex items-center gap-2">
+                              <Icon className="h-4 w-4" />
+                              {option.label}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {activeFilterCount > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="mt-3 flex flex-wrap items-center gap-2"
+                >
+                  <span className="text-xs font-black uppercase tracking-[0.14em] text-[#7b867f]">Active</span>
+                  {filters.categories?.map((cat) => (
+                    <Badge key={cat} className="cursor-pointer rounded-full bg-[#e7f0ea] text-[#185c39]" onClick={() => setFilters({ categories: filters.categories?.filter((c) => c !== cat) })}>
+                      {cat} x
+                    </Badge>
+                  ))}
+                  {filters.cities?.map((city) => (
+                    <Badge key={city} className="cursor-pointer rounded-full bg-[#e7f0ea] text-[#185c39]" onClick={() => setFilters({ cities: filters.cities?.filter((c) => c !== city) })}>
+                      {city} x
+                    </Badge>
+                  ))}
+                  {filters.dealTypes?.map((type) => (
+                    <Badge key={type} className="cursor-pointer rounded-full bg-[#fff1cd] text-[#8b5e12]" onClick={() => setFilters({ dealTypes: filters.dealTypes?.filter((t) => t !== type) })}>
+                      {type} x
+                    </Badge>
+                  ))}
+                  {filters.badgeLevel && (
+                    <Badge className="cursor-pointer rounded-full bg-[#e7f0ea] text-[#185c39] capitalize" onClick={() => setFilters({ badgeLevel: undefined })}>
+                      {filters.badgeLevel.replace('_', ' ')} x
+                    </Badge>
+                  )}
+                  {filters.availabilityStatus && (
+                    <Badge className="cursor-pointer rounded-full bg-[#e7f0ea] text-[#185c39] capitalize" onClick={() => setFilters({ availabilityStatus: undefined })}>
+                      {filters.availabilityStatus} x
+                    </Badge>
+                  )}
+                  {(filters.minPrice || filters.maxPrice) && (
+                    <Badge className="cursor-pointer rounded-full bg-[#fff1cd] text-[#8b5e12]" onClick={() => setFilters({ minPrice: undefined, maxPrice: undefined })}>
+                      {filters.minPrice ? formatPrice(filters.minPrice) : 'Any'} - {filters.maxPrice ? formatPrice(filters.maxPrice) : 'Any'} x
+                    </Badge>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 rounded-full text-xs font-black text-[#185c39] hover:bg-[#e7f0ea]"
+                    onClick={() =>
+                      setFilters({
+                        categories: [],
+                        cities: [],
+                        dealTypes: [],
+                        platforms: [],
+                        barterTypes: [],
+                        minFollowers: undefined,
+                        maxFollowers: undefined,
+                        minRating: undefined,
+                        minPrice: undefined,
+                        maxPrice: undefined,
+                        badgeLevel: undefined,
+                        availabilityStatus: undefined,
+                      })
+                    }
+                  >
+                    Clear all
                   </Button>
-                </Link>
-              </div>
-            </Card>
-          </motion.div>
-
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              {isLoadingCreators ? 'Loading...' : `${creators.length} creators found`}
-            </p>
-          </div>
-
-          {isLoadingCreators ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <CreatorCardSkeleton key={i} />
-              ))}
-            </div>
-          ) : hasCreatorsError ? (
-            <ErrorState
-              title="Unable to load creators"
-              description="Please check your connection and try again."
-              onRetry={() => setFilters({ ...filters })}
-            />
-          ) : creators.length === 0 ? (
-            <EmptyState
-              title="No creators found"
-              description="Try adjusting your filters or search query to find more creators."
-              action={{
-                label: 'Clear filters',
-                onClick: () =>
-                  setFilters({
-                    search: '',
-                    categories: [],
-                    cities: [],
-                    dealTypes: [],
-                    platforms: [],
-                    barterTypes: [],
-                    minFollowers: undefined,
-                    maxFollowers: undefined,
-                    minRating: undefined,
-                    minPrice: undefined,
-                    maxPrice: undefined,
-                    badgeLevel: undefined,
-                    availabilityStatus: undefined,
-                  }),
-              }}
-            />
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
-            >
-              {creators.map((creator, index) => (
-                <motion.div
-                  key={creator.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <CreatorCard
-                    creator={creator}
-                    onQuickDeal={() => handleQuickDeal(creator)}
-                  />
                 </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </div>
-      </div>
-        </>
-      ) : (
-        <>
-          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="relative flex-1 md:max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search saved creators..."
-                className="pl-9"
-                value={savedSearchQuery}
-                onChange={(e) => setSavedSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Select value={savedSortBy} onValueChange={setSavedSortBy}>
-                <SelectTrigger className="w-44">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recent">Recently Saved</SelectItem>
-                  <SelectItem value="rating">Highest Rated</SelectItem>
-                  <SelectItem value="followers">Most Followers</SelectItem>
-                  <SelectItem value="price_low">Price: Low to High</SelectItem>
-                  <SelectItem value="price_high">Price: High to Low</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="hidden md:flex">
-                <Button
-                  variant={savedViewMode === 'grid' ? 'secondary' : 'ghost'}
-                  size="icon"
-                  onClick={() => setSavedViewMode('grid')}
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={savedViewMode === 'list' ? 'secondary' : 'ghost'}
-                  size="icon"
-                  onClick={() => setSavedViewMode('list')}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
+              )}
+            </motion.section>
+
+            <section className="mt-4 grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+              <aside className="hidden lg:block">
+                <div className="sticky top-24 overflow-hidden rounded-[1.5rem] border border-[#d9e0d8] bg-white shadow-[0_16px_54px_rgba(38,70,50,0.06)]">
+                  <div className="border-b border-[#edf0eb] bg-[#fbfaf5] px-4 py-3">
+                    <p className="flex items-center gap-2 text-sm font-black text-[#173b2a]">
+                      <SlidersHorizontal className="size-4 text-[#b77a12]" />
+                      Refine shortlist
+                    </p>
+                  </div>
+                  <FilterPanel />
+                </div>
+              </aside>
+
+              <div className="min-w-0">
+                <div className="mb-3 rounded-[1.35rem] border border-[#d9e0d8] bg-white p-3 shadow-[0_12px_38px_rgba(38,70,50,0.05)]">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="grid size-10 place-items-center rounded-2xl bg-[#f4f2e9] text-[#b77a12]">
+                        <Crown className="size-5" />
+                      </span>
+                      <div>
+                        <p className="inline-flex items-center gap-2 text-sm font-black text-[#173b2a]">
+                          Need safer first picks?
+                          <Badge className="rounded-full bg-[#e7f0ea] text-[10px] font-black text-[#185c39]">Managed</Badge>
+                        </p>
+                        <p className="text-xs font-bold text-[#718077]">Use Platform Ambassadors for high-trust food launches.</p>
+                      </div>
+                    </div>
+                    <Button asChild variant="outline" className="rounded-full border-[#d9e0d8] bg-[#fbfaf5] font-black text-[#185c39] hover:bg-[#e7f0ea]">
+                      <Link href="/brand/ambassadors">View Ambassadors</Link>
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-black text-[#173b2a]">
+                    {isLoadingCreators ? 'Loading creators...' : `${creators.length} creators found`}
+                  </p>
+                  <p className="hidden text-xs font-bold text-[#718077] sm:block">Compact cards. Better scanning. Less wandering.</p>
+                </div>
+
+                {isLoadingCreators ? (
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <CreatorCardSkeleton key={i} />
+                    ))}
+                  </div>
+                ) : hasCreatorsError ? (
+                  <ErrorState title="Unable to load creators" description="Please check your connection and try again." onRetry={() => setFilters({ ...filters })} />
+                ) : creators.length === 0 ? (
+                  <EmptyState
+                    title="No creators found"
+                    description="Try adjusting your filters or search query to find more creators."
+                    action={{
+                      label: 'Clear filters',
+                      onClick: () =>
+                        setFilters({
+                          search: '',
+                          categories: [],
+                          cities: [],
+                          dealTypes: [],
+                          platforms: [],
+                          barterTypes: [],
+                          minFollowers: undefined,
+                          maxFollowers: undefined,
+                          minRating: undefined,
+                          minPrice: undefined,
+                          maxPrice: undefined,
+                          badgeLevel: undefined,
+                          availabilityStatus: undefined,
+                        }),
+                    }}
+                  />
+                ) : (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {creators.map((creator, index) => (
+                      <motion.div key={creator.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }}>
+                        <CreatorCard creator={creator} className="border-[#d9e0d8] shadow-[0_12px_38px_rgba(38,70,50,0.055)]" onQuickDeal={() => handleQuickDeal(creator)} />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </div>
+            </section>
+          </>
+        ) : (
+          <section className="mt-4">
+            <div className="rounded-[1.5rem] border border-[#d9e0d8] bg-white p-3 shadow-[0_16px_54px_rgba(38,70,50,0.06)] sm:p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="relative flex-1 md:max-w-md">
+                  <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7b867f]" />
+                  <Input
+                    type="text"
+                    placeholder="Search saved creators..."
+                    className="h-11 rounded-full border-[#d9e0d8] bg-[#f4f2e9] pl-10 font-bold text-[#173b2a] placeholder:text-[#7c8a82] focus-visible:ring-[#185c39]/20"
+                    value={savedSearchQuery}
+                    onChange={(e) => setSavedSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select value={savedSortBy} onValueChange={setSavedSortBy}>
+                    <SelectTrigger className="h-11 flex-1 rounded-full border-[#d9e0d8] bg-[#fbfaf5] font-black text-[#185c39] md:w-48 md:flex-none">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="recent">Recently Saved</SelectItem>
+                      <SelectItem value="rating">Highest Rated</SelectItem>
+                      <SelectItem value="followers">Most Followers</SelectItem>
+                      <SelectItem value="price_low">Price: Low to High</SelectItem>
+                      <SelectItem value="price_high">Price: High to Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="hidden rounded-full bg-[#f4f2e9] p-1 md:flex">
+                    <Button variant="ghost" size="icon" className={cn('rounded-full text-[#607168]', savedViewMode === 'grid' && 'bg-white text-[#185c39] shadow-sm')} onClick={() => setSavedViewMode('grid')}>
+                      <Grid className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className={cn('rounded-full text-[#607168]', savedViewMode === 'list' && 'bg-white text-[#185c39] shadow-sm')} onClick={() => setSavedViewMode('list')}>
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          {isLoadingSaved ? (
-            <Card>
-              <CardContent className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-                Loading saved creators...
-              </CardContent>
-            </Card>
-          ) : savedCreatorsList.length === 0 ? (
-            <EmptyState
-              icon={Heart}
-              title="No saved creators yet"
-              description="Save creators you're interested in to easily find them later."
-              action={{ label: 'Discover creators', onClick: () => setCreatorView('all') }}
-            />
-          ) : sortedSavedCreators.length > 0 ? (
-            <div
-              className={
-                savedViewMode === 'grid'
-                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                  : 'space-y-4'
-              }
-            >
-              {sortedSavedCreators.map((creator, index) => (
-                <motion.div
-                  key={creator.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <CreatorCard
-                    creator={creator}
-                    variant={savedViewMode === 'list' ? 'horizontal' : 'default'}
-                  />
-                </motion.div>
-              ))}
+            <div className="mt-4">
+              {isLoadingSaved ? (
+                <Card className="rounded-[1.5rem] border-[#d9e0d8] bg-white">
+                  <CardContent className="flex items-center justify-center py-10 text-sm font-bold text-[#647168]">Loading saved creators...</CardContent>
+                </Card>
+              ) : savedCreatorsList.length === 0 ? (
+                <EmptyState icon={Heart} title="No saved creators yet" description="Save creators you're interested in to easily find them later." action={{ label: 'Discover creators', onClick: () => setCreatorView('all') }} />
+              ) : sortedSavedCreators.length > 0 ? (
+                <div className={savedViewMode === 'grid' ? 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'space-y-3'}>
+                  {sortedSavedCreators.map((creator, index) => (
+                    <motion.div key={creator.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }}>
+                      <CreatorCard creator={creator} className="border-[#d9e0d8] shadow-[0_12px_38px_rgba(38,70,50,0.055)]" variant={savedViewMode === 'list' ? 'horizontal' : 'default'} />
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <Card className="rounded-[1.5rem] border-[#d9e0d8] bg-white">
+                  <CardContent className="flex flex-col items-center justify-center py-10">
+                    <Search className="mb-4 h-10 w-10 text-[#b77a12]" />
+                    <h3 className="mb-2 text-lg font-black text-[#173b2a]">No results found</h3>
+                    <p className="text-center text-sm font-bold text-[#647168]">No saved creators match your search.</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
-          ) : (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Search className="mb-4 h-12 w-12 text-muted-foreground" />
-                <h3 className="mb-2 text-lg font-semibold">No results found</h3>
-                <p className="text-center text-muted-foreground">No saved creators match your search.</p>
-              </CardContent>
-            </Card>
-          )}
-        </>
-      )}
+          </section>
+        )}
 
       {selectedCreator && (
         <QuickDealModal
@@ -553,6 +516,7 @@ function ExplorePageContent() {
           }}
         />
       )}
+      </div>
     </div>
   );
 }
