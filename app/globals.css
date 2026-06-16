@@ -141,6 +141,10 @@
   * {
     @apply border-border outline-ring/50;
   }
+  input, textarea {
+    -webkit-appearance: none;
+    background-color: #ffffff;
+  }
   body {
     @apply bg-background text-foreground overflow-x-hidden;
     text-size-adjust: 100%;
