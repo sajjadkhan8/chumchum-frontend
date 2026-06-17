@@ -65,19 +65,14 @@ export default function BrandNotificationsPage() {
         <div className="mx-auto max-w-7xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-[#f0c56e]">
             <Bell className="size-3.5" />
-            Inbox
-          </div>
-          <div className="mt-2 flex items-center gap-3">
-            <h1 className="text-xl font-extrabold tracking-[-0.04em] text-white sm:text-2xl">
-              Notifications
-            </h1>
+            Notifications
             {unreadCount > 0 && (
-              <span className="rounded-full bg-[#e6aa38] px-2.5 py-0.5 text-xs font-black text-[#173b2a]">
-                {unreadCount} unread
+              <span className="rounded-full bg-[#e6aa38] px-2 py-0.5 text-[10px] font-black text-[#173b2a]">
+                {unreadCount}
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-[#8fb09a]">Activity from your offers, orders, and messages</p>
+          <h1 className="sr-only">Notifications</h1>
         </div>
       </div>
 

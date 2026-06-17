@@ -11,33 +11,22 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const { user, isAuthenticated, hasHydrated } = useAuthStore();
 
-  const isProtectedBrandRoute =
-    pathname.startsWith('/brand/dashboard') ||
-    pathname.startsWith('/brand/campaigns') ||
-    pathname.startsWith('/brand/offers') ||
-    pathname.startsWith('/brand/orders') ||
-    pathname.startsWith('/brand/saved') ||
-    pathname.startsWith('/brand/payments') ||
-    pathname.startsWith('/brand/settings') ||
-    pathname.startsWith('/brand/messages') ||
-    pathname.startsWith('/brand/analytics');
-
   useEffect(() => {
     if (!hasHydrated) return;
 
-    if (isProtectedBrandRoute && !isAuthenticated) {
+    if (!isAuthenticated) {
       router.replace('/login');
       return;
     }
-    if (user && user.role === 'creator') {
+    if (user?.role === 'creator') {
       router.replace('/creator/dashboard');
     }
-    if (user && user.role === 'platform_admin') {
+    if (user?.role === 'platform_admin') {
       router.replace('/admin/dashboard');
     }
-  }, [hasHydrated, isAuthenticated, user, router, isProtectedBrandRoute]);
+  }, [hasHydrated, isAuthenticated, user, router]);
 
-  if ((isProtectedBrandRoute && !hasHydrated) || (isProtectedBrandRoute && !isAuthenticated) || user?.role === 'creator' || user?.role === 'platform_admin') {
+  if (!hasHydrated || !isAuthenticated || user?.role === 'creator' || user?.role === 'platform_admin') {
     return <div className="min-h-screen bg-background" />;
   }
 

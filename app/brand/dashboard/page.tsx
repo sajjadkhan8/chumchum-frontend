@@ -19,6 +19,7 @@ import {
   TrendingUp,
   Utensils,
   Users,
+  X,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -103,6 +104,8 @@ function EmptyPanel({ title, copy, href, action }: { title: string; copy: string
   );
 }
 
+const HERO_DISMISSED_KEY = 'brand-hero-dismissed';
+
 export default function BrandDashboardPage() {
   const { savedCreators, user } = useAuthStore();
   const [stats, setStats] = useState<BrandDashboardAnalytics>(emptyStats);
@@ -110,6 +113,16 @@ export default function BrandDashboardPage() {
   const [savedCreatorsList, setSavedCreatorsList] = useState<Creator[]>([]);
   const [activeOrders, setActiveOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showHero, setShowHero] = useState(true);
+
+  useEffect(() => {
+    if (localStorage.getItem(HERO_DISMISSED_KEY)) setShowHero(false);
+  }, []);
+
+  const dismissHero = () => {
+    localStorage.setItem(HERO_DISMISSED_KEY, '1');
+    setShowHero(false);
+  };
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -148,49 +161,60 @@ export default function BrandDashboardPage() {
   return (
     <div className="min-h-screen bg-[#fbfaf5]">
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
-        <section className="overflow-hidden rounded-[2rem] border border-[#d9e0d8] bg-[#173b2a] text-white shadow-[0_28px_90px_rgba(23,59,42,0.16)]">
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <motion.div initial={false} animate={{ opacity: 1, y: 0 }} className="p-6 sm:p-8 lg:p-10">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3.5 py-2 text-xs font-bold text-[#f0c56e]">
-                <span className="size-2 rounded-full bg-[#e6aa38]" />
-                Food business command center
-              </div>
-              <h1 className="mt-6 max-w-2xl text-[clamp(2.35rem,5vw,4.8rem)] font-extrabold leading-[0.98] tracking-[-0.06em]">
-                Good morning, {firstName}. Let&apos;s fill more tables.
-              </h1>
-              <p className="mt-5 max-w-xl text-base leading-7 text-[#c7d8ce]">
-                Track active tastings, discover local food creators, and launch campaigns for restaurants, cafes, hotels, fast food, and dessert shops.
-              </p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Link href="/brand/campaigns/new" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#e6aa38] px-5 py-3 text-sm font-extrabold text-[#173b2a]">
-                  Launch a campaign <ArrowRight className="size-4" />
-                </Link>
-                <Link href="/brand/explore?search=food" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/8 px-5 py-3 text-sm font-bold text-white hover:bg-white/12">
-                  Find food creators <Search className="size-4" />
-                </Link>
-              </div>
-            </motion.div>
+        {showHero && (
+          <section className="relative overflow-hidden rounded-[2rem] border border-[#d9e0d8] bg-[#173b2a] text-white shadow-[0_28px_90px_rgba(23,59,42,0.16)]">
+            <button
+              type="button"
+              onClick={dismissHero}
+              aria-label="Dismiss hero section"
+              className="absolute right-4 top-4 z-10 grid size-7 place-items-center rounded-full bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white"
+            >
+              <X className="size-3.5" />
+            </button>
 
-            <div className="relative min-h-[320px] overflow-hidden lg:min-h-full">
-              <Image
-                src="/landing/restaurant-opportunity.png"
-                alt="Restaurant table spread being recorded by a food creator"
-                fill
-                className="object-cover"
-                sizes="(min-width: 1024px) 45vw, 100vw"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#173b2a]/85 via-transparent to-transparent" />
-              <div className="absolute bottom-5 left-5 right-5 rounded-[1.35rem] border border-white/15 bg-[#173b2a]/85 p-4 backdrop-blur">
-                <p className="flex items-center gap-2 text-sm font-extrabold">
-                  <BadgeCheck className="size-4 text-[#e6aa38]" />
-                  Suggested next move
+            <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <motion.div initial={false} animate={{ opacity: 1, y: 0 }} className="p-6 sm:p-8 lg:p-10">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3.5 py-2 text-xs font-bold text-[#f0c56e]">
+                  <span className="size-2 rounded-full bg-[#e6aa38]" />
+                  Food business command center
+                </div>
+                <h1 className="mt-6 max-w-2xl text-[clamp(2.35rem,5vw,4.8rem)] font-extrabold leading-[0.98] tracking-[-0.06em]">
+                  Good morning, {firstName}. Let&apos;s fill more tables.
+                </h1>
+                <p className="mt-5 max-w-xl text-base leading-7 text-[#c7d8ce]">
+                  Track active tastings, discover local food creators, and launch campaigns for restaurants, cafes, hotels, fast food, and dessert shops.
                 </p>
-                <p className="mt-1 text-sm leading-6 text-[#d4e0d8]">Invite 3 local food vloggers for a weekend tasting and ask for one reel plus story coverage.</p>
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                  <Link href="/brand/campaigns/new" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#e6aa38] px-5 py-3 text-sm font-extrabold text-[#173b2a]">
+                    Launch a campaign <ArrowRight className="size-4" />
+                  </Link>
+                  <Link href="/brand/explore?search=food" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/8 px-5 py-3 text-sm font-bold text-white hover:bg-white/12">
+                    Find food creators <Search className="size-4" />
+                  </Link>
+                </div>
+              </motion.div>
+
+              <div className="relative min-h-[320px] overflow-hidden lg:min-h-full">
+                <Image
+                  src="/landing/restaurant-opportunity.png"
+                  alt="Restaurant table spread being recorded by a food creator"
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 45vw, 100vw"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#173b2a]/85 via-transparent to-transparent" />
+                <div className="absolute bottom-5 left-5 right-5 rounded-[1.35rem] border border-white/15 bg-[#173b2a]/85 p-4 backdrop-blur">
+                  <p className="flex items-center gap-2 text-sm font-extrabold">
+                    <BadgeCheck className="size-4 text-[#e6aa38]" />
+                    Suggested next move
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-[#d4e0d8]">Invite 3 local food vloggers for a weekend tasting and ask for one reel plus story coverage.</p>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         <section className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard label="Total spent" value={formatPrice(stats.totalSpent)} note="Across all creator work" icon={CreditCard} loading={isLoading} />

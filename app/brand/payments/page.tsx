@@ -290,12 +290,24 @@ export default function BrandPaymentsPage() {
                     Add
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add payment method</DialogTitle>
-                    <DialogDescription>Add a compliant payment rail for Pakistan disbursements.</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
+                <DialogContent className="max-w-[calc(100%-1rem)] rounded-[1.75rem] border-[#d9e0d8] bg-[#fbfaf5] p-0 sm:max-w-md"
+                  style={{
+                    '--background': 'oklch(0.98 0.004 120)',
+                    '--foreground': 'oklch(0.1 0 0)',
+                    '--border': 'oklch(0.88 0.01 145)',
+                    '--input': 'oklch(0.88 0.01 145)',
+                    '--ring': 'oklch(0.55 0.17 145)',
+                  } as React.CSSProperties}
+                >
+                  {/* Modal header */}
+                  <div className="rounded-t-[1.75rem] bg-[#173b2a] px-5 py-4">
+                    <DialogTitle className="text-sm font-extrabold text-white">Add Payment Method</DialogTitle>
+                    <DialogDescription className="mt-0.5 text-xs text-[#8fb09a]">
+                      Add a compliant payment rail for Pakistan disbursements.
+                    </DialogDescription>
+                  </div>
+
+                  <div className="space-y-3 p-5">
                     <div className="space-y-1.5">
                       <Label className={labelCls}>Type</Label>
                       <Select value={newMethodType} onValueChange={(v) => { const next = v as BrandPaymentMethodType; setNewMethodType(next); setNewMethodLabel(methodTypeLabels[next]); }}>
@@ -319,13 +331,24 @@ export default function BrandPaymentsPage() {
                       <Label className={labelCls}>Account Holder</Label>
                       <Input value={newMethodHolder} onChange={(e) => setNewMethodHolder(e.target.value)} className={inputCls} />
                     </div>
+
+                    <div className="flex gap-2 pt-1">
+                      <Button
+                        variant="outline"
+                        className="h-9 flex-1 rounded-xl border-[#d9e0d8] text-xs font-semibold text-[#526259] hover:bg-[#f4f2e9]"
+                        onClick={() => setMethodDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        className="h-9 flex-1 rounded-xl bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#185c39] disabled:opacity-50"
+                        onClick={() => void handleAddMethod()}
+                        disabled={isSavingMethod}
+                      >
+                        {isSavingMethod ? "Saving…" : "Save Method"}
+                      </Button>
+                    </div>
                   </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setMethodDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={() => void handleAddMethod()} disabled={isSavingMethod}>
-                      {isSavingMethod ? "Saving…" : "Save Method"}
-                    </Button>
-                  </DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>

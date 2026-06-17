@@ -26,7 +26,9 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
     pathname.startsWith('/creator/performance') ||
     pathname.startsWith('/creator/profile') ||
     pathname.startsWith('/creator/help') ||
-    pathname.startsWith('/creator/search');
+    pathname.startsWith('/creator/search') ||
+    pathname.startsWith('/creator/notifications') ||
+    pathname.startsWith('/creator/ambassador-program');
 
   useEffect(() => {
     if (!hasHydrated) return;
