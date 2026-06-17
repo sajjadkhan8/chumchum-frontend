@@ -97,12 +97,24 @@ const buildParticipantMaps = async (conversations: BackendConversation[]) => {
 };
 
 export const messagesService = {
-  async getConversations(_userId: string, role: 'creator' | 'brand'): Promise<Conversation[]> {
-    const response = await apiClient.get<BackendConversation[]>('/api/v1/conversations');
-    const conversations = Array.isArray(response) ? response : [];
-    const { creators, brands } = await buildParticipantMaps(conversations);
-
-    return conversations.map((conversation) => mapConversation(conversation, creators, brands, role));
+  async getConversations(
+    _userId: string,
+    role: 'creator' | 'brand',
+    page = 0,
+    limit = 50,
+  ): Promise<{ items: Conversation[]; total: number; page: number; limit: number }> {
+    const payload = await apiClient.get<{ items: unknown[]; total: number; page: number; limit: number }>(
+      '/api/v1/conversations',
+      { query: { page, limit } },
+    );
+    const rawItems: BackendConversation[] = Array.isArray(payload.items) ? (payload.items as BackendConversation[]) : [];
+    const { creators, brands } = await buildParticipantMaps(rawItems);
+    return {
+      items: rawItems.map((conversation) => mapConversation(conversation, creators, brands, role)),
+      total: payload.total ?? 0,
+      page: payload.page ?? page,
+      limit: payload.limit ?? limit,
+    };
   },
 
   async getMessages(conversationId: string): Promise<Message[]> {

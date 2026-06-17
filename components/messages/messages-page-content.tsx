@@ -115,9 +115,9 @@ export function MessagesPageContent() {
     if (!user || user.role === "platform_admin") return [];
     setIsLoadingConversations(true);
     try {
-      const data = await messagesService.getConversations(user.id, user.role);
-      setConversations(data);
-      return data;
+      const { items } = await messagesService.getConversations(user.id, user.role, 0, 50);
+      setConversations(items);
+      return items;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to load conversations");
       return [];

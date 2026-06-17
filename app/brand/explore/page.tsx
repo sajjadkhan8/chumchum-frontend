@@ -702,10 +702,10 @@ function ExplorePageContent() {
                     </SelectContent>
                   </Select>
                   <div className="hidden rounded-full bg-[#f4f2e9] p-1 md:flex">
-                    <Button variant="ghost" size="icon" className={cn('rounded-full text-[#607168]', savedViewMode === 'grid' && 'bg-white text-[#185c39] shadow-sm')} onClick={() => setSavedViewMode('grid')}>
+                    <Button variant="ghost" size="icon" aria-label="Grid view" className={cn('rounded-full text-[#607168]', savedViewMode === 'grid' && 'bg-white text-[#185c39] shadow-sm')} onClick={() => setSavedViewMode('grid')}>
                       <Grid className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className={cn('rounded-full text-[#607168]', savedViewMode === 'list' && 'bg-white text-[#185c39] shadow-sm')} onClick={() => setSavedViewMode('list')}>
+                    <Button variant="ghost" size="icon" aria-label="List view" className={cn('rounded-full text-[#607168]', savedViewMode === 'list' && 'bg-white text-[#185c39] shadow-sm')} onClick={() => setSavedViewMode('list')}>
                       <List className="h-4 w-4" />
                     </Button>
                   </div>

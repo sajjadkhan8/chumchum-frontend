@@ -380,6 +380,24 @@ export default function AdminDashboardPage() {
             </Link>
           </section>
 
+          {/* ── orders by category ── */}
+          {(dashboard.ordersByCategory?.length ?? 0) > 0 && (
+            <section className="rounded-2xl border border-[#e2e7e1] bg-white p-5 shadow-sm">
+              <div className="mb-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Completed orders</p>
+                <h2 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">By Category</h2>
+              </div>
+              <dl className="space-y-2">
+                {dashboard.ordersByCategory!.map(({ category, count }) => (
+                  <div key={category} className="flex items-center justify-between rounded-xl border border-[#edf1ed] bg-[#fbfaf5] px-3.5 py-2.5">
+                    <dt className="text-[12px] font-semibold capitalize text-[#496159]">{category.replace(/_/g, ' ')}</dt>
+                    <dd className="text-[14px] font-extrabold text-[#1e3d2e]">{count.toString()}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
+
           {/* ── platform health ── */}
           <section className="rounded-2xl border border-[#e2e7e1] bg-white p-5 shadow-sm">
             <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Platform health</p>

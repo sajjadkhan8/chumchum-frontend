@@ -14,6 +14,7 @@ type CreatorMetricCardProps = {
   trend?: number;
   dark?: boolean;
   gold?: boolean;
+  'aria-label'?: string;
 };
 
 function Sparkline({ data, color = "#e6aa38" }: { data: number[]; color?: string }) {
@@ -74,6 +75,7 @@ export function CreatorMetricCard({
   trend,
   dark = false,
   gold = false,
+  'aria-label': ariaLabel,
 }: CreatorMetricCardProps) {
   const ref = useCounter(animatedValue, fmt);
   const resolvedValue = animatedValue !== undefined
@@ -89,7 +91,7 @@ export function CreatorMetricCard({
 
   if (dark) {
     return (
-      <article className="metric-card group relative overflow-hidden rounded-2xl border border-[#3e6a50] bg-[#3e6a50] p-4 text-white transition-all duration-300 hover:scale-[1.015] hover:shadow-xl sm:p-5">
+      <article className="metric-card group relative overflow-hidden rounded-2xl border border-[#3e6a50] bg-[#3e6a50] p-4 text-white transition-all duration-300 hover:scale-[1.015] hover:shadow-xl sm:p-5" aria-label={ariaLabel}>
         <div
           className="pointer-events-none absolute right-0 top-0 h-full w-2/3 opacity-25"
           style={{ background: "radial-gradient(ellipse at 100% 0%, #5a8265, transparent 70%)" }}
@@ -122,6 +124,7 @@ export function CreatorMetricCard({
     <article
       className="metric-card group relative overflow-hidden rounded-2xl border-2 border-[#dce8e2] bg-white p-4 transition-all duration-300 hover:scale-[1.015] hover:border-[#2d6b4e]/50 hover:shadow-lg sm:p-5"
       style={{ boxShadow: "0 2px 8px rgba(30,61,46,0.07), 0 1px 2px rgba(30,61,46,0.04)" }}
+      aria-label={ariaLabel}
     >
       <div className={`absolute left-0 top-0 h-[3px] w-full rounded-t-2xl bg-gradient-to-r ${gold ? "from-[#e6aa38]/60" : "from-[#2d6b4e]/40"} to-transparent`} />
       <div className="flex items-start justify-between gap-2">

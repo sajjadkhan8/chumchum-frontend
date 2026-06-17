@@ -20,6 +20,7 @@ export interface AdminDashboard {
     completedOrderAmount: number;
     gmv?: number;
   };
+  ordersByCategory?: { category: string; count: number }[];
 }
 
 export interface AdminUser extends User {

@@ -42,6 +42,71 @@ const faqs = [
     q: 'How do I report suspicious activity?',
     a: 'Use the in-app report option or contact support@zingzing.pk immediately. Include screenshots and relevant message links where possible.',
   },
+  {
+    category: 'Deals',
+    q: 'How is product value calculated in a barter deal?',
+    a: 'The brand sets the estimated retail value of the product or service being offered. Creators can see this value before accepting. If you feel the valuation is inaccurate, discuss it with the brand in chat before accepting the deal.',
+  },
+  {
+    category: 'Deals',
+    q: 'What should I expect when receiving products for a barter deal?',
+    a: 'After accepting a barter offer, the brand arranges delivery directly. Once you receive the product, update the order status in your dashboard and begin creating content as agreed. If a product does not arrive within the expected window, contact the brand first and then reach out to our support team.',
+  },
+  {
+    category: 'Orders',
+    q: 'Who can cancel an order, and when?',
+    a: 'Either party can request a cancellation before content delivery begins. Once a creator marks an order as In Progress, cancellations require mutual agreement. For paid orders, cancellations after work has started may result in partial deductions depending on the stage of completion.',
+  },
+  {
+    category: 'Orders',
+    q: 'Are there any fees for cancelling an order?',
+    a: 'There are no cancellation fees for orders cancelled before work begins. If a paid order is cancelled mid-delivery, the platform fee (10%) is non-refundable on any portion of funds already released from escrow. Brands receive a refund of the remaining escrowed amount.',
+  },
+  {
+    category: 'Orders',
+    q: 'How do I open a dispute?',
+    a: 'Go to the relevant order in your dashboard and select "Open Dispute." Describe the issue clearly and attach any supporting evidence such as screenshots or message excerpts. Both parties will be notified and given an opportunity to respond before the ZingZing team makes a decision.',
+  },
+  {
+    category: 'Orders',
+    q: 'What happens during a dispute investigation?',
+    a: 'Our support team reviews all submitted evidence from both sides. We typically aim to resolve disputes within 3–5 business days. During the investigation, any pending escrow funds are held. The outcome may result in a full payout to the creator, a refund to the brand, or a split resolution based on deliverables completed.',
+  },
+  {
+    category: 'Payments',
+    q: 'How long does a withdrawal take to process?',
+    a: 'Withdrawal requests are processed within 2–5 business days after submission. Processing times may vary slightly depending on your bank. You will receive a notification once the transfer is initiated.',
+  },
+  {
+    category: 'Payments',
+    q: 'What platform fee does ZingZing charge?',
+    a: 'ZingZing charges a 10% platform fee on the total order value for paid and hybrid deals. This fee is deducted automatically when funds are released from escrow upon brand approval of the final deliverable. There are no upfront charges or monthly fees for creators.',
+  },
+  {
+    category: 'Payments',
+    q: 'How does the escrow system protect brands?',
+    a: 'When a brand places a paid or hybrid order, the campaign payment is held in escrow by ZingZing. Funds are only released to the creator once the brand reviews and approves the submitted deliverables. If the deliverable is not approved or a dispute is raised, the escrowed funds remain held until the matter is resolved.',
+  },
+  {
+    category: 'Deals',
+    q: 'What happens if a creator misses the campaign deadline?',
+    a: 'If a creator misses an agreed deadline without prior communication, brands can open a dispute or request a cancellation. ZingZing may flag repeated deadline misses on a creator\'s profile during review. We encourage creators to communicate early if they need an extension — brands are often willing to accommodate with advance notice.',
+  },
+  {
+    category: 'Security',
+    q: 'Is two-factor authentication (2FA) available?',
+    a: 'Yes, ZingZing supports two-factor authentication for added account security. You can enable 2FA from your account security settings. We strongly recommend turning it on, especially if you have earnings or active campaigns.',
+  },
+  {
+    category: 'Security',
+    q: 'How can I keep my account secure?',
+    a: 'Use a strong, unique password and enable two-factor authentication. Never share your login credentials or OTP codes with anyone, including people claiming to be from ZingZing support. We will never ask for your password via chat or email. If you suspect your account has been compromised, change your password immediately and contact support.',
+  },
+  {
+    category: 'Accounts',
+    q: 'Can I have both a creator and a brand account?',
+    a: 'Currently each registered account is tied to a single role — either creator or brand. If you need both, you will need to register with a separate email address for each role. Contact support if you need help managing multiple accounts.',
+  },
 ];
 
 export default function HelpPage() {
@@ -67,8 +132,8 @@ export default function HelpPage() {
       <main>
         <section className="border-b border-border bg-gradient-to-br from-primary/5 via-background to-accent/5">
           <div className="container mx-auto max-w-6xl px-4 py-12 md:py-16">
-            <Link href="/" className="mb-4 inline-flex items-center">
-              <ZingZingLogo variant="light" className="h-9 w-[180px]" />
+            <Link href="/" aria-label="ZingZing home" className="mb-4 inline-flex items-center">
+              <ZingZingLogo variant="light" className="h-9 w-[180px]" aria-hidden="true" />
             </Link>
             <Badge variant="secondary" className="rounded-full text-xs font-medium">Support</Badge>
             <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">Help Center</h1>
