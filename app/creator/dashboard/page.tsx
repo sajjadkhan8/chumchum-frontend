@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -23,11 +23,16 @@ import {
   Wallet,
   Zap,
   AlertCircle,
+  BadgePercent,
+  Copy,
+  Check,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CreatorMetricCard } from "@/components/creator-metric-card";
 import { calculateCreatorAmbassadorMetrics } from "@/lib/ambassador-scoring";
 import { formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
 import { analyticsService, type CreatorDashboardAnalytics } from "@/services/analytics.service";
+import { affiliateService, type AffiliateOverview } from "@/services/affiliate.service";
 import { creatorsService } from "@/services/creators.service";
 import { earningsService, type EarningsSummary } from "@/services/earnings.service";
 import { messagesService } from "@/services/messages.service";
@@ -45,30 +50,7 @@ function abbrevPKR(v: number): string {
 /* ─── empty states ─── */
 const emptyAnalytics: CreatorDashboardAnalytics = { totalOrders: 0, activeOrders: 0, completedOrders: 0, totalEarnings: 0, avgRating: 0, totalReviews: 0, repeatBrands: 0 };
 const emptyEarnings: EarningsSummary = { totalEarned: 0, availableBalance: 0, pendingBalance: 0, totalWithdrawn: 0, platformFees: 0 };
-
-/* ─── sparkline ─── */
-function Sparkline({ data, color = "#e6aa38" }: { data: number[]; color?: string }) {
-  const W = 64, H = 24;
-  if (data.length < 2) return null;
-  const min = Math.min(...data), max = Math.max(...data), rng = max - min || 1;
-  const xs = data.map((_, i) => (i / (data.length - 1)) * W);
-  const ys = data.map((v) => H - ((v - min) / rng) * (H - 2) - 1);
-  const points = xs.map((x, i) => `${x},${ys[i]}`).join(" ");
-  const area = `M${xs[0]},${H} ` + xs.map((x, i) => `L${x},${ys[i]}`).join(" ") + ` L${xs[xs.length - 1]},${H} Z`;
-  const id = `sg-${color.replace("#", "")}`;
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-16 overflow-visible" aria-hidden>
-      <defs>
-        <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill={`url(#${id})`} />
-      <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+const emptyAffiliate: AffiliateOverview = { code: "", shareUrl: "", rateBasisPoints: 100, totalCommission: 0, referredCreators: 0, commissionCount: 0 };
 
 /* ─── ring progress ─── */
 function RingProgress({ value, size = 72, stroke = 6 }: { value: number; size?: number; stroke?: number }) {
@@ -84,31 +66,6 @@ function RingProgress({ value, size = 72, stroke = 6 }: { value: number; size?: 
   );
 }
 
-/* ─── counter hook ─── */
-function useCounter(target: number, fmt?: (n: number) => string) {
-  const el = useRef<HTMLSpanElement>(null);
-  useEffect(() => {
-    if (!el.current) return;
-    if (target === 0) {
-      el.current.textContent = fmt ? fmt(0) : "0";
-      return;
-    }
-    const duration = 1300;
-    const start = performance.now();
-    let raf: number;
-    const tick = (now: number) => {
-      const t = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - t, 3);
-      const v = eased * target;
-      if (el.current) el.current.textContent = fmt ? fmt(v) : Math.round(v).toLocaleString();
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, fmt]);
-  return el;
-}
-
 /* ─── status chip ─── */
 function StatusChip({ status }: { status: string }) {
   const cfg: Record<string, { label: string; cls: string; Icon: React.ElementType }> = {
@@ -122,78 +79,6 @@ function StatusChip({ status }: { status: string }) {
       <Icon className="size-2.5" />
       {label}
     </span>
-  );
-}
-
-/* ─── metric card ─── */
-interface MetricProps {
-  title: string;
-  value: number;
-  sub: string;
-  Icon: React.ElementType;
-  spark?: number[];
-  fmt?: (n: number) => string;
-  trend?: number;
-}
-function MetricCard({ title, value, sub, Icon, spark, fmt, trend, dark }: MetricProps & { dark?: boolean }) {
-  const ref = useCounter(value, fmt);
-
-  if (dark) {
-    return (
-      <article className="metric-card relative overflow-hidden rounded-2xl border border-[#2d6b4e] bg-[#1e3d2e] p-4 transition-all duration-300 hover:scale-[1.015] hover:shadow-xl sm:p-5">
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-2/3 opacity-25"
-          style={{ background: "radial-gradient(ellipse at 100% 0%, #2d6b4e, transparent 70%)" }} aria-hidden />
-        <div className="relative flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#6fa688]">{title}</p>
-            <p className="mt-2 text-2xl font-extrabold leading-none tracking-tight text-[#f0c56e]">
-              <span ref={ref} className="block truncate">{fmt ? fmt(0) : "0"}</span>
-            </p>
-            <p className="mt-1.5 truncate text-[10px] font-medium text-[#5a8a72] sm:text-[11px]">{sub}</p>
-            {trend !== undefined && (
-              <p className="mt-2 flex items-center gap-1 text-[10px] font-bold text-emerald-400">
-                <TrendingUp className="size-3" />
-                {Math.abs(trend)}% this month
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col items-end gap-2 shrink-0">
-            <span className="grid size-8 place-items-center rounded-xl bg-white/10 text-[#f0c56e] sm:size-9">
-              <Icon className="size-3.5 sm:size-4" />
-            </span>
-            {spark && <div className="hidden opacity-80 sm:block"><Sparkline data={spark} color="#f0c56e" /></div>}
-          </div>
-        </div>
-      </article>
-    );
-  }
-
-  return (
-    <article className="metric-card group relative overflow-hidden rounded-2xl border-2 border-[#dce8e2] bg-white p-4 transition-all duration-300 hover:scale-[1.015] hover:border-[#2d6b4e]/50 hover:shadow-lg sm:p-5"
-      style={{ boxShadow: "0 2px 8px rgba(30,61,46,0.07), 0 1px 2px rgba(30,61,46,0.04)" }}>
-      <div className="absolute left-0 top-0 h-[3px] w-full rounded-t-2xl bg-gradient-to-r from-[#2d6b4e]/40 to-transparent" />
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a9a87]">{title}</p>
-          <p className="mt-2 text-2xl font-extrabold leading-none tracking-tight text-[#1e3d2e]">
-            <span ref={ref} className="block truncate">{fmt ? fmt(0) : "0"}</span>
-          </p>
-          <p className="mt-1.5 truncate text-[10px] font-medium text-[#7a9a87] sm:text-[11px]">{sub}</p>
-          {trend !== undefined && (
-            <p className="mt-2 flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-              <TrendingUp className="size-3" />
-              {Math.abs(trend)}% this month
-            </p>
-          )}
-        </div>
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          <span className="grid size-8 place-items-center rounded-xl bg-[#e8f0ec] text-[#2d6b4e] sm:size-9">
-            <Icon className="size-3.5 sm:size-4" />
-          </span>
-          {spark && <div className="hidden opacity-80 sm:block"><Sparkline data={spark} color="#2d6b4e" /></div>}
-        </div>
-      </div>
-    </article>
   );
 }
 
@@ -241,24 +126,28 @@ export default function CreatorDashboardPage() {
   const [earnings, setEarnings] = useState<EarningsSummary>(emptyEarnings);
   const [orders, setOrders] = useState<Order[]>([]);
   const [convos, setConvos] = useState<Conversation[]>([]);
+  const [affiliate, setAffiliate] = useState<AffiliateOverview>(emptyAffiliate);
+  const [affiliateCopied, setAffiliateCopied] = useState(false);
   const [loading, setLoading] = useState(true);
-  const isAmbassador = user?.creatorProgramStatus === "active_ambassador" || user?.email === "ambassador@test.com";
+  const isAmbassador = user?.creatorProgramStatus === "active_ambassador";
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const [profile, anal, earn, ords, msgs] = await Promise.all([
+      const [profile, anal, earn, ords, msgs, aff] = await Promise.all([
         creatorsService.getMe().catch(() => null),
         analyticsService.getCreatorDashboard().catch(() => emptyAnalytics),
         earningsService.getSummary().catch(() => emptyEarnings),
         ordersService.getAll().catch(() => []),
         messagesService.getConversations(user?.id || "", "creator").catch(() => []),
+        affiliateService.getOverview().catch(() => emptyAffiliate),
       ]);
       setCreatorProfile(profile);
       setAnalytics(anal);
       setEarnings(earn);
       setOrders(ords);
       setConvos(msgs);
+      setAffiliate(aff);
       setLoading(false);
     };
     void load();
@@ -299,9 +188,21 @@ export default function CreatorDashboardPage() {
   const actions = [
     { label: "New Package",    copy: "Create a service",      href: "/creator/packages/new",        Icon: Plus },
     { label: "Withdraw",       copy: "Access your earnings",  href: "/creator/payments",            Icon: Wallet },
+    { label: "Affiliate",      copy: "Share your link",       href: "/creator/affiliate",           Icon: BadgePercent },
     { label: "Edit Profile",   copy: "Keep it fresh",         href: "/creator/profile/public",      Icon: Users },
     { label: "View Insights",  copy: "Know your audience",    href: "/creator/insights",            Icon: BarChart3 },
   ];
+
+  const copyAffiliateLink = async () => {
+    if (!affiliate.shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(affiliate.shareUrl);
+      setAffiliateCopied(true);
+      window.setTimeout(() => setAffiliateCopied(false), 1600);
+    } catch {
+      setAffiliateCopied(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -320,10 +221,10 @@ export default function CreatorDashboardPage() {
 
         {/* ── metric cards ── */}
         <section className="grid grid-cols-2 gap-3 xl:grid-cols-4" aria-label="Key metrics">
-          <MetricCard dark  title="Total Earnings" value={totalEarned}            fmt={abbrevPKR}             sub={`${formatPrice(earnings.availableBalance)} available`}         Icon={DollarSign} spark={sparkE} trend={12} />
-          <MetricCard       title="Active Orders"  value={analytics.activeOrders}                            sub={`${analytics.completedOrders} completed`}                      Icon={Package}    spark={sparkO} trend={8}  />
-          <MetricCard       title="Profile Views"  value={views}                                             sub={`${analytics.repeatBrands} repeat brands`}                     Icon={Eye}        spark={sparkV} trend={5}  />
-          <MetricCard       title="Avg Rating"     value={rating}                 fmt={(v) => v.toFixed(1)} sub={`${analytics.totalReviews || creator.totalReviews} reviews`}    Icon={Star}       spark={sparkR} trend={3}  />
+          <CreatorMetricCard dark title="Total Earnings" animatedValue={totalEarned} fmt={abbrevPKR} sub={`${formatPrice(earnings.availableBalance)} available`} Icon={DollarSign} spark={sparkE} trend={12} />
+          <CreatorMetricCard title="Active Orders" animatedValue={analytics.activeOrders} sub={`${analytics.completedOrders} completed`} Icon={Package} spark={sparkO} trend={8} />
+          <CreatorMetricCard title="Profile Views" animatedValue={views} sub={`${analytics.repeatBrands} repeat brands`} Icon={Eye} spark={sparkV} trend={5} />
+          <CreatorMetricCard title="Avg Rating" animatedValue={rating} fmt={(v) => v.toFixed(1)} sub={`${analytics.totalReviews || creator.totalReviews} reviews`} Icon={Star} spark={sparkR} trend={3} />
         </section>
 
         {/* ── main layout ── */}
@@ -469,6 +370,47 @@ export default function CreatorDashboardPage() {
                   {Math.max(earningsPct, ordersPct)}% toward this month&apos;s milestone.
                 </p>
               </div>
+            </section>
+
+            {/* ── affiliate snapshot ── */}
+            <section className="dash-panel rounded-2xl border border-[#e2e7e1] bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Affiliate</p>
+                  <h2 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">Referral Earnings</h2>
+                </div>
+                <span className="grid size-9 place-items-center rounded-xl bg-[#e8f0ec] text-[#2d6b4e]">
+                  <BadgePercent className="size-4" />
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-[#edf1ed] bg-[#fbfaf5] p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a9a87]">Commission</p>
+                    <p className="mt-1 text-lg font-extrabold text-[#1e3d2e]">{formatPrice(affiliate.totalCommission)}</p>
+                  </div>
+                  <div className="rounded-xl border border-[#edf1ed] bg-[#fbfaf5] p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a9a87]">Creators</p>
+                    <p className="mt-1 text-lg font-extrabold text-[#1e3d2e]">{affiliate.referredCreators}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 sm:flex-col">
+                  <button
+                    type="button"
+                    onClick={copyAffiliateLink}
+                    className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#2d6b4e] px-4 text-[12px] font-extrabold text-white transition hover:bg-[#1f5239]"
+                  >
+                    {affiliateCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                    {affiliateCopied ? "Copied" : "Copy"}
+                  </button>
+                  <Link href="/creator/affiliate" className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#d1ddd6] bg-white px-4 text-[12px] font-extrabold text-[#2d6b4e] transition hover:bg-[#e6eceb]">
+                    Details <ArrowRight className="size-3.5" />
+                  </Link>
+                </div>
+              </div>
+              <p className="mt-3 truncate rounded-xl bg-[#fdf4e1] px-3 py-2 text-[11px] font-semibold text-[#9a6b00]">
+                {affiliate.shareUrl || "Your affiliate link is being prepared."}
+              </p>
             </section>
 
             {/* ── messages ── */}

@@ -20,7 +20,7 @@ export interface EarningsSummary {
 
 export interface EarningTransaction {
   id: string;
-  type: 'earning' | 'withdrawal' | 'refund' | 'platform_fee';
+  type: 'earning' | 'affiliate_commission' | 'withdrawal' | 'refund' | 'platform_fee';
   amount: number;
   description: string;
   status: 'pending' | 'completed' | 'failed';

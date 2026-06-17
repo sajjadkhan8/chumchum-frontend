@@ -18,6 +18,7 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
     pathname.startsWith('/creator/offers') ||
     pathname.startsWith('/creator/orders') ||
     pathname.startsWith('/creator/earnings') ||
+    pathname.startsWith('/creator/affiliate') ||
     pathname.startsWith('/creator/payments') ||
     pathname.startsWith('/creator/packages') ||
     pathname.startsWith('/creator/settings') ||

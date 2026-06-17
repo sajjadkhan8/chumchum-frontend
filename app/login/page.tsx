@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, ChevronDown, ChevronUp, Eye, EyeOff, Loader2, Mail, Phone } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Loader2, Mail, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { Button } from '@/components/ui/button';
@@ -41,8 +40,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [googleRole, setGoogleRole] = useState<UserRole>('creator');
-  const [showDemoAccounts, setShowDemoAccounts] = useState(false);
-  const [activeDemoEmail, setActiveDemoEmail] = useState('');
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const submittingRef = useRef(false);
@@ -54,17 +51,6 @@ export default function LoginPage() {
   if (hasHydrated && isAuthenticated && user?.role) {
     return <div className="grid min-h-screen place-items-center bg-[#fbfaf5]"><Loader2 className="size-6 animate-spin text-[#2d6b4e]" /></div>;
   }
-
-  const applyDemoCredentials = (demoEmail: string) => {
-    setAuthMethod('email');
-    setPhone('');
-    setOtp('');
-    setOtpSent(false);
-    setEmail(demoEmail);
-    setPassword('password');
-    setActiveDemoEmail(demoEmail);
-    toast.success('Demo credentials applied');
-  };
 
   const handleEmailLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -118,13 +104,6 @@ export default function LoginPage() {
     }
   };
 
-  const demos = [
-    ['Creator', 'ali.rehmani@zingzing.pk'],
-    ['Ambassador', 'ambassador@test.com'],
-    ['Brand', 'influencer@foodpanda.pk'],
-    ['Admin', 'ops@zingzing.pk'],
-  ];
-
   return (
     <AuthShell
       eyebrow="Welcome back"
@@ -167,7 +146,7 @@ export default function LoginPage() {
 
       {/* Email form */}
       {authMethod === 'email' && (
-        <form onSubmit={handleEmailLogin} className="mt-4 space-y-3">
+        <form method="post" onSubmit={handleEmailLogin} className="mt-4 space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="email" className={labelClass}>Email address</Label>
             <Input
@@ -227,7 +206,7 @@ export default function LoginPage() {
 
       {/* Phone form */}
       {authMethod === 'phone' && (
-        <form onSubmit={handlePhoneLogin} className="mt-4 space-y-3">
+        <form method="post" onSubmit={handlePhoneLogin} className="mt-4 space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="phone" className={labelClass}>Phone number</Label>
             <div className="flex gap-2">
@@ -305,40 +284,6 @@ export default function LoginPage() {
       >
         Continue with Google
       </Button>
-
-      {/* Demo accounts */}
-      <div className="mt-4 rounded-2xl border border-[#d1ddd6] bg-[#f4f2e9] p-3">
-        <button
-          type="button"
-          onClick={() => setShowDemoAccounts(!showDemoAccounts)}
-          className="flex w-full items-center justify-between gap-3 text-left text-xs font-bold text-[#496159]"
-          aria-expanded={showDemoAccounts}
-        >
-          Explore with a demo account
-          {showDemoAccounts ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-        </button>
-        <AnimatePresence>
-          {showDemoAccounts && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {demos.map(([label, demoEmail]) => (
-                  <button
-                    key={demoEmail}
-                    type="button"
-                    onClick={() => applyDemoCredentials(demoEmail)}
-                    className={`rounded-xl border p-2.5 text-left transition-colors ${
-                      activeDemoEmail === demoEmail ? 'border-[#2d6b4e] bg-white' : 'border-[#d1ddd6] bg-white/70 hover:border-[#b0c5ba]'
-                    }`}
-                  >
-                    <span className="block text-[11px] font-extrabold text-[#1e3d2e]">{label}</span>
-                    <span className="mt-0.5 block truncate text-[10px] text-[#718077]">{demoEmail}</span>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
 
       <p className="mt-4 text-center text-sm text-[#6b7870]">
         New to ZingZing?{' '}

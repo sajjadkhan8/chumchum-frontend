@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Menu, Bell, MessageCircle, User, LogOut, Building2, Moon, Sun, Shield, Settings, Share2, Star, CircleHelp, X, ChevronRight } from 'lucide-react';
+import { Search, Menu, Bell, MessageCircle, User, LogOut, Building2, Moon, Sun, Shield, Settings, Share2, Star, CircleHelp, X, ChevronRight, BadgePercent } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -198,11 +198,13 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     ? [
         { href: '/creator/profile/public', label: 'My Profile', icon: User },
         { href: '/creator/profile/social', label: 'Social Accounts', icon: Share2 },
+        { href: '/creator/affiliate', label: 'Affiliate Program', icon: BadgePercent },
         { href: '/creator/ambassador-program', label: 'Ambassador Program', icon: Star, badge: '79/100', accent: 'amber' },
         { href: '/creator/settings/preferences', label: 'Preferences', icon: Settings },
       ]
     : [
         { href: '/brand/profile', label: 'Company Profile', icon: Building2 },
+        { href: '/brand/affiliate', label: 'Affiliate Program', icon: BadgePercent },
         { href: '/brand/settings', label: 'Settings', icon: Settings },
       ];
 

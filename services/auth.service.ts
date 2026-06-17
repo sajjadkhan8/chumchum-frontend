@@ -36,7 +36,7 @@ export const authService = {
     return apiClient.post<AuthTokenResponse>('/api/v1/auth/verify-otp', { phone, otp }, { auth: false });
   },
 
-  async signup(email: string, password: string, role: UserRole, name: string): Promise<AuthTokenResponse> {
+  async signup(email: string, password: string, role: UserRole, name: string, affiliateCode?: string): Promise<AuthTokenResponse> {
     return apiClient.post<AuthTokenResponse>(
       '/api/v1/auth/register',
       {
@@ -44,18 +44,20 @@ export const authService = {
         password,
         role: role.toUpperCase(),
         name,
+        affiliateCode,
       },
       { auth: false },
     );
   },
 
-  async google(idToken: string, role: UserRole, name?: string): Promise<AuthTokenResponse> {
+  async google(idToken: string, role: UserRole, name?: string, affiliateCode?: string): Promise<AuthTokenResponse> {
     return apiClient.post<AuthTokenResponse>(
       '/api/v1/auth/google',
       {
         idToken,
         role: role.toUpperCase(),
         name,
+        affiliateCode,
       },
       { auth: false },
     );

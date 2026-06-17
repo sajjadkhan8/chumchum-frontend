@@ -4,6 +4,7 @@ import { ArrowUp, Clock3, CreditCard, Landmark, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreatorMetricCard } from "@/components/creator-metric-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -48,23 +49,9 @@ export function WithdrawTab({
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="grid gap-2.5 sm:grid-cols-3">
-            <div className="rounded-2xl bg-[#2d6b4e] p-4 text-white">
-              <Wallet className="size-4 text-[#f0c56e]" />
-              <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.12em] text-[#c2d8cb]">Available balance</p>
-              <p className="mt-1 text-xl font-extrabold tracking-[-0.03em]">
-                {formatPrice(availableBalance)}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-[#d1ddd6] bg-[#fbfaf5] p-4">
-              <Landmark className="size-4 text-[#2d6b4e]" />
-              <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.12em] text-[#87938b]">Minimum withdrawal</p>
-              <p className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-[#1e3d2e]">{formatPrice(1000)}</p>
-            </div>
-            <div className="rounded-2xl border border-[#d1ddd6] bg-[#fbfaf5] p-4">
-              <Clock3 className="size-4 text-[#b77a12]" />
-              <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.12em] text-[#87938b]">Estimated arrival</p>
-              <p className="mt-1 text-xs font-extrabold leading-5 text-[#1e3d2e]">Wallet: instant<br />Bank: 1-3 days</p>
-            </div>
+            <CreatorMetricCard dark title="Available balance" value={formatPrice(availableBalance)} sub="ready to transfer" Icon={Wallet} />
+            <CreatorMetricCard title="Minimum withdrawal" value={formatPrice(1000)} sub="per request" Icon={Landmark} />
+            <CreatorMetricCard gold title="Estimated arrival" value={<span className="text-base leading-5">Wallet: instant<br />Bank: 1-3 days</span>} sub="after approval" Icon={Clock3} />
           </div>
 
           {payoutMethods.length === 0 ? (

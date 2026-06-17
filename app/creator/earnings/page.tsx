@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { StatsCard } from "@/components/stats-card";
+import { CreatorMetricCard } from "@/components/creator-metric-card";
 import { formatDate, formatPrice } from "@/lib/utils";
 import {
   earningsService,
@@ -41,7 +41,7 @@ import {
   type WithdrawalRequest,
 } from "@/services/earnings.service";
 
-type ActivityType = "earning" | "withdrawal" | "fee" | "refund";
+type ActivityType = "earning" | "affiliate" | "withdrawal" | "fee" | "refund";
 
 interface Activity {
   id: string;
@@ -63,6 +63,7 @@ const emptySummary: EarningsSummary = {
 const toActivityType = (type: EarningTransaction["type"]): ActivityType => {
   if (type === "platform_fee") return "fee";
   if (type === "refund") return "refund";
+  if (type === "affiliate_commission") return "affiliate";
   return type;
 };
 
@@ -138,13 +139,13 @@ export default function CreatorEarningsPage() {
       .sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [methodMap, timeRange, transactions, withdrawals]);
 
-  const earningActivities = activities.filter((activity) => activity.type === "earning" || activity.type === "refund");
+  const earningActivities = activities.filter((activity) => activity.type === "earning" || activity.type === "affiliate" || activity.type === "refund");
   const withdrawalActivities = activities.filter((activity) => activity.type === "withdrawal" || activity.type === "fee");
 
   const thisMonth = useMemo(() => {
     const now = new Date();
     return transactions
-      .filter((tx) => tx.type === "earning" && tx.status === "completed")
+      .filter((tx) => (tx.type === "earning" || tx.type === "affiliate_commission") && tx.status === "completed")
       .filter((tx) => {
         const date = new Date(tx.createdAt);
         return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
@@ -156,7 +157,7 @@ export default function CreatorEarningsPage() {
     const now = new Date();
     const previous = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     return transactions
-      .filter((tx) => tx.type === "earning" && tx.status === "completed")
+      .filter((tx) => (tx.type === "earning" || tx.type === "affiliate_commission") && tx.status === "completed")
       .filter((tx) => {
         const date = new Date(tx.createdAt);
         return date.getMonth() === previous.getMonth() && date.getFullYear() === previous.getFullYear();
@@ -242,20 +243,10 @@ export default function CreatorEarningsPage() {
       </div>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Total Earnings" value={formatPrice(summary.totalEarned)} icon={DollarSign} />
-        <StatsCard
-          title="Available Balance"
-          value={formatPrice(summary.availableBalance)}
-          icon={Wallet}
-        />
-        <StatsCard title="Pending Balance" value={formatPrice(summary.pendingBalance)} icon={Clock} subtitle="In escrow or pending release" />
-        <StatsCard
-          title="This Month"
-          value={formatPrice(thisMonth)}
-          change={monthlyChange}
-          icon={TrendingUp}
-          trend={monthlyChange >= 0 ? "up" : "down"}
-        />
+        <CreatorMetricCard dark title="Total Earnings" value={formatPrice(summary.totalEarned)} sub="lifetime creator revenue" Icon={DollarSign} />
+        <CreatorMetricCard title="Available Balance" value={formatPrice(summary.availableBalance)} sub="ready to withdraw" Icon={Wallet} />
+        <CreatorMetricCard title="Pending Balance" value={formatPrice(summary.pendingBalance)} sub="in escrow or pending release" Icon={Clock} />
+        <CreatorMetricCard gold title="This Month" value={formatPrice(thisMonth)} sub={`${monthlyChange >= 0 ? "+" : "-"}${Math.abs(monthlyChange).toFixed(1)}% vs last month`} Icon={TrendingUp} />
       </div>
 
       <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">

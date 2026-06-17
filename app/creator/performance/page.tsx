@@ -10,11 +10,11 @@ import {
   MousePointerClick,
   Package,
   RefreshCw,
-  TrendingUp,
   Trophy,
   Zap,
 } from "lucide-react";
 import Link from "next/link";
+import { CreatorMetricCard } from "@/components/creator-metric-card";
 import { analyticsService, type CreatorPerformanceAnalytics } from "@/services/analytics.service";
 
 // ─── constants ────────────────────────────────────────────────────────────────
@@ -101,34 +101,13 @@ function SummaryCard({
   loading?: boolean;
 }) {
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`rounded-[1.35rem] border p-5 ${
-        accent
-          ? "border-[#2d6b4e] bg-[#2d6b4e] text-white"
-          : "border-[#d1ddd6] bg-white text-[#1e3d2e]"
-      }`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <p className={`text-xs font-bold ${accent ? "text-[#c2d8cb]" : "text-[#6b7870]"}`}>
-          {title}
-        </p>
-        <span
-          className={`grid size-9 place-items-center rounded-xl ${
-            accent ? "bg-white/10 text-[#f0c56e]" : "bg-[#e6eceb] text-[#2d6b4e]"
-          }`}
-        >
-          <Icon className="size-4" />
-        </span>
-      </div>
-      <p className="mt-1.5 text-2xl font-extrabold leading-none tracking-[-0.045em]">
-        {loading ? <span className="opacity-30">···</span> : value}
-      </p>
-      <p className={`mt-1.5 text-[11px] font-semibold ${accent ? "text-[#a9c4b3]" : "text-[#87938b]"}`}>
-        {detail}
-      </p>
-    </motion.article>
+    <CreatorMetricCard
+      dark={accent}
+      title={title}
+      value={loading ? <span className="opacity-30">...</span> : value}
+      sub={detail}
+      Icon={Icon}
+    />
   );
 }
 
