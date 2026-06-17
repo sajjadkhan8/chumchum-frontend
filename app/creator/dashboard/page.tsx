@@ -146,7 +146,7 @@ export default function CreatorDashboardPage() {
       setAnalytics(anal);
       setEarnings(earn);
       setOrders(ords);
-      setConvos(msgs);
+      setConvos(msgs && 'items' in msgs ? msgs.items : (msgs as unknown as Conversation[]) ?? []);
       setAffiliate(aff);
       setLoading(false);
     };

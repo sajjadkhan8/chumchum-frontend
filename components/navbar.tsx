@@ -113,7 +113,8 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
         if (cancelled) return;
 
         if (conversationResult.status === 'fulfilled') {
-          const unread = conversationResult.value.reduce((total, conversation) => total + Math.max(0, conversation.unreadCount || 0), 0);
+          const convItems = 'items' in conversationResult.value ? conversationResult.value.items : (conversationResult.value as unknown as import("@/types").Conversation[]);
+          const unread = convItems.reduce((total: number, conversation: import("@/types").Conversation) => total + Math.max(0, conversation.unreadCount || 0), 0);
           setUnreadMessageCount(unread);
         } else {
           setUnreadMessageCount(0);

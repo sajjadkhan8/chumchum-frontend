@@ -81,7 +81,7 @@ const defaultProfile = {
   website: "",
   niche: "",
   coverImage: "",
-  availabilityStatus: "Available this week",
+  availabilityStatus: "AVAILABLE",
   responseTime: "Within 24 hours",
   collaborationPreferences: "",
   avatar: "",
@@ -825,11 +825,17 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <p className={labelClass}>Availability Status</p>
-                      <input
+                      <select
                         className={inputClass}
                         value={profile.availabilityStatus}
                         onChange={(e) => setProfile((p) => ({ ...p, availabilityStatus: e.target.value }))}
-                      />
+                      >
+                        <option value="">Select status</option>
+                        <option value="AVAILABLE">Available</option>
+                        <option value="BUSY">Busy</option>
+                        <option value="UNAVAILABLE">Unavailable</option>
+                        <option value="ON_VACATION">On Vacation</option>
+                      </select>
                     </div>
                     <div className="space-y-1.5">
                       <p className={labelClass}>Cover / Banner Image URL</p>

@@ -278,8 +278,9 @@ function CreatorOrdersPageContent() {
     }
 
     try {
-      const conversations = await messagesService.getConversations(user.id, "creator");
-      const existing = conversations.find((conversation) => conversation.brandId === order.brandId);
+      const convResult = await messagesService.getConversations(user.id, "creator");
+      const convList = 'items' in convResult ? convResult.items : (convResult as unknown as import("@/types").Conversation[]);
+      const existing = convList.find((conversation) => conversation.brandId === order.brandId);
 
       if (existing) {
         router.push(`/creator/messages?conversation=${existing.id}`);

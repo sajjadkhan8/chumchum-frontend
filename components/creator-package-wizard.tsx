@@ -250,7 +250,6 @@ const normalizeTag = (value: string): string =>
     .replace(/^#+/, "")
     .replace(/\s+/g, " ");
 
-const MAX_CATEGORIES = 5;
 const MAX_NICHES = 5;
 const MAX_TAGS = 5;
 
@@ -403,7 +402,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   const [isLoadingPlatformOptions, setIsLoadingPlatformOptions] = useState(true);
   const [connectedPlatforms, setConnectedPlatforms] = useState<Platform[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [categoryInput, setCategoryInput] = useState("");
   const [nicheInput, setNicheInput] = useState("");
 
   const serviceSections = useMemo(() => {
@@ -427,7 +425,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   );
 
   const tagsList = useMemo(() => parseTags(formData.tags), [formData.tags]);
-  const categoriesList = useMemo(() => parseTags(formData.category), [formData.category]);
   const nichesList = useMemo(() => parseTags(formData.niche), [formData.niche]);
 
   const resolvedDeliverables = useMemo(() => {
@@ -675,51 +672,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     }
 
     setTagInput("");
-  };
-
-  const addCategoriesFromRawInput = (rawInput: string) => {
-    const rawPieces = rawInput
-      .split(/[,\n]/)
-      .map((part) => normalizeTag(part))
-      .filter(Boolean);
-
-    if (!rawPieces.length) return;
-
-    let reachedLimit = false;
-
-    setFormData((prev) => {
-      const existing = parseTags(prev.category);
-      const seen = new Set(existing.map((item) => item.toLowerCase()));
-      const next = [...existing];
-
-      rawPieces.forEach((piece) => {
-        if (next.length >= MAX_CATEGORIES) {
-          reachedLimit = true;
-          return;
-        }
-
-        const key = piece.toLowerCase();
-        if (!seen.has(key)) {
-          seen.add(key);
-          next.push(piece);
-        }
-      });
-
-      return { ...prev, category: next.join(", ") };
-    });
-
-    if (reachedLimit) {
-      toast.error(`You can add up to ${MAX_CATEGORIES} categories only.`);
-    }
-
-    setCategoryInput("");
-  };
-
-  const removeCategory = (categoryToRemove: string) => {
-    setFormData((prev) => {
-      const next = parseTags(prev.category).filter((item) => item !== categoryToRemove);
-      return { ...prev, category: next.join(", ") };
-    });
   };
 
   const addNichesFromRawInput = (rawInput: string) => {
@@ -1269,53 +1221,29 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
               <div className="grid gap-5 sm:grid-cols-3">
                 {/* Category */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label className={labelClass}>Category</Label>
-                    <span className="text-[11px] text-[#a0b4aa]">{categoriesList.length}/{MAX_CATEGORIES}</span>
-                  </div>
-                  <div className="min-h-10 rounded-xl border-2 border-[#dce6df] bg-white px-3 py-2 transition-colors focus-within:border-[#2d6b4e] focus-within:ring-4 focus-within:ring-[#2d6b4e]/8">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {categoriesList.map((category) => (
-                        <span key={category} className="inline-flex items-center gap-1 rounded-full bg-[#e4f1e8] px-2.5 py-0.5 text-xs font-bold text-[#1e5c3e]">
-                          {category}
-                          <button
-                            type="button"
-                            aria-label={`Remove ${category}`}
-                            onClick={() => removeCategory(category)}
-                            className="rounded-full p-0.5 text-[#1e5c3e]/60 transition-colors hover:text-[#1e5c3e]"
-                          >
-                            <X className="size-2.5" />
-                          </button>
-                        </span>
-                      ))}
-                      <input
-                        value={categoryInput}
-                        onChange={(e) => setCategoryInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
-                            if (!categoryInput.trim()) return;
-                            e.preventDefault();
-                            addCategoriesFromRawInput(categoryInput);
-                            return;
-                          }
-                          if (e.key === "Backspace" && !categoryInput.trim() && categoriesList.length) {
-                            e.preventDefault();
-                            removeCategory(categoriesList[categoriesList.length - 1]);
-                          }
-                        }}
-                        onBlur={() => addCategoriesFromRawInput(categoryInput)}
-                        onPaste={(e) => {
-                          const pasted = e.clipboardData.getData("text");
-                          if (!pasted.includes(",") && !pasted.includes("\n")) return;
-                          e.preventDefault();
-                          addCategoriesFromRawInput(pasted);
-                        }}
-                        placeholder={categoriesList.length ? "Add more…" : "e.g. Food & Beverage"}
-                        className="min-w-[80px] flex-1 border-0 bg-transparent py-0.5 text-sm text-[#1e3d2e] outline-none placeholder:text-[#b0bfb8]"
-                      />
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-[#a0b4aa]">Up to {MAX_CATEGORIES}. Enter or comma to add.</p>
+                  <Label className={labelClass}>Category</Label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value }))}
+                    className="h-10 w-full rounded-xl border-2 border-[#dce6df] bg-white px-3 text-sm text-[#1e3d2e] transition-colors focus:border-[#2d6b4e] focus:outline-none focus:ring-4 focus:ring-[#2d6b4e]/8"
+                  >
+                    <option value="">Select a category</option>
+                    <option value="FASHION_BEAUTY">Fashion &amp; Beauty</option>
+                    <option value="FOOD_BEVERAGE">Food &amp; Beverage</option>
+                    <option value="TECHNOLOGY_GADGETS">Technology &amp; Gadgets</option>
+                    <option value="FITNESS_HEALTH">Fitness &amp; Health</option>
+                    <option value="TRAVEL_LIFESTYLE">Travel &amp; Lifestyle</option>
+                    <option value="ENTERTAINMENT_COMEDY">Entertainment &amp; Comedy</option>
+                    <option value="EDUCATION_CAREER">Education &amp; Career</option>
+                    <option value="BUSINESS_FINANCE">Business &amp; Finance</option>
+                    <option value="HOME_DECOR">Home &amp; Decor</option>
+                    <option value="GAMING">Gaming</option>
+                    <option value="PARENTING_FAMILY">Parenting &amp; Family</option>
+                    <option value="SPORTS">Sports</option>
+                    <option value="AUTOMOTIVE">Automotive</option>
+                    <option value="RELIGIOUS_SPIRITUAL">Religious &amp; Spiritual</option>
+                    <option value="GENERAL">General</option>
+                  </select>
                 </div>
 
                 {/* Niche */}
