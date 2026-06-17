@@ -246,6 +246,7 @@ interface BackendBrandResponse {
   business_verification_status?: string;
   verification_contact_email?: string;
   verification_phone_number?: string;
+  plan_tier?: 'STARTER' | 'GROWTH' | 'ENTERPRISE';
   user?: {
     id?: string;
     city?: string;
@@ -269,6 +270,7 @@ export const mapBrand = (input: BackendBrandResponse): Brand => ({
   businessVerificationStatus: input.business_verification_status,
   verificationContactEmail: input.verification_contact_email,
   verificationPhoneNumber: input.verification_phone_number,
+  planTier: input.plan_tier,
   totalCampaigns: 0,
   activeOrders: 0,
 });

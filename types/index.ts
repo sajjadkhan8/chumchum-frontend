@@ -136,6 +136,23 @@ export interface PackageAnalytics {
   engagementPerformance: number;
 }
 
+export type SubscriptionInterval = 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+export type SubscriptionStatus = 'ACTIVE' | 'CANCELLED' | 'EXPIRED';
+
+export interface Subscription {
+  id: string;
+  brandId: string;
+  packageId: string;
+  packageTitle: string;
+  status: SubscriptionStatus;
+  interval: SubscriptionInterval;
+  duration: number;
+  cyclesCompleted: number;
+  nextRenewalAt: string;
+  cancelledAt?: string;
+  createdAt: string;
+}
+
 export interface CreatorPackage extends Package {
   shortDescription: string;
   fullDescription: string;
@@ -147,6 +164,9 @@ export interface CreatorPackage extends Package {
   visibility: 'public' | 'private';
   tags: string[];
   analytics: PackageAnalytics;
+  packageType?: 'ONE_TIME' | 'SUBSCRIPTION';
+  subscriptionInterval?: SubscriptionInterval;
+  subscriptionDuration?: number;
 }
 
 // Order Types
@@ -204,6 +224,7 @@ export interface Brand {
   businessVerificationStatus?: string;
   verificationContactEmail?: string;
   verificationPhoneNumber?: string;
+  planTier?: 'STARTER' | 'GROWTH' | 'ENTERPRISE';
   totalCampaigns: number;
   activeOrders: number;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,9 +20,13 @@ import {
   Play,
   Search,
   ShieldCheck,
+  TrendingUp,
   Utensils,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
+import { creatorsService } from "@/services/creators.service";
+import type { Creator } from "@/types";
+import { formatFollowers, getInitials } from "@/lib/utils";
 
 const categories = [
   { label: "Restaurants", icon: Utensils },
@@ -34,19 +38,79 @@ const categories = [
   { label: "Lahore", icon: MapPin },
 ];
 
-const creators = [
-  { name: "Areeba Khan", niche: "Cafe finds & lifestyle", followers: "184K", position: "50% 17%" },
-  { name: "Hamza Ali", niche: "Street food & film", followers: "92K", position: "84% 20%" },
-  { name: "Maham Noor", niche: "Recipes & restaurant reviews", followers: "128K", position: "51% 80%" },
-  { name: "Saad Raza", niche: "Hotels & travel dining", followers: "210K", position: "15% 58%" },
-];
-
 const fadeUp = {
   initial: false as const,
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, margin: "-80px" },
   transition: { duration: 0.55 },
 };
+
+type CreatorTab = "trending" | "rising" | "verified";
+
+const tabConfig: { key: CreatorTab; label: string; eyebrow: string }[] = [
+  { key: "trending", label: "Trending", eyebrow: "Most active this month" },
+  { key: "rising", label: "Rising Stars", eyebrow: "Fastest growing voices" },
+  { key: "verified", label: "Verified", eyebrow: "Platform-vetted talent" },
+];
+
+function CreatorCardSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-[1.5rem] border border-[#d1ddd6] bg-white">
+      <div className="aspect-[0.88/1] animate-pulse bg-[#e9ece5]" />
+      <div className="space-y-2 p-4">
+        <div className="h-4 w-3/4 animate-pulse rounded-full bg-[#e9ece5]" />
+        <div className="h-3 w-1/2 animate-pulse rounded-full bg-[#e9ece5]" />
+        <div className="h-3 w-1/3 animate-pulse rounded-full bg-[#e9ece5]" />
+      </div>
+    </div>
+  );
+}
+
+function CreatorCard({ creator }: { creator: Creator }) {
+  const primaryPlatform = creator.platforms[0];
+  const followers = primaryPlatform
+    ? formatFollowers(primaryPlatform.followers)
+    : formatFollowers(creator.totalFollowers);
+
+  return (
+    <motion.article
+      initial={false}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.5 }}
+      className="group overflow-hidden rounded-[1.5rem] border border-[#d1ddd6] bg-white"
+    >
+      <div className="relative aspect-[0.88/1] overflow-hidden bg-[#e9ece5]">
+        {creator.avatar ? (
+          <Image
+            src={creator.avatar}
+            alt={creator.name}
+            fill
+            className="object-cover transition duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-4xl font-black text-[#2d6b4e]/30">
+            {getInitials(creator.name)}
+          </div>
+        )}
+        {creator.isVerified && (
+          <span className="absolute right-3 top-3 rounded-full bg-white/90 p-1.5 text-[#2d6b4e] shadow">
+            <BadgeCheck className="size-4" />
+          </span>
+        )}
+      </div>
+      <div className="p-4">
+        <h3 className="text-base font-extrabold tracking-tight">{creator.name}</h3>
+        <p className="mt-1 text-xs font-semibold text-[#738078]">
+          {creator.niche || creator.categories[0] || "Creator"}
+        </p>
+        <p className="mt-3 flex items-center gap-1 text-xs font-bold text-[#365442]">
+          <Instagram className="size-3.5" /> {followers}
+        </p>
+      </div>
+    </motion.article>
+  );
+}
 
 function Wordmark({ light = false }: { light?: boolean }) {
   return (
@@ -79,11 +143,45 @@ export default function Home() {
   const shouldRedirect = hasHydrated && isAuthenticated && Boolean(user?.role);
   const redirectPath = user?.role === "creator" ? "/creator/dashboard" : "/brand/dashboard";
 
+  const [activeTab, setActiveTab] = useState<CreatorTab>("trending");
+  const [trendingCreators, setTrendingCreators] = useState<Creator[]>([]);
+  const [risingCreators, setRisingCreators] = useState<Creator[]>([]);
+  const [verifiedCreators, setVerifiedCreators] = useState<Creator[]>([]);
+  const [creatorsLoading, setCreatorsLoading] = useState(true);
+
   useEffect(() => {
     if (shouldRedirect) router.replace(redirectPath);
   }, [redirectPath, router, shouldRedirect]);
 
+  useEffect(() => {
+    const load = async () => {
+      setCreatorsLoading(true);
+      try {
+        const [trending, rising, verified] = await Promise.all([
+          creatorsService.getTrending(4),
+          creatorsService.getRisingStars(4),
+          creatorsService.getVerified(4),
+        ]);
+        setTrendingCreators(trending);
+        setRisingCreators(rising);
+        setVerifiedCreators(verified);
+      } catch {
+        // fail silently — homepage stays usable without live data
+      } finally {
+        setCreatorsLoading(false);
+      }
+    };
+    void load();
+  }, []);
+
   if (shouldRedirect) return null;
+
+  const visibleCreators =
+    activeTab === "trending" ? trendingCreators
+    : activeTab === "rising" ? risingCreators
+    : verifiedCreators;
+
+  const activeTabConfig = tabConfig.find((t) => t.key === activeTab)!;
 
   return (
     <main className="min-h-screen bg-[#fbfaf5] text-[#1e3d2e]">
@@ -254,25 +352,47 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Creators section — live data from 3 endpoints */}
       <section id="creators" className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <SectionIntro eyebrow="Food voices worth knowing" title="Creators who know what tastes good." copy="Meet food vloggers, recipe creators, cafe explorers, and hospitality storytellers building trusted local communities." />
-          <Link href="/brand/explore" className="inline-flex items-center gap-2 text-sm font-extrabold text-[#2d6b4e]">Explore everyone <ArrowRight className="size-4" /></Link>
+          <SectionIntro
+            eyebrow={activeTabConfig.eyebrow}
+            title="Creators who know what tastes good."
+            copy="Meet food vloggers, recipe creators, cafe explorers, and hospitality storytellers building trusted local communities."
+          />
+          <Link href="/brand/explore" className="inline-flex items-center gap-2 text-sm font-extrabold text-[#2d6b4e]">
+            Explore everyone <ArrowRight className="size-4" />
+          </Link>
         </div>
-        <div className="mt-10 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
-          {creators.map((creator, index) => (
-            <motion.article key={creator.name} {...fadeUp} transition={{ duration: 0.5, delay: index * 0.06 }} className="group overflow-hidden rounded-[1.5rem] border border-[#d1ddd6] bg-white">
-              <div className="relative aspect-[0.88/1] overflow-hidden bg-[#e9ece5]">
-                <Image src="/landing/hero-creator-collage.png" alt={creator.name} fill className="scale-[2.2] object-cover transition duration-500 group-hover:scale-[2.28]" style={{ objectPosition: creator.position }} />
-                <span className="absolute right-3 top-3 rounded-full bg-white/90 p-1.5 text-[#2d6b4e] shadow"><BadgeCheck className="size-4" /></span>
-              </div>
-              <div className="p-4">
-                <h3 className="text-base font-extrabold tracking-tight">{creator.name}</h3>
-                <p className="mt-1 text-xs font-semibold text-[#738078]">{creator.niche}</p>
-                <p className="mt-3 flex items-center gap-1 text-xs font-bold text-[#365442]"><Instagram className="size-3.5" /> {creator.followers}</p>
-              </div>
-            </motion.article>
+
+        {/* Tab switcher */}
+        <div className="mt-8 flex gap-1 rounded-2xl border border-[#d1ddd6] bg-white p-1 w-fit">
+          {tabConfig.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all ${
+                activeTab === key
+                  ? "bg-[#2d6b4e] text-white shadow-sm"
+                  : "text-[#526259] hover:bg-[#f0f4f1]"
+              }`}
+            >
+              {key === "trending" && <TrendingUp className="size-3.5" />}
+              {key === "rising" && <span className="text-[11px]">★</span>}
+              {key === "verified" && <BadgeCheck className="size-3.5" />}
+              {label}
+            </button>
           ))}
+        </div>
+
+        <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
+          {creatorsLoading
+            ? Array.from({ length: 4 }).map((_, i) => <CreatorCardSkeleton key={i} />)
+            : visibleCreators.length > 0
+            ? visibleCreators.map((creator) => (
+                <CreatorCard key={creator.id} creator={creator} />
+              ))
+            : Array.from({ length: 4 }).map((_, i) => <CreatorCardSkeleton key={i} />)}
         </div>
       </section>
 
@@ -285,7 +405,7 @@ export default function Home() {
           <motion.div {...fadeUp}>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#b77a12]">Built for real working relationships</p>
             <blockquote className="mt-5 text-3xl font-extrabold leading-tight tracking-[-0.045em] text-[#1e3d2e] sm:text-5xl">
-              “The right local creators helped us turn one tasting night into weeks of real customer conversations.”
+              &ldquo;The right local creators helped us turn one tasting night into weeks of real customer conversations.&rdquo;
             </blockquote>
             <p className="mt-6 max-w-xl text-base leading-7 text-[#637168]">With relevant food creators and deliverables agreed up front, the restaurant launched quickly, filled tables, and built relationships for future menu drops.</p>
             <div className="mt-8 flex items-center gap-4 border-t border-[#d3d9d2] pt-6">

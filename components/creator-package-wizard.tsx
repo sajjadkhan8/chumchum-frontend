@@ -279,6 +279,9 @@ interface WizardFormData {
   previousWorkUrls: string[];
   visibility: "public" | "private";
   status: "active" | "draft" | "under_review";
+  packageType: "ONE_TIME" | "SUBSCRIPTION";
+  subscriptionInterval: "WEEKLY" | "MONTHLY" | "QUARTERLY";
+  subscriptionDuration: string;
 }
 
 const defaultForm: WizardFormData = {
@@ -306,6 +309,9 @@ const defaultForm: WizardFormData = {
   previousWorkUrls: [""],
   visibility: "public",
   status: "active",
+  packageType: "ONE_TIME",
+  subscriptionInterval: "MONTHLY",
+  subscriptionDuration: "3",
 };
 
 const buildDeliverableItemsFromLegacy = (deliverables: string[] = []): DeliverableItem[] =>
@@ -385,6 +391,9 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       previousWorkUrls: initialPackage.mediaUrls?.length ? initialPackage.mediaUrls : [""],
       visibility: initialPackage.visibility,
       status: initialPackage.status === "draft" ? "draft" : initialPackage.status === "under_review" ? "under_review" : "active",
+      packageType: initialPackage.packageType ?? "ONE_TIME",
+      subscriptionInterval: initialPackage.subscriptionInterval ?? "MONTHLY",
+      subscriptionDuration: String(initialPackage.subscriptionDuration ?? 3),
     };
   }, [initialPackage]);
 
@@ -990,6 +999,9 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       mediaUrls: formData.previousWorkUrls.map((url) => url.trim()).filter(Boolean),
       visibility: formData.visibility,
       tiers: tiers.length > 0 ? tiers : undefined,
+      packageType: formData.packageType,
+      subscriptionInterval: formData.packageType === "SUBSCRIPTION" ? formData.subscriptionInterval : undefined,
+      subscriptionDuration: formData.packageType === "SUBSCRIPTION" ? Number(formData.subscriptionDuration || 3) : undefined,
       analytics: initialPackage?.analytics || {
         views: 0,
         clicks: 0,
@@ -1586,6 +1598,72 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
           <div className={`${panelClass} p-6 md:p-8`}>
             <h2 className={`mb-6 ${sectionTitle}`}>Pricing &amp; Deal Type</h2>
             <div className="space-y-6">
+
+              {/* Package type: One-time vs Subscription */}
+              <div>
+                <p className={labelClass + " mb-2"}>Package type</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { key: "ONE_TIME" as const, label: "One-time", desc: "Single purchase per order" },
+                    { key: "SUBSCRIPTION" as const, label: "Recurring", desc: "Auto-renews each period" },
+                  ]).map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => updateField("packageType", opt.key)}
+                      className={`rounded-xl border-2 p-4 text-left transition-all duration-200 ${
+                        formData.packageType === opt.key
+                          ? "border-[#2d6b4e] bg-[#2d6b4e] text-white shadow-sm"
+                          : "border-[#dce6df] text-[#496159] hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
+                      }`}
+                    >
+                      <p className="text-sm font-bold">{opt.label}</p>
+                      <p className={`mt-0.5 text-[10px] ${formData.packageType === opt.key ? "text-white/70" : "text-[#a0b4aa]"}`}>
+                        {opt.desc}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Subscription configuration */}
+              {formData.packageType === "SUBSCRIPTION" && (
+                <div className="space-y-4 rounded-2xl border border-[#b7d4c6] bg-[#f0f8f4] p-5">
+                  <p className={labelClass}>Subscription settings</p>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label className={labelClass}>Billing interval</Label>
+                      <Select
+                        value={formData.subscriptionInterval}
+                        onValueChange={(v) => updateField("subscriptionInterval", v)}
+                      >
+                        <SelectTrigger className="h-10 rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] focus:border-[#2d6b4e] focus:ring-4 focus:ring-[#2d6b4e]/8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="WEEKLY">Weekly</SelectItem>
+                          <SelectItem value="MONTHLY">Monthly</SelectItem>
+                          <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="sub-duration" className={labelClass}>
+                        Duration (cycles, 0 = unlimited)
+                      </Label>
+                      <Input
+                        id="sub-duration"
+                        type="number"
+                        min={0}
+                        value={formData.subscriptionDuration}
+                        onChange={(e) => updateField("subscriptionDuration", e.target.value)}
+                        placeholder="3"
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Deal type */}
               <div className="grid grid-cols-3 gap-2">

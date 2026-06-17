@@ -63,6 +63,8 @@ export interface PackageUpsertRequest {
   tags?: string[];
   is_active?: boolean;
   tiers?: PackageTierRequest[];
+  subscription_interval?: string;
+  subscription_duration?: number;
 }
 
 const normalizePackages = (payload: unknown): CreatorPackage[] => {

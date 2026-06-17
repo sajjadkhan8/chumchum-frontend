@@ -225,6 +225,24 @@ export const creatorsService = {
     return unwrapCreators(response).map((creator) => mapCreator(creator as never));
   },
 
+  async getRisingStars(limit = 6): Promise<Creator[]> {
+    const response = await apiClient.get<SearchResponse | unknown[]>('/api/v1/creators/rising-stars', {
+      query: { limit },
+      auth: false,
+    });
+
+    return unwrapCreators(response).map((creator) => mapCreator(creator as never));
+  },
+
+  async getVerified(limit = 6): Promise<Creator[]> {
+    const response = await apiClient.get<SearchResponse | unknown[]>('/api/v1/creators/verified', {
+      query: { limit },
+      auth: false,
+    });
+
+    return unwrapCreators(response).map((creator) => mapCreator(creator as never));
+  },
+
   async getByCity(city: string, limit = 6): Promise<Creator[]> {
     const response = await apiClient.get<SearchResponse | unknown[]>('/api/v1/creators/by-city', {
       query: { city, limit },

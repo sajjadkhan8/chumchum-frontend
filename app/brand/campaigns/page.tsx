@@ -20,7 +20,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
 import { campaignsService } from '@/services/campaigns.service';
-import type { BrandCampaign, BrandCampaignStatus } from '@/types';
+import { brandsService } from '@/services/brands.service';
+import type { Brand, BrandCampaign, BrandCampaignStatus } from '@/types';
 import { cn, formatPrice, formatRelativeTime } from '@/lib/utils';
 
 const statusTabs: Array<{ value: 'all' | BrandCampaignStatus; label: string }> = [
@@ -100,6 +101,14 @@ function EmptyState({ activeTab }: { activeTab: string }) {
   );
 }
 
+const STARTER_CAMPAIGN_LIMIT = 5;
+
+const planBadgeStyle: Record<string, string> = {
+  STARTER: 'bg-[#f4f2e9] text-[#7a6b4e] ring-[#ddd3bc]',
+  GROWTH: 'bg-[#e7f0ea] text-[#185c39] ring-[#bcd3c5]',
+  ENTERPRISE: 'bg-[#e8edf8] text-[#2b4faa] ring-[#b8c6e8]',
+};
+
 export default function BrandCampaignsPage() {
   const [campaigns, setCampaigns] = useState<BrandCampaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,6 +116,7 @@ export default function BrandCampaignsPage() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
+  const [brand, setBrand] = useState<Brand | null>(null);
 
   const load = useCallback(async (nextPage = 0, append = false) => {
     setIsLoading(true);
@@ -120,6 +130,7 @@ export default function BrandCampaignsPage() {
 
   useEffect(() => {
     void load(0);
+    brandsService.getMe().then(setBrand).catch(() => null);
   }, [load]);
 
   const filtered = useMemo(() => {
@@ -149,10 +160,38 @@ export default function BrandCampaignsPage() {
             <div className="p-5 sm:p-6 lg:p-7">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="max-w-2xl">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-[#f0c56e]">
-                    <Sparkles className="size-3.5" />
-                    Food campaign desk
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-[#f0c56e]">
+                      <Sparkles className="size-3.5" />
+                      Food campaign desk
+                    </div>
+                    {brand?.planTier && (
+                      <span className={cn('inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black ring-1', planBadgeStyle[brand.planTier] ?? planBadgeStyle.STARTER)}>
+                        {brand.planTier.charAt(0) + brand.planTier.slice(1).toLowerCase()} plan
+                      </span>
+                    )}
                   </div>
+                  {brand?.planTier === 'STARTER' && (
+                    <div className="mt-3 max-w-xs">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-[#d4e0d8]">
+                        <span>Campaigns this month</span>
+                        <span className={totalElements >= STARTER_CAMPAIGN_LIMIT ? 'text-[#f0c56e]' : 'text-white'}>
+                          {Math.min(totalElements, STARTER_CAMPAIGN_LIMIT)}/{STARTER_CAMPAIGN_LIMIT}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
+                        <div
+                          className={cn('h-full rounded-full transition-all', totalElements >= STARTER_CAMPAIGN_LIMIT ? 'bg-[#e6aa38]' : 'bg-[#6ec996]')}
+                          style={{ width: `${Math.min((totalElements / STARTER_CAMPAIGN_LIMIT) * 100, 100)}%` }}
+                        />
+                      </div>
+                      {totalElements >= STARTER_CAMPAIGN_LIMIT && (
+                        <p className="mt-1.5 text-[11px] font-bold text-[#f0c56e]">
+                          Limit reached — <Link href="/pricing" className="underline">upgrade to Growth</Link> for unlimited.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <Button asChild className="shrink-0 rounded-full bg-[#e6aa38] px-5 font-black text-[#173b2a] hover:bg-[#f0bb55]">
                   <Link href="/brand/campaigns/new">
