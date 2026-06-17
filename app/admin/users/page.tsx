@@ -1,11 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { RefreshCw, Search, Users } from 'lucide-react';
+import { RefreshCw, Search, Users, ShieldBan, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { adminService, type AdminUser } from '@/services/admin.service';
 import { formatDate } from '@/lib/utils';
@@ -19,6 +21,11 @@ export default function AdminUsersPage() {
   const [active, setActive] = useState<'all' | 'active' | 'inactive'>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [moderateTarget, setModerateTarget] = useState<AdminUser | null>(null);
+  const [moderateAction, setModerateAction] = useState<'suspend' | 'ban' | 'unban'>('suspend');
+  const [moderateReason, setModerateReason] = useState('');
+  const [suspendDays, setSuspendDays] = useState(30);
+  const [isSubmittingModerate, setIsSubmittingModerate] = useState(false);
   const limit = 20;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
@@ -52,6 +59,37 @@ export default function AdminUsersPage() {
       toast.error(error instanceof Error ? error.message : 'Unable to update user');
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const openModerate = (user: AdminUser, action: 'suspend' | 'ban' | 'unban') => {
+    setModerateTarget(user);
+    setModerateAction(action);
+    setModerateReason('');
+    setSuspendDays(30);
+  };
+
+  const submitModerate = async () => {
+    if (!moderateTarget) return;
+    setIsSubmittingModerate(true);
+    try {
+      const updated = await adminService.moderateUser(
+        moderateTarget.id,
+        moderateAction,
+        moderateReason || undefined,
+        moderateAction === 'suspend' ? suspendDays : undefined,
+      );
+      setUsers((current) => current.map((item) => (item.id === moderateTarget.id ? { ...item, active: updated.active } : item)));
+      toast.success(
+        moderateAction === 'ban' ? 'User banned' :
+        moderateAction === 'suspend' ? `User suspended for ${suspendDays} days` :
+        'User un-banned',
+      );
+      setModerateTarget(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to moderate user');
+    } finally {
+      setIsSubmittingModerate(false);
     }
   };
 
@@ -170,12 +208,50 @@ export default function AdminUsersPage() {
                     )}
                   </TableCell>
                   <TableCell className="text-right text-[13px] text-[#1e3d2e]">
-                    <Switch
-                      checked={user.active}
-                      disabled={updatingId === user.id || user.role === 'platform_admin'}
-                      onCheckedChange={(active) => updateStatus(user, active)}
-                      aria-label={`Set ${user.name} active status`}
-                    />
+                    <div className="flex items-center justify-end gap-2">
+                      {user.role !== 'platform_admin' && (
+                        <>
+                          {user.active ? (
+                            <>
+                              <button
+                                className="inline-flex h-7 items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 text-[11px] font-bold text-amber-700 transition hover:bg-amber-100 disabled:opacity-50"
+                                title="Suspend user"
+                                disabled={updatingId === user.id}
+                                onClick={() => openModerate(user, 'suspend')}
+                              >
+                                <ShieldAlert className="size-3" />
+                                Suspend
+                              </button>
+                              <button
+                                className="inline-flex h-7 items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 text-[11px] font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+                                title="Ban user"
+                                disabled={updatingId === user.id}
+                                onClick={() => openModerate(user, 'ban')}
+                              >
+                                <ShieldBan className="size-3" />
+                                Ban
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              className="inline-flex h-7 items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 text-[11px] font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+                              title="Remove ban/suspension"
+                              disabled={updatingId === user.id}
+                              onClick={() => openModerate(user, 'unban')}
+                            >
+                              <ShieldCheck className="size-3" />
+                              Unban
+                            </button>
+                          )}
+                        </>
+                      )}
+                      <Switch
+                        checked={user.active}
+                        disabled={updatingId === user.id || user.role === 'platform_admin'}
+                        onCheckedChange={(active) => updateStatus(user, active)}
+                        aria-label={`Set ${user.name} active status`}
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -217,6 +293,74 @@ export default function AdminUsersPage() {
           </div>
         </div>
       </div>
+
+      {/* Moderation dialog */}
+      <Dialog open={Boolean(moderateTarget)} onOpenChange={(open) => !open && setModerateTarget(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-extrabold text-[#1e3d2e]">
+              {moderateAction === 'ban' ? 'Ban user' : moderateAction === 'suspend' ? 'Suspend user' : 'Remove ban/suspension'}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-[#496159]">
+              {moderateAction === 'unban'
+                ? `Restore access for ${moderateTarget?.name}.`
+                : `This will disable ${moderateTarget?.name}'s account.`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-1">
+            {moderateAction !== 'unban' && (
+              <>
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-[#173b2a]">
+                    Reason {moderateAction === 'ban' ? '(required)' : '(optional)'}
+                  </label>
+                  <textarea
+                    className="w-full rounded-xl border border-[#d1ddd6] bg-[#fbfaf5] px-3 py-2.5 text-sm text-[#173b2a] placeholder:text-[#7c8a82] focus:border-[#185c39] focus:outline-none focus:ring-1 focus:ring-[#185c39]/20"
+                    rows={3}
+                    placeholder="Reason for this action…"
+                    value={moderateReason}
+                    onChange={(e) => setModerateReason(e.target.value)}
+                  />
+                </div>
+                {moderateAction === 'suspend' && (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-[#173b2a]">Suspension duration (days)</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={365}
+                      className="w-full rounded-xl border border-[#d1ddd6] bg-[#fbfaf5] px-3 py-2.5 text-sm text-[#173b2a] focus:border-[#185c39] focus:outline-none focus:ring-1 focus:ring-[#185c39]/20"
+                      value={suspendDays}
+                      onChange={(e) => setSuspendDays(Math.max(1, parseInt(e.target.value) || 30))}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setModerateTarget(null)}>Cancel</Button>
+            <Button
+              disabled={isSubmittingModerate || (moderateAction === 'ban' && !moderateReason.trim())}
+              onClick={submitModerate}
+              className={
+                moderateAction === 'ban'
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : moderateAction === 'suspend'
+                  ? 'bg-amber-500 text-white hover:bg-amber-600'
+                  : 'bg-emerald-600 text-white hover:bg-emerald-700'
+              }
+            >
+              {isSubmittingModerate ? 'Processing…' :
+               moderateAction === 'ban' ? 'Confirm Ban' :
+               moderateAction === 'suspend' ? 'Confirm Suspend' :
+               'Remove Restriction'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

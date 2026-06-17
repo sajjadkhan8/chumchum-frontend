@@ -174,8 +174,8 @@ export default function AmbassadorProgramPage() {
                         { step: 'Engagement Verification', completed: applicationStatus.verificationSteps.engagementVerified },
                         { step: 'Content Review', completed: applicationStatus.verificationSteps.contentReviewPassed },
                         { step: 'Background Check', completed: applicationStatus.verificationSteps.backgroundCheckPassed },
-                      ].map((step, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
+                      ].map((step) => (
+                        <div key={step.step} className="flex items-center gap-2">
                           {step.completed ? (
                             <CheckCircle2 className="size-4 text-[#2d6b4e]" />
                           ) : (
@@ -220,9 +220,9 @@ export default function AmbassadorProgramPage() {
               <p className="mb-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Perks</p>
               <h2 className="mb-5 text-2xl font-extrabold tracking-[-0.04em] text-[#1e3d2e]">Program Benefits</h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {benefits.map((benefit, idx) => (
+                {benefits.map((benefit) => (
                   <div
-                    key={idx}
+                    key={benefit.title}
                     className="rounded-[1.4rem] border border-[#d1ddd6] bg-white p-5 shadow-[0_8px_28px_rgba(38,70,50,0.06)] transition-shadow hover:shadow-[0_12px_36px_rgba(38,70,50,0.1)]"
                   >
                     <div className="mb-3 text-4xl">{benefit.icon}</div>

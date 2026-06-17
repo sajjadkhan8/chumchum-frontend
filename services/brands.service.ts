@@ -29,6 +29,10 @@ export const brandsService = {
     return response ? mapBrand(response as never) : null;
   },
 
+  async selectPlan(planTier: 'STARTER' | 'GROWTH' | 'ENTERPRISE'): Promise<{ success: boolean; planTier: string }> {
+    return apiClient.patch<{ success: boolean; planTier: string }>('/api/v1/brands/me/plan', { planTier });
+  },
+
   async updateMe(payload: BrandProfileUpdatePayload): Promise<Brand> {
     const response = await apiClient.patch<unknown>('/api/v1/brands/me/profile', {
       company_name: payload.companyName,

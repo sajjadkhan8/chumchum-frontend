@@ -95,7 +95,7 @@ function PlatformBar({ label, value, max, copy }: { label: string; value: number
 const emptyDashboard: AdminDashboard = {
   users: { total: 0, creators: 0, brands: 0, admins: 0, active: 0, inactive: 0 },
   orders: { total: 0, byStatus: {} },
-  revenue: { completedOrderAmount: 0 },
+  revenue: { completedOrderAmount: 0, gmv: 0 },
 };
 
 export default function AdminDashboardPage() {
@@ -123,10 +123,7 @@ export default function AdminDashboardPage() {
     0,
   );
 
-  const sparkU = [40, 55, 45, 70, 60, 85, 75, 90, 80, 95, 88, 100];
-  const sparkO = [2, 5, 3, 7, 6, 9, 8, 10, 9, 12, 11, 13];
-  const sparkR = [100, 120, 110, 140, 130, 160, 150, 180, 170, 200, 190, 210];
-  const sparkC = [10, 15, 12, 20, 18, 25, 22, 28, 26, 30, 29, 32];
+  // Spark arrays intentionally omitted — no time-series endpoint yet; trend arrows would be fabricated.
 
   const quickActions = [
     { label: 'User Moderation',  copy: 'Review flagged accounts',   href: '/admin/user-moderation',  Icon: ShieldAlert },
@@ -164,33 +161,29 @@ export default function AdminDashboardPage() {
           animatedValue={dashboard.users.total}
           sub={`${dashboard.users.active} active · ${dashboard.users.inactive} inactive`}
           Icon={Users}
-          spark={sparkU}
-          trend={8}
+          aria-label={`Total users: ${dashboard.users.total}`}
         />
         <CreatorMetricCard
           title="Active Orders"
           animatedValue={activeOrders}
           sub={`${dashboard.orders.total} total orders`}
           Icon={ShoppingBag}
-          spark={sparkO}
-          trend={5}
+          aria-label={`Active orders: ${activeOrders}`}
         />
         <CreatorMetricCard
-          title="Completed Revenue"
-          animatedValue={dashboard.revenue.completedOrderAmount}
+          title="Platform GMV"
+          animatedValue={dashboard.revenue.gmv ?? dashboard.revenue.completedOrderAmount}
           fmt={abbrevPKR}
-          sub="from completed orders"
+          sub={`${abbrevPKR(dashboard.revenue.completedOrderAmount)} completed`}
           Icon={DollarSign}
-          spark={sparkR}
-          trend={12}
+          aria-label={`Platform GMV: ${abbrevPKR(dashboard.revenue.gmv ?? dashboard.revenue.completedOrderAmount)}`}
         />
         <CreatorMetricCard
           title="Creators"
           animatedValue={dashboard.users.creators}
           sub={`${dashboard.users.brands} brands · ${dashboard.users.admins} admins`}
           Icon={FileCheck2}
-          spark={sparkC}
-          trend={3}
+          aria-label={`Creators: ${dashboard.users.creators}`}
         />
       </section>
 

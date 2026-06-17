@@ -18,6 +18,7 @@ export interface AdminDashboard {
   };
   revenue: {
     completedOrderAmount: number;
+    gmv?: number;
   };
 }
 
@@ -385,6 +386,15 @@ export const adminService = {
 
   async updateUserStatus(id: string, active: boolean): Promise<AdminUser> {
     const response = await apiClient.patch<BackendAdminUser>(`/api/v1/admin/users/${id}/status`, { active });
+    return mapAdminUser(response);
+  },
+
+  async moderateUser(id: string, action: 'suspend' | 'ban' | 'unban', reason?: string, suspendDays?: number): Promise<AdminUser> {
+    const response = await apiClient.patch<BackendAdminUser>(`/api/v1/admin/users/${id}/moderate`, {
+      action,
+      reason,
+      suspendDays,
+    });
     return mapAdminUser(response);
   },
 
