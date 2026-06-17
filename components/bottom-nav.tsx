@@ -27,7 +27,7 @@ export function BottomNav() {
 
   const creatorNavItems: NavItem[] = [
     { href: '/creator/dashboard', icon: Home, label: 'Home' },
-    { href: '/creator/offers', icon: Search, label: 'Offers' },
+    { href: '/creator/campaigns', icon: Search, label: 'Campaigns' },
     { href: '/creator/messages', icon: MessageCircle, label: 'Messages' },
     { href: '/creator/orders', icon: ShoppingBag, label: 'Orders' },
     { href: '/creator/settings', icon: User, label: 'Profile' },

@@ -77,7 +77,7 @@ function SkeletonCard() {
   );
 }
 
-function CreatorOffersFeedPage() {
+function CreatorCampaignsFeedPage() {
   const router = useRouter();
 
   // filters
@@ -131,7 +131,7 @@ function CreatorOffersFeedPage() {
       setTotalElements(normalized.totalElements);
       setPage(nextPage);
     } catch {
-      toast.error('Failed to load offers');
+      toast.error('Failed to load campaigns');
     } finally {
       setIsLoading(false);
     }
@@ -187,7 +187,7 @@ function CreatorOffersFeedPage() {
       });
       toast.success('Reaction submitted to brand');
       setIsDialogOpen(false);
-      router.push('/creator/offers/reactions');
+      router.push('/creator/campaigns/reactions');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to submit reaction');
     } finally {
@@ -202,7 +202,7 @@ function CreatorOffersFeedPage() {
         {/* Top bar */}
         <div className="flex justify-end">
           <Link
-            href="/creator/offers/reactions"
+            href="/creator/campaigns/reactions"
             className="rounded-full border border-[#d1ddd6] bg-white px-4 py-2 text-sm font-bold text-[#2d6b4e] hover:bg-[#e6eceb] transition-colors"
           >
             My Reactions
@@ -217,10 +217,10 @@ function CreatorOffersFeedPage() {
           const typeCount = new Set(offers.map((o) => o.offerType).filter(Boolean)).size;
           return (
             <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-              <CreatorMetricCard dark title="Open Offers" value={totalElements} sub="available campaigns" Icon={Layers} />
+              <CreatorMetricCard dark title="Open Campaigns" value={totalElements} sub="available campaigns" Icon={Layers} />
               <CreatorMetricCard title="Loaded" value={offers.length} sub="shown in this feed" Icon={Search} />
               <CreatorMetricCard title="Offer Types" value={typeCount || "-"} sub="unique formats" Icon={Layers} />
-              <CreatorMetricCard gold title="Avg. Budget" value={avgBudget ? formatPrice(avgBudget) : "-"} sub="visible offer average" Icon={DollarSign} />
+              <CreatorMetricCard gold title="Avg. Budget" value={avgBudget ? formatPrice(avgBudget) : "-"} sub="visible campaign average" Icon={DollarSign} />
             </div>
           );
         })()}
@@ -235,7 +235,7 @@ function CreatorOffersFeedPage() {
                 className={`${inputClass} pl-9`}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search offers by title, brief…"
+                placeholder="Search campaigns by title, brief…"
                 onKeyDown={(e) => e.key === 'Enter' && void loadOffers(0)}
               />
             </div>
@@ -405,7 +405,7 @@ function CreatorOffersFeedPage() {
           )}
         </div>
 
-        {/* Offers list */}
+        {/* Campaigns list */}
         {isLoading && offers.length === 0 ? (
           <div className="space-y-3">
             <SkeletonCard />
@@ -415,7 +415,7 @@ function CreatorOffersFeedPage() {
         ) : offers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Search className="size-10 text-[#c2d8cb]" />
-            <p className="mt-4 text-base font-bold text-[#1e3d2e]">No offers right now</p>
+            <p className="mt-4 text-base font-bold text-[#1e3d2e]">No campaigns right now</p>
             <p className="mt-1 text-sm text-[#87938b]">Try adjusting your filters to see more results</p>
           </div>
         ) : (
@@ -470,7 +470,7 @@ function CreatorOffersFeedPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Link
-                          href={`/creator/offers/${offer.id}`}
+                          href={`/creator/campaigns/${offer.id}`}
                           className="rounded-full border border-[#d1ddd6] bg-white px-4 py-2 text-xs font-bold text-[#2d6b4e] transition-colors hover:bg-[#e6eceb]"
                         >
                           View Details
@@ -480,7 +480,7 @@ function CreatorOffersFeedPage() {
                           onClick={() => openReaction(offer)}
                           className="rounded-full bg-[#2d6b4e] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#1f5239]"
                         >
-                          React to Offer
+                          React to Campaign
                         </button>
                       </div>
                     </div>
@@ -509,7 +509,7 @@ function CreatorOffersFeedPage() {
           <DialogContent className="max-w-lg overflow-hidden rounded-[1.6rem] p-0">
             {/* Dialog header strip */}
             <DialogHeader className="bg-[#1e3d2e] px-6 py-5">
-              <DialogTitle className="text-white">React to Offer</DialogTitle>
+              <DialogTitle className="text-white">React to Campaign</DialogTitle>
               {selectedOffer && (
                 <p className="mt-0.5 text-sm text-[#87b49a]">{selectedOffer.title}</p>
               )}
@@ -602,6 +602,7 @@ function CreatorOffersFeedPage() {
   );
 }
 
-export default function CreatorOffersPage() {
-  return <CreatorOffersFeedPage />;
+export default function CreatorCampaignsPage() {
+  return <CreatorCampaignsFeedPage />;
 }
+

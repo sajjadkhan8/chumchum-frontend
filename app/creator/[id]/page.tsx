@@ -495,7 +495,7 @@ export default function CreatorProfilePage({
                       ) : (
                         <Card>
                           <CardContent className="py-6 text-sm text-muted-foreground">
-                            No barter-focused offers yet.
+                            No barter-focused campaigns yet.
                           </CardContent>
                         </Card>
                       )}

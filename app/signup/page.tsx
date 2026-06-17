@@ -32,7 +32,7 @@ const roleOptions: { value: UserRole; label: string; eyebrow: string; icon: Reac
     eyebrow: 'Grow your reach',
     icon: Building2,
     description: 'Discover trusted local creators and run campaigns in one calm place.',
-    benefits: ['Search verified creators', 'Send clear offers', 'Manage campaign delivery'],
+    benefits: ['Search verified creators', 'Send clear campaigns', 'Manage campaign delivery'],
   },
 ];
 

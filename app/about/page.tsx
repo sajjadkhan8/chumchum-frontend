@@ -39,8 +39,8 @@ export default function AboutPage() {
     {
       step: '02',
       icon: Handshake,
-      title: 'Send and negotiate offers',
-      description: 'Use paid, barter, or hybrid offers with clear deliverables and timelines.',
+      title: 'Send and manage campaigns',
+      description: 'Use paid, barter, or hybrid campaigns with clear deliverables and timelines.',
     },
     {
       step: '03',
@@ -137,4 +137,3 @@ export default function AboutPage() {
     </div>
   );
 }
-

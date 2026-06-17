@@ -73,7 +73,7 @@ export default function HelpPage() {
             <Badge variant="secondary" className="rounded-full text-xs font-medium">Support</Badge>
             <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">Help Center</h1>
             <p className="mt-3 max-w-2xl text-base text-muted-foreground md:text-lg">
-              Answers to common questions about campaigns, offers, payments, and account safety.
+              Answers to common questions about campaigns, payments, and account safety.
             </p>
 
             <div className="mt-6 max-w-xl">
@@ -111,7 +111,7 @@ export default function HelpPage() {
                 <CardTitle className="text-lg">Campaign Support</CardTitle>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
-                Resolve issues with offers, deliverables, disputes, and communication between brands and creators.
+                Resolve issues with campaigns, deliverables, disputes, and communication between brands and creators.
               </CardContent>
             </Card>
             <Card className="border-border/70">
@@ -191,4 +191,3 @@ export default function HelpPage() {
     </div>
   );
 }
-

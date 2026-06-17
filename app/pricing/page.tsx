@@ -10,13 +10,13 @@ const plans = [
     name: 'Starter',
     price: 'PKR 0',
     description: 'Perfect for first-time collaborations in Pakistan.',
-    features: ['Browse creators', 'Send 5 offers/month', 'Basic campaign tracking'],
+    features: ['Browse creators', 'Send 5 campaigns/month', 'Basic campaign tracking'],
   },
   {
     name: 'Growth',
     price: 'PKR 487,500/mo',
     description: 'For scaling brands running multiple influencer campaigns.',
-    features: ['Unlimited offers', 'Priority chat support', 'Performance insights'],
+    features: ['Unlimited campaigns', 'Priority chat support', 'Performance insights'],
   },
   {
     name: 'Enterprise',
@@ -70,4 +70,3 @@ export default function PricingPage() {
     </div>
   );
 }
-

@@ -119,7 +119,7 @@ export default function BrandNotificationsPage() {
               </span>
               <div>
                 <p className="text-sm font-bold text-[#1a2e22]">You&apos;re all caught up</p>
-                <p className="mt-0.5 text-xs text-[#8fa098]">New activity from offers, orders, and messages will appear here</p>
+                <p className="mt-0.5 text-xs text-[#8fa098]">New activity from campaigns, orders, and messages will appear here</p>
               </div>
             </div>
           ) : (

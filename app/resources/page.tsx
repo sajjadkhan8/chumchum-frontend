@@ -25,7 +25,7 @@ const featuredResources = [
   {
     icon: BookOpen,
     title: 'Creator Pricing Playbook',
-    description: 'Learn how to package paid, barter, and hybrid offers with clear scope and revision rules.',
+    description: 'Learn how to package paid, barter, and hybrid campaigns with clear scope and revision rules.',
     href: '/about',
     cta: 'See Workflow',
   },
@@ -186,4 +186,3 @@ export default function ResourcesPage() {
     </div>
   );
 }
-

@@ -38,7 +38,7 @@ function statusBadge(status: string) {
 const canWithdraw = (status: string) =>
   ['submitted', 'shortlisted', 'in_review'].includes(status?.toLowerCase());
 
-export default function CreatorOfferReactionsPage() {
+export default function CreatorCampaignReactionsPage() {
   const [reactions, setReactions] = useState<BrandCampaignReaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -83,15 +83,15 @@ export default function CreatorOfferReactionsPage() {
               MY ACTIVITY
             </p>
             <h1 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-[#1e3d2e]">
-              Offer reactions
+              Campaign reactions
             </h1>
           </div>
           <Link
-            href="/creator/offers"
+            href="/creator/campaigns"
             className="flex items-center gap-1.5 rounded-full border border-[#d1ddd6] bg-white px-4 py-2 text-sm font-bold text-[#2d6b4e] transition-colors hover:bg-[#e6eceb]"
           >
             <ArrowLeft className="h-4 w-4" />
-            Offers
+            Campaigns
           </Link>
         </div>
 
@@ -144,13 +144,13 @@ export default function CreatorOfferReactionsPage() {
               No reactions yet
             </p>
             <p className="mt-1.5 max-w-xs text-sm text-[#87938b]">
-              React to brand offers to see your responses here.
+              React to brand campaigns to see your responses here.
             </p>
             <Link
-              href="/creator/offers"
+              href="/creator/campaigns"
               className="mt-6 rounded-full bg-[#2d6b4e] px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#1f5239]"
             >
-              Browse offers
+              Browse campaigns
             </Link>
           </div>
         )}
@@ -256,3 +256,4 @@ export default function CreatorOfferReactionsPage() {
     </div>
   );
 }
+

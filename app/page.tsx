@@ -221,7 +221,7 @@ export default function Home() {
               <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#7a6b4e]">For creators</span>
             </div>
             <h3 className="mt-16 max-w-sm text-3xl font-extrabold tracking-[-0.04em]">Turn your point of view into better work.</h3>
-            <p className="mt-4 max-w-md leading-7 text-[#647168]">Show your strengths, package deliverables, discover fitting offers, and manage every agreement with confidence.</p>
+            <p className="mt-4 max-w-md leading-7 text-[#647168]">Show your strengths, package deliverables, discover fitting campaigns, and manage every agreement with confidence.</p>
             <Link href="/signup?role=creator" className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#2d6b4e] px-5 py-3 text-sm font-bold text-white">
               Build your profile <ArrowRight className="size-4" />
             </Link>

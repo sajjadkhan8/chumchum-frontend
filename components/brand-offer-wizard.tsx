@@ -71,7 +71,7 @@ const serviceCatalogByPlatform: Record<SupportedPlatform, ServiceSection[]> = {
     {
       label: 'Short-form video',
       items: [
-        { key: 'ig_reel_15', label: 'Reel (15s)', description: 'Quick hook-first reel ideal for launches, drops, and offers.' },
+        { key: 'ig_reel_15', label: 'Reel (15s)', description: 'Quick hook-first reel ideal for launches, drops, and campaigns.' },
         { key: 'ig_reel_30', label: 'Reel (30s)', description: 'Standard branded reel with product context and CTA.' },
         { key: 'ig_reel_60', label: 'Reel (60s)', description: 'Longer storytelling reel for benefits, demos, or testimonials.' },
       ],
@@ -112,7 +112,7 @@ const serviceCatalogByPlatform: Record<SupportedPlatform, ServiceSection[]> = {
       label: 'Shorts',
       items: [
         { key: 'yt_short_15', label: 'YouTube Short (15s)', description: 'Fast vertical short for awareness and launch moments.' },
-        { key: 'yt_short_60', label: 'YouTube Short (60s)', description: 'Extended short for tutorials, demos, or offer explanation.' },
+        { key: 'yt_short_60', label: 'YouTube Short (60s)', description: 'Extended short for tutorials, demos, or campaign explanation.' },
       ],
     },
     {
@@ -1636,7 +1636,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                          onClick={() => updateForm({ creatorType: value })}
                          className={`rounded-[1.15rem] border border-[#e8ede8] p-3 text-left text-sm transition-colors ${
                            form.creatorType === value
-                             ? 'border-[#185c39]/50 bg-[#e7f0ea]'
+                             ? 'border-[#185c39]/50 bg-[#e7f0ea] text-[#185c39]'
                              : 'border-[#e1e6df] hover:border-[#185c39]/40 hover:bg-white'
                          }`}
                        >

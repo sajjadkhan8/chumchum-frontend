@@ -15,7 +15,7 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
 
   const isProtectedCreatorRoute =
     pathname.startsWith('/creator/dashboard') ||
-    pathname.startsWith('/creator/offers') ||
+    pathname.startsWith('/creator/campaigns') ||
     pathname.startsWith('/creator/orders') ||
     pathname.startsWith('/creator/earnings') ||
     pathname.startsWith('/creator/affiliate') ||
@@ -60,7 +60,7 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!pathname.startsWith('/creator/offers') && !pathname.startsWith('/creator/search')) {
+    if (!pathname.startsWith('/creator/campaigns') && !pathname.startsWith('/creator/search')) {
       setHideCreatorWorkspacePanel(false);
     }
   }, [pathname]);

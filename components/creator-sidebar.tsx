@@ -54,8 +54,8 @@ const navGroups: NavGroup[] = [
   {
     title: 'Offers',
     items: [
-      { href: '/creator/offers', label: 'Discover Offers', icon: Search },
-      { href: '/creator/offers/reactions', label: 'Saved Offers', icon: Bookmark },
+      { href: '/creator/campaigns', label: 'Discover Campaigns', icon: Search },
+      { href: '/creator/campaigns/reactions', label: 'Saved Campaigns', icon: Bookmark },
     ],
   },
   {

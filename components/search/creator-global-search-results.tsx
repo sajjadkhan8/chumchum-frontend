@@ -18,7 +18,7 @@ import { cn, formatFollowers, formatPrice, formatRelativeTime } from '@/lib/util
 import { getCreatorGlobalSearchResults, type CreatorGlobalSearchResults as CreatorGlobalSearchPayload, type CreatorSearchBrandResult } from '@/lib/search/creator-search';
 import type { BrandCampaign, Creator } from '@/types';
 
-type SearchTab = 'brands' | 'offers' | 'creators';
+type SearchTab = 'brands' | 'campaigns' | 'creators';
 type SortOption = 'relevant' | 'top-rated' | 'budget-high';
 
 type SearchFilters = {
@@ -273,7 +273,7 @@ function BrandResultCard({
             onClick={() => onViewOffers(brand.id)}
             className="h-10 rounded-full bg-[#2d6b4e] px-4 text-sm font-bold text-white transition-colors hover:bg-[#1f5239]"
           >
-            View offers
+            View campaigns
           </button>
           {brand.website ? (
             <a
@@ -336,13 +336,13 @@ function OfferResultCard({ offer, brand, compact = false }: { offer: BrandCampai
 
         <div className="flex shrink-0 flex-col gap-2 sm:min-w-[9rem] sm:items-end">
           <Link
-            href={`/creator/offers/${offer.id}`}
+            href={`/creator/campaigns/${offer.id}`}
             className="flex h-10 items-center justify-center rounded-full bg-[#2d6b4e] px-4 text-sm font-bold text-white transition-colors hover:bg-[#1f5239]"
           >
             Apply now
           </Link>
           <Link
-            href={`/creator/offers/${offer.id}`}
+            href={`/creator/campaigns/${offer.id}`}
             className="flex h-10 items-center justify-center rounded-full border-2 border-[#d1ddd6] px-4 text-sm font-bold text-[#1e3d2e] transition-colors hover:border-[#b0c5ba]"
           >
             View details
@@ -452,7 +452,7 @@ export function CreatorGlobalSearchResults() {
   const currentSort = (searchParams.get('sort') as SortOption | null) ?? 'relevant';
   const brandFocus = searchParams.get('brand') ?? '';
 
-  const [results, setResults] = useState<CreatorGlobalSearchPayload>({ brands: [], offers: [], creators: [] });
+  const [results, setResults] = useState<CreatorGlobalSearchPayload>({ brands: [], campaigns: [], creators: [] });
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({
@@ -468,7 +468,7 @@ export function CreatorGlobalSearchResults() {
     let cancelled = false;
 
     if (!searchTerm) {
-      setResults({ brands: [], offers: [], creators: [] });
+      setResults({ brands: [], campaigns: [], creators: [] });
       setIsLoading(false);
       setHasError(false);
       return () => { cancelled = true; };
@@ -479,7 +479,7 @@ export function CreatorGlobalSearchResults() {
 
     void getCreatorGlobalSearchResults(searchTerm)
       .then((nextResults) => { if (!cancelled) setResults(nextResults); })
-      .catch(() => { if (!cancelled) { setResults({ brands: [], offers: [], creators: [] }); setHasError(true); } })
+      .catch(() => { if (!cancelled) { setResults({ brands: [], campaigns: [], creators: [] }); setHasError(true); } })
       .finally(() => { if (!cancelled) setIsLoading(false); });
 
     return () => { cancelled = true; };
@@ -493,7 +493,7 @@ export function CreatorGlobalSearchResults() {
   const budgetBounds = useMemo<[number, number]>(() => {
     const values = [
       ...results.brands.map((b) => b.avgBudget).filter((v) => v > 0),
-      ...results.offers.map((o) => Math.round((o.budgetMin + o.budgetMax) / 2)).filter((v) => v > 0),
+      ...results.campaigns.map((o) => Math.round((o.budgetMin + o.budgetMax) / 2)).filter((v) => v > 0),
       ...results.creators.map((c) => Math.round(((c.minPrice ?? 0) + (c.maxPrice ?? c.minPrice ?? 0)) / 2)).filter((v) => v > 0),
     ];
     if (values.length === 0) return DEFAULT_BUDGET_RANGE;
@@ -509,15 +509,15 @@ export function CreatorGlobalSearchResults() {
   const industryOptions = useMemo(() => {
     const options = new Set<string>(FALLBACK_INDUSTRIES);
     results.brands.forEach((b) => options.add(b.industry));
-    results.offers.forEach((o) => offerIndustryTokens(o).forEach((t) => options.add(t)));
+    results.campaigns.forEach((o) => offerIndustryTokens(o).forEach((t) => options.add(t)));
     return Array.from(options).filter(Boolean).slice(0, 8);
-  }, [results.brands, results.offers]);
+  }, [results.brands, results.campaigns]);
 
   const contentTypeOptions = useMemo(() => {
     const options = new Set<string>(FALLBACK_CONTENT_TYPES);
-    results.offers.forEach((o) => contentTypeTokens(o).forEach((t) => options.add(t)));
+    results.campaigns.forEach((o) => contentTypeTokens(o).forEach((t) => options.add(t)));
     return Array.from(options);
-  }, [results.offers]);
+  }, [results.campaigns]);
 
   const updateParams = useCallback((patch: Partial<Record<'tab' | 'sort' | 'brand', string | null>>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -560,7 +560,7 @@ export function CreatorGlobalSearchResults() {
 
   const filteredOffers = useMemo(() => {
     const [budgetMin, budgetMax] = filters.budgetRange;
-    return results.offers
+    return results.campaigns
       .filter((offer) => {
         const offerBudget = Math.round((offer.budgetMin + offer.budgetMax) / 2);
         const assoc = Array.from(brandMap.values()).find((b) => b.id === offer.brandId || normalize(b.name) === normalize(offer.brandName));
@@ -589,7 +589,7 @@ export function CreatorGlobalSearchResults() {
         }
         return r.updatedAt.getTime() - l.updatedAt.getTime();
       });
-  }, [brandFocus, brandMap, currentSort, filters, results.offers]);
+  }, [brandFocus, brandMap, currentSort, filters, results.campaigns]);
 
   const filteredCreators = useMemo(() => {
     const [budgetMin, budgetMax] = filters.budgetRange;
@@ -616,7 +616,7 @@ export function CreatorGlobalSearchResults() {
     [brandFocus, brandMap, filteredBrands],
   );
 
-  const counts = { brands: filteredBrands.length, offers: filteredOffers.length, creators: filteredCreators.length };
+  const counts = { brands: filteredBrands.length, campaigns: filteredOffers.length, creators: filteredCreators.length };
   const focusedBrand = brandFocus ? brandMap.get(brandFocus) : undefined;
 
   // ─── Sidebar ────────────────────────────────────────────────────────────────
@@ -786,11 +786,11 @@ export function CreatorGlobalSearchResults() {
 
             {/* Tab strip */}
             <div className="flex items-center gap-6 border-b border-[#d1ddd6] pb-0">
-              {(['brands', 'offers', 'creators'] as const).map((tab) => (
+              {(['brands', 'campaigns', 'creators'] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
-                  onClick={() => updateParams({ tab, brand: tab === 'brands' || tab === 'offers' ? brandFocus || null : null })}
+                  onClick={() => updateParams({ tab, brand: tab === 'brands' || tab === 'campaigns' ? brandFocus || null : null })}
                   className={cn(
                     'relative inline-flex items-center gap-2 pb-3 text-sm font-bold tracking-[-0.01em] transition',
                     currentTab === tab ? 'text-[#2d6b4e]' : 'text-[#87938b] hover:text-[#496159]',
@@ -809,11 +809,11 @@ export function CreatorGlobalSearchResults() {
             </div>
 
             {/* Focused brand banner */}
-            {focusedBrand && currentTab === 'offers' && (
+            {focusedBrand && currentTab === 'campaigns' && (
               <div className="flex flex-col gap-2 rounded-2xl border border-[#c2dac9] bg-[#e4f1e8] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Focused brand</p>
-                  <p className="text-base font-extrabold text-[#1e3d2e]">Showing offers from {focusedBrand.name}</p>
+                  <p className="text-base font-extrabold text-[#1e3d2e]">Showing campaigns from {focusedBrand.name}</p>
                 </div>
                 <button
                   type="button"
@@ -843,13 +843,13 @@ export function CreatorGlobalSearchResults() {
                       key={brand.id}
                       brand={brand}
                       isFocused={brandFocus === brand.id}
-                      onViewOffers={(brandId) => updateParams({ tab: 'offers', brand: brandId })}
+                      onViewOffers={(brandId) => updateParams({ tab: 'campaigns', brand: brandId })}
                       onClearBrandFocus={() => updateParams({ brand: null })}
                     />
                   ))}
                   {activeOffersFromBrands.length > 0 && (
                     <section className="space-y-4 pt-2">
-                      <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Active offers from these brands</p>
+                      <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Active campaigns from these brands</p>
                       <div className="space-y-3">
                         {activeOffersFromBrands.map((offer) => {
                           const brand = filteredBrands.find((b) => b.id === offer.brandId || normalize(b.name) === normalize(offer.brandName));
@@ -860,9 +860,9 @@ export function CreatorGlobalSearchResults() {
                   )}
                 </div>
               )
-            ) : currentTab === 'offers' ? (
+            ) : currentTab === 'campaigns' ? (
               filteredOffers.length === 0 ? (
-                <EmptyState title="No offers match these filters" description="Try a broader budget or remove a content type to surface more open campaigns." onReset={clearAllFilters} />
+                <EmptyState title="No campaigns match these filters" description="Try a broader budget or remove a content type to surface more open campaigns." onReset={clearAllFilters} />
               ) : (
                 <div className="space-y-4">
                   {filteredOffers.map((offer) => {

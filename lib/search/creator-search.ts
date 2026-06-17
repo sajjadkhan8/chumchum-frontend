@@ -28,7 +28,7 @@ export interface CreatorSearchBrandResult {
 
 export interface CreatorGlobalSearchResults {
   brands: CreatorSearchBrandResult[];
-  offers: BrandCampaign[];
+  campaigns: BrandCampaign[];
   creators: Creator[];
 }
 
@@ -239,7 +239,7 @@ const mergeBrandCampaigns = (offers: BrandCampaign[], brand: Brand | undefined, 
 export async function getCreatorGlobalSearchResults(searchTerm: string): Promise<CreatorGlobalSearchResults> {
   const term = searchTerm.trim();
   if (!term) {
-    return { brands: [], offers: [], creators: [] };
+    return { brands: [], campaigns: [], creators: [] };
   }
 
   const [offersResult, creatorsResult] = await Promise.allSettled([
@@ -332,7 +332,7 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
 
   return {
     brands,
-    offers,
+    campaigns: offers,
     creators,
   };
 }

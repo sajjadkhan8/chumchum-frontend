@@ -20,7 +20,7 @@ const locationLabel = (offer: BrandCampaign) => {
   return offer.targetCity || 'Nationwide';
 };
 
-export default function CreatorOfferDetailPage() {
+export default function CreatorCampaignDetailPage() {
   const params = useParams<{ id: string }>();
   const [offer, setOffer] = useState<BrandCampaign | null>(null);
 
@@ -31,7 +31,7 @@ export default function CreatorOfferDetailPage() {
   if (!offer) {
     return (
       <div className="container mx-auto p-4 pb-6 md:p-6">
-        <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">Offer not available.</CardContent></Card>
+        <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">Campaign not available.</CardContent></Card>
       </div>
     );
   }
@@ -74,3 +74,4 @@ export default function CreatorOfferDetailPage() {
     </div>
   );
 }
+

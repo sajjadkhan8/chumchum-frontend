@@ -261,7 +261,7 @@ export default function CreatorDashboardPage() {
                       : "Consistent delivery and quality content builds your ambassador profile faster than anything else."}
                   </p>
                   <div className="mt-5 flex flex-wrap gap-2">
-                    <Link href="/creator/offers" className="inline-flex min-h-9 items-center gap-1.5 rounded-xl bg-[#e6aa38] px-4 text-[12px] font-extrabold text-[#1e3d2e] transition hover:bg-[#f0bd58]">
+                    <Link href="/creator/campaigns" className="inline-flex min-h-9 items-center gap-1.5 rounded-xl bg-[#e6aa38] px-4 text-[12px] font-extrabold text-[#1e3d2e] transition hover:bg-[#f0bd58]">
                       Discover Offers <ArrowUpRight className="size-3.5" />
                     </Link>
                     <Link href="/creator/ambassador-program" className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-white/15 bg-white/8 px-4 text-[12px] font-semibold text-white/80 transition hover:bg-white/12">
@@ -326,7 +326,7 @@ export default function CreatorDashboardPage() {
                   </span>
                   <p className="text-sm font-extrabold text-[#1e3d2e]">No orders yet</p>
                   <p className="text-[11px] text-[#87938b] max-w-xs">Your brand collaborations will appear here once you start getting campaigns.</p>
-                  <Link href="/creator/offers" className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-[#2d6b4e] px-4 py-2 text-[12px] font-extrabold text-white transition hover:bg-[#1f5239]">
+                  <Link href="/creator/campaigns" className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-[#2d6b4e] px-4 py-2 text-[12px] font-extrabold text-white transition hover:bg-[#1f5239]">
                     Browse Offers <ArrowRight className="size-3.5" />
                   </Link>
                 </div>

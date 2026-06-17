@@ -509,7 +509,7 @@ function BrandSettingsPageContent() {
                 {[
                   { key: "messages", label: "New messages", desc: "When creators message you" },
                   { key: "newOrders", label: "Order updates", desc: "Campaign progress changes" },
-                  { key: "reviews", label: "Creator responses", desc: "When creators respond to offers" },
+                  { key: "reviews", label: "Creator responses", desc: "When creators respond to campaigns" },
                   { key: "marketing", label: "Marketing", desc: "Tips and promotional content" },
                   { key: "weeklyDigest", label: "Weekly report", desc: "Weekly campaign performance summary" },
                 ].map((item) => (

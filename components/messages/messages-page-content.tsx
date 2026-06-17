@@ -336,7 +336,7 @@ export function MessagesPageContent() {
                 </div>
                 <p className="text-sm font-bold text-[#1e3d2e]">No conversations found</p>
                 <p className="mt-1 text-xs text-[#87938b]">
-                  {searchQuery ? "Try a different search term" : "Start by exploring brand offers"}
+                  {searchQuery ? "Try a different search term" : "Start by exploring brand campaigns"}
                 </p>
               </div>
             )}

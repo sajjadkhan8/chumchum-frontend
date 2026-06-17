@@ -983,7 +983,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                 <div className="space-y-3">
                   <ToggleRow
                     label="Accept barter deals"
-                    description="Receive non-cash exchange offers"
+                    description="Receive non-cash exchange campaigns"
                     checked={creatorPreferences.acceptsBarter}
                     onCheckedChange={(checked) =>
                       setCreatorPreferences((p) => ({ ...p, acceptsBarter: checked }))
@@ -991,7 +991,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                   />
                   <ToggleRow
                     label="Accept hybrid deals"
-                    description="Combine cash + barter in offers"
+                    description="Combine cash + barter in campaigns"
                     checked={creatorPreferences.acceptsHybridDeals}
                     onCheckedChange={(checked) =>
                       setCreatorPreferences((p) => ({ ...p, acceptsHybridDeals: checked }))
@@ -1035,7 +1035,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                     {
                       key: "newOrders",
                       label: "New order requests",
-                      description: "Get notified when brands send you offers",
+                      description: "Get notified when brands send you campaigns",
                     },
                     {
                       key: "messages",
