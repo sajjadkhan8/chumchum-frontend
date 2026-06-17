@@ -21,6 +21,7 @@ interface CreatorProfileUpdatePayload {
   website?: string;
   niche?: string;
   availabilityStatus?: string;
+  isFiler?: boolean;
   responseTime?: string;
   minPrice?: number;
   maxPrice?: number;

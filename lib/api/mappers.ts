@@ -100,6 +100,8 @@ interface BackendCreatorResponse {
   repeat_clients?: number;
   accepts_barter?: boolean;
   accepts_hybrid_deals?: boolean;
+  is_filer?: boolean;
+  active_order_count?: number;
   minimum_budget?: number;
   preferred_industries?: string;
   languages?: string[];
@@ -216,8 +218,10 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
     responseTime: input.response_time || 'Within 24 hours',
     isVerified: Boolean(input.is_verified) || (input.rating || 0) >= 4,
     badgeLevel,
+    isFiler: Boolean(input.is_filer),
     isTrending: Boolean(input.is_trending),
     isFastResponder: Boolean(input.is_fast_responder),
+    activeOrderCount: typeof input.active_order_count === 'number' ? input.active_order_count : 0,
     rating: input.rating || 0,
     totalReviews: input.total_reviews || 0,
     completedDeals: input.completed_deals || 0,
@@ -546,8 +550,6 @@ interface BackendConversationResponse {
   id: string;
   creatorId: string;
   brandId: string;
-  readByCreator?: boolean;
-  readByBrand?: boolean;
   unreadCountCreator?: number;
   unreadCountBrand?: number;
   lastMessage?: string;
@@ -564,10 +566,10 @@ export const mapConversation = (
   const brand = brandMap[input.brandId];
   const unreadCount =
     viewerRole === 'creator'
-      ? input.unreadCountCreator ?? (input.readByCreator ? 0 : 1)
+      ? (input.unreadCountCreator ?? 0)
       : viewerRole === 'brand'
-        ? input.unreadCountBrand ?? (input.readByBrand ? 0 : 1)
-        : input.unreadCountCreator ?? input.unreadCountBrand ?? (input.readByCreator && input.readByBrand ? 0 : 1);
+        ? (input.unreadCountBrand ?? 0)
+        : (input.unreadCountCreator ?? input.unreadCountBrand ?? 0);
 
   return {
     id: input.id,
@@ -611,11 +613,11 @@ export const mapConversation = (
       ? {
           id: `${input.id}-last`,
           conversationId: input.id,
-          senderId: input.readByCreator ? input.brandId : input.creatorId,
-          senderType: input.readByCreator ? 'brand' : 'creator',
-          type: 'text',
+          senderId: input.creatorId,
+          senderType: 'creator' as const,
+          type: 'text' as const,
           content: input.lastMessage,
-          isRead: Boolean(input.readByCreator || input.readByBrand),
+          isRead: unreadCount === 0,
           createdAt: safeDate(input.updatedAt),
         }
       : undefined,

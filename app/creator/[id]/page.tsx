@@ -231,6 +231,13 @@ export default function CreatorProfilePage({
                         Trending
                       </Badge>
                     )}
+                    {(creator.activeOrderCount ?? 0) >= 3 &&
+                      creator.availabilityStatus !== 'UNAVAILABLE' &&
+                      creator.availabilityStatus !== 'ON_VACATION' && (
+                        <Badge className="bg-amber-500 text-white">
+                          Limited availability
+                        </Badge>
+                      )}
                   </div>
                   <p className="text-muted-foreground">@{creator.username}</p>
                   <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">

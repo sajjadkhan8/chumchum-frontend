@@ -82,6 +82,7 @@ const defaultProfile = {
   niche: "",
   coverImage: "",
   availabilityStatus: "AVAILABLE",
+  isFiler: false,
   responseTime: "Within 24 hours",
   collaborationPreferences: "",
   avatar: "",
@@ -268,6 +269,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       website: creator.website || "",
       niche: creator.niche || creator.categories?.[0] || "",
       availabilityStatus: creator.availabilityStatus || current.availabilityStatus,
+      isFiler: Boolean(creator.isFiler),
       avatar: creator.avatar || "",
       coverImage: creator.coverImage || "",
       responseTime: creator.responseTime || "Within 24 hours",
@@ -318,6 +320,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
         website: profile.website,
         niche: profile.niche,
         availabilityStatus: profile.availabilityStatus,
+        isFiler: profile.isFiler,
         responseTime: profile.responseTime,
         preferredIndustries: profile.collaborationPreferences,
         languages: profile.languages,
@@ -873,6 +876,13 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                       onChange={(e) => setProfile((p) => ({ ...p, collaborationPreferences: e.target.value }))}
                     />
                   </div>
+
+                  <ToggleRow
+                    label="FBR Filer Status"
+                    description="Indicate that you are a registered FBR tax filer"
+                    checked={profile.isFiler}
+                    onCheckedChange={(checked) => setProfile((p) => ({ ...p, isFiler: checked }))}
+                  />
                 </div>
               </div>
 

@@ -53,6 +53,7 @@ export interface Creator {
   availabilityStatus?: string;
   acceptsBarter?: boolean;
   acceptsHybridDeals?: boolean;
+  isFiler?: boolean;
   preferredIndustries?: string;
   minimumBudget?: number;
   platforms: SocialStats[];
@@ -67,6 +68,7 @@ export interface Creator {
   badgeLevel?: CreatorBadgeLevel;
   isTrending: boolean;
   isFastResponder: boolean;
+  activeOrderCount?: number;
   rating: number;
   totalReviews: number;
   completedDeals: number;

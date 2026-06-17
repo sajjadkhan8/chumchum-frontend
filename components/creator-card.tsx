@@ -127,6 +127,13 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
                   Trending
                 </Badge>
               )}
+              {(creator.activeOrderCount ?? 0) >= 3 &&
+                creator.availabilityStatus !== 'UNAVAILABLE' &&
+                creator.availabilityStatus !== 'ON_VACATION' && (
+                  <Badge className="bg-amber-500/90 text-[11px] text-white backdrop-blur-sm">
+                    Limited availability
+                  </Badge>
+                )}
               {creator.dealTypes.includes('barter') && (
                 <Badge className="bg-accent/90 text-[11px] text-accent-foreground backdrop-blur-sm">
                   <Gift className="mr-1 h-3 w-3" />

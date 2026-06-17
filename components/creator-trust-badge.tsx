@@ -20,7 +20,7 @@ const badgeConfig = {
     label: 'Pro',
     description: 'Experienced creator with a proven delivery record',
     icon: Award,
-    className: 'border-violet-300 bg-violet-50 text-violet-800 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-200',
+    className: 'border-green-300 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200',
   },
   elite: {
     label: 'Elite',
