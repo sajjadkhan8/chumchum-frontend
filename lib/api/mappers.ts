@@ -15,6 +15,7 @@ import type {
   CreatorBadgeLevel,
   User,
   UserRole,
+  VerificationSource,
 } from '@/types';
 
 const DEFAULT_CITY: City = 'Karachi';
@@ -121,6 +122,7 @@ interface BackendCreatorResponse {
     avg_views?: number;
     engagement_rate?: number;
     is_verified?: boolean;
+    verified_by?: string;
   }[];
   content_previews?: {
     id?: string;
@@ -162,6 +164,7 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
         username: account.username || username,
         profileUrl: account.profile_url,
         avgViews: account.avg_views || 0,
+        verified_by: account.verified_by as VerificationSource | undefined,
       }))
     : [
         { key: 'instagram', url: input.instagram_url },

@@ -21,6 +21,8 @@ export type CreatorBadgeLevel = 'none' | 'verified' | 'rising_star' | 'pro' | 'e
 export type BarterType = 'food' | 'hotel' | 'salon' | 'events' | 'products';
 export type City = 'Karachi' | 'Lahore' | 'Islamabad' | 'Rawalpindi' | 'Faisalabad' | 'Multan' | 'Peshawar';
 
+export type VerificationSource = 'SELF' | 'PLATFORM_REVIEWED' | 'API_CONNECTED';
+
 export interface SocialStats {
   platform: Platform;
   followers: number;
@@ -28,6 +30,7 @@ export interface SocialStats {
   username: string;
   profileUrl?: string;
   avgViews?: number;
+  verified_by?: VerificationSource;
 }
 
 export type BarterCategory = BarterType | 'services' | 'travel' | 'education';

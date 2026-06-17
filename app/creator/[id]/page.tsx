@@ -430,6 +430,15 @@ export default function CreatorProfilePage({
                         <p className="text-sm text-primary">
                           {platform.engagementRate}% eng.
                         </p>
+                        {platform.verified_by === 'SELF' && (
+                          <span className="text-xs text-muted-foreground">(self-reported)</span>
+                        )}
+                        {platform.verified_by === 'PLATFORM_REVIEWED' && (
+                          <span className="text-xs text-green-600">✓ verified</span>
+                        )}
+                        {platform.verified_by === 'API_CONNECTED' && (
+                          <span className="text-xs text-blue-600">✓ API verified</span>
+                        )}
                       </div>
                     </div>
                   );
