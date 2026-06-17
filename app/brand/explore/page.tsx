@@ -28,7 +28,8 @@ import { useAuthStore } from '@/store/auth-store';
 import { creatorsService } from '@/services/creators.service';
 import { savedCreatorsService } from '@/services/saved-creators.service';
 import { ambassadorService } from '@/services/ambassador.service';
-import type { Creator, DealType, PlatformAmbassador } from '@/types';
+import { packagesService } from '@/services/packages.service';
+import type { Creator, DealType, Package, PlatformAmbassador } from '@/types';
 import { cn, formatFollowers, formatPrice } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -252,6 +253,19 @@ function ExplorePageContent() {
       setIsLoadingAmbassadors(false);
     };
     void fetchAmbassadors();
+  }, []);
+
+  const [featuredPackages, setFeaturedPackages] = useState<Package[]>([]);
+  const [isLoadingFeatured, setIsLoadingFeatured] = useState(true);
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      setIsLoadingFeatured(true);
+      const result = await packagesService.getFeatured(0, 8).catch(() => ({ items: [] }));
+      setFeaturedPackages(result.items);
+      setIsLoadingFeatured(false);
+    };
+    void fetchFeatured();
   }, []);
 
   const handleQuickDeal = (creator: Creator) => {
@@ -482,6 +496,63 @@ function ExplorePageContent() {
                 </motion.div>
               )}
             </motion.section>
+
+            {(isLoadingFeatured || featuredPackages.length > 0) && (
+              <motion.section
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="mt-4"
+              >
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.14em] text-[#b77a12]">
+                    <Sparkles className="size-4" />
+                    Featured Packages
+                  </p>
+                  <Link
+                    href="/brand/explore/packages"
+                    className="flex items-center gap-1 text-xs font-black text-[#185c39] hover:underline"
+                  >
+                    View all <ArrowRight className="size-3.5" />
+                  </Link>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {isLoadingFeatured
+                    ? Array.from({ length: 4 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="h-[148px] w-[220px] shrink-0 animate-pulse rounded-[1.25rem] bg-[#e6eceb]"
+                        />
+                      ))
+                    : featuredPackages.map((pkg) => (
+                        <div
+                          key={pkg.id}
+                          className="group flex w-[220px] shrink-0 flex-col justify-between rounded-[1.25rem] border border-[#d9e0d8] bg-white p-4 shadow-[0_4px_16px_rgba(38,70,50,0.06)] transition-shadow hover:shadow-[0_8px_28px_rgba(38,70,50,0.12)]"
+                        >
+                          <div className="min-w-0">
+                            <p className="mb-1 line-clamp-2 text-sm font-black leading-snug text-[#173b2a]">{pkg.title}</p>
+                            <p className="line-clamp-1 text-[11px] text-[#496159]">{pkg.platform}</p>
+                          </div>
+                          <div className="mt-3 flex items-end justify-between gap-2">
+                            <div>
+                              <span className={cn(
+                                'inline-block rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide',
+                                pkg.dealType === 'paid' && 'bg-[#e7f0ea] text-[#185c39]',
+                                pkg.dealType === 'barter' && 'bg-[#fff1cd] text-[#8b5e12]',
+                                pkg.dealType === 'hybrid' && 'bg-[#e8e4ff] text-[#4a3a9e]',
+                              )}>
+                                {pkg.dealType}
+                              </span>
+                            </div>
+                            {pkg.price > 0 && (
+                              <p className="shrink-0 text-sm font-black text-[#173b2a]">{formatPrice(pkg.price)}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                </div>
+              </motion.section>
+            )}
 
             <section className="mt-4 grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
               <aside className="hidden lg:block">

@@ -49,6 +49,8 @@ interface BackendOrderResponse {
   deliveryDate?: string;
   createdAt?: string;
   deliverables?: BackendDeliverableResponse[];
+  barterProductReceived?: boolean;
+  conversationId?: string;
 }
 
 interface BackendDeliverableResponse {
@@ -198,5 +200,11 @@ export const ordersService = {
     );
 
     return mapDeliverable(response);
+  },
+
+  async confirmBarterReceipt(orderId: string): Promise<Order | null> {
+    const response = await apiClient.patch<BackendOrderResponse>(`/api/v1/orders/${orderId}/barter-confirm`);
+    const enriched = await enrichOrders(response ? [response] : []);
+    return enriched[0] || null;
   },
 };

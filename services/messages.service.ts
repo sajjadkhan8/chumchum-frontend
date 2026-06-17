@@ -12,6 +12,10 @@ interface BackendConversation {
   unreadCountBrand?: number;
   lastMessage?: string;
   updatedAt?: string;
+  creatorName?: string;
+  creatorAvatarUrl?: string;
+  brandName?: string;
+  brandLogoUrl?: string;
 }
 
 interface BackendMessage {
@@ -37,30 +41,57 @@ interface QuickDealRespondResponse {
   orderId?: string;
 }
 
+const buildParticipantMapsFromEmbedded = (
+  conversations: BackendConversation[],
+): { creators: Record<string, ReturnType<typeof mapCreator>>; brands: Record<string, ReturnType<typeof mapBrand>> } => {
+  const creators: Record<string, ReturnType<typeof mapCreator>> = {};
+  const brands: Record<string, ReturnType<typeof mapBrand>> = {};
+  for (const c of conversations) {
+    if (c.creatorName) {
+      creators[c.creatorId] = mapCreator({
+        id: c.creatorId,
+        name: c.creatorName,
+        avatar_url: c.creatorAvatarUrl,
+      } as never);
+    }
+    if (c.brandName) {
+      brands[c.brandId] = mapBrand({
+        id: c.brandId,
+        name: c.brandName,
+        logo_url: c.brandLogoUrl,
+      } as never);
+    }
+  }
+  return { creators, brands };
+};
+
 const buildParticipantMaps = async (conversations: BackendConversation[]) => {
-  const creatorIds = [...new Set(conversations.map((conversation) => conversation.creatorId))];
-  const brandIds = [...new Set(conversations.map((conversation) => conversation.brandId))];
+  const missingCreatorIds = [...new Set(
+    conversations.filter((c) => !c.creatorName).map((c) => c.creatorId),
+  )];
+  const missingBrandIds = [...new Set(
+    conversations.filter((c) => !c.brandName).map((c) => c.brandId),
+  )];
+
+  const { creators, brands } = buildParticipantMapsFromEmbedded(conversations);
+
+  if (missingCreatorIds.length === 0 && missingBrandIds.length === 0) {
+    return { creators, brands };
+  }
 
   const [creatorResponses, brandResponses] = await Promise.all([
-    Promise.allSettled(creatorIds.map((id) => apiClient.get<unknown>(`/api/v1/creators/${id}`))),
-    Promise.allSettled(brandIds.map((id) => apiClient.get<unknown>(`/api/v1/brands/${id}`))),
+    Promise.allSettled(missingCreatorIds.map((id) => apiClient.get<unknown>(`/api/v1/creators/${id}`))),
+    Promise.allSettled(missingBrandIds.map((id) => apiClient.get<unknown>(`/api/v1/brands/${id}`))),
   ]);
 
-  const creators = creatorIds.reduce<Record<string, ReturnType<typeof mapCreator>>>((acc, id, index) => {
+  missingCreatorIds.forEach((id, index) => {
     const value = creatorResponses[index];
-    if (value.status === 'fulfilled') {
-      acc[id] = mapCreator(value.value as never);
-    }
-    return acc;
-  }, {});
-
-  const brands = brandIds.reduce<Record<string, ReturnType<typeof mapBrand>>>((acc, id, index) => {
+    if (value.status === 'fulfilled') creators[id] = mapCreator(value.value as never);
+  });
+  missingBrandIds.forEach((id, index) => {
     const value = brandResponses[index];
-    if (value.status === 'fulfilled') {
-      acc[id] = mapBrand(value.value as never);
-    }
-    return acc;
-  }, {});
+    if (value.status === 'fulfilled') brands[id] = mapBrand(value.value as never);
+  });
 
   return { creators, brands };
 };
@@ -147,6 +178,8 @@ export const messagesService = {
     estimatedBarterValue?: number;
     creatorExpectation?: string;
     message: string;
+    platform?: string;
+    deliveryDays?: number;
   }): Promise<{ conversationId: string; messageId: string; offerId: string }> {
     return apiClient.post('/api/v1/quick-deals', {
       creatorId: payload.creatorId,
@@ -157,6 +190,8 @@ export const messagesService = {
       estimatedBarterValue: payload.estimatedBarterValue,
       creatorExpectation: payload.creatorExpectation,
       message: payload.message,
+      platform: payload.platform?.toUpperCase(),
+      deliveryDays: payload.deliveryDays,
     });
   },
 

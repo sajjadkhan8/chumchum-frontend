@@ -538,23 +538,47 @@ export function MessagesPageContent() {
                           )}
 
                           {/* Attachment */}
-                          {message.type === "attachment" && (
-                            <button
-                              type="button"
-                              onClick={() => message.attachmentUrl && void downloadFile(
-                                message.attachmentUrl,
-                                getAttachmentName(message.attachmentUrl),
-                              ).catch((e) => toast.error(e instanceof Error ? e.message : "Could not download"))}
-                              className={`flex min-w-0 items-center gap-2.5 rounded-2xl border px-4 py-3 text-sm transition-colors ${
-                                isOwn
-                                  ? "rounded-br-md border-[#2d6b4e]/20 bg-[#2d6b4e] text-white hover:bg-[#1f5239]"
-                                  : "rounded-bl-md border-[#d1ddd6] bg-white text-[#1e3d2e] hover:bg-[#f4f7f5]"
-                              } ${!message.attachmentUrl ? "pointer-events-none opacity-70" : ""}`}
-                            >
-                              <FileText className="size-4 shrink-0" />
-                              <span className="min-w-0 truncate">{getAttachmentName(message.attachmentUrl)}</span>
-                            </button>
-                          )}
+                          {message.type === "attachment" && (() => {
+                            const name = getAttachmentName(message.attachmentUrl);
+                            const ext = name.split(".").pop()?.toLowerCase() ?? "";
+                            const isImage = ["jpg", "jpeg", "png", "webp", "gif"].includes(ext)
+                              || (message.attachmentUrl && /\/(jpeg|jpg|png|webp|gif)($|\?)/i.test(message.attachmentUrl));
+                            if (isImage && message.attachmentUrl) {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => void downloadFile(message.attachmentUrl!, name).catch((e) => toast.error(e instanceof Error ? e.message : "Could not download"))}
+                                  className={`overflow-hidden rounded-2xl ${isOwn ? "rounded-br-md" : "rounded-bl-md"} border border-[#d1ddd6] bg-white shadow-sm transition-opacity hover:opacity-90`}
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={message.attachmentUrl}
+                                    alt={name}
+                                    className="max-h-64 max-w-full object-cover"
+                                    loading="lazy"
+                                  />
+                                  <p className="truncate border-t border-[#d1ddd6] px-3 py-1.5 text-xs text-[#87938b]">{name}</p>
+                                </button>
+                              );
+                            }
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => message.attachmentUrl && void downloadFile(
+                                  message.attachmentUrl,
+                                  name,
+                                ).catch((e) => toast.error(e instanceof Error ? e.message : "Could not download"))}
+                                className={`flex min-w-0 items-center gap-2.5 rounded-2xl border px-4 py-3 text-sm transition-colors ${
+                                  isOwn
+                                    ? "rounded-br-md border-[#2d6b4e]/20 bg-[#2d6b4e] text-white hover:bg-[#1f5239]"
+                                    : "rounded-bl-md border-[#d1ddd6] bg-white text-[#1e3d2e] hover:bg-[#f4f7f5]"
+                                } ${!message.attachmentUrl ? "pointer-events-none opacity-70" : ""}`}
+                              >
+                                <FileText className="size-4 shrink-0" />
+                                <span className="min-w-0 truncate">{name}</span>
+                              </button>
+                            );
+                          })()}
 
                           {/* Offer card */}
                           {message.type === "offer" && message.offer && (

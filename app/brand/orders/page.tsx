@@ -231,6 +231,18 @@ export default function BrandOrdersPage() {
     }
   };
 
+  const confirmBarterReceipt = async (orderId: string) => {
+    try {
+      const updated = await ordersService.confirmBarterReceipt(orderId);
+      if (updated) {
+        setOrders((current) => current.map((order) => (order.id === orderId ? updated : order)));
+      }
+      toast.success("Barter product receipt confirmed");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to confirm receipt");
+    }
+  };
+
   const submitRevision = async () => {
     if (!revisionTarget) return;
     setIsSubmittingRevision(true);
@@ -557,16 +569,27 @@ export default function BrandOrdersPage() {
 
                     <div className="mt-4 grid gap-2 sm:grid-cols-2">
                       <Button variant="outline" className="rounded-full border-[#d9e0d8] bg-white font-black text-[#185c39] hover:bg-[#e7f0ea]" asChild>
-                        <Link href={`/brand/messages?creator=${order.creatorId}`}>
+                        <Link href={order.conversationId ? `/brand/messages?conversation=${order.conversationId}` : `/brand/messages?creator=${order.creatorId}`}>
                           <MessageCircle className="mr-2 h-4 w-4" />
                           Message
                         </Link>
                       </Button>
-                      {(order.status === "delivered" || order.status === "review") && (
+                      {(order.status === "delivered" || order.status === "review") && areAllDeliverablesApproved(order) && (
                         <Button className="rounded-full bg-[#185c39] font-black text-white hover:bg-[#12462b]" onClick={() => updateOrderStatus(order.id, "completed")}>
                           <CheckCircle className="mr-2 h-4 w-4" />
                           Approve
                         </Button>
+                      )}
+                      {(order.dealType === "barter" || order.dealType === "hybrid") && !order.barterProductReceived && order.status !== "cancelled" && (
+                        <Button variant="outline" className="rounded-full border-[#e3a52f] bg-[#fdf3dc] font-black text-[#9b6712] hover:bg-[#f7e8c8]" onClick={() => confirmBarterReceipt(order.id)}>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Confirm Product Received
+                        </Button>
+                      )}
+                      {(order.dealType === "barter" || order.dealType === "hybrid") && order.barterProductReceived && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e4f1e8] px-4 py-2 text-sm font-black text-[#185c39]">
+                          <CheckCircle className="size-4" /> Product Received
+                        </span>
                       )}
                     </div>
                   </motion.div>

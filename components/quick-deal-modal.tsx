@@ -97,6 +97,7 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
     setIsSubmitting(true);
 
     try {
+      const primaryPlatform = creator.platforms?.[0]?.platform?.toUpperCase() ?? 'INSTAGRAM';
       const result = await messagesService.createQuickDeal({
         creatorId: creator.id,
         dealType,
@@ -106,6 +107,7 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
         estimatedBarterValue: barterValue ? Number(barterValue) : undefined,
         creatorExpectation: creatorExpectation || undefined,
         message,
+        platform: primaryPlatform,
       });
 
       toast.success('Offer sent successfully!', {

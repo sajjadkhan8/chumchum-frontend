@@ -206,6 +206,8 @@ export interface Order {
   updatedAt: Date;
   deadlineDate?: Date;
   deliveryDate?: Date;
+  barterProductReceived?: boolean;
+  conversationId?: string;
 }
 
 // Brand Types

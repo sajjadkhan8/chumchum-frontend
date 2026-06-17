@@ -38,7 +38,7 @@ const toCreateRequest = (pkg: CreatorPackage): PackageUpsertRequest => ({
   subscription_interval: pkg.subscriptionInterval,
   subscription_duration: pkg.subscriptionDuration,
   deal_type: toPackageDealType(pkg.dealType),
-  barter_details: pkg.barterValue,
+  barter_details: pkg.barterDescription || pkg.barterValue,
   barter_description: pkg.barterDescription,
   barter_category: pkg.barterCategory,
   estimated_barter_value: pkg.estimatedBarterValue,

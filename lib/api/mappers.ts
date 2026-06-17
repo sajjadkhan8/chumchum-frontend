@@ -381,6 +381,8 @@ interface BackendOrderResponse {
   deliveryDate?: string;
   createdAt?: string;
   deliverables?: BackendOrderDeliverableResponse[];
+  barterProductReceived?: boolean;
+  conversationId?: string;
 }
 
 interface BackendOrderDeliverableResponse {
@@ -390,6 +392,7 @@ interface BackendOrderDeliverableResponse {
   status?: string;
   file_url?: string;
   submitted_at?: string;
+  revision_note?: string;
   created_at?: string;
 }
 
@@ -408,6 +411,7 @@ const mapOrderDeliverable = (input: BackendOrderDeliverableResponse): OrderDeliv
   status: normalizeDeliverableStatus(input.status),
   fileUrl: input.file_url,
   submittedAt: input.submitted_at ? safeDate(input.submitted_at) : undefined,
+  revisionNote: input.revision_note,
   createdAt: input.created_at ? safeDate(input.created_at) : undefined,
 });
 
@@ -483,6 +487,8 @@ export const mapOrder = (input: BackendOrderResponse, packageMap: Record<string,
     updatedAt: safeDate(input.createdAt),
     deadlineDate: input.deadlineDate ? safeDate(input.deadlineDate) : undefined,
     deliveryDate: input.deliveryDate ? safeDate(input.deliveryDate) : undefined,
+    barterProductReceived: Boolean(input.barterProductReceived),
+    conversationId: input.conversationId,
   };
 };
 
