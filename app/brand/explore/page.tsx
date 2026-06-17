@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Search, TrendingUp, Star, Wallet, MapPin, Crown, Heart, Grid, List, Sparkles, SlidersHorizontal, Users, ArrowRight, CalendarClock } from 'lucide-react';
@@ -36,7 +36,7 @@ const sortOptions = [
   { value: 'trending', label: 'Trending', icon: TrendingUp },
   { value: 'budget_friendly', label: 'Budget Friendly', icon: Wallet },
   { value: 'top_rated', label: 'Top Rated', icon: Star },
-  { value: 'near_you', label: 'Near You', icon: MapPin },
+  { value: 'near_you', label: 'By City (A–Z)', icon: MapPin },
 ];
 
 function HeroStat({ label, value, icon: Icon }: { label: string; value: string; icon: React.ElementType }) {
@@ -165,8 +165,10 @@ function ExplorePageContent() {
     rawView === 'saved' ? 'saved' : rawView === 'ambassadors' ? 'ambassadors' : 'all';
 
   const [creators, setCreators] = useState<Creator[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [isLoadingCreators, setIsLoadingCreators] = useState(true);
   const [hasCreatorsError, setHasCreatorsError] = useState(false);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [savedCreatorsList, setSavedCreatorsList] = useState<Creator[]>([]);
   const [isLoadingSaved, setIsLoadingSaved] = useState(true);
   const [ambassadors, setAmbassadors] = useState<PlatformAmbassador[]>([]);
@@ -216,8 +218,9 @@ function ExplorePageContent() {
       setIsLoadingCreators(true);
       setHasCreatorsError(false);
       try {
-        const data = await creatorsService.getAll(filters);
+        const { creators: data, total } = await creatorsService.getAll(filters);
         setCreators(data);
+        setTotalCount(total);
       } catch (error) {
         console.error('Failed to fetch creators:', error);
         setHasCreatorsError(true);
@@ -255,6 +258,13 @@ function ExplorePageContent() {
     setSelectedCreator(creator);
     setIsQuickDealOpen(true);
   };
+
+  const handleSearchChange = useCallback((value: string) => {
+    clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      setFilters({ search: value });
+    }, 350);
+  }, [setFilters]);
 
   const activeFilterCount = [
     filters.categories?.length || 0,
@@ -350,7 +360,7 @@ function ExplorePageContent() {
             </div>
 
             <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
-              <HeroStat label="Creators" value={isLoadingCreators ? '...' : String(creators.length)} icon={Users} />
+              <HeroStat label="Creators" value={isLoadingCreators ? '...' : String(totalCount)} icon={Users} />
               <HeroStat label="Ambassadors" value={isLoadingAmbassadors ? '...' : String(ambassadors.length)} icon={Crown} />
               <HeroStat label="Saved" value={String(savedCreatorsList.length)} icon={Heart} />
             </div>
@@ -375,8 +385,8 @@ function ExplorePageContent() {
                       type="search"
                       placeholder="Search food vloggers in Karachi, cafes, TikTok, reels..."
                       className="h-12 rounded-full border-[#d9e0d8] bg-[#f4f2e9] pl-12 text-base font-bold text-[#173b2a] placeholder:text-[#7c8a82] focus-visible:ring-[#185c39]/20"
-                      value={filters.search || ''}
-                      onChange={(e) => setFilters({ search: e.target.value })}
+                      defaultValue={filters.search || ''}
+                      onChange={(e) => handleSearchChange(e.target.value)}
                     />
                   </div>
                 </div>
@@ -489,7 +499,7 @@ function ExplorePageContent() {
               <div className="min-w-0">
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-sm font-black text-[#173b2a]">
-                    {isLoadingCreators ? 'Loading creators...' : `${creators.length} creators found`}
+                    {isLoadingCreators ? 'Loading creators...' : `${totalCount} creators found`}
                   </p>
                   <p className="hidden text-xs font-bold text-[#718077] sm:block">Compact cards. Better scanning. Less wandering.</p>
                 </div>

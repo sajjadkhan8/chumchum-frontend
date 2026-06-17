@@ -132,7 +132,7 @@ export default function CreatorProfilePage({
   const avgEngagement =
     creator.platforms.reduce((sum, p) => sum + p.engagementRate, 0) /
     creator.platforms.length;
-  const creatorLanguages = ["Arabic", "English"];
+  const creatorLanguages = creator.languages && creator.languages.length > 0 ? creator.languages : [];
   const packagePortfolio = creatorPackages.flatMap((pkg) => {
     const mediaUrls = [pkg.thumbnail, ...(pkg.mediaUrls || [])].filter(Boolean);
     return mediaUrls.map((url, index) => {
@@ -159,8 +159,8 @@ export default function CreatorProfilePage({
   const bestPerformingPackages = [...creatorPackages]
     .sort((a, b) => (b.ordersCompleted + (b.isPopular ? 10 : 0)) - (a.ordersCompleted + (a.isPopular ? 10 : 0)))
     .slice(0, 2);
-  const completionRate = Math.min(99, Math.round((creator.completedDeals / (creator.completedDeals + 5)) * 100));
-  const repeatClients = Math.max(3, Math.round(creator.completedDeals * 0.24));
+  const completionRate = creator.completionRate ?? Math.min(99, Math.round((creator.completedDeals / (creator.completedDeals + 5)) * 100));
+  const repeatClients = creator.repeatClients ?? Math.max(3, Math.round(creator.completedDeals * 0.24));
 
   const handleBookPackage = (pkg: CreatorPackage) => {
     if (!user) {

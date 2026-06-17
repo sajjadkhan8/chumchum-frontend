@@ -13,14 +13,18 @@ import {
   Music2,
   Plus,
   Save,
+  Trash2,
   Check,
   ChevronDown,
+  Image as ImageIcon,
+  Video,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { getInitials } from "@/lib/utils";
+import { pakistanCities, pakistanLanguages } from "@/lib/localization";
 import { useAuthStore } from "@/store/auth-store";
 import { creatorsService, type CreatorSocialAccountPayload } from "@/services/creators.service";
 import { uploadsService } from "@/services/uploads.service";
@@ -56,17 +60,9 @@ const categories = [
   "Entertainment",
 ];
 
-const languages = ["English", "Urdu"];
+const languages = [...pakistanLanguages];
 
-const cities = [
-  "Karachi",
-  "Lahore",
-  "Islamabad",
-  "Rawalpindi",
-  "Faisalabad",
-  "Multan",
-  "Peshawar",
-];
+const cities = [...pakistanCities];
 
 type EditableSocialAccount = CreatorSocialAccountPayload & {
   platform: Platform;
@@ -220,6 +216,16 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
 
   const [profile, setProfile] = useState(defaultProfile);
   const [socialAccounts, setSocialAccounts] = useState<EditableSocialAccount[]>([]);
+  const [portfolioItems, setPortfolioItems] = useState<Array<{
+    id: string; type: string; thumbnailUrl: string; mediaUrl: string; platform: string;
+  }>>([]);
+  const [newPortfolioItem, setNewPortfolioItem] = useState({
+    type: 'image' as 'image' | 'video',
+    thumbnailUrl: '',
+    mediaUrl: '',
+    platform: 'instagram',
+  });
+  const [isAddingPortfolioItem, setIsAddingPortfolioItem] = useState(false);
 
   const [creatorPreferences, setCreatorPreferences] = useState({
     acceptsBarter: true,
@@ -287,6 +293,13 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
           verified: false,
         })),
     );
+    setPortfolioItems(creator.contentPreviews.map((p) => ({
+      id: p.id,
+      type: p.type,
+      thumbnailUrl: p.thumbnail,
+      mediaUrl: p.url,
+      platform: p.platform,
+    })));
   }, [user]);
 
   const handleSave = async () => {
@@ -501,6 +514,44 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
         ? prev.languages.filter((l) => l !== language)
         : [...prev.languages, language],
     }));
+  };
+
+  const handleAddPortfolioItem = async () => {
+    if (!newPortfolioItem.mediaUrl.trim()) {
+      toast.error("Media URL is required");
+      return;
+    }
+    setIsAddingPortfolioItem(true);
+    try {
+      const added = await creatorsService.addPortfolioItem({
+        type: newPortfolioItem.type,
+        thumbnailUrl: newPortfolioItem.thumbnailUrl || newPortfolioItem.mediaUrl,
+        mediaUrl: newPortfolioItem.mediaUrl,
+        platform: newPortfolioItem.platform,
+      });
+      setPortfolioItems((items) => [
+        ...items,
+        { id: added.id, type: added.type, thumbnailUrl: added.thumbnailUrl, mediaUrl: added.mediaUrl, platform: added.platform },
+      ]);
+      setNewPortfolioItem({ type: 'image', thumbnailUrl: '', mediaUrl: '', platform: 'instagram' });
+      toast.success("Portfolio item added");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not add portfolio item";
+      toast.error(message);
+    } finally {
+      setIsAddingPortfolioItem(false);
+    }
+  };
+
+  const handleDeletePortfolioItem = async (id: string) => {
+    try {
+      await creatorsService.deletePortfolioItem(id);
+      setPortfolioItems((items) => items.filter((item) => item.id !== id));
+      toast.success("Portfolio item removed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not remove portfolio item";
+      toast.error(message);
+    }
   };
 
   const platformIcons: Record<string, React.ElementType> = {
@@ -858,6 +909,100 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                       {language}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Portfolio */}
+              <div className={panelClass}>
+                <PanelHeader eyebrow="Work Samples" title="Portfolio" />
+                <p className="mb-4 text-sm text-[#496159]">Showcase your best content. Brands browse these before reaching out.</p>
+
+                {portfolioItems.length > 0 && (
+                  <div className="mb-4 grid gap-2 sm:grid-cols-2">
+                    {portfolioItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className="group relative flex items-center gap-3 rounded-2xl border border-[#d1ddd6] bg-[#f4f7f5] p-3"
+                      >
+                        <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e6eceb] text-[#2d6b4e]">
+                          {item.type === 'video' ? <Video className="size-4" /> : <ImageIcon className="size-4" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-extrabold capitalize text-[#1e3d2e]">{item.platform}</p>
+                          <p className="truncate text-[11px] text-[#87938b]">{item.type}</p>
+                        </div>
+                        <button
+                          onClick={() => void handleDeletePortfolioItem(item.id)}
+                          className="shrink-0 rounded-full border border-[#d1ddd6] bg-white p-1.5 text-[#87938b] opacity-0 transition-opacity group-hover:opacity-100 hover:border-[#c0392b] hover:text-[#c0392b]"
+                          aria-label="Remove item"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="space-y-3 rounded-2xl border border-dashed border-[#cddad1] bg-white p-4">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#7a8f82]">Add item</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <p className={labelClass}>Type</p>
+                      <div className="flex rounded-xl bg-[#e8ede9] p-1 gap-1">
+                        {(['image', 'video'] as const).map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setNewPortfolioItem((p) => ({ ...p, type: t }))}
+                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg h-9 text-xs font-semibold transition-all duration-200 capitalize ${
+                              newPortfolioItem.type === t
+                                ? 'bg-[#2d6b4e] text-white shadow-sm'
+                                : 'text-[#6b7c72] hover:text-[#2e5440]'
+                            }`}
+                          >
+                            {t === 'video' ? <Video className="size-3.5" /> : <ImageIcon className="size-3.5" />}
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className={labelClass}>Platform</p>
+                      <DesignSelect
+                        value={newPortfolioItem.platform}
+                        onValueChange={(v) => setNewPortfolioItem((p) => ({ ...p, platform: v }))}
+                        options={['instagram', 'tiktok', 'youtube', 'facebook']}
+                        capitalize
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className={labelClass}>Media URL</p>
+                    <input
+                      className={inputClass}
+                      placeholder="https://..."
+                      value={newPortfolioItem.mediaUrl}
+                      onChange={(e) => setNewPortfolioItem((p) => ({ ...p, mediaUrl: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className={labelClass}>Thumbnail URL <span className="normal-case font-normal text-[#b0bfb8]">(optional — defaults to media URL)</span></p>
+                    <input
+                      className={inputClass}
+                      placeholder="https://..."
+                      value={newPortfolioItem.thumbnailUrl}
+                      onChange={(e) => setNewPortfolioItem((p) => ({ ...p, thumbnailUrl: e.target.value }))}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isAddingPortfolioItem || !newPortfolioItem.mediaUrl.trim()}
+                    onClick={() => void handleAddPortfolioItem()}
+                    className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#cddad1] bg-white text-sm font-bold text-[#2d6b4e] transition-colors hover:border-[#2d6b4e] hover:bg-[#e4f1e8] disabled:opacity-50"
+                  >
+                    <Plus className="size-4" />
+                    {isAddingPortfolioItem ? "Adding…" : "Add to portfolio"}
+                  </button>
                 </div>
               </div>
 

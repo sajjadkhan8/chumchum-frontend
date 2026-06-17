@@ -5,6 +5,7 @@ import type { Creator, CreatorFilters } from '@/types';
 interface SearchResponse {
   creators?: unknown[];
   content?: unknown[];
+  total?: number;
 }
 
 interface CreatorProfileUpdatePayload {
@@ -128,11 +129,17 @@ export const creatorsService = {
     await apiClient.patch('/api/v1/creators/me/payment-settings', { ...payload });
   },
 
-  async getAll(filters?: CreatorFilters): Promise<Creator[]> {
+  async getAll(filters?: CreatorFilters): Promise<{ creators: Creator[]; total: number }> {
+    // Send a single city to the backend when exactly one is selected; otherwise let the
+    // backend return unfiltered results and rely on client-side city filtering below.
+    const backendCity = filters?.cities?.length === 1 ? filters.cities[0] : undefined;
+
     const payload = await apiClient.get<SearchResponse | unknown[]>('/api/v1/creators', {
       query: {
         search: filters?.search,
-        city: filters?.cities?.[0],
+        city: backendCity,
+        category: filters?.categories?.[0],
+        platform: filters?.platforms?.[0]?.toLowerCase(),
         minFollowers: filters?.minFollowers,
         maxFollowers: filters?.maxFollowers,
         minRating: filters?.minRating,
@@ -147,18 +154,13 @@ export const creatorsService = {
       auth: false,
     });
 
+    const raw = payload as SearchResponse;
+    const backendTotal: number = (typeof raw?.total === 'number' ? raw.total : 0);
     let results = unwrapCreators(payload).map((creator) => mapCreator(creator as never));
 
-    if (filters?.categories?.length) {
-      results = results.filter((creator) => creator.categories.some((category) => filters.categories?.includes(category)));
-    }
-
-    if (filters?.platforms?.length) {
-      results = results.filter((creator) => creator.platforms.some((platform) => filters.platforms?.includes(platform.platform)));
-    }
-
-    if (filters?.cities?.length) {
-      results = results.filter((creator) => filters.cities?.includes(creator.city));
+    // Multi-city client-side filter (backend only handles single city)
+    if ((filters?.cities?.length ?? 0) > 1) {
+      results = results.filter((creator) => filters!.cities!.includes(creator.city));
     }
 
     if (filters?.dealTypes?.length) {
@@ -181,7 +183,7 @@ export const creatorsService = {
       results.sort((a, b) => a.city.localeCompare(b.city));
     }
 
-    return results;
+    return { creators: results, total: backendTotal || results.length };
   },
 
   async getById(id: string): Promise<Creator | null> {
@@ -190,7 +192,7 @@ export const creatorsService = {
   },
 
   async getByUsername(username: string): Promise<Creator | null> {
-    const creators = await this.getAll({ search: username });
+    const { creators } = await this.getAll({ search: username });
     return creators.find((creator) => creator.username === username) || null;
   },
 
@@ -241,6 +243,20 @@ export const creatorsService = {
     });
 
     return unwrapCreators(response).map((creator) => mapCreator(creator as never));
+  },
+
+  async addPortfolioItem(item: {
+    type: 'image' | 'video';
+    thumbnailUrl: string;
+    mediaUrl: string;
+    platform: string;
+  }): Promise<{ id: string; type: string; thumbnailUrl: string; mediaUrl: string; platform: string }> {
+    const response = await apiClient.post<{ id: string; type: string; thumbnailUrl: string; mediaUrl: string; platform: string }>('/api/v1/creators/me/portfolio', item);
+    return response;
+  },
+
+  async deletePortfolioItem(itemId: string): Promise<void> {
+    await apiClient.delete(`/api/v1/creators/me/portfolio/${itemId}`);
   },
 
   async getByCity(city: string, limit = 6): Promise<Creator[]> {

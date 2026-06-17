@@ -248,7 +248,7 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
   ]);
 
   const offers = offersResult.status === 'fulfilled' ? rankOffers(offersResult.value.content || [], term) : [];
-  const creators = creatorsResult.status === 'fulfilled' ? rankCreators(creatorsResult.value, term) : [];
+  const creators = creatorsResult.status === 'fulfilled' ? rankCreators(creatorsResult.value.creators, term) : [];
 
   const brandsResult = await brandsService.getAll().catch(() => []);
   const matchedBrands = brandsResult.filter((brand) => calculateMatchScore(term, [brand.name, brand.industry, brand.description, brand.city]) > 0);

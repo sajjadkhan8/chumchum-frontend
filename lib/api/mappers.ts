@@ -95,6 +95,8 @@ interface BackendCreatorResponse {
   is_trending?: boolean;
   is_fast_responder?: boolean;
   completed_deals?: number;
+  completion_rate?: number;
+  repeat_clients?: number;
   accepts_barter?: boolean;
   accepts_hybrid_deals?: boolean;
   minimum_budget?: number;
@@ -216,6 +218,8 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
     rating: input.rating || 0,
     totalReviews: input.total_reviews || 0,
     completedDeals: input.completed_deals || 0,
+    completionRate: input.completion_rate,
+    repeatClients: input.repeat_clients,
     contentPreviews: (input.content_previews || [])
       .filter((preview) => Boolean(preview.media_url || preview.thumbnail_url))
       .map((preview, index) => ({

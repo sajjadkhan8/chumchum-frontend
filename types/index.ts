@@ -67,6 +67,8 @@ export interface Creator {
   rating: number;
   totalReviews: number;
   completedDeals: number;
+  completionRate?: number;
+  repeatClients?: number;
   contentPreviews: ContentPreview[];
   createdAt: Date;
 }
