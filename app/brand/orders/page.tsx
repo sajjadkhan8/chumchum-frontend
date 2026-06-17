@@ -159,6 +159,9 @@ export default function BrandOrdersPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [revisionTarget, setRevisionTarget] = useState<{ orderId: string; deliverableId: string; deliverableName: string } | null>(null);
+  const [revisionNote, setRevisionNote] = useState("");
+  const [isSubmittingRevision, setIsSubmittingRevision] = useState(false);
 
   const loadOrders = async () => {
     setIsLoading(true);
@@ -217,14 +220,31 @@ export default function BrandOrdersPage() {
     }
   };
 
-  const updateDeliverableStatus = async (orderId: string, deliverableId: string, status: OrderDeliverable["status"]) => {
+  const updateDeliverableStatus = async (orderId: string, deliverableId: string, status: OrderDeliverable["status"], comment?: string) => {
     try {
-      await ordersService.updateDeliverableStatus(orderId, deliverableId, status);
+      await ordersService.updateDeliverableStatus(orderId, deliverableId, status, comment);
       await loadOrders();
       toast.success(`Deliverable marked ${status.replace("_", " ")}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update deliverable";
       toast.error(message);
+    }
+  };
+
+  const submitRevision = async () => {
+    if (!revisionTarget) return;
+    setIsSubmittingRevision(true);
+    try {
+      await ordersService.updateDeliverableStatus(revisionTarget.orderId, revisionTarget.deliverableId, "revision", revisionNote.trim() || undefined);
+      await loadOrders();
+      setRevisionTarget(null);
+      setRevisionNote("");
+      toast.success("Revision requested");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to request revision";
+      toast.error(message);
+    } finally {
+      setIsSubmittingRevision(false);
     }
   };
 
@@ -502,7 +522,8 @@ export default function BrandOrdersPage() {
                                     </Button>
                                     <Button variant="outline" size="sm" className="rounded-full border-[#d9e0d8] bg-white font-black text-[#185c39] hover:bg-[#e7f0ea]" onClick={(e) => {
                                       e.stopPropagation();
-                                      void updateDeliverableStatus(order.id, deliverable.id, "revision");
+                                      setRevisionTarget({ orderId: order.id, deliverableId: deliverable.id, deliverableName: deliverable.name });
+                                      setRevisionNote("");
                                     }}>
                                       <RefreshCw className="mr-2 h-4 w-4" />
                                       Revision
@@ -606,6 +627,38 @@ export default function BrandOrdersPage() {
                 </Button>
                 <Button className="rounded-full bg-[#185c39] font-black text-white hover:bg-[#12462b]" onClick={submitReview} disabled={isSubmittingReview}>
                   {isSubmittingReview ? "Submitting..." : "Submit Review"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={Boolean(revisionTarget)} onOpenChange={(open) => !open && setRevisionTarget(null)}>
+          <DialogContent className="max-w-[calc(100%-1rem)] rounded-[1.5rem] border-[#d9e0d8] bg-[#fbfaf5] sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black tracking-[-0.04em] text-[#173b2a]">Request revision</DialogTitle>
+              <DialogDescription className="font-bold text-[#647168]">
+                {revisionTarget?.deliverableName ? `Describe what needs to change for "${revisionTarget.deliverableName}".` : "Describe what needs to change."}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="revision-note" className="font-black text-[#173b2a]">Revision notes</Label>
+                <Textarea
+                  id="revision-note"
+                  rows={4}
+                  value={revisionNote}
+                  onChange={(event) => setRevisionNote(event.target.value)}
+                  placeholder="Explain what needs to be changed…"
+                  className="rounded-2xl border-[#d9e0d8] bg-white focus-visible:ring-[#185c39]/20"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" className="rounded-full border-[#d9e0d8] bg-white font-black text-[#185c39] hover:bg-[#e7f0ea]" onClick={() => setRevisionTarget(null)} disabled={isSubmittingRevision}>
+                  Cancel
+                </Button>
+                <Button className="rounded-full bg-[#185c39] font-black text-white hover:bg-[#12462b]" onClick={submitRevision} disabled={isSubmittingRevision || !revisionNote.trim()}>
+                  {isSubmittingRevision ? "Sending…" : "Request Revision"}
                 </Button>
               </div>
             </div>

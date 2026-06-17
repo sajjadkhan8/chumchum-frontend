@@ -160,6 +160,7 @@ export interface OrderDeliverable {
   status: DeliverableStatus;
   fileUrl?: string;
   submittedAt?: Date;
+  revisionNote?: string;
   createdAt?: Date;
 }
 

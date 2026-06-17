@@ -27,6 +27,7 @@ export interface SubmitDeliverableRequest {
 
 export interface UpdateDeliverableStatusRequest {
   status: OrderDeliverable['status'];
+  comment?: string;
 }
 
 interface BackendOrderResponse {
@@ -57,6 +58,7 @@ interface BackendDeliverableResponse {
   status: string;
   file_url?: string;
   submitted_at?: string;
+  revision_note?: string;
   created_at?: string;
 }
 
@@ -81,6 +83,7 @@ const mapDeliverable = (payload: BackendDeliverableResponse): OrderDeliverable =
   status: normalizeDeliverableStatus(payload.status),
   fileUrl: payload.file_url,
   submittedAt: toOptionalDate(payload.submitted_at),
+  revisionNote: payload.revision_note,
   createdAt: toOptionalDate(payload.created_at),
 });
 
@@ -187,8 +190,8 @@ export const ordersService = {
     return mapDeliverable(response);
   },
 
-  async updateDeliverableStatus(orderId: string, deliverableId: string, status: OrderDeliverable['status']): Promise<OrderDeliverable> {
-    const payload: UpdateDeliverableStatusRequest = { status };
+  async updateDeliverableStatus(orderId: string, deliverableId: string, status: OrderDeliverable['status'], comment?: string): Promise<OrderDeliverable> {
+    const payload: UpdateDeliverableStatusRequest = { status, ...(comment ? { comment } : {}) };
     const response = await apiClient.patch<BackendDeliverableResponse>(
       `/api/v1/orders/${orderId}/deliverables/${deliverableId}/status`,
       payload,
