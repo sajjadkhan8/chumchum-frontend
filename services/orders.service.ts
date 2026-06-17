@@ -134,11 +134,13 @@ export const ordersService = {
     return enriched[0] || null;
   },
 
-  async getAll(filters?: { status?: OrderStatus; search?: string }): Promise<Order[]> {
+  async getAll(filters?: { status?: OrderStatus; search?: string; page?: number; limit?: number }): Promise<Order[]> {
     const response = await apiClient.get<BackendOrderResponse[] | { orders?: BackendOrderResponse[] }>('/api/v1/orders', {
       query: {
         status: filters?.status,
         search: filters?.search,
+        page: filters?.page ?? 0,
+        limit: filters?.limit ?? 100,
       },
     });
 
