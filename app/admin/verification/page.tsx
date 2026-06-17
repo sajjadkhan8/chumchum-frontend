@@ -3,9 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Award, CheckCircle2, RefreshCw, Search, ShieldCheck, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -43,33 +40,33 @@ function QueueControls({
   return (
     <div className="mb-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_12rem_auto]">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#87938b]" />
         <Input
           value={search}
-          onChange={(event) => onSearchChange(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') onApply();
-          }}
+          onChange={(e) => onSearchChange(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && onApply()}
           placeholder="Search name, email, or ID"
-          className="pl-9"
+          className="border-[#d1ddd6] pl-9"
         />
       </div>
       <Select value={status} onValueChange={onStatusChange}>
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="border-[#d1ddd6]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {statuses.map((item) => (
-            <SelectItem key={item} value={item}>
-              <span className="capitalize">{item.replace('_', ' ')}</span>
+          {statuses.map((s) => (
+            <SelectItem key={s} value={s}>
+              <span className="capitalize">{s.replace('_', ' ')}</span>
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
-      <Button className="min-h-10 gap-2" onClick={onApply}>
-        <Search className="h-4 w-4" />
-        Apply
-      </Button>
+      <button
+        className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#2d6b4e] px-4 text-[12px] font-bold text-white transition hover:bg-[#1f5239]"
+        onClick={onApply}
+      >
+        <Search className="h-4 w-4" /> Apply
+      </button>
     </div>
   );
 }
@@ -87,17 +84,25 @@ function QueuePagination({
 }) {
   const totalPages = Math.max(1, Math.ceil(total / limit));
   return (
-    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm text-muted-foreground">
+    <div className="mt-5 flex flex-col gap-3 border-t border-[#f0f3f0] pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-[12px] text-[#87938b]">
         {total} results · Page {page + 1} of {totalPages}
       </p>
       <div className="flex gap-2">
-        <Button variant="outline" disabled={isLoading || page <= 0} onClick={() => onPageChange(page - 1)}>
+        <button
+          className="inline-flex h-9 items-center rounded-xl border border-[#d1ddd6] px-3.5 text-[12px] font-bold text-[#2d6b4e] transition hover:bg-[#e8f0ec] disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={isLoading || page <= 0}
+          onClick={() => onPageChange(page - 1)}
+        >
           Previous
-        </Button>
-        <Button variant="outline" disabled={isLoading || page + 1 >= totalPages} onClick={() => onPageChange(page + 1)}>
+        </button>
+        <button
+          className="inline-flex h-9 items-center rounded-xl border border-[#d1ddd6] px-3.5 text-[12px] font-bold text-[#2d6b4e] transition hover:bg-[#e8f0ec] disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={isLoading || page + 1 >= totalPages}
+          onClick={() => onPageChange(page + 1)}
+        >
           Next
-        </Button>
+        </button>
       </div>
     </div>
   );
@@ -116,32 +121,35 @@ export default function AdminVerificationPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadQueue = useCallback(async (tab: VerificationTab, nextPage = pages[tab]) => {
-    setIsLoading(true);
-    try {
-      const filters = { search: searches[tab], status: statuses[tab], page: nextPage, limit };
-      if (tab === 'creators') {
-        const response = await adminService.getVerificationCreators(filters);
-        setCreators(response.creators);
-        setTotals((current) => ({ ...current, creators: response.total }));
-        setPages((current) => ({ ...current, creators: response.page }));
-      } else if (tab === 'brands') {
-        const response = await adminService.getVerificationBrands(filters);
-        setBrands(response.brands);
-        setTotals((current) => ({ ...current, brands: response.total }));
-        setPages((current) => ({ ...current, brands: response.page }));
-      } else {
-        const response = await adminService.getAmbassadorApplications(filters);
-        setApplications(response.applications);
-        setTotals((current) => ({ ...current, ambassadors: response.total }));
-        setPages((current) => ({ ...current, ambassadors: response.page }));
+  const loadQueue = useCallback(
+    async (tab: VerificationTab, nextPage = pages[tab]) => {
+      setIsLoading(true);
+      try {
+        const filters = { search: searches[tab], status: statuses[tab], page: nextPage, limit };
+        if (tab === 'creators') {
+          const response = await adminService.getVerificationCreators(filters);
+          setCreators(response.creators);
+          setTotals((current) => ({ ...current, creators: response.total }));
+          setPages((current) => ({ ...current, creators: response.page }));
+        } else if (tab === 'brands') {
+          const response = await adminService.getVerificationBrands(filters);
+          setBrands(response.brands);
+          setTotals((current) => ({ ...current, brands: response.total }));
+          setPages((current) => ({ ...current, brands: response.page }));
+        } else {
+          const response = await adminService.getAmbassadorApplications(filters);
+          setApplications(response.applications);
+          setTotals((current) => ({ ...current, ambassadors: response.total }));
+          setPages((current) => ({ ...current, ambassadors: response.page }));
+        }
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Unable to load verification queue');
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Unable to load verification queue');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [pages, searches, statuses]);
+    },
+    [pages, searches, statuses],
+  );
 
   useEffect(() => {
     void loadQueue(activeTab);
@@ -176,8 +184,14 @@ export default function AdminVerificationPage() {
   const updateBrand = async (brand: AdminVerificationBrand, status: string) => {
     setUpdatingId(brand.id);
     try {
-      await adminService.updateBrandVerification(brand.id, status, brandContact[brand.id] || brand.verification_contact_email || brand.user?.email);
-      setBrands((current) => current.map((item) => (item.id === brand.id ? { ...item, business_verification_status: status } : item)));
+      await adminService.updateBrandVerification(
+        brand.id,
+        status,
+        brandContact[brand.id] || brand.verification_contact_email || brand.user?.email,
+      );
+      setBrands((current) =>
+        current.map((item) => (item.id === brand.id ? { ...item, business_verification_status: status } : item)),
+      );
       toast.success('Brand verification updated');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to update brand');
@@ -211,129 +225,327 @@ export default function AdminVerificationPage() {
   );
 
   const pagination = (tab: VerificationTab) => (
-    <QueuePagination page={pages[tab]} total={totals[tab]} isLoading={isLoading} onPageChange={(page) => loadQueue(tab, page)} />
+    <QueuePagination
+      page={pages[tab]}
+      total={totals[tab]}
+      isLoading={isLoading}
+      onPageChange={(page) => loadQueue(tab, page)}
+    />
   );
 
   return (
     <div className="space-y-6">
+      {/* Page header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold md:text-3xl">Verification</h1>
-          <p className="text-sm text-muted-foreground">Creator, brand, and ambassador trust operations.</p>
+          <h1 className="text-2xl font-extrabold text-[#1e3d2e] md:text-3xl">Verification</h1>
+          <p className="mt-1 text-sm text-[#496159]">Creator, brand, and ambassador trust operations.</p>
         </div>
-        <Button variant="outline" className="min-h-11 gap-2" onClick={() => loadQueue(activeTab)} disabled={isLoading}>
+        <button
+          className="inline-flex items-center gap-2 rounded-xl border border-[#d1ddd6] bg-white px-4 py-2.5 text-[12px] font-bold text-[#2d6b4e] transition hover:bg-[#e8f0ec] disabled:opacity-50"
+          onClick={() => loadQueue(activeTab)}
+          disabled={isLoading}
+        >
           <RefreshCw className={isLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
           Refresh
-        </Button>
+        </button>
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as VerificationTab)}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="creators">Creators</TabsTrigger>
-          <TabsTrigger value="brands">Brands</TabsTrigger>
-          <TabsTrigger value="ambassadors">Ambassadors</TabsTrigger>
+        <TabsList className="gap-1 rounded-xl border border-[#e2e7e1] bg-[#f9faf8] p-1">
+          <TabsTrigger
+            value="creators"
+            className="rounded-lg px-4 py-2 text-[12px] font-bold text-[#496159] data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white data-[state=active]:shadow-sm"
+          >
+            Creators
+          </TabsTrigger>
+          <TabsTrigger
+            value="brands"
+            className="rounded-lg px-4 py-2 text-[12px] font-bold text-[#496159] data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white data-[state=active]:shadow-sm"
+          >
+            Brands
+          </TabsTrigger>
+          <TabsTrigger
+            value="ambassadors"
+            className="rounded-lg px-4 py-2 text-[12px] font-bold text-[#496159] data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white data-[state=active]:shadow-sm"
+          >
+            Ambassadors
+          </TabsTrigger>
         </TabsList>
 
+        {/* Creators tab */}
         <TabsContent value="creators" className="mt-4">
-          <Card>
-            <CardHeader><CardTitle className="text-base">Creator Verification</CardTitle></CardHeader>
-            <CardContent>
+          <div className="overflow-hidden rounded-2xl border border-[#e2e7e1] bg-white shadow-sm">
+            <div className="border-b border-[#f0f3f0] px-5 py-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Creator trust</p>
+              <h2 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">Creator Verification</h2>
+            </div>
+            <div className="p-5">
               {controls('creators', ['all', 'verified', 'unverified'])}
               <Table>
-                <TableHeader><TableRow><TableHead>Creator</TableHead><TableHead>Verification</TableHead><TableHead>Badge level</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader>
+                <TableHeader>
+                  <TableRow className="border-[#f4f6f4]">
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Creator</TableHead>
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Verification</TableHead>
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Badge level</TableHead>
+                    <TableHead className="text-right text-[11px] font-bold uppercase tracking-wide text-[#496159]">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {creators.map((creator) => (
-                    <TableRow key={creator.id}>
-                      <TableCell><p className="font-medium">{creator.name}</p><p className="text-xs text-muted-foreground">{creator.email || creator.username}</p></TableCell>
-                      <TableCell><Badge variant={creator.is_verified ? 'default' : 'secondary'}>{creator.is_verified ? 'Verified' : 'Unverified'}</Badge></TableCell>
+                    <TableRow key={creator.id} className="border-[#f4f6f4] transition-colors hover:bg-[#fafcfa]">
                       <TableCell>
-                        <Select value={creator.badge_level || 'none'} disabled={updatingId === creator.id || !creator.is_verified} onValueChange={(value) => updateCreatorBadge(creator, value as CreatorBadgeLevel)}>
-                          <SelectTrigger className="w-[10rem] capitalize"><Award className="h-4 w-4" /><span>{(creator.badge_level || 'none').replace('_', ' ')}</span></SelectTrigger>
-                          <SelectContent>{creatorBadgeLevels.filter((level) => level !== 'none').map((level) => <SelectItem key={level} value={level} className="capitalize">{level.replace('_', ' ')}</SelectItem>)}</SelectContent>
+                        <p className="text-[13px] font-semibold text-[#1e3d2e]">{creator.name}</p>
+                        <p className="text-[11px] text-[#87938b]">{creator.email || creator.username}</p>
+                      </TableCell>
+                      <TableCell>
+                        {creator.is_verified ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">
+                            <CheckCircle2 className="size-3" /> Verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[#e8f0ec] px-2.5 py-0.5 text-[11px] font-bold text-[#496159]">
+                            Unverified
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={creator.badge_level || 'none'}
+                          disabled={updatingId === creator.id || !creator.is_verified}
+                          onValueChange={(value) => updateCreatorBadge(creator, value as CreatorBadgeLevel)}
+                        >
+                          <SelectTrigger className="w-[10rem] capitalize border-[#d1ddd6]">
+                            <Award className="h-4 w-4 text-[#2d6b4e]" />
+                            <span>{(creator.badge_level || 'none').replace('_', ' ')}</span>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {creatorBadgeLevels
+                              .filter((level) => level !== 'none')
+                              .map((level) => (
+                                <SelectItem key={level} value={level} className="capitalize">
+                                  {level.replace('_', ' ')}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
                         </Select>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant={creator.is_verified ? 'outline' : 'default'} size="sm" className="gap-2" disabled={updatingId === creator.id} onClick={() => updateCreator(creator, !creator.is_verified)}>
-                          {creator.is_verified ? <XCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                          {creator.is_verified ? 'Remove' : 'Verify'}
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          {creator.is_verified ? (
+                            <button
+                              className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#d1ddd6] px-3 text-[11px] font-bold text-[#496159] transition hover:bg-[#e8f0ec] disabled:opacity-50"
+                              disabled={updatingId === creator.id}
+                              onClick={() => updateCreator(creator, false)}
+                            >
+                              <XCircle className="h-3.5 w-3.5" /> Remove
+                            </button>
+                          ) : (
+                            <button
+                              className="inline-flex h-8 items-center gap-1.5 rounded-xl bg-[#2d6b4e] px-3 text-[11px] font-bold text-white transition hover:bg-[#1f5239] disabled:opacity-50"
+                              disabled={updatingId === creator.id}
+                              onClick={() => updateCreator(creator, true)}
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Verify
+                            </button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
-                  {!isLoading && creators.length === 0 && <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">No creators found.</TableCell></TableRow>}
+                  {!isLoading && creators.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-12 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="grid size-10 place-items-center rounded-xl bg-[#e8f0ec]">
+                            <CheckCircle2 className="size-4 text-[#2d6b4e]" />
+                          </span>
+                          <p className="text-[13px] font-bold text-[#1e3d2e]">No items found</p>
+                          <p className="text-[11px] text-[#87938b]">Try adjusting your filters.</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
               {pagination('creators')}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
+        {/* Brands tab */}
         <TabsContent value="brands" className="mt-4">
-          <Card>
-            <CardHeader><CardTitle className="text-base">Brand Verification</CardTitle></CardHeader>
-            <CardContent>
+          <div className="overflow-hidden rounded-2xl border border-[#e2e7e1] bg-white shadow-sm">
+            <div className="border-b border-[#f0f3f0] px-5 py-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Brand trust</p>
+              <h2 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">Brand Verification</h2>
+            </div>
+            <div className="p-5">
               {controls('brands', brandStatuses)}
               <Table>
-                <TableHeader><TableRow><TableHead>Brand</TableHead><TableHead>Contact</TableHead><TableHead className="text-right">Status</TableHead></TableRow></TableHeader>
+                <TableHeader>
+                  <TableRow className="border-[#f4f6f4]">
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Brand</TableHead>
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Contact</TableHead>
+                    <TableHead className="text-right text-[11px] font-bold uppercase tracking-wide text-[#496159]">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {brands.map((brand) => (
-                    <TableRow key={brand.id}>
-                      <TableCell><p className="font-medium">{brand.name}</p><p className="text-xs text-muted-foreground">{brand.user?.email}</p></TableCell>
+                    <TableRow key={brand.id} className="border-[#f4f6f4] transition-colors hover:bg-[#fafcfa]">
                       <TableCell>
-                        <Input value={brandContact[brand.id] ?? ''} placeholder={brand.verification_contact_email || brand.user?.email} onChange={(event) => setBrandContact((current) => ({ ...current, [brand.id]: event.target.value }))} />
+                        <p className="text-[13px] font-semibold text-[#1e3d2e]">{brand.name}</p>
+                        <p className="text-[11px] text-[#87938b]">{brand.user?.email}</p>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={brandContact[brand.id] ?? ''}
+                          placeholder={brand.verification_contact_email || brand.user?.email}
+                          className="border-[#d1ddd6]"
+                          onChange={(event) =>
+                            setBrandContact((current) => ({ ...current, [brand.id]: event.target.value }))
+                          }
+                        />
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end">
-                          <Select value={(brand.business_verification_status || 'pending').toLowerCase()} disabled={updatingId === brand.id} onValueChange={(status) => updateBrand(brand, status)}>
-                            <SelectTrigger className="w-[10rem]"><SelectValue /></SelectTrigger>
-                            <SelectContent>{brandStatuses.slice(1).map((status) => <SelectItem key={status} value={status}><span className="capitalize">{status}</span></SelectItem>)}</SelectContent>
+                          <Select
+                            value={(brand.business_verification_status || 'pending').toLowerCase()}
+                            disabled={updatingId === brand.id}
+                            onValueChange={(status) => updateBrand(brand, status)}
+                          >
+                            <SelectTrigger className="w-[10rem] border-[#d1ddd6]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {brandStatuses.slice(1).map((status) => (
+                                <SelectItem key={status} value={status}>
+                                  <span className="capitalize">{status}</span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
                           </Select>
                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
-                  {!isLoading && brands.length === 0 && <TableRow><TableCell colSpan={3} className="h-24 text-center text-muted-foreground">No brands found.</TableCell></TableRow>}
+                  {!isLoading && brands.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="py-12 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="grid size-10 place-items-center rounded-xl bg-[#e8f0ec]">
+                            <ShieldCheck className="size-4 text-[#2d6b4e]" />
+                          </span>
+                          <p className="text-[13px] font-bold text-[#1e3d2e]">No items found</p>
+                          <p className="text-[11px] text-[#87938b]">Try adjusting your filters.</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
               {pagination('brands')}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
+        {/* Ambassadors tab */}
         <TabsContent value="ambassadors" className="mt-4">
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ShieldCheck className="h-4 w-4 text-primary" />Ambassador Applications</CardTitle></CardHeader>
-            <CardContent>
+          <div className="overflow-hidden rounded-2xl border border-[#e2e7e1] bg-white shadow-sm">
+            <div className="border-b border-[#f0f3f0] px-5 py-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Ambassador trust</p>
+              <h2 className="mt-0.5 flex items-center gap-2 text-[15px] font-extrabold text-[#1e3d2e]">
+                <ShieldCheck className="h-4 w-4 text-[#2d6b4e]" />
+                Ambassador Applications
+              </h2>
+            </div>
+            <div className="p-5">
               {controls('ambassadors', applicationStatuses)}
               <Table>
-                <TableHeader><TableRow><TableHead>Applicant</TableHead><TableHead>Checks</TableHead><TableHead className="text-right">Decision</TableHead></TableRow></TableHeader>
+                <TableHeader>
+                  <TableRow className="border-[#f4f6f4]">
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Applicant</TableHead>
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Checks</TableHead>
+                    <TableHead className="text-right text-[11px] font-bold uppercase tracking-wide text-[#496159]">Decision</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {applications.map((application) => (
-                    <TableRow key={application.id}>
-                      <TableCell><p className="font-medium">{application.creatorName || application.creatorId.slice(0, 8)}</p><p className="text-xs text-muted-foreground">{application.creatorEmail || application.id.slice(0, 8)}</p></TableCell>
+                    <TableRow key={application.id} className="border-[#f4f6f4] transition-colors hover:bg-[#fafcfa]">
+                      <TableCell>
+                        <p className="text-[13px] font-semibold text-[#1e3d2e]">
+                          {application.creatorName || application.creatorId.slice(0, 8)}
+                        </p>
+                        <p className="text-[11px] text-[#87938b]">{application.creatorEmail || application.id.slice(0, 8)}</p>
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1.5">
-                          {[['Identity', application.identityVerified], ['Engagement', application.engagementVerified], ['Content', application.contentReviewPassed], ['Background', application.backgroundCheckPassed]].map(([label, passed]) => (
-                            <Badge key={String(label)} variant={passed ? 'default' : 'secondary'}>{label}</Badge>
-                          ))}
+                          {(
+                            [
+                              ['Identity', application.identityVerified],
+                              ['Engagement', application.engagementVerified],
+                              ['Content', application.contentReviewPassed],
+                              ['Background', application.backgroundCheckPassed],
+                            ] as [string, boolean][]
+                          ).map(([label, passed]) =>
+                            passed ? (
+                              <span
+                                key={label}
+                                className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700"
+                              >
+                                {label}
+                              </span>
+                            ) : (
+                              <span
+                                key={label}
+                                className="inline-flex items-center rounded-full border border-[#e2e7e1] bg-[#f9faf8] px-2 py-0.5 text-[10px] font-bold text-[#87938b]"
+                              >
+                                {label}
+                              </span>
+                            ),
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end">
-                          <Select value={application.status?.toUpperCase() || 'UNDER_REVIEW'} disabled={updatingId === application.id} onValueChange={(status) => reviewApplication(application, status)}>
-                            <SelectTrigger className="w-[10rem]"><SelectValue /></SelectTrigger>
-                            <SelectContent>{['UNDER_REVIEW', 'APPROVED', 'REJECTED'].map((status) => <SelectItem key={status} value={status}>{status.replace('_', ' ')}</SelectItem>)}</SelectContent>
+                          <Select
+                            value={application.status?.toUpperCase() || 'UNDER_REVIEW'}
+                            disabled={updatingId === application.id}
+                            onValueChange={(status) => reviewApplication(application, status)}
+                          >
+                            <SelectTrigger className="w-[10rem] border-[#d1ddd6]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {['UNDER_REVIEW', 'APPROVED', 'REJECTED'].map((status) => (
+                                <SelectItem key={status} value={status}>
+                                  {status.replace('_', ' ')}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
                           </Select>
                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
-                  {!isLoading && applications.length === 0 && <TableRow><TableCell colSpan={3} className="h-24 text-center text-muted-foreground">No ambassador applications found.</TableCell></TableRow>}
+                  {!isLoading && applications.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="py-12 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="grid size-10 place-items-center rounded-xl bg-[#e8f0ec]">
+                            <Award className="size-4 text-[#2d6b4e]" />
+                          </span>
+                          <p className="text-[13px] font-bold text-[#1e3d2e]">No items found</p>
+                          <p className="text-[11px] text-[#87938b]">Try adjusting your filters.</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
               {pagination('ambassadors')}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

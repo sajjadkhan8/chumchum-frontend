@@ -3,17 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Banknote, CircleAlert, ClipboardList, Clock3, Plus, RefreshCw, Search, ShieldCheck, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -190,163 +180,433 @@ export default function AdminDisputesPage() {
 
   return (
     <div className="space-y-6">
+      {/* Page header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold md:text-3xl">Disputes & Audit</h1>
-          <p className="text-sm text-muted-foreground">Resolve order cases and inspect immutable admin actions.</p>
+          <h1 className="text-2xl font-extrabold text-[#1e3d2e] md:text-3xl">Disputes</h1>
+          <p className="mt-1 text-sm text-[#496159]">Resolve order cases and inspect immutable admin actions.</p>
         </div>
-        <Button
-          variant="outline"
-          className="min-h-11 gap-2"
+        <button
+          className="inline-flex items-center gap-2 rounded-xl border border-[#d1ddd6] bg-white px-4 py-2.5 text-[12px] font-bold text-[#2d6b4e] transition hover:bg-[#e8f0ec] disabled:opacity-50"
           onClick={() => activeTab === 'audit' ? loadLogs(logPage) : loadDisputes(disputePage)}
           disabled={isLoading}
         >
           <RefreshCw className={isLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
           Refresh
-        </Button>
+        </button>
       </div>
 
       <Tabs value={activeTab} onValueChange={changeTab}>
-        <TabsList>
-          <TabsTrigger value="disputes"><ClipboardList /> Disputes</TabsTrigger>
-          <TabsTrigger value="audit"><ShieldCheck /> Audit Log</TabsTrigger>
+        <TabsList className="gap-1 rounded-xl border border-[#e2e7e1] bg-[#f9faf8] p-1">
+          <TabsTrigger
+            value="disputes"
+            className="gap-2 rounded-lg px-4 py-2 text-[12px] font-bold text-[#496159] data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white data-[state=active]:shadow-sm"
+          >
+            <ClipboardList className="h-4 w-4" /> Disputes
+          </TabsTrigger>
+          <TabsTrigger
+            value="audit"
+            className="gap-2 rounded-lg px-4 py-2 text-[12px] font-bold text-[#496159] data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white data-[state=active]:shadow-sm"
+          >
+            <ShieldCheck className="h-4 w-4" /> Audit Log
+          </TabsTrigger>
         </TabsList>
 
+        {/* Disputes tab */}
         <TabsContent value="disputes">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-3">
-              <CardTitle className="text-base">{disputeTotal} dispute cases</CardTitle>
-              <Button className="gap-2" onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> Open case</Button>
-            </CardHeader>
-            <CardContent>
+          <div className="overflow-hidden rounded-2xl border border-[#e2e7e1] bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-[#f0f3f0] px-5 py-4">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Case management</p>
+                <h2 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">{disputeTotal} dispute cases</h2>
+              </div>
+              <button
+                className="inline-flex items-center gap-2 rounded-xl bg-[#2d6b4e] px-4 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#1f5239]"
+                onClick={() => setCreateOpen(true)}
+              >
+                <Plus className="h-4 w-4" /> Open case
+              </button>
+            </div>
+            <div className="p-5">
+              {/* Filter row */}
               <div className="mb-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_13rem_auto]">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={disputeSearch} onChange={(event) => setDisputeSearch(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && loadDisputes(0)} placeholder="Search case, order, creator, brand" className="pl-9" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#87938b]" />
+                  <Input
+                    value={disputeSearch}
+                    onChange={(event) => setDisputeSearch(event.target.value)}
+                    onKeyDown={(event) => event.key === 'Enter' && loadDisputes(0)}
+                    placeholder="Search case, order, creator, brand"
+                    className="border-[#d1ddd6] pl-9"
+                  />
                 </div>
                 <Select value={disputeStatus} onValueChange={setDisputeStatus}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="border-[#d1ddd6]">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All statuses</SelectItem>
-                    {statuses.map((status) => <SelectItem key={status} value={status} className="capitalize">{readable(status)}</SelectItem>)}
+                    {statuses.map((status) => (
+                      <SelectItem key={status} value={status} className="capitalize">{readable(status)}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                <Button onClick={() => loadDisputes(0)} disabled={isLoading}><Search className="h-4 w-4" /> Apply</Button>
+                <button
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#2d6b4e] px-4 text-[12px] font-bold text-white transition hover:bg-[#1f5239] disabled:opacity-50"
+                  onClick={() => loadDisputes(0)}
+                  disabled={isLoading}
+                >
+                  <Search className="h-4 w-4" /> Apply
+                </button>
               </div>
+
+              {/* Disputes table */}
               <Table>
-                <TableHeader><TableRow><TableHead>Case</TableHead><TableHead>Parties & Assignee</TableHead><TableHead>Priority</TableHead><TableHead>Status</TableHead><TableHead className="sticky right-0 bg-background text-right shadow-[-8px_0_12px_-12px_rgba(0,0,0,0.35)]">Action</TableHead></TableRow></TableHeader>
+                <TableHeader>
+                  <TableRow className="border-[#f4f6f4]">
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Case</TableHead>
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Parties &amp; Assignee</TableHead>
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Priority</TableHead>
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Status</TableHead>
+                    <TableHead className="sticky right-0 bg-white text-right text-[11px] font-bold uppercase tracking-wide text-[#496159] shadow-[-8px_0_12px_-12px_rgba(0,0,0,0.1)]">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {disputes.map((dispute) => (
-                    <TableRow key={dispute.id}>
-                      <TableCell><div className="min-w-[14rem]"><p className="font-medium">{dispute.title}</p><p className="line-clamp-1 text-xs text-muted-foreground">{dispute.packageTitle} · {dispute.orderNumber || dispute.orderId}</p></div></TableCell>
+                    <TableRow key={dispute.id} className="border-[#f4f6f4] transition-colors hover:bg-[#fafcfa]">
                       <TableCell>
-                        <div className="min-w-[10rem] text-sm">
-                          <p>{dispute.creatorName} · {dispute.brandName}</p>
-                          {dispute.assignedAdminName ? <p className="text-xs text-muted-foreground">Assigned to {dispute.assignedAdminName}</p> : <Button variant="outline" size="sm" className="mt-1 gap-1.5" disabled={updatingId === dispute.id} onClick={() => updateDispute(dispute, { assignToMe: true }, 'Case assigned')}><UserCheck className="h-4 w-4" /> Assign to me</Button>}
+                        <div className="min-w-[14rem]">
+                          <p className="font-semibold text-[#1e3d2e]">{dispute.title}</p>
+                          <p className="line-clamp-1 text-xs text-[#87938b]">{dispute.packageTitle} · {dispute.orderNumber || dispute.orderId}</p>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Select value={dispute.priority} disabled={updatingId === dispute.id} onValueChange={(value) => updateDispute(dispute, { priority: value as AdminDispute['priority'] }, 'Priority updated')}>
-                          <SelectTrigger className="w-[7.5rem] capitalize"><SelectValue /></SelectTrigger>
-                          <SelectContent>{priorities.map((priority) => <SelectItem key={priority} value={priority} className="capitalize">{priority}</SelectItem>)}</SelectContent>
+                        <div className="min-w-[10rem] text-sm">
+                          <p className="text-[#1e3d2e]">{dispute.creatorName} · {dispute.brandName}</p>
+                          {dispute.assignedAdminName ? (
+                            <p className="text-xs text-[#87938b]">Assigned to {dispute.assignedAdminName}</p>
+                          ) : (
+                            <button
+                              className="mt-1 inline-flex h-7 items-center gap-1.5 rounded-xl border border-[#d1ddd6] px-2.5 text-[11px] font-bold text-[#2d6b4e] transition hover:bg-[#e8f0ec] disabled:opacity-50"
+                              disabled={updatingId === dispute.id}
+                              onClick={() => updateDispute(dispute, { assignToMe: true }, 'Case assigned')}
+                            >
+                              <UserCheck className="h-3.5 w-3.5" /> Assign to me
+                            </button>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={dispute.priority}
+                          disabled={updatingId === dispute.id}
+                          onValueChange={(value) => updateDispute(dispute, { priority: value as AdminDispute['priority'] }, 'Priority updated')}
+                        >
+                          <SelectTrigger className="w-[7.5rem] border-[#d1ddd6] capitalize">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {priorities.map((priority) => (
+                              <SelectItem key={priority} value={priority} className="capitalize">{priority}</SelectItem>
+                            ))}
+                          </SelectContent>
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Select value={dispute.status} disabled={updatingId === dispute.id} onValueChange={(value) => updateDispute(dispute, { status: value as DisputeStatus }, 'Status updated')}>
-                          <SelectTrigger className="w-[11rem] capitalize"><SelectValue /></SelectTrigger>
-                          <SelectContent>{statuses.map((status) => <SelectItem key={status} value={status} className="capitalize">{readable(status)}</SelectItem>)}</SelectContent>
+                        <Select
+                          value={dispute.status}
+                          disabled={updatingId === dispute.id}
+                          onValueChange={(value) => updateDispute(dispute, { status: value as DisputeStatus }, 'Status updated')}
+                        >
+                          <SelectTrigger className="w-[11rem] border-[#d1ddd6] capitalize">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {statuses.map((status) => (
+                              <SelectItem key={status} value={status} className="capitalize">{readable(status)}</SelectItem>
+                            ))}
+                          </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell className="sticky right-0 bg-background text-right shadow-[-8px_0_12px_-12px_rgba(0,0,0,0.35)]">
+                      <TableCell className="sticky right-0 bg-white text-right shadow-[-8px_0_12px_-12px_rgba(0,0,0,0.1)]">
                         {dispute.refundStatus === 'pending' ? (
-                          <Badge variant="outline" className="gap-1.5"><Clock3 className="h-3.5 w-3.5" /> Provider pending</Badge>
+                          <span className="inline-flex items-center gap-1 rounded-full border border-[#e2e7e1] bg-[#f9faf8] px-2.5 py-0.5 text-[10px] font-bold text-[#496159]">
+                            <Clock3 className="h-3 w-3" /> Provider pending
+                          </span>
                         ) : dispute.refundStatus === 'failed' ? (
-                          <Badge variant="destructive" className="gap-1.5" title={dispute.refundFailureReason}><CircleAlert className="h-3.5 w-3.5" /> Refund failed</Badge>
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-[10px] font-bold text-red-600"
+                            title={dispute.refundFailureReason}
+                          >
+                            <CircleAlert className="h-3 w-3" /> Refund failed
+                          </span>
                         ) : dispute.refundExecuted ? (
-                          <Badge variant="outline" className="gap-1.5"><Banknote className="h-3.5 w-3.5" /> Refunded {formatPrice(dispute.refundAmount || 0)}</Badge>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                            <Banknote className="h-3 w-3" /> Refunded {formatPrice(dispute.refundAmount || 0)}
+                          </span>
                         ) : dispute.status === 'resolved' && ['cancel_order', 'brand_favored', 'mutual_agreement'].includes(dispute.resolution) && (dispute.orderAmount || 0) > 0 ? (
-                          <Button size="sm" className="gap-1.5" onClick={() => openRefund(dispute)}><Banknote className="h-4 w-4" /> Request refund</Button>
+                          <button
+                            className="inline-flex h-8 items-center gap-1.5 rounded-xl bg-[#2d6b4e] px-3 text-[11px] font-bold text-white transition hover:bg-[#1f5239]"
+                            onClick={() => openRefund(dispute)}
+                          >
+                            <Banknote className="h-3.5 w-3.5" /> Request refund
+                          </button>
                         ) : dispute.status === 'resolved' || dispute.status === 'closed' ? (
-                          <Badge variant="outline" className="capitalize">{readable(dispute.resolution)}</Badge>
+                          <span className="inline-flex items-center rounded-full border border-[#e2e7e1] bg-[#f9faf8] px-2.5 py-0.5 text-[10px] font-bold capitalize text-[#496159]">
+                            {readable(dispute.resolution)}
+                          </span>
                         ) : (
-                          <Button size="sm" onClick={() => setResolveDispute(dispute)}>Resolve</Button>
+                          <button
+                            className="inline-flex h-8 items-center rounded-xl bg-[#2d6b4e] px-3 text-[11px] font-bold text-white transition hover:bg-[#1f5239]"
+                            onClick={() => setResolveDispute(dispute)}
+                          >
+                            Resolve
+                          </button>
                         )}
                       </TableCell>
                     </TableRow>
                   ))}
-                  {!isLoading && disputes.length === 0 && <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">No dispute cases found.</TableCell></TableRow>}
+                  {!isLoading && disputes.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-24 text-center text-[#87938b]">No dispute cases found.</TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
+
               <Pagination page={disputePage} pages={disputePages} loading={isLoading} onPage={loadDisputes} />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
+        {/* Audit log tab */}
         <TabsContent value="audit">
-          <Card>
-            <CardHeader><CardTitle className="text-base">{logTotal} immutable admin actions</CardTitle></CardHeader>
-            <CardContent>
+          <div className="overflow-hidden rounded-2xl border border-[#e2e7e1] bg-white shadow-sm">
+            <div className="border-b border-[#f0f3f0] px-5 py-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Immutable record</p>
+              <h2 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">{logTotal} admin actions</h2>
+            </div>
+            <div className="p-5">
+              {/* Filter row */}
               <div className="mb-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_16rem_auto]">
-                <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={logSearch} onChange={(event) => setLogSearch(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && loadLogs(0)} placeholder="Search admin, target, or details" className="pl-9" /></div>
-                <Select value={logAction} onValueChange={setLogAction}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All actions</SelectItem>{auditActions.map((action) => <SelectItem key={action} value={action}>{readable(action)}</SelectItem>)}</SelectContent></Select>
-                <Button onClick={() => loadLogs(0)} disabled={isLoading}><Search className="h-4 w-4" /> Apply</Button>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#87938b]" />
+                  <Input
+                    value={logSearch}
+                    onChange={(event) => setLogSearch(event.target.value)}
+                    onKeyDown={(event) => event.key === 'Enter' && loadLogs(0)}
+                    placeholder="Search admin, target, or details"
+                    className="border-[#d1ddd6] pl-9"
+                  />
+                </div>
+                <Select value={logAction} onValueChange={setLogAction}>
+                  <SelectTrigger className="border-[#d1ddd6]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All actions</SelectItem>
+                    {auditActions.map((action) => (
+                      <SelectItem key={action} value={action}>{readable(action)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <button
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#2d6b4e] px-4 text-[12px] font-bold text-white transition hover:bg-[#1f5239] disabled:opacity-50"
+                  onClick={() => loadLogs(0)}
+                  disabled={isLoading}
+                >
+                  <Search className="h-4 w-4" /> Apply
+                </button>
               </div>
+
+              {/* Audit table */}
               <Table>
-                <TableHeader><TableRow><TableHead>Time</TableHead><TableHead>Admin</TableHead><TableHead>Action</TableHead><TableHead>Target</TableHead><TableHead>Details</TableHead></TableRow></TableHeader>
+                <TableHeader>
+                  <TableRow className="border-[#f4f6f4]">
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Time</TableHead>
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Admin</TableHead>
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Action</TableHead>
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Target</TableHead>
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Details</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
-                  {logs.map((log) => <TableRow key={log.id}><TableCell className="whitespace-nowrap">{formatDate(new Date(log.createdAt))}</TableCell><TableCell>{log.adminName}</TableCell><TableCell><Badge variant="outline" className="capitalize">{readable(log.action)}</Badge></TableCell><TableCell><span className="capitalize">{log.targetType}</span><p className="max-w-[12rem] truncate text-xs text-muted-foreground">{log.targetId || '-'}</p></TableCell><TableCell className="max-w-[22rem] text-sm text-muted-foreground">{log.details || '-'}</TableCell></TableRow>)}
-                  {!isLoading && logs.length === 0 && <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">No audit entries found.</TableCell></TableRow>}
+                  {logs.map((log) => (
+                    <TableRow key={log.id} className="border-[#f4f6f4] transition-colors hover:bg-[#fafcfa]">
+                      <TableCell className="whitespace-nowrap text-sm text-[#496159]">{formatDate(new Date(log.createdAt))}</TableCell>
+                      <TableCell className="text-sm font-medium text-[#1e3d2e]">{log.adminName}</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center rounded-full border border-[#e2e7e1] bg-[#f9faf8] px-2.5 py-0.5 text-[10px] font-bold capitalize text-[#496159]">
+                          {readable(log.action)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm capitalize text-[#1e3d2e]">{log.targetType}</span>
+                        <p className="max-w-[12rem] truncate text-xs text-[#87938b]">{log.targetId || '-'}</p>
+                      </TableCell>
+                      <TableCell className="max-w-[22rem] text-sm text-[#87938b]">{log.details || '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                  {!isLoading && logs.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-24 text-center text-[#87938b]">No audit entries found.</TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
+
               <Pagination page={logPage} pages={logPages} loading={isLoading} onPage={loadLogs} />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 
+      {/* Create dispute dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Open dispute case</DialogTitle><DialogDescription>Start a tracked moderation case for an existing order.</DialogDescription></DialogHeader>
-          <div className="grid gap-4">
-            <Input value={createForm.orderId} onChange={(event) => setCreateForm((form) => ({ ...form, orderId: event.target.value }))} placeholder="Order UUID" />
-            <Input value={createForm.title} onChange={(event) => setCreateForm((form) => ({ ...form, title: event.target.value }))} placeholder="Case title" maxLength={200} />
-            <Textarea value={createForm.description} onChange={(event) => setCreateForm((form) => ({ ...form, description: event.target.value }))} placeholder="Describe the dispute and evidence" maxLength={5000} />
-            <Select value={createForm.priority} onValueChange={(priority) => setCreateForm((form) => ({ ...form, priority }))}><SelectTrigger className="capitalize"><SelectValue /></SelectTrigger><SelectContent>{priorities.map((priority) => <SelectItem key={priority} value={priority} className="capitalize">{priority} priority</SelectItem>)}</SelectContent></Select>
-          </div>
-          <DialogFooter><Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button><Button disabled={updatingId === 'create'} onClick={createDispute}>Open case</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={Boolean(resolveDispute)} onOpenChange={(open) => !open && setResolveDispute(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Resolve dispute</DialogTitle><DialogDescription>Record the final decision and supporting rationale. This action is added to the audit log.</DialogDescription></DialogHeader>
-          <div className="grid gap-4">
-            <Select value={resolution} onValueChange={(value) => setResolution(value as DisputeResolution)}><SelectTrigger className="capitalize"><SelectValue /></SelectTrigger><SelectContent>{resolutions.map((item) => <SelectItem key={item} value={item} className="capitalize">{readable(item)}</SelectItem>)}</SelectContent></Select>
-            <Textarea value={resolutionNotes} onChange={(event) => setResolutionNotes(event.target.value)} placeholder="Resolution rationale and evidence considered" maxLength={5000} />
-          </div>
-          <DialogFooter><Button variant="outline" onClick={() => setResolveDispute(null)}>Cancel</Button><Button disabled={Boolean(updatingId)} onClick={submitResolution}>Resolve case</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={Boolean(refundDispute)} onOpenChange={(open) => !open && setRefundDispute(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Submit refund request</DialogTitle>
-            <DialogDescription>
-              This submits a refund to the configured provider. Order cancellation and earnings clawback happen only after the provider webhook confirms it.
-            </DialogDescription>
+            <DialogTitle className="text-[#1e3d2e]">Open dispute case</DialogTitle>
+            <DialogDescription className="text-[#496159]">Start a tracked moderation case for an existing order.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4">
-            <div className="rounded-md border bg-muted/40 p-3 text-sm">
-              <p className="font-medium">{refundDispute?.packageTitle}</p>
-              <p className="text-muted-foreground">Order amount: {formatPrice(refundDispute?.orderAmount || 0)} · Current status: {readable(refundDispute?.orderStatus || '')}</p>
-            </div>
-            <Input value={refundAmount} onChange={(event) => setRefundAmount(event.target.value)} inputMode="numeric" placeholder="Refund amount" />
-            <Textarea value={refundReason} onChange={(event) => setRefundReason(event.target.value)} placeholder="Reason for refund execution" maxLength={500} />
+          <div className="grid gap-3">
+            <Input
+              value={createForm.orderId}
+              onChange={(event) => setCreateForm((form) => ({ ...form, orderId: event.target.value }))}
+              placeholder="Order UUID"
+              className="border-[#d1ddd6]"
+            />
+            <Input
+              value={createForm.title}
+              onChange={(event) => setCreateForm((form) => ({ ...form, title: event.target.value }))}
+              placeholder="Case title"
+              maxLength={200}
+              className="border-[#d1ddd6]"
+            />
+            <Textarea
+              value={createForm.description}
+              onChange={(event) => setCreateForm((form) => ({ ...form, description: event.target.value }))}
+              placeholder="Describe the dispute and evidence"
+              maxLength={5000}
+              className="border-[#d1ddd6]"
+            />
+            <Select value={createForm.priority} onValueChange={(priority) => setCreateForm((form) => ({ ...form, priority }))}>
+              <SelectTrigger className="border-[#d1ddd6] capitalize">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {priorities.map((priority) => (
+                  <SelectItem key={priority} value={priority} className="capitalize">{priority} priority</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRefundDispute(null)}>Cancel</Button>
-            <Button variant="destructive" disabled={Boolean(updatingId)} onClick={executeRefund}>Submit to provider</Button>
+            <button
+              className="inline-flex h-10 items-center rounded-xl border border-[#d1ddd6] px-4 text-[13px] font-bold text-[#496159] transition hover:bg-[#f9faf8]"
+              onClick={() => setCreateOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="inline-flex h-10 items-center rounded-xl bg-[#2d6b4e] px-4 text-[13px] font-bold text-white transition hover:bg-[#1f5239] disabled:opacity-50"
+              disabled={updatingId === 'create'}
+              onClick={createDispute}
+            >
+              Open case
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Resolve dispute dialog */}
+      <Dialog open={Boolean(resolveDispute)} onOpenChange={(open) => !open && setResolveDispute(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-[#1e3d2e]">Resolve dispute</DialogTitle>
+            <DialogDescription className="text-[#496159]">Record the final decision. This action is added to the audit log.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <Select value={resolution} onValueChange={(value) => setResolution(value as DisputeResolution)}>
+              <SelectTrigger className="border-[#d1ddd6] capitalize">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {resolutions.map((item) => (
+                  <SelectItem key={item} value={item} className="capitalize">{readable(item)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Textarea
+              value={resolutionNotes}
+              onChange={(event) => setResolutionNotes(event.target.value)}
+              placeholder="Resolution rationale and evidence considered"
+              maxLength={5000}
+              className="border-[#d1ddd6]"
+            />
+          </div>
+          <DialogFooter>
+            <button
+              className="inline-flex h-10 items-center rounded-xl border border-[#d1ddd6] px-4 text-[13px] font-bold text-[#496159] transition hover:bg-[#f9faf8]"
+              onClick={() => setResolveDispute(null)}
+            >
+              Cancel
+            </button>
+            <button
+              className="inline-flex h-10 items-center rounded-xl bg-[#2d6b4e] px-4 text-[13px] font-bold text-white transition hover:bg-[#1f5239] disabled:opacity-50"
+              disabled={Boolean(updatingId)}
+              onClick={submitResolution}
+            >
+              Resolve case
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Refund dialog */}
+      <Dialog open={Boolean(refundDispute)} onOpenChange={(open) => !open && setRefundDispute(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-[#1e3d2e]">Submit refund request</DialogTitle>
+            <DialogDescription className="text-[#496159]">
+              This submits a refund to the configured provider. Order cancellation happens only after the provider webhook confirms it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div className="rounded-xl border border-[#edf1ed] bg-[#fbfaf5] p-3.5">
+              <p className="text-[13px] font-semibold text-[#1e3d2e]">{refundDispute?.packageTitle}</p>
+              <p className="mt-0.5 text-[11px] text-[#87938b]">
+                Order amount: {formatPrice(refundDispute?.orderAmount || 0)} · Status: {readable(refundDispute?.orderStatus || '')}
+              </p>
+            </div>
+            <Input
+              value={refundAmount}
+              onChange={(event) => setRefundAmount(event.target.value)}
+              inputMode="numeric"
+              placeholder="Refund amount"
+              className="border-[#d1ddd6]"
+            />
+            <Textarea
+              value={refundReason}
+              onChange={(event) => setRefundReason(event.target.value)}
+              placeholder="Reason for refund execution"
+              maxLength={500}
+              className="border-[#d1ddd6]"
+            />
+          </div>
+          <DialogFooter>
+            <button
+              className="inline-flex h-10 items-center rounded-xl border border-[#d1ddd6] px-4 text-[13px] font-bold text-[#496159] transition hover:bg-[#f9faf8]"
+              onClick={() => setRefundDispute(null)}
+            >
+              Cancel
+            </button>
+            <button
+              className="inline-flex h-10 items-center rounded-xl bg-red-500 px-4 text-[13px] font-bold text-white transition hover:bg-red-600 disabled:opacity-50"
+              disabled={Boolean(updatingId)}
+              onClick={executeRefund}
+            >
+              Submit to provider
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -356,9 +616,24 @@ export default function AdminDisputesPage() {
 
 function Pagination({ page, pages, loading, onPage }: { page: number; pages: number; loading: boolean; onPage: (page: number) => void | Promise<void> }) {
   return (
-    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm text-muted-foreground">Page {page + 1} of {pages}</p>
-      <div className="flex gap-2"><Button variant="outline" disabled={loading || page <= 0} onClick={() => onPage(page - 1)}>Previous</Button><Button variant="outline" disabled={loading || page + 1 >= pages} onClick={() => onPage(page + 1)}>Next</Button></div>
+    <div className="mt-5 flex flex-col gap-3 border-t border-[#f0f3f0] pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-[12px] text-[#87938b]">Page {page + 1} of {pages}</p>
+      <div className="flex gap-2">
+        <button
+          className="inline-flex h-9 items-center rounded-xl border border-[#d1ddd6] px-3.5 text-[12px] font-bold text-[#2d6b4e] transition hover:bg-[#e8f0ec] disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={loading || page <= 0}
+          onClick={() => onPage(page - 1)}
+        >
+          Previous
+        </button>
+        <button
+          className="inline-flex h-9 items-center rounded-xl border border-[#d1ddd6] px-3.5 text-[12px] font-bold text-[#2d6b4e] transition hover:bg-[#e8f0ec] disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={loading || page + 1 >= pages}
+          onClick={() => onPage(page + 1)}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 }

@@ -216,6 +216,74 @@ export interface AdminAuditLogsResponse {
   limit: number;
 }
 
+export interface AdminPaymentsStats {
+  totalTransactions: number;
+  pendingTransactions: number;
+  totalEarnings: number;
+  pendingWithdrawals: number;
+  pendingWithdrawalsAmount: number;
+  completedWithdrawals: number;
+  completedWithdrawalsAmount: number;
+}
+
+export type TransactionType = 'order_payment' | 'earning' | 'affiliate_commission' | 'withdrawal' | 'refund' | 'platform_fee';
+export type TransactionStatus = 'pending' | 'completed' | 'failed';
+export type WithdrawalStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+export interface AdminTransaction {
+  id: string;
+  creatorId: string;
+  creatorName: string;
+  orderId?: string;
+  type: TransactionType;
+  amount: number;
+  description: string;
+  status: TransactionStatus;
+  createdAt: string;
+}
+
+export interface AdminTransactionFilters {
+  search?: string;
+  type?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminTransactionsResponse {
+  transactions: AdminTransaction[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface AdminWithdrawal {
+  id: string;
+  creatorId: string;
+  creatorName: string;
+  payoutMethodId: string;
+  payoutMethodName: string;
+  payoutMethodType: string;
+  amount: number;
+  status: WithdrawalStatus;
+  processedAt?: string;
+  createdAt: string;
+}
+
+export interface AdminWithdrawalFilters {
+  search?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminWithdrawalsResponse {
+  withdrawals: AdminWithdrawal[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface AdminPaymentAuditLog {
   id: string;
   actorId: string;
@@ -456,5 +524,36 @@ export const adminService = {
         limit: filters.limit ?? 20,
       },
     });
+  },
+
+  async getPaymentsStats(): Promise<AdminPaymentsStats> {
+    return apiClient.get<AdminPaymentsStats>('/api/v1/admin/payments/stats');
+  },
+
+  async getTransactions(filters: AdminTransactionFilters = {}): Promise<AdminTransactionsResponse> {
+    return apiClient.get<AdminTransactionsResponse>('/api/v1/admin/payments/transactions', {
+      query: {
+        search: filters.search,
+        type: filters.type && filters.type !== 'all' ? filters.type : undefined,
+        status: filters.status && filters.status !== 'all' ? filters.status : undefined,
+        page: filters.page ?? 0,
+        limit: filters.limit ?? 20,
+      },
+    });
+  },
+
+  async getWithdrawals(filters: AdminWithdrawalFilters = {}): Promise<AdminWithdrawalsResponse> {
+    return apiClient.get<AdminWithdrawalsResponse>('/api/v1/admin/payments/withdrawals', {
+      query: {
+        search: filters.search,
+        status: filters.status && filters.status !== 'all' ? filters.status : undefined,
+        page: filters.page ?? 0,
+        limit: filters.limit ?? 20,
+      },
+    });
+  },
+
+  async processWithdrawal(id: string, status: string): Promise<AdminWithdrawal> {
+    return apiClient.patch<AdminWithdrawal>(`/api/v1/admin/payments/withdrawals/${id}/status`, { status });
   },
 };

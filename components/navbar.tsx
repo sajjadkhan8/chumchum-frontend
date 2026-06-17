@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Menu, Bell, MessageCircle, User, LogOut, Building2, Moon, Sun, Shield, Settings, Share2, Star, CircleHelp, X, ChevronRight, BadgePercent } from 'lucide-react';
+import { Search, Menu, Bell, MessageCircle, User, LogOut, Building2, Moon, Sun, Settings, Share2, Star, CircleHelp, X, ChevronRight, BadgePercent } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -178,21 +178,13 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
     { href: '/brand/orders', label: 'Orders' },
     { href: '/brand/payments', label: 'Payments' },
   ];
-  const adminNavLinks = [
-    { href: '/admin/dashboard', label: 'Dashboard' },
-    { href: '/admin/users', label: 'Users' },
-    { href: '/admin/orders', label: 'Orders' },
-    { href: '/admin/payments', label: 'Payments Audit' },
-    { href: '/admin/verification', label: 'Verification' },
-  ];
-
-  const navLinks = isSignedIn ? (isAdmin ? adminNavLinks : isCreator ? creatorNavLinks : brandNavLinks) : publicNavLinks;
+  const navLinks = isSignedIn ? (isAdmin ? [] : isCreator ? creatorNavLinks : brandNavLinks) : publicNavLinks;
   const showCreatorUtilityTopbar = isCreator && isSignedIn;
 
   const profileMenu: ProfileMenuItem[] = isAdmin
     ? [
-        { href: '/admin/dashboard', label: 'Admin Dashboard', icon: Shield },
-        { href: '/admin/users', label: 'User Moderation', icon: User },
+        { href: '/admin/profile', label: 'Admin Profile', icon: User },
+        { href: '/admin/settings', label: 'Settings', icon: Settings },
       ]
     : isCreator
     ? [
