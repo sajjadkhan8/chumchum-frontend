@@ -10,7 +10,6 @@ import {
   Save,
   Mail,
   Phone,
-  Users,
   CheckCircle,
   Settings,
   ShieldCheck,
@@ -356,7 +355,7 @@ function BrandSettingsPageContent() {
                   size="sm"
                   variant="outline"
                   className="h-7 rounded-lg border-[#d9e0d8] px-3 text-xs font-semibold text-[#526259] hover:bg-[#f4f2e9]"
-                  onClick={() => toast.info("Plan upgrade flow coming soon.")}
+                  onClick={() => toast.info("Plan changes are handled by ZingZing support.")}
                 >
                   Upgrade
                 </Button>
@@ -615,45 +614,18 @@ function BrandSettingsPageContent() {
               </SectionCard>
 
               <SectionCard title="Team Members" description="Who has access to your account" icon={UserCircle2}>
-                <div className="space-y-2">
-                  {[
-                    { initials: "AR", name: "Ali Raza", email: "ali@karachigourmet.pk", role: "Owner" },
-                    { initials: "HT", name: "Hina Tariq", email: "hina@karachigourmet.pk", role: "Admin" },
-                  ].map((member) => (
-                    <div
-                      key={member.email}
-                      className="flex items-center gap-3 rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] px-3.5 py-2.5"
-                    >
-                      <Avatar className="size-8 shrink-0">
-                        <AvatarFallback className="bg-[#e7f0ea] text-xs font-bold text-[#185c39]">
-                          {member.initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-[#1a2e22]">{member.name}</p>
-                        <p className="truncate text-[11px] text-[#8fa098]">{member.email} · {member.role}</p>
-                      </div>
-                      {member.role !== "Owner" && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 rounded-lg px-2 text-[11px] font-semibold text-[#c13a3a] hover:bg-[#fce4e4]"
-                          onClick={() => toast.info("Team member removal is disabled in demo mode.")}
-                        >
-                          Remove
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-1 h-8 w-full rounded-xl border-[#d9e0d8] text-xs font-semibold text-[#526259] hover:bg-[#f4f2e9]"
-                    onClick={() => toast.info("Invite team flow coming soon.")}
-                  >
-                    <Users className="mr-1.5 size-3.5" />
-                    Invite Team Member
-                  </Button>
+                <div className="flex items-start gap-3 rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] px-3.5 py-3">
+                  <Avatar className="size-8 shrink-0">
+                    <AvatarFallback className="bg-[#e7f0ea] text-xs font-bold text-[#185c39]">
+                      <UserCircle2 className="size-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-[#1a2e22]">Team access is owner-managed</p>
+                    <p className="mt-0.5 text-[11px] leading-4 text-[#8fa098]">
+                      Invite and removal controls are not enabled for this workspace yet. Contact ZingZing support for role changes.
+                    </p>
+                  </div>
                 </div>
               </SectionCard>
             </div>

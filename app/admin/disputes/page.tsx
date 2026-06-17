@@ -176,7 +176,7 @@ export default function AdminDisputesPage() {
       setDisputes((current) => current.map((item) => (item.id === updated.id ? updated : item)));
       setRefundDispute(null);
       setRefundReason('');
-      toast.success('Refund submitted to mock provider');
+      toast.success('Refund submitted to provider');
       window.setTimeout(() => void loadDisputes(disputePage), 1800);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to execute refund');
@@ -333,7 +333,7 @@ export default function AdminDisputesPage() {
           <DialogHeader>
             <DialogTitle>Submit refund request</DialogTitle>
             <DialogDescription>
-              This submits a refund to the mock provider. Order cancellation and earnings clawback happen only after the provider webhook confirms it.
+              This submits a refund to the configured provider. Order cancellation and earnings clawback happen only after the provider webhook confirms it.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">

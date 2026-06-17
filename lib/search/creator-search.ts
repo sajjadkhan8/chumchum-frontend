@@ -1,9 +1,9 @@
 'use client';
 
-import { mockBrands } from '@/data/brands';
 import { getInitials } from '@/lib/utils';
 import { creatorsService } from '@/services/creators.service';
 import { campaignsService } from '@/services/campaigns.service';
+import { brandsService } from '@/services/brands.service';
 import type { Brand, BrandCampaign, Creator } from '@/types';
 
 export interface CreatorSearchBrandResult {
@@ -250,7 +250,8 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
   const offers = offersResult.status === 'fulfilled' ? rankOffers(offersResult.value.content || [], term) : [];
   const creators = creatorsResult.status === 'fulfilled' ? rankCreators(creatorsResult.value, term) : [];
 
-  const staticBrands = mockBrands.filter((brand) => calculateMatchScore(term, [brand.name, brand.industry, brand.description, brand.city]) > 0);
+  const brandsResult = await brandsService.getAll().catch(() => []);
+  const matchedBrands = brandsResult.filter((brand) => calculateMatchScore(term, [brand.name, brand.industry, brand.description, brand.city]) > 0);
   const offersByBrand = new Map<string, BrandCampaign[]>();
 
   for (const offer of offers) {
@@ -262,7 +263,7 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
 
   const brandResults = new Map<string, CreatorSearchBrandResult>();
 
-  for (const brand of staticBrands) {
+  for (const brand of matchedBrands) {
     const relatedOffers = offers.filter(
       (offer) => offer.brandId === brand.id || normalize(offer.brandName) === normalize(brand.name),
     );
@@ -295,10 +296,10 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
 
   for (const [key, brandOffers] of offersByBrand.entries()) {
     const firstOffer = brandOffers[0];
-    const matchingStaticBrand = mockBrands.find(
+    const matchingBrand = brandsResult.find(
       (brand) => brand.id === firstOffer.brandId || normalize(brand.name) === normalize(firstOffer.brandName),
     );
-    const merged = mergeBrandCampaigns(brandOffers, matchingStaticBrand, term);
+    const merged = mergeBrandCampaigns(brandOffers, matchingBrand, term);
     if (merged) {
       brandResults.set(merged.id, merged);
     } else if (firstOffer.brandName) {
@@ -335,4 +336,3 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
     creators,
   };
 }
-

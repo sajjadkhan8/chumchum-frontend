@@ -19,6 +19,11 @@ export interface BrandProfileUpdatePayload {
 }
 
 export const brandsService = {
+  async getAll(): Promise<Brand[]> {
+    const response = await apiClient.get<unknown[]>('/api/v1/brands', { auth: false });
+    return (Array.isArray(response) ? response : []).map((brand) => mapBrand(brand as never));
+  },
+
   async getMe(): Promise<Brand | null> {
     const response = await apiClient.get<unknown>('/api/v1/brands/me/profile');
     return response ? mapBrand(response as never) : null;

@@ -129,7 +129,7 @@ export default function CreatorDashboardPage() {
   const [affiliate, setAffiliate] = useState<AffiliateOverview>(emptyAffiliate);
   const [affiliateCopied, setAffiliateCopied] = useState(false);
   const [loading, setLoading] = useState(true);
-  const isAmbassador = user?.creatorProgramStatus === "active_ambassador" || user?.email === "ambassador@test.com";
+  const isAmbassador = user?.creatorProgramStatus === "active_ambassador";
 
   useEffect(() => {
     const load = async () => {
