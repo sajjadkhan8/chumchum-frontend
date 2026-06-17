@@ -16,6 +16,7 @@ import {
   Eye,
   FileText,
   Upload,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -134,6 +135,7 @@ function CreatorOrdersPageContent() {
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
   const [submissionNote, setSubmissionNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [downloadingReceiptIds, setDownloadingReceiptIds] = useState<Set<string>>(new Set());
 
   const loadOrders = async () => {
     setIsLoading(true);
@@ -268,6 +270,27 @@ function CreatorOrdersPageContent() {
       toast.error(message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDownloadReceipt = async (order: Order) => {
+    setDownloadingReceiptIds((prev) => new Set(prev).add(order.id));
+    try {
+      const blob = await ordersService.downloadReceipt(order.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `receipt-${order.id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not download receipt");
+    } finally {
+      setDownloadingReceiptIds((prev) => {
+        const next = new Set(prev);
+        next.delete(order.id);
+        return next;
+      });
     }
   };
 
@@ -539,6 +562,17 @@ function CreatorOrdersPageContent() {
                             <MessageCircle className="mr-2 h-4 w-4" />
                             Message Brand
                           </Button>
+                          {order.status === "completed" && (
+                            <Button
+                              variant="outline"
+                              className="flex-1 rounded-full border-[#d1ddd6] font-bold text-[#2d6b4e] hover:bg-[#e6eceb]"
+                              disabled={downloadingReceiptIds.has(order.id)}
+                              onClick={(e) => { e.stopPropagation(); void handleDownloadReceipt(order); }}
+                            >
+                              <Download className="mr-2 h-4 w-4" />
+                              {downloadingReceiptIds.has(order.id) ? "Downloading…" : "Download Receipt"}
+                            </Button>
+                          )}
                           {order.status === "pending" ? (
                             <Button
                               className="flex-1 rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]"

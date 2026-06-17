@@ -209,4 +209,9 @@ export const ordersService = {
     const enriched = await enrichOrders(response ? [response] : []);
     return enriched[0] || null;
   },
+
+  async downloadReceipt(orderId: string): Promise<Blob> {
+    const { blob } = await apiClient.download(`/api/v1/orders/${orderId}/receipt`);
+    return blob;
+  },
 };

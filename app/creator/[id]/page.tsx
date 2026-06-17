@@ -404,6 +404,50 @@ export default function CreatorProfilePage({
               </CardContent>
             </Card>
 
+            {/* Rate Card */}
+            {(creator.rateCardReel || creator.rateCardStory || creator.rateCardPost || creator.rateCardVideo) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Starting Rates</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {creator.rateCardReel && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Reel / Short Video</span>
+                        <span className="font-semibold">{formatPrice(creator.rateCardReel)}</span>
+                      </div>
+                      <Separator />
+                    </>
+                  )}
+                  {creator.rateCardStory && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Story / Highlight</span>
+                        <span className="font-semibold">{formatPrice(creator.rateCardStory)}</span>
+                      </div>
+                      <Separator />
+                    </>
+                  )}
+                  {creator.rateCardPost && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Static Post</span>
+                        <span className="font-semibold">{formatPrice(creator.rateCardPost)}</span>
+                      </div>
+                      <Separator />
+                    </>
+                  )}
+                  {creator.rateCardVideo && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">YouTube / Long Video</span>
+                      <span className="font-semibold">{formatPrice(creator.rateCardVideo)}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Platforms Card */}
             <Card>
               <CardHeader>

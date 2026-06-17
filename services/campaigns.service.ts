@@ -61,6 +61,7 @@ interface BackendBrandCampaign {
    closedAt?: string;
    createdAt?: string;
    updatedAt?: string;
+   minProposedPrice?: number;
    reactionCount?: number;
  }
 
@@ -158,6 +159,7 @@ const mapCampaign = (input: BackendBrandCampaign): BrandCampaign => ({
    contentSubmissionDeadline: input.contentSubmissionDeadline,
    goLiveDate: input.goLiveDate,
    campaignDuration: input.campaignDuration,
+   minProposedPrice: input.minProposedPrice ?? undefined,
    status: normalizeCampaignStatus(input.status),
    publishedAt: toDate(input.publishedAt),
    closedAt: toDate(input.closedAt),
@@ -234,6 +236,7 @@ export const campaignsService = {
      contentSubmissionDeadline?: string;
      goLiveDate?: string;
      campaignDuration?: number;
+     minProposedPrice?: number;
    }): Promise<BrandCampaign> {
      const response = await apiClient.post<BackendBrandCampaign>('/api/v1/brand/campaigns', payload);
      return mapCampaign(response);
@@ -285,6 +288,7 @@ export const campaignsService = {
      contentSubmissionDeadline: string;
      goLiveDate: string;
      campaignDuration: number;
+     minProposedPrice: number;
    }>): Promise<BrandCampaign> {
      const response = await apiClient.patch<BackendBrandCampaign>(`/api/v1/brand/campaigns/${campaignId}`, payload);
      return mapCampaign(response);

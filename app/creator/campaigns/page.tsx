@@ -454,9 +454,16 @@ function CreatorCampaignsFeedPage() {
                     )}
 
                     {/* Budget */}
-                    <p className="text-lg font-extrabold text-[#e6aa38]">
-                      {formatPrice(offer.budgetMin)} – {formatPrice(offer.budgetMax)}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-lg font-extrabold text-[#e6aa38]">
+                        {formatPrice(offer.budgetMin)} – {formatPrice(offer.budgetMax)}
+                      </p>
+                      {offer.minProposedPrice ? (
+                        <span className="rounded-full border border-[#e3a52f] bg-[#fdf3dc] px-2.5 py-0.5 text-[10px] font-bold text-[#8a6010]">
+                          Min. bid: {formatPrice(offer.minProposedPrice)}
+                        </span>
+                      ) : null}
+                    </div>
 
                     {/* Footer row */}
                     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -560,8 +567,22 @@ function CreatorCampaignsFeedPage() {
                       min={0}
                       value={proposedPrice}
                       onChange={(e) => setProposedPrice(e.target.value)}
-                      className={inputClass}
+                      className={
+                        selectedOffer?.minProposedPrice && proposedPrice && Number(proposedPrice) < selectedOffer.minProposedPrice
+                          ? inputClass + " border-[#c0392b] focus-visible:border-[#c0392b]"
+                          : inputClass
+                      }
                     />
+                    {selectedOffer?.minProposedPrice && (
+                      <p className="mt-1 text-[11px] text-[#87938b]">
+                        Minimum bid: PKR {selectedOffer.minProposedPrice.toLocaleString()}
+                      </p>
+                    )}
+                    {selectedOffer?.minProposedPrice && proposedPrice && Number(proposedPrice) < selectedOffer.minProposedPrice && (
+                      <p className="mt-1 text-[11px] font-bold text-[#c0392b]">
+                        Your bid is below the minimum of PKR {selectedOffer.minProposedPrice.toLocaleString()}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[#87938b]">Delivery Days</p>
@@ -588,7 +609,13 @@ function CreatorCampaignsFeedPage() {
                 <button
                   type="button"
                   onClick={() => void submitReaction()}
-                  disabled={isSubmitting}
+                  disabled={
+                    isSubmitting ||
+                    (reactionType === 'proposal' &&
+                      Boolean(selectedOffer?.minProposedPrice) &&
+                      Boolean(proposedPrice) &&
+                      Number(proposedPrice) < (selectedOffer?.minProposedPrice ?? 0))
+                  }
                   className="rounded-full bg-[#2d6b4e] px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-[#1f5239] disabled:opacity-60"
                 >
                   {isSubmitting ? 'Submitting…' : 'Submit Reaction'}

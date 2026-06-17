@@ -9,6 +9,7 @@ import {
   CalendarClock,
   CheckCircle,
   Clock,
+  Download,
   Eye,
   MessageCircle,
   MoreVertical,
@@ -162,6 +163,7 @@ export default function BrandOrdersPage() {
   const [revisionTarget, setRevisionTarget] = useState<{ orderId: string; deliverableId: string; deliverableName: string } | null>(null);
   const [revisionNote, setRevisionNote] = useState("");
   const [isSubmittingRevision, setIsSubmittingRevision] = useState(false);
+  const [downloadingReceiptIds, setDownloadingReceiptIds] = useState<Set<string>>(new Set());
 
   const loadOrders = async () => {
     setIsLoading(true);
@@ -257,6 +259,27 @@ export default function BrandOrdersPage() {
       toast.error(message);
     } finally {
       setIsSubmittingRevision(false);
+    }
+  };
+
+  const handleDownloadReceipt = async (order: Order) => {
+    setDownloadingReceiptIds((prev) => new Set(prev).add(order.id));
+    try {
+      const blob = await ordersService.downloadReceipt(order.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `receipt-${order.id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not download receipt");
+    } finally {
+      setDownloadingReceiptIds((prev) => {
+        const next = new Set(prev);
+        next.delete(order.id);
+        return next;
+      });
     }
   };
 
@@ -574,6 +597,17 @@ export default function BrandOrdersPage() {
                           Message
                         </Link>
                       </Button>
+                      {order.status === "completed" && (
+                        <Button
+                          variant="outline"
+                          className="rounded-full border-[#d9e0d8] bg-white font-black text-[#185c39] hover:bg-[#e7f0ea]"
+                          disabled={downloadingReceiptIds.has(order.id)}
+                          onClick={() => void handleDownloadReceipt(order)}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          {downloadingReceiptIds.has(order.id) ? "Downloading…" : "Download Receipt"}
+                        </Button>
+                      )}
                       {(order.status === "delivered" || order.status === "review") && areAllDeliverablesApproved(order) && (
                         <Button className="rounded-full bg-[#185c39] font-black text-white hover:bg-[#12462b]" onClick={() => updateOrderStatus(order.id, "completed")}>
                           <CheckCircle className="mr-2 h-4 w-4" />

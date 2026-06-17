@@ -86,6 +86,10 @@ const defaultProfile = {
   responseTime: "Within 24 hours",
   collaborationPreferences: "",
   avatar: "",
+  rateCardReel: undefined as number | undefined,
+  rateCardStory: undefined as number | undefined,
+  rateCardPost: undefined as number | undefined,
+  rateCardVideo: undefined as number | undefined,
 };
 
 const platformOrder: Platform[] = ["instagram", "youtube", "tiktok", "facebook", "snapchat"];
@@ -274,6 +278,10 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       coverImage: creator.coverImage || "",
       responseTime: creator.responseTime || "Within 24 hours",
       collaborationPreferences: creator.preferredIndustries || "",
+      rateCardReel: creator.rateCardReel,
+      rateCardStory: creator.rateCardStory,
+      rateCardPost: creator.rateCardPost,
+      rateCardVideo: creator.rateCardVideo,
     }));
     setCreatorPreferences({
       acceptsBarter: Boolean(creator.acceptsBarter),
@@ -325,6 +333,10 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
         preferredIndustries: profile.collaborationPreferences,
         languages: profile.languages,
         categories: profile.categories,
+        rateCardReel: profile.rateCardReel,
+        rateCardStory: profile.rateCardStory,
+        rateCardPost: profile.rateCardPost,
+        rateCardVideo: profile.rateCardVideo,
         ...buildSocialLinks(socialAccounts),
       });
       await loadCreatorProfile();
@@ -840,7 +852,59 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                         <option value="ON_VACATION">On Vacation</option>
                       </select>
                     </div>
-                    <div className="space-y-1.5">
+                    {/* Rate Card */}
+                  <div className="rounded-2xl border border-[#dce6df] bg-[#f8faf8] p-4">
+                    <p className="mb-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#b77a12]">Rate Card</p>
+                    <p className="mb-3 text-xs text-[#87938b]">Set your starting rates per content format (PKR). Leave blank if not applicable.</p>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <p className={labelClass}>Reel / Short Video (PKR)</p>
+                        <input
+                          type="number"
+                          min="0"
+                          className={inputClass}
+                          placeholder="e.g. 15000"
+                          value={profile.rateCardReel ?? ""}
+                          onChange={(e) => setProfile((p) => ({ ...p, rateCardReel: e.target.value ? Number(e.target.value) : undefined }))}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className={labelClass}>Story / Highlight (PKR)</p>
+                        <input
+                          type="number"
+                          min="0"
+                          className={inputClass}
+                          placeholder="e.g. 5000"
+                          value={profile.rateCardStory ?? ""}
+                          onChange={(e) => setProfile((p) => ({ ...p, rateCardStory: e.target.value ? Number(e.target.value) : undefined }))}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className={labelClass}>Static Post (PKR)</p>
+                        <input
+                          type="number"
+                          min="0"
+                          className={inputClass}
+                          placeholder="e.g. 8000"
+                          value={profile.rateCardPost ?? ""}
+                          onChange={(e) => setProfile((p) => ({ ...p, rateCardPost: e.target.value ? Number(e.target.value) : undefined }))}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className={labelClass}>YouTube / Long Video (PKR)</p>
+                        <input
+                          type="number"
+                          min="0"
+                          className={inputClass}
+                          placeholder="e.g. 40000"
+                          value={profile.rateCardVideo ?? ""}
+                          onChange={(e) => setProfile((p) => ({ ...p, rateCardVideo: e.target.value ? Number(e.target.value) : undefined }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
                       <p className={labelClass}>Cover / Banner Image URL</p>
                       <div className="flex gap-2">
                         <input

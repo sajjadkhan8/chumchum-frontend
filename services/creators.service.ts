@@ -35,6 +35,10 @@ interface CreatorProfileUpdatePayload {
   instagramUrl?: string;
   youtubeUrl?: string;
   facebookUrl?: string;
+  rateCardReel?: number;
+  rateCardStory?: number;
+  rateCardPost?: number;
+  rateCardVideo?: number;
 }
 
 export interface CreatorSocialAccountPayload {

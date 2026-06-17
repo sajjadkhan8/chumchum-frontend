@@ -135,6 +135,10 @@ interface BackendCreatorResponse {
     views?: number;
     likes?: number;
   }[];
+  rate_card_reel?: number;
+  rate_card_story?: number;
+  rate_card_post?: number;
+  rate_card_video?: number;
   user?: {
     id?: string;
     name?: string;
@@ -227,6 +231,10 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
     completedDeals: input.completed_deals || 0,
     completionRate: input.completion_rate,
     repeatClients: input.repeat_clients,
+    rateCardReel: input.rate_card_reel ?? undefined,
+    rateCardStory: input.rate_card_story ?? undefined,
+    rateCardPost: input.rate_card_post ?? undefined,
+    rateCardVideo: input.rate_card_video ?? undefined,
     contentPreviews: (input.content_previews || [])
       .filter((preview) => Boolean(preview.media_url || preview.thumbnail_url))
       .map((preview, index) => ({

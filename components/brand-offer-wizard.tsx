@@ -247,6 +247,7 @@ interface OfferForm {
    budgetType: string;
    budgetMin: string;
    budgetMax: string;
+   minProposedPrice: string;
    paymentStructure: string;
    barterProductDesc: string;
    barterEstimatedValue: string;
@@ -297,6 +298,7 @@ const defaultForm: OfferForm = {
    budgetType: 'fixed',
    budgetMin: '25000',
    budgetMax: '80000',
+   minProposedPrice: '',
    paymentStructure: 'full_upfront',
    barterProductDesc: '',
    barterEstimatedValue: '',
@@ -457,6 +459,7 @@ const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
       budgetType: offer.budgetType || 'fixed',
       budgetMin: String(offer.budgetMin ?? ''),
       budgetMax: String(offer.budgetMax ?? ''),
+      minProposedPrice: offer.minProposedPrice != null ? String(offer.minProposedPrice) : '',
       paymentStructure: offer.paymentStructure || 'full_upfront',
       barterProductDesc: offer.barterProductDesc || '',
       barterEstimatedValue: offer.barterEstimatedValue != null ? String(offer.barterEstimatedValue) : '',
@@ -944,6 +947,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
          contentSubmissionDeadline: form.contentSubmissionDeadline || undefined,
          goLiveDate: form.goLiveDate || undefined,
          campaignDuration: form.campaignDuration ? Number(form.campaignDuration) : undefined,
+         minProposedPrice: form.minProposedPrice ? Number(form.minProposedPrice) : undefined,
        };
        const savedOffer = isEditMode && offerId
          ? await campaignsService.updateCampaign(offerId, payload)
@@ -1588,6 +1592,21 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                   />
                   <p className="text-xs text-muted-foreground">Approximate retail / market value. Helps creators evaluate the offer.</p>
                 </div>
+              </div>
+            )}
+
+            {/* Minimum bid floor */}
+            {form.budgetType !== 'barter_only' && (
+              <div className="space-y-2">
+                <Label>Minimum Proposed Price (PKR, optional)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.minProposedPrice}
+                  onChange={(e) => updateForm({ minProposedPrice: e.target.value })}
+                  placeholder="e.g. 5000"
+                />
+                <p className="text-xs text-muted-foreground">Creators submitting proposals below this amount will see a warning. Leave blank for no floor.</p>
               </div>
             )}
 

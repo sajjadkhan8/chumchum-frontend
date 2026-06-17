@@ -74,6 +74,10 @@ export interface Creator {
   completedDeals: number;
   completionRate?: number;
   repeatClients?: number;
+  rateCardReel?: number;
+  rateCardStory?: number;
+  rateCardPost?: number;
+  rateCardVideo?: number;
   contentPreviews: ContentPreview[];
   createdAt: Date;
 }
@@ -292,6 +296,7 @@ export interface BrandCampaign {
    contentSubmissionDeadline?: string;
    goLiveDate?: string;
    campaignDuration?: number;
+   minProposedPrice?: number;
    status: BrandCampaignStatus;
    publishedAt?: Date;
    closedAt?: Date;
