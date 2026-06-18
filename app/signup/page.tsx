@@ -15,7 +15,7 @@ import { useAuthStore } from '@/store/auth-store';
 import type { UserRole } from '@/types';
 
 const inputClass = 'h-11 rounded-xl border-[#cddad1] bg-[#fbfaf5] px-3.5 text-[#1e3d2e] shadow-none focus-visible:border-[#2d6b4e] focus-visible:ring-[#2d6b4e]/15';
-const primaryButtonClass = 'h-11 w-full rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]';
+const primaryButtonClass = 'h-11 w-full rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239] disabled:opacity-50 disabled:cursor-not-allowed';
 
 const roleOptions: { value: UserRole; label: string; eyebrow: string; icon: React.ElementType; description: string; benefits: string[] }[] = [
   {
@@ -47,6 +47,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState<PasswordStrengthResult | null>(null);
   const [affiliateCode, setAffiliateCode] = useState<string | undefined>();
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   useEffect(() => {
     if (hasHydrated && isAuthenticated && user?.role) {
@@ -76,8 +77,12 @@ export default function SignupPage() {
   const handleSignup = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!role) return;
+    if (!termsAccepted) {
+      toast.error('Please accept the Terms of Service and Privacy Policy to continue.');
+      return;
+    }
     try {
-      await signup(email, password, role, name, affiliateCode);
+      await signup(email, password, role, name, affiliateCode, true);
       toast.success('Account created successfully!');
       router.push(role === 'creator' ? '/creator/dashboard' : '/brand/dashboard');
     } catch (error) {
@@ -87,8 +92,12 @@ export default function SignupPage() {
 
   const handleGoogleSignup = async () => {
     if (!role) return;
+    if (!termsAccepted) {
+      toast.error('Please accept the Terms of Service and Privacy Policy to continue.');
+      return;
+    }
     try {
-      await signupWithGoogle(role, name, affiliateCode);
+      await signupWithGoogle(role, name, affiliateCode, true);
       toast.success('Account created successfully!');
       router.push(role === 'creator' ? '/creator/dashboard' : '/brand/dashboard');
     } catch (error) {
@@ -114,7 +123,7 @@ export default function SignupPage() {
         <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#b77a12]">Get started</p>
           <h2 className="mt-2 text-3xl font-extrabold tracking-[-0.045em] text-[#1e3d2e]">Choose your path.</h2>
-          <p className="mt-2 text-sm leading-6 text-[#6b7870]">We’ll shape your workspace around what you want to do.</p>
+          <p className="mt-2 text-sm leading-6 text-[#6b7870]">We'll shape your workspace around what you want to do.</p>
 
           <div className="mt-6 grid gap-3">
             {roleOptions.map((option) => {
@@ -157,7 +166,7 @@ export default function SignupPage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#b77a12]">{role === 'creator' ? 'Creator account' : 'Brand account'}</p>
               <h2 className="mt-2 text-3xl font-extrabold tracking-[-0.045em] text-[#1e3d2e]">Create your account.</h2>
-              <p className="mt-2 text-sm leading-6 text-[#6b7870]">A few details and you’re ready to connect.</p>
+              <p className="mt-2 text-sm leading-6 text-[#6b7870]">A few details and you're ready to connect.</p>
             </div>
             <span className="mt-1 hidden rounded-full bg-[#f7e8c8] px-3 py-2 text-[11px] font-bold capitalize text-[#8b5e12] sm:inline-flex">{role}</span>
           </div>
@@ -167,9 +176,47 @@ export default function SignupPage() {
             </div>
           )}
 
-          <Button type="button" variant="outline" onClick={handleGoogleSignup} disabled={isLoading || !role} className="mt-5 h-11 w-full rounded-full border-[#ccd7ce] bg-white font-bold text-[#2f5243] hover:border-[#2d6b4e] hover:bg-[#fbfaf5]">
-            Continue with Google
-          </Button>
+          {/* HIGH-13: ToS consent — required before both Google and email signup */}
+          <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-[#d1ddd6] bg-[#f4f2e9] px-3.5 py-3 transition hover:border-[#2d6b4e]">
+            <div className="relative mt-0.5 shrink-0">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="peer sr-only"
+                id="termsAccepted"
+              />
+              <div className="grid size-4.5 place-items-center rounded border-2 border-[#cddad1] bg-white transition peer-checked:border-[#2d6b4e] peer-checked:bg-[#2d6b4e] peer-focus-visible:ring-2 peer-focus-visible:ring-[#2d6b4e]/30">
+                {termsAccepted && <Check className="size-3 text-white" strokeWidth={3} />}
+              </div>
+            </div>
+            <span className="text-[11px] leading-5 text-[#526259]">
+              I agree to the{' '}
+              <Link href="/terms" className="font-bold text-[#2d6b4e] hover:underline" onClick={(e) => e.stopPropagation()}>
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="font-bold text-[#2d6b4e] hover:underline" onClick={(e) => e.stopPropagation()}>
+                Privacy Policy
+              </Link>
+              , and consent to the collection and processing of my personal data as described therein.
+            </span>
+          </label>
+
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGoogleSignup}
+              disabled={isLoading || !role || !termsAccepted}
+              className="h-11 w-full rounded-full border-[#ccd7ce] bg-white font-bold text-[#2f5243] hover:border-[#2d6b4e] hover:bg-[#fbfaf5] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Continue with Google
+            </Button>
+            {!termsAccepted && (
+              <p className="mt-1.5 text-center text-[10px] text-[#87938b]">Accept the terms above to continue with Google</p>
+            )}
+          </div>
           <div className="my-4 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#87938b]">
             <div className="h-px flex-1 bg-[#d1ddd6]" /> or use email <div className="h-px flex-1 bg-[#d1ddd6]" />
           </div>
@@ -223,10 +270,7 @@ export default function SignupPage() {
                 </div>
               )}
             </div>
-            <p className="rounded-xl bg-[#e6eceb] px-3 py-2.5 text-[11px] leading-5 text-[#6b7870]">
-              By creating an account, you agree to our <Link href="/terms" className="font-bold text-[#2d6b4e] hover:underline">Terms</Link> and <Link href="/privacy" className="font-bold text-[#2d6b4e] hover:underline">Privacy Policy</Link>.
-            </p>
-            <Button type="submit" disabled={isLoading} className={primaryButtonClass}>
+            <Button type="submit" disabled={isLoading || !termsAccepted} className={primaryButtonClass}>
               {isLoading ? <><Loader2 className="size-4 animate-spin" /> Creating account...</> : <>Create account <ArrowRight className="size-4" /></>}
             </Button>
           </form>

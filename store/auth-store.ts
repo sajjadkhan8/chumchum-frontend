@@ -20,8 +20,8 @@ interface AuthState {
   loginWithGoogle: (role: UserRole) => Promise<void>;
   requestOtp: (phone: string) => Promise<void>;
   loginWithPhone: (phone: string, otp: string) => Promise<void>;
-  signup: (email: string, password: string, role: UserRole, name: string, affiliateCode?: string) => Promise<void>;
-  signupWithGoogle: (role: UserRole, name?: string, affiliateCode?: string) => Promise<void>;
+  signup: (email: string, password: string, role: UserRole, name: string, affiliateCode?: string, termsAccepted?: boolean) => Promise<void>;
+  signupWithGoogle: (role: UserRole, name?: string, affiliateCode?: string, termsAccepted?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: User) => void;
   setCreatorProfile: (profile: Creator) => void;
@@ -130,10 +130,10 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      signup: async (email: string, password: string, role: UserRole, name: string, affiliateCode?: string) => {
+      signup: async (email: string, password: string, role: UserRole, name: string, affiliateCode?: string, termsAccepted?: boolean) => {
         set({ isLoading: true });
         try {
-          const response = await authService.signup(email, password, role, name, affiliateCode);
+          const response = await authService.signup(email, password, role, name, affiliateCode, termsAccepted);
           tokenStorage.set(response.accessToken, response.refreshToken);
 
           const user = mapUser(response.user);
@@ -153,12 +153,12 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      signupWithGoogle: async (role: UserRole, name?: string, affiliateCode?: string) => {
+      signupWithGoogle: async (role: UserRole, name?: string, affiliateCode?: string, termsAccepted?: boolean) => {
         set({ isLoading: true });
         try {
           const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
           const idToken = await getGoogleIdToken(clientId);
-          const response = await authService.google(idToken, role, name, affiliateCode);
+          const response = await authService.google(idToken, role, name, affiliateCode, termsAccepted);
           tokenStorage.set(response.accessToken, response.refreshToken);
 
           const user = mapUser(response.user);
