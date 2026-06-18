@@ -83,10 +83,8 @@ interface BackendCreatorResponse {
   city?: string;
   avatar_url?: string;
   bio?: string;
-  category?: string;
   cover_image_url?: string;
   website?: string;
-  niche?: string;
   availability_status?: string;
   response_time?: string;
   min_price?: number;
@@ -103,7 +101,6 @@ interface BackendCreatorResponse {
   is_filer?: boolean;
   active_order_count?: number;
   minimum_budget?: number;
-  preferred_industries?: string;
   languages?: string[];
   categories?: string[];
   tiktok_url?: string;
@@ -157,7 +154,7 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
   const avatar = input.avatar_url || input.user?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
   const followers = input.followers || 0;
   const engagementRate = input.engagement_rate || 0;
-  const categories = input.categories?.length ? input.categories : [input.niche || input.category || 'General'];
+  const categories = input.categories?.length ? input.categories : ['General'];
   const badgeLevel = ['verified', 'rising_star', 'pro', 'elite'].includes((input.badge_level || '').toLowerCase())
     ? (input.badge_level?.toLowerCase() as CreatorBadgeLevel)
     : 'none';
@@ -202,11 +199,9 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
     categories,
     languages: input.languages || [],
     website: input.website,
-    niche: input.niche || input.category,
     availabilityStatus: input.availability_status,
     acceptsBarter: input.accepts_barter,
     acceptsHybridDeals: input.accepts_hybrid_deals,
-    preferredIndustries: input.preferred_industries,
     minimumBudget: input.minimum_budget,
     platforms: socialAccounts.length > 0 ? socialAccounts : [{ platform: 'instagram', followers, engagementRate, username }],
     totalFollowers: followers,

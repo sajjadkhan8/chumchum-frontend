@@ -49,12 +49,10 @@ export interface Creator {
   categories: string[];
   languages?: string[];
   website?: string;
-  niche?: string;
   availabilityStatus?: string;
   acceptsBarter?: boolean;
   acceptsHybridDeals?: boolean;
   isFiler?: boolean;
-  preferredIndustries?: string;
   minimumBudget?: number;
   platforms: SocialStats[];
   totalFollowers: number;

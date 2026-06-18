@@ -35,6 +35,7 @@ import { ReviewCard } from "@/components/review-card";
 import { QuickDealModal } from "@/components/quick-deal-modal";
 import { PackageOrderModal } from "@/components/package-order-modal";
 import { CreatorTrustBadge, getCreatorTrustLabel } from "@/components/creator-trust-badge";
+import { ShareProfileModal } from "@/components/share-profile-modal";
 import { formatFollowers, formatPrice, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { creatorsService } from "@/services/creators.service";
@@ -64,6 +65,7 @@ export default function CreatorProfilePage({
   const [creatorReviews, setCreatorReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingCreator, setIsSavingCreator] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     const loadCreatorProfile = async () => {
@@ -262,7 +264,7 @@ export default function CreatorProfilePage({
                     />
                   </Button>
                 )}
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" onClick={() => setShareOpen(true)}>
                   <Share2 className="h-5 w-5" />
                 </Button>
                 {canHireCreator && (
@@ -720,6 +722,11 @@ export default function CreatorProfilePage({
         pkg={selectedPackage}
         onClose={() => setSelectedPackage(null)}
         onCreated={() => router.push("/brand/orders")}
+      />
+      <ShareProfileModal
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+        creator={creator}
       />
     </div>
   );

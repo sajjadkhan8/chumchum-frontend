@@ -13,6 +13,7 @@ import {
   Music2,
   Plus,
   Save,
+  Share2,
   Trash2,
   Check,
   ChevronDown,
@@ -29,8 +30,9 @@ import { useAuthStore } from "@/store/auth-store";
 import { creatorsService, type CreatorSocialAccountPayload } from "@/services/creators.service";
 import { uploadsService } from "@/services/uploads.service";
 import { usersService } from "@/services/users.service";
-import type { Platform } from "@/types";
+import type { Creator, Platform } from "@/types";
 import { toast } from "sonner";
+import { ShareProfileModal } from "@/components/share-profile-modal";
 
 // ─── Design-system constants ─────────────────────────────────────────────────
 
@@ -89,12 +91,10 @@ const defaultProfile = {
   categories: [] as string[],
   languages: ["English", "Urdu"],
   website: "",
-  niche: "",
   coverImage: "",
   availabilityStatus: "AVAILABLE",
   isFiler: false,
   responseTime: "Within 24 hours",
-  collaborationPreferences: "",
   avatar: "",
   rateCardReel: undefined as number | undefined,
   rateCardStory: undefined as number | undefined,
@@ -228,6 +228,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     section === "profile" ? "profile" : section === "social" ? "social" : "preferences",
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
@@ -249,7 +250,6 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
   const [creatorPreferences, setCreatorPreferences] = useState({
     acceptsBarter: true,
     acceptsHybridDeals: true,
-    preferredIndustries: "Fashion, Beauty, Wellness, E-commerce",
     minimumBudget: "25000",
   });
 
@@ -285,13 +285,11 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       categories: creator.categories || [],
       languages: creator.languages?.length ? creator.languages : current.languages,
       website: creator.website || "",
-      niche: creator.niche || creator.categories?.[0] || "",
       availabilityStatus: creator.availabilityStatus || current.availabilityStatus,
       isFiler: Boolean(creator.isFiler),
       avatar: creator.avatar || "",
       coverImage: creator.coverImage || "",
       responseTime: creator.responseTime || "Within 24 hours",
-      collaborationPreferences: creator.preferredIndustries || "",
       rateCardReel: creator.rateCardReel,
       rateCardStory: creator.rateCardStory,
       rateCardPost: creator.rateCardPost,
@@ -300,7 +298,6 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     setCreatorPreferences({
       acceptsBarter: Boolean(creator.acceptsBarter),
       acceptsHybridDeals: Boolean(creator.acceptsHybridDeals),
-      preferredIndustries: creator.preferredIndustries || "",
       minimumBudget: creator.minimumBudget ? String(creator.minimumBudget) : "",
     });
 
@@ -344,6 +341,22 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       }
     }
 
+    // Validate pending portfolio item if the user typed a media URL but didn't click "Add to portfolio"
+    const pendingMedia = newPortfolioItem.mediaUrl.trim();
+    const pendingThumb = newPortfolioItem.thumbnailUrl.trim();
+    if (pendingMedia) {
+      if (!isValidUrl(pendingMedia)) {
+        setPortfolioErrors((prev) => ({ ...prev, mediaUrl: 'Enter a valid URL starting with https://' }));
+        toast.error('Media URL is not valid');
+        return;
+      }
+      if (pendingThumb && !isValidUrl(pendingThumb)) {
+        setPortfolioErrors((prev) => ({ ...prev, thumbnailUrl: 'Enter a valid URL starting with https://' }));
+        toast.error('Thumbnail URL is not valid');
+        return;
+      }
+    }
+
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       toast.error(Object.values(errors)[0]);
@@ -351,6 +364,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     }
 
     setFieldErrors({});
+    setPortfolioErrors({});
     setIsSaving(true);
     try {
       await creatorsService.updateMe({
@@ -361,14 +375,11 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
         city: profile.city,
         avatarUrl: profile.avatar,
         bio: profile.bio,
-        category: profile.categories[0],
         coverImageUrl: profile.coverImage,
         website: profile.website,
-        niche: profile.categories[0],
         availabilityStatus: profile.availabilityStatus,
         isFiler: profile.isFiler,
         responseTime: profile.responseTime,
-        preferredIndustries: profile.collaborationPreferences,
         languages: profile.languages,
         categories: profile.categories,
         rateCardReel: profile.rateCardReel,
@@ -377,6 +388,18 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
         rateCardVideo: profile.rateCardVideo,
         ...buildSocialLinks(socialAccounts),
       });
+
+      // Save pending portfolio item if the user filled in the form but didn't click "Add to portfolio"
+      if (pendingMedia) {
+        await creatorsService.addPortfolioItem({
+          type: newPortfolioItem.type,
+          thumbnailUrl: pendingThumb || pendingMedia,
+          mediaUrl: pendingMedia,
+          platform: newPortfolioItem.platform,
+        });
+        setNewPortfolioItem({ type: 'image', thumbnailUrl: '', mediaUrl: '', platform: 'instagram' });
+      }
+
       await loadCreatorProfile();
       toast.success("Profile saved");
     } catch (error) {
@@ -412,19 +435,13 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       const saved = await creatorsService.updatePreferences({
         acceptsBarter: creatorPreferences.acceptsBarter,
         acceptsHybridDeals: creatorPreferences.acceptsHybridDeals,
-        preferredIndustries: creatorPreferences.preferredIndustries,
         minimumBudget: creatorPreferences.minimumBudget ? Number(creatorPreferences.minimumBudget) : undefined,
       });
       setCreatorPreferences({
         acceptsBarter: Boolean(saved.acceptsBarter),
         acceptsHybridDeals: Boolean(saved.acceptsHybridDeals),
-        preferredIndustries: saved.preferredIndustries || "",
         minimumBudget: saved.minimumBudget ? String(saved.minimumBudget) : "",
       });
-      setProfile((current) => ({
-        ...current,
-        collaborationPreferences: saved.preferredIndustries || "",
-      }));
       toast.success("Creator preferences saved");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not save creator preferences";
@@ -712,14 +729,25 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       <div className="mx-auto max-w-[1320px] space-y-5">
 
         {/* Page header */}
-        <div className="pb-2 pt-4">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">
-            {pageEyebrow}
-          </p>
-          <h1 className="mt-1 text-2xl font-extrabold tracking-[-0.035em] text-[#1e3d2e] md:text-3xl">
-            {pageTitle}
-          </h1>
-          <p className="mt-1 text-sm text-[#496159]">{pageSubtitle}</p>
+        <div className="flex items-start justify-between gap-4 pb-2 pt-4">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">
+              {pageEyebrow}
+            </p>
+            <h1 className="mt-1 text-2xl font-extrabold tracking-[-0.035em] text-[#1e3d2e] md:text-3xl">
+              {pageTitle}
+            </h1>
+            <p className="mt-1 text-sm text-[#496159]">{pageSubtitle}</p>
+          </div>
+          {section === "profile" && (
+            <button
+              onClick={() => setShareOpen(true)}
+              className="mt-4 flex shrink-0 items-center gap-2 rounded-full border-2 border-[#2d6b4e] bg-[#2d6b4e] px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#1f5239]"
+            >
+              <Share2 className="size-4" />
+              Share Profile
+            </button>
+          )}
         </div>
 
         <TabsPrimitive.Root value={activeTab} onValueChange={setActiveTab}>
@@ -986,16 +1014,6 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                         />
                       </div>
                     </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <p className={labelClass}>Collaboration Preferences</p>
-                    <textarea
-                      className={textareaClass}
-                      rows={3}
-                      value={profile.collaborationPreferences}
-                      onChange={(e) => setProfile((p) => ({ ...p, collaborationPreferences: e.target.value }))}
-                    />
                   </div>
 
                   <ToggleRow
@@ -1288,16 +1306,6 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                     }
                   />
                   <div className="space-y-1.5 pt-1">
-                    <p className={labelClass}>Preferred Industries</p>
-                    <input
-                      className={inputClass}
-                      value={creatorPreferences.preferredIndustries}
-                      onChange={(e) =>
-                        setCreatorPreferences((p) => ({ ...p, preferredIndustries: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-1.5">
                     <p className={labelClass}>Minimum Collaboration Budget (PKR)</p>
                     <input
                       type="number"
@@ -1506,6 +1514,45 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
           )}
         </TabsPrimitive.Root>
       </div>
+
+      {section === "profile" && shareOpen && (
+        <ShareProfileModal
+          isOpen={shareOpen}
+          onClose={() => setShareOpen(false)}
+          creator={{
+            id: user?.id ?? "",
+            userId: user?.id ?? "",
+            username: profile.handle || "",
+            name: profile.name || user?.name || "",
+            avatar: profile.avatar || user?.avatar || "",
+            coverImage: profile.coverImage,
+            bio: profile.bio,
+            city: (profile.city as Creator["city"]) ?? "Karachi",
+            categories: profile.categories,
+            languages: profile.languages,
+            website: profile.website,
+            availabilityStatus: profile.availabilityStatus,
+            isFiler: profile.isFiler,
+            responseTime: profile.responseTime,
+            rateCardReel: profile.rateCardReel,
+            rateCardStory: profile.rateCardStory,
+            rateCardPost: profile.rateCardPost,
+            rateCardVideo: profile.rateCardVideo,
+            platforms: [],
+            totalFollowers: 0,
+            avgEngagementRate: 0,
+            dealTypes: [],
+            isVerified: false,
+            isTrending: false,
+            isFastResponder: false,
+            rating: 0,
+            totalReviews: 0,
+            completedDeals: 0,
+            contentPreviews: [],
+            createdAt: new Date(),
+          }}
+        />
+      )}
     </div>
   );
 }

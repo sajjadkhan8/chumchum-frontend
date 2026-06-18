@@ -23,6 +23,7 @@ interface RequestOptions {
   headers?: Record<string, string>;
   auth?: boolean;
   signal?: AbortSignal;
+  noGlobalRedirect?: boolean;
 }
 
 interface ApiEnvelope<T> {
@@ -158,6 +159,7 @@ export const apiClient = {
       headers,
       auth = true,
       signal,
+      noGlobalRedirect = false,
     } = options;
 
     const url = `${API_BASE_URL}${path}${toQueryString(query)}`;
@@ -188,7 +190,9 @@ export const apiClient = {
       if (nextToken) {
         return this.request<T>(path, options, false);
       }
-      redirectToLogin();
+      if (!noGlobalRedirect) {
+        redirectToLogin();
+      }
       throw new ApiError('Session expired. Please log in again.', response.status);
     }
 

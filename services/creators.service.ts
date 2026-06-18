@@ -16,10 +16,8 @@ interface CreatorProfileUpdatePayload {
   city?: string;
   avatarUrl?: string;
   bio?: string;
-  category?: string;
   coverImageUrl?: string;
   website?: string;
-  niche?: string;
   availabilityStatus?: string;
   isFiler?: boolean;
   responseTime?: string;
@@ -28,7 +26,6 @@ interface CreatorProfileUpdatePayload {
   acceptsBarter?: boolean;
   acceptsHybridDeals?: boolean;
   minimumBudget?: number;
-  preferredIndustries?: string;
   languages?: string[];
   categories?: string[];
   tiktokUrl?: string;
@@ -53,7 +50,6 @@ export interface CreatorSocialAccountPayload {
 interface CreatorPreferencesPayload {
   acceptsBarter: boolean;
   acceptsHybridDeals: boolean;
-  preferredIndustries: string;
   minimumBudget?: number;
 }
 
@@ -90,10 +86,8 @@ export const creatorsService = {
       city: payload.city,
       avatar_url: payload.avatarUrl,
       bio: payload.bio,
-      category: payload.category,
       cover_image_url: payload.coverImageUrl,
       website: payload.website,
-      niche: payload.niche,
       availability_status: payload.availabilityStatus,
       response_time: payload.responseTime,
       min_price: payload.minPrice,
@@ -101,7 +95,6 @@ export const creatorsService = {
       accepts_barter: payload.acceptsBarter,
       accepts_hybrid_deals: payload.acceptsHybridDeals,
       minimum_budget: payload.minimumBudget,
-      preferred_industries: payload.preferredIndustries,
       languages: payload.languages,
       categories: payload.categories,
       tiktok_url: payload.tiktokUrl,
@@ -201,8 +194,12 @@ export const creatorsService = {
   },
 
   async getByUsername(username: string): Promise<Creator | null> {
-    const { creators } = await this.getAll({ search: username });
-    return creators.find((creator) => creator.username === username) || null;
+    try {
+      const response = await apiClient.get<unknown>(`/api/v1/creators/by-username/${encodeURIComponent(username)}`, { auth: false });
+      return response ? mapCreator(response as never) : null;
+    } catch {
+      return null;
+    }
   },
 
   async getByIdentifier(identifier: string): Promise<Creator | null> {
