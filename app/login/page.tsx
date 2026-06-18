@@ -153,6 +153,7 @@ export default function LoginPage() {
         eyebrow="Two-factor authentication"
         title="One more step to keep your account secure."
         description="Enter the 6-digit code from your authenticator app to complete sign in."
+        hideMobileHeader
       >
         <div className="flex items-start gap-3">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e6eceb] text-[#2d6b4e]">
@@ -200,6 +201,7 @@ export default function LoginPage() {
       eyebrow="Welcome back"
       title="Good work starts with the right connection."
       description="Pick up conversations, opportunities, and collaborations without losing the thread."
+      hideMobileHeader
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-4">

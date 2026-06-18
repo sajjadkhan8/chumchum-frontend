@@ -10,6 +10,7 @@ type AuthShellProps = {
   eyebrow: string;
   title: string;
   description: string;
+  hideMobileHeader?: boolean;
 };
 
 export function AuthWordmark({ light = false }: { light?: boolean }) {
@@ -25,24 +26,26 @@ export function AuthWordmark({ light = false }: { light?: boolean }) {
   );
 }
 
-export function AuthShell({ children, eyebrow, title, description }: AuthShellProps) {
+export function AuthShell({ children, eyebrow, title, description, hideMobileHeader = false }: AuthShellProps) {
   return (
     <main className="min-h-screen bg-[#fbfaf5] text-[#1e3d2e]">
       <div className="mx-auto grid max-w-[1600px] lg:min-h-screen lg:grid-cols-[minmax(0,0.92fr)_minmax(480px,0.72fr)]">
         <section className="relative hidden overflow-hidden bg-[#1e3d2e] p-8 text-white lg:flex lg:flex-col xl:p-12">
-          <div className="relative z-10 flex items-center justify-between">
-            <AuthWordmark light />
-            <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-[#c2d8cb] transition hover:text-white">
-              <ArrowLeft className="size-4" />
-              Back home
-            </Link>
-          </div>
+          {!hideMobileHeader && (
+            <div className="relative z-10 flex items-center justify-between">
+              <AuthWordmark light />
+              <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-[#c2d8cb] transition hover:text-white">
+                <ArrowLeft className="size-4" />
+                Back home
+              </Link>
+            </div>
+          )}
 
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="relative z-10 mt-auto max-w-xl pb-8 pt-16"
+            className={`relative z-10 max-w-xl pb-8 ${hideMobileHeader ? 'my-auto py-10' : 'mt-auto pt-16'}`}
           >
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3.5 py-2 text-xs font-bold text-[#f0c56e]">
               <span className="size-2 rounded-full bg-[#e6aa38]" />
@@ -89,14 +92,16 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
           </div>
         </section>
 
-        <section className="flex flex-col px-4 pt-2 pb-6 sm:px-6 sm:pb-8 lg:min-h-screen lg:justify-center lg:px-10 lg:py-0 xl:px-16">
-          <div className="mx-auto flex w-full max-w-[540px] items-center justify-between px-1 py-1.5 lg:hidden">
-            <AuthWordmark />
-            <Link href="/" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5e6c64]">
-              <ArrowLeft className="size-3.5" />
-              Home
-            </Link>
-          </div>
+        <section className={`flex flex-col px-4 pb-6 sm:px-6 sm:pb-8 lg:min-h-screen lg:justify-center lg:px-10 lg:py-0 xl:px-16 ${hideMobileHeader ? 'pt-6' : 'pt-2'}`}>
+          {!hideMobileHeader && (
+            <div className="mx-auto flex w-full max-w-[540px] items-center justify-between px-1 py-1.5 lg:hidden">
+              <AuthWordmark />
+              <Link href="/" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5e6c64]">
+                <ArrowLeft className="size-3.5" />
+                Home
+              </Link>
+            </div>
+          )}
           <motion.div
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}

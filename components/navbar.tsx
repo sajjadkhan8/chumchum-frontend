@@ -245,7 +245,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
           ? "border-[#d1ddd6] bg-[#fbfaf5]/95"
           : isBrand
           ? "border-[#d9e0d8] bg-[#fbfaf5]/95 shadow-[0_10px_34px_rgba(38,70,50,0.06)] supports-[backdrop-filter]:bg-[#fbfaf5]/88"
-          : "border-border bg-background/95 supports-[backdrop-filter]:bg-background/60"
+          : "border-[#d9e0d8] bg-[#fbfaf5]/95 supports-[backdrop-filter]:bg-[#fbfaf5]/88"
       )}
     >
       <div className={cn(
@@ -261,9 +261,9 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
             </span>
           </Link>
         ) : (
-          <Link href="/" className="flex min-h-11 items-center gap-3">
-            <ZingZingLogo variant="icon" size={40} className="h-10 w-10" />
-            {isCreator && <span className="hidden text-xl font-extrabold tracking-[-0.04em] text-[#1e3d2e] lg:inline">Zing<span className="text-[#e3a52f]">Zing</span></span>}
+          <Link href="/" className="flex min-h-11 items-center gap-2.5">
+            <ZingZingLogo variant="icon" size={36} className="h-9 w-9 rounded-2xl" />
+            <span className={cn("hidden text-xl font-extrabold tracking-[-0.04em] text-[#1e3d2e] sm:inline", isCreator && "lg:inline sm:hidden")}>Zing<span className="text-[#e3a52f]">Zing</span></span>
           </Link>
         )}
 
@@ -281,10 +281,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                   isLinkActive(link.href)
                     ? isBrand
                       ? 'bg-[#e7f0ea] text-[#185c39] shadow-[inset_0_0_0_1px_rgba(24,92,57,0.08)]'
-                      : 'text-primary'
+                      : 'text-[#2d6b4e]'
                     : isBrand
                     ? 'text-[#607168]'
-                    : 'text-muted-foreground hover:text-primary'
+                    : 'text-[#607168] hover:text-[#1e3d2e]'
                 )}
               >
                 {link.label}
@@ -358,7 +358,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
             <Button
               variant="ghost"
               size="icon"
-              className={cn(isBrand && 'h-10 w-10 rounded-full text-[#385046] hover:bg-[#f2efe4] hover:text-[#185c39]')}
+              className={cn(
+                'h-10 w-10 rounded-full',
+                isBrand ? 'text-[#385046] hover:bg-[#f2efe4] hover:text-[#185c39]' : 'text-[#526259] hover:bg-[#e8ede9] hover:text-[#1e3d2e]'
+              )}
               onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
               title={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
@@ -559,13 +562,13 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
           ) : (
             <>
               <Link href="/login" className="hidden sm:block">
-                <Button variant="ghost">Log in</Button>
+                <Button variant="ghost" className="font-semibold text-[#526259] hover:bg-[#e8ede9] hover:text-[#1e3d2e]">Log in</Button>
               </Link>
               <Link href="/brand/explore" className="hidden lg:block">
-                <Button variant="outline" className="rounded-full">Find Creators</Button>
+                <Button variant="outline" className="rounded-full border-[#d1ddd6] font-semibold text-[#526259] hover:border-[#2d6b4e] hover:text-[#2d6b4e]">Find Creators</Button>
               </Link>
               <Link href="/signup">
-                <Button className="rounded-full">Sign Up</Button>
+                <Button className="rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]">Sign Up</Button>
               </Link>
             </>
           )}
@@ -577,9 +580,9 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className={cn("w-[88vw] max-w-sm p-0", isBrand && "border-[#d9e0d8] bg-[#fbfaf5]")}>
-              <div className={cn("border-b p-4", isBrand && "border-[#d9e0d8]")}>
-                <p className={cn("text-base font-semibold", isBrand && "text-[#173b2a]")}>Menu</p>
+            <SheetContent side="right" className={cn("w-[88vw] max-w-sm p-0", (isBrand || !isSignedIn) && "border-[#d9e0d8] bg-[#fbfaf5]")}>
+              <div className={cn("border-b p-4", (isBrand || !isSignedIn) && "border-[#d9e0d8]")}>
+                <p className={cn("text-base font-semibold", (isBrand || !isSignedIn) && "text-[#173b2a]")}>Menu</p>
               </div>
               <nav className="flex flex-col gap-1 p-4 pb-safe">
                 {navLinks.map((link) => (
@@ -587,15 +590,15 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                     <Link
                       href={link.href}
                       className={cn(
-                        'min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary',
-                        isBrand && 'rounded-xl font-bold hover:bg-[#f2efe4] hover:text-[#173b2a]',
+                        'min-h-11 rounded-xl px-3 py-2 text-base font-medium transition-colors hover:bg-[#e8ede9] hover:text-[#1e3d2e]',
+                        isBrand && 'font-bold hover:bg-[#f2efe4] hover:text-[#173b2a]',
                         isLinkActive(link.href)
                           ? isBrand
                             ? 'bg-[#e7f0ea] text-[#185c39]'
-                            : 'bg-primary/10 text-primary'
+                            : 'bg-[#e7f0ea] text-[#2d6b4e]'
                           : isBrand
                           ? 'text-[#607168]'
-                          : 'text-muted-foreground'
+                          : 'text-[#607168]'
                       )}
                     >
                       {link.label}
@@ -606,14 +609,14 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                   <>
                     {!isCreator && (
                       <SheetClose asChild>
-                        <Link href={messagesLink} className={cn('min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary', isBrand && 'rounded-xl font-bold hover:bg-[#f2efe4] hover:text-[#173b2a]', isLinkActive(messagesLink) ? isBrand ? 'bg-[#e7f0ea] text-[#185c39]' : 'bg-primary/10 text-primary' : isBrand ? 'text-[#607168]' : 'text-muted-foreground')}>
+                        <Link href={messagesLink} className={cn('min-h-11 rounded-xl px-3 py-2 text-base font-medium transition-colors hover:bg-[#e8ede9] hover:text-[#1e3d2e]', isBrand && 'font-bold hover:bg-[#f2efe4] hover:text-[#173b2a]', isLinkActive(messagesLink) ? isBrand ? 'bg-[#e7f0ea] text-[#185c39]' : 'bg-[#e7f0ea] text-[#2d6b4e]' : isBrand ? 'text-[#607168]' : 'text-[#607168]')}>
                           Messages
                         </Link>
                       </SheetClose>
                     )}
                     {profileMenu.map((item) => (
                       <SheetClose asChild key={item.label}>
-                        <Link href={item.href} className={cn('min-h-11 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-muted/60 hover:text-primary', isBrand && 'rounded-xl font-bold hover:bg-[#f2efe4] hover:text-[#173b2a]', isLinkActive(item.href) ? isBrand ? 'bg-[#e7f0ea] text-[#185c39]' : 'bg-primary/10 text-primary' : isBrand ? 'text-[#607168]' : 'text-muted-foreground')}>
+                        <Link href={item.href} className={cn('min-h-11 rounded-xl px-3 py-2 text-base font-medium transition-colors hover:bg-[#e8ede9] hover:text-[#1e3d2e]', isBrand && 'font-bold hover:bg-[#f2efe4] hover:text-[#173b2a]', isLinkActive(item.href) ? isBrand ? 'bg-[#e7f0ea] text-[#185c39]' : 'bg-[#e7f0ea] text-[#2d6b4e]' : isBrand ? 'text-[#607168]' : 'text-[#607168]')}>
                           {item.label}
                         </Link>
                       </SheetClose>
@@ -628,18 +631,18 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                 ) : (
                   <>
                     <SheetClose asChild>
-                      <Link href="/login" className="min-h-11 rounded-lg px-3 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-primary">
+                      <Link href="/login" className="min-h-11 rounded-xl px-3 py-2 text-base font-semibold text-[#526259] transition-colors hover:bg-[#e8ede9] hover:text-[#1e3d2e]">
                         Log in
                       </Link>
                     </SheetClose>
                     <SheetClose asChild>
                       <Link href="/signup">
-                        <Button className="mt-3 min-h-11 w-full rounded-full">Create Account</Button>
+                        <Button className="mt-3 min-h-11 w-full rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]">Create Account</Button>
                       </Link>
                     </SheetClose>
                     <SheetClose asChild>
                       <Link href="/brand/explore">
-                        <Button className="mt-2 min-h-11 w-full rounded-full" variant="outline">Find Creators</Button>
+                        <Button className="mt-2 min-h-11 w-full rounded-full border-[#d1ddd6] font-semibold text-[#526259] hover:border-[#2d6b4e] hover:text-[#2d6b4e]" variant="outline">Find Creators</Button>
                       </Link>
                     </SheetClose>
                   </>

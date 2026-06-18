@@ -118,6 +118,7 @@ export default function SignupPage() {
       eyebrow="Join the network"
       title="Make local influence feel effortless."
       description="A focused place for creators and brands to discover each other, agree on the work, and build lasting partnerships."
+      hideMobileHeader
     >
       {step === 'role' ? (
         <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}>

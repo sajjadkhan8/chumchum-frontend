@@ -17,6 +17,7 @@ import {
   FileText,
   Upload,
   Download,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatPrice, formatDate, getInitials } from "@/lib/utils";
 import { toast } from "sonner";
 import { ordersService } from "@/services/orders.service";
+import { reviewsService } from "@/services/reviews.service";
 import { uploadsService } from "@/services/uploads.service";
 import { messagesService } from "@/services/messages.service";
 import { downloadFile } from "@/lib/download-file";
@@ -136,6 +138,11 @@ function CreatorOrdersPageContent() {
   const [submissionNote, setSubmissionNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [downloadingReceiptIds, setDownloadingReceiptIds] = useState<Set<string>>(new Set());
+  const [reviewedOrderIds, setReviewedOrderIds] = useState<Set<string>>(new Set());
+  const [reviewTarget, setReviewTarget] = useState<Order | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const loadOrders = async () => {
     setIsLoading(true);
@@ -291,6 +298,25 @@ function CreatorOrdersPageContent() {
         next.delete(order.id);
         return next;
       });
+    }
+  };
+
+  const submitReview = async () => {
+    if (!reviewTarget) return;
+    setIsSubmittingReview(true);
+    try {
+      await reviewsService.create({
+        orderId: reviewTarget.id,
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+      });
+      setReviewedOrderIds((prev) => new Set(prev).add(reviewTarget.id));
+      setReviewTarget(null);
+      toast.success("Review submitted");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to submit review");
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -559,6 +585,26 @@ function CreatorOrdersPageContent() {
                           </div>
                         </div>
 
+                        {/* Leave a review prompt for completed orders */}
+                        {order.status === "completed" && !reviewedOrderIds.has(order.id) && (
+                          <div className="mt-1 rounded-[1.15rem] bg-[#e7f0ea] p-4">
+                            <div className="mb-2 flex items-center gap-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star key={i} className="h-4 w-4 fill-[#e6aa38] text-[#e6aa38]" />
+                              ))}
+                            </div>
+                            <p className="text-sm font-bold text-[#185c39]">Order complete — share how working with this brand went.</p>
+                            <Button
+                              className="mt-3 rounded-full bg-[#185c39] font-black text-white hover:bg-[#12462b]"
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); setReviewTarget(order); setReviewRating(5); setReviewComment(""); }}
+                            >
+                              <Star className="mr-2 h-4 w-4" />
+                              Review Brand
+                            </Button>
+                          </div>
+                        )}
+
                         {/* Action buttons */}
                         <div className="flex flex-wrap gap-2">
                           <Button
@@ -690,6 +736,64 @@ function CreatorOrdersPageContent() {
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Submitting..." : "Submit"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Review brand dialog */}
+      <Dialog open={Boolean(reviewTarget)} onOpenChange={(open) => !open && setReviewTarget(null)}>
+        <DialogContent className="max-w-[calc(100%-1rem)] rounded-[1.5rem] border-[#d9e0d8] bg-[#fbfaf5] sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black tracking-[-0.04em] text-[#1e3d2e]">Review brand</DialogTitle>
+            <DialogDescription className="font-bold text-[#647168]">
+              Rate {reviewTarget?.brand.name || "this brand"} for the completed order.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="font-black text-[#1e3d2e]">Rating</Label>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <button
+                    key={rating}
+                    type="button"
+                    onClick={() => setReviewRating(rating)}
+                    aria-label={`${rating} star rating`}
+                    className="rounded-full p-1 hover:bg-[#e6eceb]"
+                  >
+                    <Star className={`h-5 w-5 ${rating <= reviewRating ? "fill-[#e6aa38] text-[#e6aa38]" : "text-[#9aa49d]"}`} />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="brand-review-comment" className="font-black text-[#1e3d2e]">Comment</Label>
+              <Textarea
+                id="brand-review-comment"
+                rows={4}
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder="Share how working with this brand went"
+                className="rounded-2xl border-[#d9e0d8] bg-white focus-visible:ring-[#2d6b4e]/20"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                className="rounded-full border-[#d9e0d8] bg-white font-black text-[#2d6b4e] hover:bg-[#e6eceb]"
+                onClick={() => setReviewTarget(null)}
+                disabled={isSubmittingReview}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="rounded-full bg-[#2d6b4e] font-black text-white hover:bg-[#1f5239]"
+                onClick={() => void submitReview()}
+                disabled={isSubmittingReview}
+              >
+                {isSubmittingReview ? "Submitting…" : "Submit review"}
               </Button>
             </div>
           </div>

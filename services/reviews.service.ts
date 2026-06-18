@@ -6,6 +6,7 @@ interface BackendReview {
   creatorId?: string;
   brandId?: string;
   orderId?: string;
+  reviewerType?: string;
   rating?: number;
   comment?: string;
   createdAt?: string;
@@ -55,6 +56,7 @@ const mapReview = (input: BackendReview, creatorId: string): Review => {
         }
       : fallbackBrand(brandId),
     orderId: input.orderId || '',
+    reviewerType: input.reviewerType === 'creator' ? 'creator' : 'brand',
     rating: input.rating || 0,
     comment: input.comment || '',
     createdAt: input.createdAt ? new Date(input.createdAt) : new Date(),
@@ -97,5 +99,15 @@ export const reviewsService = {
     }
 
     return [];
+  },
+
+  async getByBrandId(brandId: string): Promise<Review[]> {
+    if (!brandId) return [];
+    try {
+      const response = await apiClient.get<unknown>(`/api/v1/reviews/brands/${brandId}`, { auth: false });
+      return unwrapReviews(response).map((review) => mapReview(review, review.creatorId || ''));
+    } catch {
+      return [];
+    }
   },
 };

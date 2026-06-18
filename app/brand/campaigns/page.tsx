@@ -193,12 +193,20 @@ export default function BrandCampaignsPage() {
                     </div>
                   )}
                 </div>
-                <Button asChild className="shrink-0 rounded-full bg-[#e6aa38] px-5 font-black text-[#173b2a] hover:bg-[#f0bb55]">
-                  <Link href="/brand/campaigns/new">
-                    <Plus className="mr-2 size-4" />
-                    New Campaign
-                  </Link>
-                </Button>
+                {brand?.planTier === 'STARTER' && totalElements >= STARTER_CAMPAIGN_LIMIT ? (
+                  <Button asChild className="shrink-0 rounded-full bg-[#e6aa38] px-5 font-black text-[#173b2a] hover:bg-[#f0bb55]">
+                    <Link href="/pricing">
+                      Upgrade to create more
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button asChild className="shrink-0 rounded-full bg-[#e6aa38] px-5 font-black text-[#173b2a] hover:bg-[#f0bb55]">
+                    <Link href="/brand/campaigns/new">
+                      <Plus className="mr-2 size-4" />
+                      New Campaign
+                    </Link>
+                  </Button>
+                )}
               </div>
 
               <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">

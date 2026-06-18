@@ -156,6 +156,7 @@ export default function BrandOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [reviewedOrderIds, setReviewedOrderIds] = useState<Set<string>>(new Set());
   const [reviewTarget, setReviewTarget] = useState<Order | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
@@ -299,6 +300,7 @@ export default function BrandOrdersPage() {
         rating: reviewRating,
         comment: reviewComment.trim(),
       });
+      setReviewedOrderIds((prev) => new Set(prev).add(reviewTarget.id));
       setReviewTarget(null);
       toast.success("Review submitted");
     } catch (error) {
@@ -459,7 +461,7 @@ export default function BrandOrdersPage() {
                         </div>
                       </div>
 
-                      <div className="mt-4 grid gap-2 text-sm font-bold text-[#607168] sm:grid-cols-3">
+                      <div className="mt-4 grid grid-cols-2 gap-2 text-sm font-bold text-[#607168] sm:grid-cols-3">
                         <span className="inline-flex items-center gap-2 rounded-2xl bg-[#fbfaf5] px-3 py-2">
                           <Wallet className="size-4 text-[#185c39]" />
                           {formatPrice(order.amount ?? order.package.price ?? 0)}
@@ -575,7 +577,7 @@ export default function BrandOrdersPage() {
                       </div>
                     </div>
 
-                    {order.status === "completed" && (
+                    {order.status === "completed" && !reviewedOrderIds.has(order.id) && (
                       <div className="mt-4 rounded-[1.15rem] bg-[#e7f0ea] p-4">
                         <div className="mb-2 flex items-center gap-1">
                           {[...Array(5)].map((_, i) => (

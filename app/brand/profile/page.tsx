@@ -8,6 +8,7 @@ import {
   Globe,
   Mail,
   Phone,
+  Star,
   User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getInitials } from "@/lib/utils";
+import { formatRelativeTime, getInitials } from "@/lib/utils";
 import { brandsService } from "@/services/brands.service";
+import { reviewsService } from "@/services/reviews.service";
 import { uploadsService } from "@/services/uploads.service";
+import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
+import type { Review } from "@/types";
 
 const industries = [
   "Fashion & Apparel",
@@ -64,8 +68,10 @@ const inputCls =
 const labelCls = "text-xs font-bold text-[#526259]";
 
 export default function BrandProfilePage() {
+  const { user } = useAuthStore();
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [brandReviews, setBrandReviews] = useState<Review[]>([]);
 
   const [profile, setProfile] = useState({
     companyName: "Karachi Gourmet Group",
@@ -137,6 +143,11 @@ export default function BrandProfilePage() {
   useEffect(() => {
     void loadBrandProfile();
   }, [loadBrandProfile]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void reviewsService.getByBrandId(user.id).then(setBrandReviews).catch(() => null);
+  }, [user?.id]);
 
   return (
     <div className="min-h-screen bg-[#f4f2e9]">
@@ -414,6 +425,32 @@ export default function BrandProfilePage() {
               </div>
             </div>
           </section>
+
+          {brandReviews.length > 0 && (
+            <section className="mt-6 rounded-[1.4rem] border border-[#d9e0d8] bg-[#f4f2e9] p-5">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Reputation</p>
+              <h3 className="mt-1 text-lg font-extrabold tracking-[-0.03em] text-[#1a2e22]">
+                Creator reviews ({brandReviews.length})
+              </h3>
+              <div className="mt-4 space-y-3">
+                {brandReviews.map((review) => (
+                  <div key={review.id} className="rounded-2xl border border-[#d9e0d8] bg-white p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star key={s} className={`h-3.5 w-3.5 ${s <= review.rating ? "fill-[#e6aa38] text-[#e6aa38]" : "text-[#cdd4cf]"}`} />
+                        ))}
+                      </div>
+                      <span className="text-xs text-[#87938b]">{formatRelativeTime(review.createdAt)}</span>
+                    </div>
+                    {review.comment && (
+                      <p className="mt-2 text-sm text-[#3a5244]">{review.comment}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           <div className="mt-6">
             <Button

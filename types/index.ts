@@ -240,6 +240,8 @@ export interface Brand {
   planTier?: 'STARTER' | 'GROWTH' | 'ENTERPRISE';
   totalCampaigns: number;
   activeOrders: number;
+  brandRating?: number;
+  brandTotalReviews?: number;
 }
 
 export type BrandCampaignStatus = 'draft' | 'published' | 'paused' | 'closed' | 'archived';
@@ -369,6 +371,7 @@ export interface Review {
   brandId: string;
   brand: Brand;
   orderId: string;
+  reviewerType: 'brand' | 'creator';
   rating: number;
   comment: string;
   createdAt: Date;
