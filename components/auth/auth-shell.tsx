@@ -45,7 +45,7 @@ export function AuthShell({ children, eyebrow, title, description, hideMobileHea
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className={`relative z-10 max-w-xl pb-8 ${hideMobileHeader ? 'my-auto py-10' : 'mt-auto pt-16'}`}
+            className={`relative z-10 max-w-xl pb-8 ${hideMobileHeader ? '' : 'mt-auto pt-16'}`}
           >
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3.5 py-2 text-xs font-bold text-[#f0c56e]">
               <span className="size-2 rounded-full bg-[#e6aa38]" />
@@ -92,7 +92,7 @@ export function AuthShell({ children, eyebrow, title, description, hideMobileHea
           </div>
         </section>
 
-        <section className={`flex flex-col px-4 pb-6 sm:px-6 sm:pb-8 lg:min-h-screen lg:justify-center lg:px-10 lg:py-0 xl:px-16 ${hideMobileHeader ? 'pt-6' : 'pt-2'}`}>
+        <section className={`flex flex-col px-4 pb-6 sm:px-6 sm:pb-8 lg:min-h-screen lg:px-10 xl:px-16 ${hideMobileHeader ? 'pt-6 lg:pt-14 lg:justify-start' : 'pt-2 lg:py-0 lg:justify-center'}`}>
           {!hideMobileHeader && (
             <div className="mx-auto flex w-full max-w-[540px] items-center justify-between px-1 py-1.5 lg:hidden">
               <AuthWordmark />
