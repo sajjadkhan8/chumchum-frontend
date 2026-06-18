@@ -2,7 +2,7 @@ import { apiClient } from '@/lib/api/client';
 import { mapUser } from '@/lib/api/mappers';
 import type { User, UserRole } from '@/types';
 
-interface AuthTokenResponse {
+export interface AuthTokenResponse {
   accessToken: string;
   refreshToken?: string;
   user: {
@@ -19,13 +19,28 @@ interface AuthTokenResponse {
   };
 }
 
+export interface MfaChallengeResponse {
+  mfaRequired: true;
+  challengeToken: string;
+}
+
+export type LoginResponse = AuthTokenResponse | MfaChallengeResponse;
+
+export function isMfaChallenge(response: LoginResponse): response is MfaChallengeResponse {
+  return 'mfaRequired' in response && (response as MfaChallengeResponse).mfaRequired === true;
+}
+
 export interface ForgotPasswordResponse {
   message: string;
 }
 
 export const authService = {
-  async login(email: string, password: string): Promise<AuthTokenResponse> {
-    return apiClient.post<AuthTokenResponse>('/api/v1/auth/login', { email, password }, { auth: false });
+  async login(email: string, password: string): Promise<LoginResponse> {
+    return apiClient.post<LoginResponse>('/api/v1/auth/login', { email, password }, { auth: false });
+  },
+
+  async verifyMfa(challengeToken: string, totpCode: string): Promise<AuthTokenResponse> {
+    return apiClient.post<AuthTokenResponse>('/api/v1/auth/mfa/verify', { challengeToken, totpCode }, { auth: false });
   },
 
   async sendOtp(phone: string): Promise<{ message: string; expiresIn: number }> {

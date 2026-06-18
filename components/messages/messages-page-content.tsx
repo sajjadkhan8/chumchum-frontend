@@ -64,6 +64,7 @@ export function MessagesPageContent() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const processedCreatorParamRef = useRef<string | null>(null);
+  const selectedConversationRef = useRef<Conversation | null>(null);
 
   const buildMessagesHref = useCallback(
     (params: Record<string, string | undefined> = {}) => {
@@ -188,8 +189,43 @@ export function MessagesPageContent() {
   }, [selectedConversation, loadMessagesForConversation]);
 
   useEffect(() => {
+    selectedConversationRef.current = selectedConversation;
+  }, [selectedConversation]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Background polling — only when tab is visible to avoid unnecessary API calls.
+  useEffect(() => {
+    const silentRefreshMessages = async () => {
+      const convo = selectedConversationRef.current;
+      if (!convo || document.visibilityState !== "visible") return;
+      try {
+        const data = await messagesService.getMessages(convo.id);
+        setMessages((prev) => (prev.length !== data.length ? data : prev));
+      } catch {
+        // Silent — polling failures don't show toasts.
+      }
+    };
+
+    const silentRefreshConversations = async () => {
+      if (!user || user.role === "platform_admin" || document.visibilityState !== "visible") return;
+      try {
+        const { items } = await messagesService.getConversations(user.id, user.role, 0, 50);
+        setConversations(items);
+      } catch {
+        // Silent.
+      }
+    };
+
+    const messagesInterval = setInterval(silentRefreshMessages, 5_000);
+    const conversationsInterval = setInterval(silentRefreshConversations, 15_000);
+    return () => {
+      clearInterval(messagesInterval);
+      clearInterval(conversationsInterval);
+    };
+  }, [user]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;

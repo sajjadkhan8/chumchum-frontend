@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { tokenStorage } from '@/lib/api/client';
 import { mapUser } from '@/lib/api/mappers';
-import { authService } from '@/services/auth.service';
+import { authService, isMfaChallenge } from '@/services/auth.service';
 import { savedCreatorsService } from '@/services/saved-creators.service';
 import { isValidPakistaniPhone, normalizePakistaniPhone } from '@/lib/phone-utils';
 import { getGoogleIdToken } from '@/lib/google-auth';
@@ -16,7 +16,10 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   hasHydrated: boolean;
+  mfaChallengeToken: string | null;
   login: (email: string, password: string) => Promise<void>;
+  loginWithMfa: (challengeToken: string, totpCode: string) => Promise<void>;
+  clearMfaChallenge: () => void;
   loginWithGoogle: (role: UserRole) => Promise<void>;
   requestOtp: (phone: string) => Promise<void>;
   loginWithPhone: (phone: string, otp: string) => Promise<void>;
@@ -46,21 +49,19 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       hasHydrated: false,
+      mfaChallengeToken: null,
 
       login: async (email: string, password: string) => {
         set({ isLoading: true });
         try {
           const response = await authService.login(email, password);
+          if (isMfaChallenge(response)) {
+            set({ isLoading: false, mfaChallengeToken: response.challengeToken });
+            return;
+          }
           tokenStorage.set(response.accessToken, response.refreshToken);
-
           const user = mapUser(response.user);
-          set({
-            user,
-            isAuthenticated: true,
-            isLoading: false,
-            hasHydrated: true,
-          });
-
+          set({ user, isAuthenticated: true, isLoading: false, hasHydrated: true });
           if (user.role === 'brand') {
             await get().loadSavedCreators();
           }
@@ -70,6 +71,26 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      loginWithMfa: async (challengeToken: string, totpCode: string) => {
+        set({ isLoading: true });
+        try {
+          const response = await authService.verifyMfa(challengeToken, totpCode);
+          tokenStorage.set(response.accessToken, response.refreshToken);
+          const user = mapUser(response.user);
+          set({ user, isAuthenticated: true, isLoading: false, hasHydrated: true, mfaChallengeToken: null });
+          if (user.role === 'brand') {
+            await get().loadSavedCreators();
+          }
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
+
+      clearMfaChallenge: () => {
+        set({ mfaChallengeToken: null });
+      },
+
       loginWithGoogle: async (role: UserRole) => {
         set({ isLoading: true });
         try {
@@ -77,15 +98,8 @@ export const useAuthStore = create<AuthState>()(
           const idToken = await getGoogleIdToken(clientId);
           const response = await authService.google(idToken, role);
           tokenStorage.set(response.accessToken, response.refreshToken);
-
           const user = mapUser(response.user);
-          set({
-            user,
-            isAuthenticated: true,
-            isLoading: false,
-            hasHydrated: true,
-          });
-
+          set({ user, isAuthenticated: true, isLoading: false, hasHydrated: true });
           if (user.role === 'brand') {
             await get().loadSavedCreators();
           }
@@ -112,15 +126,8 @@ export const useAuthStore = create<AuthState>()(
           const normalizedPhone = normalizePakistaniPhone(phone);
           const response = await authService.verifyOtp(normalizedPhone, otp);
           tokenStorage.set(response.accessToken, response.refreshToken);
-
           const user = mapUser(response.user);
-          set({
-            user,
-            isAuthenticated: true,
-            isLoading: false,
-            hasHydrated: true,
-          });
-
+          set({ user, isAuthenticated: true, isLoading: false, hasHydrated: true });
           if (user.role === 'brand') {
             await get().loadSavedCreators();
           }
@@ -135,15 +142,8 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await authService.signup(email, password, role, name, affiliateCode, termsAccepted);
           tokenStorage.set(response.accessToken, response.refreshToken);
-
           const user = mapUser(response.user);
-          set({
-            user,
-            isAuthenticated: true,
-            isLoading: false,
-            hasHydrated: true,
-          });
-
+          set({ user, isAuthenticated: true, isLoading: false, hasHydrated: true });
           if (user.role === 'brand') {
             await get().loadSavedCreators();
           }
@@ -160,15 +160,8 @@ export const useAuthStore = create<AuthState>()(
           const idToken = await getGoogleIdToken(clientId);
           const response = await authService.google(idToken, role, name, affiliateCode, termsAccepted);
           tokenStorage.set(response.accessToken, response.refreshToken);
-
           const user = mapUser(response.user);
-          set({
-            user,
-            isAuthenticated: true,
-            isLoading: false,
-            hasHydrated: true,
-          });
-
+          set({ user, isAuthenticated: true, isLoading: false, hasHydrated: true });
           if (user.role === 'brand') {
             await get().loadSavedCreators();
           }
@@ -184,7 +177,6 @@ export const useAuthStore = create<AuthState>()(
         } catch {
           // Ignore logout failures and always clear local state.
         }
-
         tokenStorage.clear();
         set({
           user: null,
@@ -193,16 +185,15 @@ export const useAuthStore = create<AuthState>()(
           savedCreators: [],
           isAuthenticated: false,
           hasHydrated: true,
+          mfaChallengeToken: null,
         });
       },
 
       restoreSession: async () => {
         set({ hasHydrated: false, isAuthenticated: false });
-
         try {
           const user = await authService.me();
           set({ user, isAuthenticated: true, hasHydrated: true });
-
           if (user.role === 'brand') {
             await get().loadSavedCreators();
           }
@@ -234,7 +225,6 @@ export const useAuthStore = create<AuthState>()(
       loadSavedCreators: async () => {
         const user = get().user;
         if (!user || user.role !== 'brand') return;
-
         try {
           const saved = await syncSavedCreators();
           set({ savedCreators: saved });
@@ -246,13 +236,11 @@ export const useAuthStore = create<AuthState>()(
       toggleSavedCreator: async (creatorId: string) => {
         const state = get();
         const isSaved = state.savedCreators.includes(creatorId);
-
         set({
           savedCreators: isSaved
             ? state.savedCreators.filter((id) => id !== creatorId)
             : [...state.savedCreators, creatorId],
         });
-
         try {
           if (isSaved) {
             await savedCreatorsService.remove(creatorId);
@@ -260,9 +248,7 @@ export const useAuthStore = create<AuthState>()(
             await savedCreatorsService.save(creatorId);
           }
         } catch {
-          set({
-            savedCreators: state.savedCreators,
-          });
+          set({ savedCreators: state.savedCreators });
         }
       },
     }),
@@ -273,7 +259,6 @@ export const useAuthStore = create<AuthState>()(
         if (!persistedState || typeof persistedState !== 'object') {
           return persistedState as AuthState;
         }
-
         if (version < 3) {
           return {
             ...(persistedState as AuthState),
@@ -284,7 +269,6 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
           } satisfies Partial<AuthState> as AuthState;
         }
-
         return persistedState as AuthState;
       },
       onRehydrateStorage: () => (state) => {

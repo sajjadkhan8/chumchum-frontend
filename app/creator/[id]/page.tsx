@@ -130,8 +130,9 @@ export default function CreatorProfilePage({
     0
   );
   const avgEngagement =
-    creator.platforms.reduce((sum, p) => sum + p.engagementRate, 0) /
-    creator.platforms.length;
+    creator.platforms.length > 0
+      ? creator.platforms.reduce((sum, p) => sum + p.engagementRate, 0) / creator.platforms.length
+      : 0;
   const creatorLanguages = creator.languages && creator.languages.length > 0 ? creator.languages : [];
   const packagePortfolio = creatorPackages.flatMap((pkg) => {
     const mediaUrls = [pkg.thumbnail, ...(pkg.mediaUrls || [])].filter(Boolean);

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Eye, EyeOff, Loader2, Mail, Phone } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Loader2, Mail, Phone, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { Button } from '@/components/ui/button';
@@ -17,10 +17,21 @@ const getDashboardPath = (role?: string) => {
   return role === 'creator' ? '/creator/dashboard' : '/brand/dashboard';
 };
 
+const getAllowedPathPrefixes = (role?: string): string[] => {
+  if (role === 'platform_admin') return ['/admin'];
+  if (role === 'creator') return ['/creator'];
+  if (role === 'brand') return ['/brand'];
+  return [];
+};
+
 const getPostLoginPath = (role?: string) => {
   if (typeof window === 'undefined') return getDashboardPath(role);
   const nextPath = new URLSearchParams(window.location.search).get('next');
-  return nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : getDashboardPath(role);
+  if (nextPath?.startsWith('/') && !nextPath.startsWith('//')) {
+    const allowed = getAllowedPathPrefixes(role);
+    if (allowed.some((prefix) => nextPath.startsWith(prefix))) return nextPath;
+  }
+  return getDashboardPath(role);
 };
 
 const inputClass =
@@ -31,12 +42,17 @@ const labelClass = 'text-[10px] font-bold uppercase tracking-widest text-[#7a8f8
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, loginWithGoogle, loginWithPhone, requestOtp, isLoading, user, isAuthenticated, hasHydrated } = useAuthStore();
+  const {
+    login, loginWithGoogle, loginWithPhone, requestOtp,
+    loginWithMfa, clearMfaChallenge, mfaChallengeToken,
+    isLoading, user, isAuthenticated, hasHydrated,
+  } = useAuthStore();
   const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
+  const [totpCode, setTotpCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [googleRole, setGoogleRole] = useState<UserRole>('creator');
@@ -58,11 +74,15 @@ export default function LoginPage() {
     submittingRef.current = true;
     try {
       await login(email, password);
-      toast.success('Welcome back!', { id: 'login-success' });
-      router.push(getPostLoginPath(useAuthStore.getState().user?.role));
+      // If MFA is required the store sets mfaChallengeToken and returns — no redirect yet.
+      if (!useAuthStore.getState().mfaChallengeToken) {
+        toast.success('Welcome back!', { id: 'login-success' });
+        router.push(getPostLoginPath(useAuthStore.getState().user?.role));
+      }
     } catch (error) {
-      submittingRef.current = false;
       toast.error(error instanceof Error ? error.message : 'Invalid credentials');
+    } finally {
+      submittingRef.current = false;
     }
   };
 
@@ -86,8 +106,9 @@ export default function LoginPage() {
       toast.success('Welcome back!', { id: 'login-success' });
       router.push(getPostLoginPath(useAuthStore.getState().user?.role));
     } catch (error) {
-      submittingRef.current = false;
       toast.error(error instanceof Error ? error.message : 'Invalid OTP');
+    } finally {
+      submittingRef.current = false;
     }
   };
 
@@ -99,10 +120,80 @@ export default function LoginPage() {
       toast.success('Welcome back!', { id: 'login-success' });
       router.push(getPostLoginPath(useAuthStore.getState().user?.role));
     } catch (error) {
-      submittingRef.current = false;
       toast.error(error instanceof Error ? error.message : 'Google login failed');
+    } finally {
+      submittingRef.current = false;
     }
   };
+
+  const handleMfaSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!mfaChallengeToken || submittingRef.current) return;
+    if (totpCode.length !== 6) {
+      toast.error('Enter the 6-digit code from your authenticator app');
+      return;
+    }
+    submittingRef.current = true;
+    try {
+      await loginWithMfa(mfaChallengeToken, totpCode);
+      toast.success('Welcome back!', { id: 'login-success' });
+      router.push(getPostLoginPath(useAuthStore.getState().user?.role));
+    } catch (error) {
+      setTotpCode('');
+      toast.error(error instanceof Error ? error.message : 'Invalid authenticator code');
+    } finally {
+      submittingRef.current = false;
+    }
+  };
+
+  // MFA challenge step — shown instead of normal login forms
+  if (mfaChallengeToken) {
+    return (
+      <AuthShell
+        eyebrow="Two-factor authentication"
+        title="One more step to keep your account secure."
+        description="Enter the 6-digit code from your authenticator app to complete sign in."
+      >
+        <div className="flex items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e6eceb] text-[#2d6b4e]">
+            <ShieldCheck className="size-5" />
+          </span>
+          <div>
+            <h2 className="text-2xl font-extrabold tracking-[-0.04em] text-[#1e3d2e]">Verify your identity.</h2>
+            <p className="mt-1 text-sm text-[#6b7870]">Open your authenticator app and enter the current code.</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleMfaSubmit} className="mt-6 space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="totp" className={labelClass}>Authenticator code</Label>
+            <Input
+              id="totp"
+              inputMode="numeric"
+              placeholder="000000"
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              maxLength={6}
+              autoFocus
+              required
+              className={`${inputClass} text-center text-xl tracking-[0.5em] font-bold`}
+            />
+          </div>
+          <Button type="submit" disabled={isLoading || totpCode.length !== 6} className={primaryButtonClass}>
+            {isLoading ? <><Loader2 className="size-4 animate-spin" /> Verifying...</> : <>Verify and sign in <ArrowRight className="size-4" /></>}
+          </Button>
+        </form>
+
+        <button
+          type="button"
+          onClick={() => { clearMfaChallenge(); setTotpCode(''); }}
+          className="mt-4 w-full text-center text-xs font-bold text-[#6b7870] hover:text-[#2d6b4e]"
+        >
+          Use a different account
+        </button>
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell
@@ -120,7 +211,7 @@ export default function LoginPage() {
         <span className="mt-1 hidden rounded-full bg-[#f7e8c8] px-3 py-1.5 text-[11px] font-bold text-[#8b5e12] sm:inline-flex">Secure login</span>
       </div>
 
-      {/* Auth method toggle — custom, no radix Tabs */}
+      {/* Auth method toggle */}
       <div className="mt-5 flex rounded-xl bg-[#e8ede9] p-1 gap-1">
         {(['email', 'phone'] as const).map((method) => {
           const Icon = method === 'email' ? Mail : Phone;
@@ -141,7 +232,6 @@ export default function LoginPage() {
         })}
       </div>
 
-      {/* Forms — min-h matches the taller email form so the card never shrinks on toggle */}
       <div className="min-h-[196px]">
 
       {/* Email form */}
@@ -251,7 +341,7 @@ export default function LoginPage() {
         </form>
       )}
 
-      </div>{/* end min-h wrapper */}
+      </div>
 
       {/* Divider */}
       <div className="my-4 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#87938b]">

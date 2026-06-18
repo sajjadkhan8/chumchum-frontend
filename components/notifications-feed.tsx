@@ -22,16 +22,18 @@ export function NotificationsFeed({ role }: Props) {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   const load = useCallback(async (nextPage = 0) => {
     setIsLoading(true);
+    setHasError(false);
     try {
       const result = await notificationsService.list(nextPage, 20);
       setNotifications(nextPage === 0 ? result.content : (prev) => [...prev, ...result.content]);
       setTotalPages(result.totalPages);
       setPage(nextPage);
     } catch {
-      // silently fail
+      if (nextPage === 0) setHasError(true);
     } finally {
       setIsLoading(false);
     }
@@ -40,6 +42,20 @@ export function NotificationsFeed({ role }: Props) {
   useEffect(() => {
     void load(0);
   }, [load]);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (document.visibilityState !== 'visible') return;
+      try {
+        const result = await notificationsService.list(0, 20);
+        setNotifications(result.content);
+        setTotalPages(result.totalPages);
+      } catch {
+        // Silent background poll failures are acceptable.
+      }
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const markRead = async (notif: AppNotification) => {
     if (notif.read) return;
@@ -74,6 +90,13 @@ export function NotificationsFeed({ role }: Props) {
       <CardContent className="p-0">
         {isLoading && notifications.length === 0 ? (
           <p className="px-4 py-6 text-center text-sm text-muted-foreground">Loading…</p>
+        ) : hasError ? (
+          <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+            Could not load notifications.{' '}
+            <button type="button" onClick={() => void load(0)} className="font-bold underline">
+              Retry
+            </button>
+          </p>
         ) : notifications.length === 0 ? (
           <p className="px-4 py-6 text-center text-sm text-muted-foreground">You are all caught up.</p>
         ) : (

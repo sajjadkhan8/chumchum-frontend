@@ -500,19 +500,26 @@ function CreatorOrdersPageContent() {
                                   key={deliverable.id}
                                   className="flex flex-col gap-3 rounded-xl bg-[#f4f7f5] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                                 >
-                                  <div className="flex items-center gap-2">
-                                    <DeliverableIcon
-                                      className={`h-4 w-4 shrink-0 ${
-                                        deliverableStatus === "completed"
-                                          ? "text-[#1e5c3e]"
-                                          : deliverableStatus === "in_progress"
-                                            ? "text-[#1e4db7]"
-                                            : deliverableStatus === "revision"
-                                              ? "text-[#8a4a10]"
-                                              : "text-[#87938b]"
-                                      }`}
-                                    />
-                                    <span className="text-sm text-[#1e3d2e]">{deliverable.name}</span>
+                                  <div className="flex flex-col gap-0.5">
+                                    <div className="flex items-center gap-2">
+                                      <DeliverableIcon
+                                        className={`h-4 w-4 shrink-0 ${
+                                          deliverableStatus === "completed"
+                                            ? "text-[#1e5c3e]"
+                                            : deliverableStatus === "in_progress"
+                                              ? "text-[#1e4db7]"
+                                              : deliverableStatus === "revision"
+                                                ? "text-[#8a4a10]"
+                                                : "text-[#87938b]"
+                                        }`}
+                                      />
+                                      <span className="text-sm text-[#1e3d2e]">{deliverable.name}</span>
+                                    </div>
+                                    {deliverableStatus === "revision" && deliverable.revisionNote && (
+                                      <p className="ml-6 text-xs text-[#8a4a10]">
+                                        <span className="font-bold">Feedback:</span> {deliverable.revisionNote}
+                                      </p>
+                                    )}
                                   </div>
                                   <div className="flex flex-wrap items-center gap-2">
                                     {deliverable.fileUrl && (

@@ -606,9 +606,9 @@ function BrandSettingsPageContent() {
                     size="sm"
                     variant="outline"
                     className="h-7 shrink-0 rounded-lg border-[#d9e0d8] px-3 text-xs font-semibold text-[#526259] hover:bg-[#f4f2e9]"
-                    onClick={() => toast.info("2FA setup wizard is planned for the next release.")}
+                    onClick={() => toast.info("Two-factor authentication for brand accounts is coming soon.")}
                   >
-                    Enable 2FA
+                    Coming soon
                   </Button>
                 </div>
               </SectionCard>

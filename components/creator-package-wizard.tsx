@@ -899,7 +899,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
     const packagePayload: CreatorPackage = {
       id: mode === "edit" && initialPackage ? initialPackage.id : `cp-${Date.now()}`,
-      creatorId: initialPackage?.creatorId || "1",
+      creatorId: initialPackage?.creatorId || creatorProfile?.id || "",
       title: formData.title,
       shortDescription: formData.fullDescription || formData.title,
       description: formData.fullDescription || formData.title,

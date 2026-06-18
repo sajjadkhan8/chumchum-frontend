@@ -62,6 +62,8 @@ export default function CreatorCampaignReactionsPage() {
   }, [load]);
 
   const withdraw = async (reaction: BrandCampaignReaction) => {
+    if (reaction.status === 'withdrawn') return;
+    setReactions((prev) => prev.map((item) => (item.id === reaction.id ? { ...item, status: 'withdrawn' as BrandCampaignReaction['status'] } : item)));
     try {
       const updated = await campaignsService.updateCreatorReaction(reaction.campaignId, reaction.id, {
         status: 'WITHDRAWN',
@@ -69,6 +71,7 @@ export default function CreatorCampaignReactionsPage() {
       setReactions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
       toast.success('Reaction withdrawn');
     } catch (error) {
+      setReactions((prev) => prev.map((item) => (item.id === reaction.id ? reaction : item)));
       toast.error(error instanceof Error ? error.message : 'Failed to withdraw reaction');
     }
   };

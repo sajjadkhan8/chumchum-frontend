@@ -1394,10 +1394,10 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                     <p className="mt-0.5 text-xs text-[#87938b]">Protect your account with 2FA</p>
                   </div>
                   <button
-                    onClick={() => toast.info("2FA setup wizard is planned for next iteration.")}
+                    onClick={() => toast.info("Two-factor authentication for creators is coming soon.")}
                     className="rounded-full border-2 border-[#d1ddd6] bg-white px-4 py-2 text-xs font-bold text-[#496159] hover:border-[#b0c5ba]"
                   >
-                    Enable 2FA
+                    Coming soon
                   </button>
                 </div>
               </div>

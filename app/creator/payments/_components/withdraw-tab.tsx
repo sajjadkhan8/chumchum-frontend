@@ -153,7 +153,7 @@ export function WithdrawTab({
                 <Button
                   className="mt-2 h-11 w-full rounded-full bg-[#2d6b4e] font-extrabold text-white hover:bg-[#1f5239]"
                   onClick={onRequestWithdrawal}
-                  disabled={isWithdrawing || availableBalance <= 0}
+                  disabled={isWithdrawing || availableBalance <= 0 || requestedAmount <= 0 || requestedAmount > availableBalance || !withdrawMethodId}
                 >
                   <ArrowUp className="mr-2 h-4 w-4" />
                   {isWithdrawing ? "Submitting..." : "Request Withdrawal"}
