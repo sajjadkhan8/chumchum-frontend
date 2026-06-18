@@ -147,19 +147,24 @@ export default function BrandPaymentsPage() {
       toast.error("Enter a valid top-up amount (minimum PKR 1,000)");
       return;
     }
+    if (amount > 10_000_000) {
+      toast.error("Maximum single top-up is PKR 10,000,000");
+      return;
+    }
     setIsTopupSubmitting(true);
     try {
-      const next = await paymentsService.topUpBrandWallet(amount);
-      setSummary(next);
-      setTopupAmount("");
+      const session = await paymentsService.initiateSafepayTopup(amount);
+      // Redirect to Safepay hosted checkout — payment is confirmed via webhook
       setIsTopupOpen(false);
-      toast.success("Wallet credited successfully");
+      window.location.href = session.checkoutUrl;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Wallet top-up failed";
+      const message = error instanceof Error ? error.message : "Could not initiate payment. Please try again.";
       toast.error(message);
-    } finally {
       setIsTopupSubmitting(false);
     }
+    // Note: setIsTopupSubmitting(false) is intentionally NOT called on success
+    // because we are navigating away — keeping the spinner avoids a flash of
+    // the unsubmitted state before the redirect lands.
   };
 
   const handleAddMethod = async () => {
@@ -241,22 +246,36 @@ export default function BrandPaymentsPage() {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Top up campaign wallet</DialogTitle>
-                    <DialogDescription>Use your default payment method to add funds instantly.</DialogDescription>
+                    <DialogTitle>Add funds via Safepay</DialogTitle>
+                    <DialogDescription>
+                      You&apos;ll be redirected to Safepay&apos;s secure checkout to complete payment.
+                      Funds are credited to your wallet automatically once payment is confirmed.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-3 py-3">
                     <div className="space-y-1.5">
                       <Label htmlFor="topup-amount" className={labelCls}>Amount (PKR)</Label>
-                      <Input id="topup-amount" type="number" min={1000} value={topupAmount} onChange={(e) => setTopupAmount(e.target.value)} className={inputCls} />
+                      <Input
+                        id="topup-amount"
+                        type="number"
+                        min={1000}
+                        max={10000000}
+                        value={topupAmount}
+                        onChange={(e) => setTopupAmount(e.target.value)}
+                        className={inputCls}
+                        placeholder="e.g. 50000"
+                      />
                     </div>
                     <p className="text-xs text-[#718077]">
-                      Charged to: {defaultMethod ? `${defaultMethod.label} (${defaultMethod.accountMask})` : "No default payment method"}
+                      Minimum PKR 1,000 · Maximum PKR 10,000,000 · Secured by Safepay
                     </p>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsTopupOpen(false)}>Cancel</Button>
-                    <Button onClick={() => void handleTopup()} disabled={isTopupSubmitting || !defaultMethod}>
-                      {isTopupSubmitting ? "Processing…" : "Top Up"}
+                    <Button variant="outline" onClick={() => setIsTopupOpen(false)} disabled={isTopupSubmitting}>
+                      Cancel
+                    </Button>
+                    <Button onClick={() => void handleTopup()} disabled={isTopupSubmitting}>
+                      {isTopupSubmitting ? "Redirecting…" : "Pay with Safepay →"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>

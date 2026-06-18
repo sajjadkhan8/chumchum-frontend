@@ -23,7 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { getInitials } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { pakistanCities, pakistanLanguages } from "@/lib/localization";
 import { useAuthStore } from "@/store/auth-store";
 import { creatorsService, type CreatorSocialAccountPayload } from "@/services/creators.service";
@@ -58,6 +58,16 @@ const categories = [
   "Gaming",
   "Education",
   "Entertainment",
+];
+
+const responseTimes = [
+  'Within 1 hour',
+  'Within 6 hours',
+  'Within 12 hours',
+  'Within 24 hours',
+  'Within 48 hours',
+  'Within 3 days',
+  'Within 1 week',
 ];
 
 const languages = [...pakistanLanguages];
@@ -113,16 +123,18 @@ function DesignSelect({
   onValueChange,
   options,
   capitalize,
+  placeholder,
 }: {
   value: string;
   onValueChange: (v: string) => void;
   options: string[];
   capitalize?: boolean;
+  placeholder?: string;
 }) {
   return (
     <SelectPrimitive.Root value={value} onValueChange={onValueChange}>
-      <SelectPrimitive.Trigger className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] outline-none transition-colors focus:border-[#2d6b4e]">
-        <SelectPrimitive.Value />
+      <SelectPrimitive.Trigger className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] outline-none transition-colors focus:border-[#2d6b4e] data-[placeholder]:text-[#b0bfb8]">
+        <SelectPrimitive.Value placeholder={placeholder} />
         <SelectPrimitive.Icon>
           <ChevronDown className="size-4 text-[#87938b]" />
         </SelectPrimitive.Icon>
@@ -216,6 +228,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     section === "profile" ? "profile" : section === "social" ? "social" : "preferences",
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
 
@@ -313,6 +326,30 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
   }, [user]);
 
   const handleSave = async () => {
+    const errors: Record<string, string> = {};
+
+    if (profile.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email))
+      errors.email = 'Enter a valid email address — e.g. name@example.com';
+
+    if (profile.phone && !/^\+?[\d\s\-(). ]{7,20}$/.test(profile.phone.trim()))
+      errors.phone = 'Enter a valid phone number — e.g. 0312-1234567';
+
+    if (profile.website) {
+      try {
+        const url = new URL(profile.website.trim());
+        if (!['http:', 'https:'].includes(url.protocol)) throw new Error();
+      } catch {
+        errors.website = 'Enter a valid website URL starting with https://';
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      toast.error(Object.values(errors)[0]);
+      return;
+    }
+
+    setFieldErrors({});
     setIsSaving(true);
     try {
       await creatorsService.updateMe({
@@ -323,10 +360,10 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
         city: profile.city,
         avatarUrl: profile.avatar,
         bio: profile.bio,
-        category: profile.niche || profile.categories[0],
+        category: profile.categories[0],
         coverImageUrl: profile.coverImage,
         website: profile.website,
-        niche: profile.niche,
+        niche: profile.categories[0],
         availabilityStatus: profile.availabilityStatus,
         isFiler: profile.isFiler,
         responseTime: profile.responseTime,
@@ -780,19 +817,27 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                       <p className={labelClass}>Email</p>
                       <input
                         type="email"
-                        className={inputClass}
+                        className={cn(inputClass, fieldErrors.email && 'border-[#c0392b] focus:border-[#c0392b] focus:ring-[#c0392b]/10')}
                         value={profile.email}
-                        onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
+                        onChange={(e) => {
+                          setProfile((p) => ({ ...p, email: e.target.value }));
+                          if (fieldErrors.email) setFieldErrors((prev) => { const n = { ...prev }; delete n.email; return n; });
+                        }}
                       />
+                      {fieldErrors.email && <p className="text-xs text-[#c0392b]">{fieldErrors.email}</p>}
                     </div>
                     <div className="space-y-1.5">
                       <p className={labelClass}>Phone</p>
                       <input
                         type="tel"
-                        className={inputClass}
+                        className={cn(inputClass, fieldErrors.phone && 'border-[#c0392b] focus:border-[#c0392b] focus:ring-[#c0392b]/10')}
                         value={profile.phone}
-                        onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))}
+                        onChange={(e) => {
+                          setProfile((p) => ({ ...p, phone: e.target.value }));
+                          if (fieldErrors.phone) setFieldErrors((prev) => { const n = { ...prev }; delete n.phone; return n; });
+                        }}
                       />
+                      {fieldErrors.phone && <p className="text-xs text-[#c0392b]">{fieldErrors.phone}</p>}
                     </div>
                   </div>
 
@@ -810,31 +855,25 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                       <div className="relative">
                         <Globe className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#87938b]" />
                         <input
-                          className={inputClass + " pl-8"}
+                          className={cn(inputClass, 'pl-8', fieldErrors.website && 'border-[#c0392b] focus:border-[#c0392b] focus:ring-[#c0392b]/10')}
                           value={profile.website}
-                          onChange={(e) => setProfile((p) => ({ ...p, website: e.target.value }))}
+                          onChange={(e) => {
+                            setProfile((p) => ({ ...p, website: e.target.value }));
+                            if (fieldErrors.website) setFieldErrors((prev) => { const n = { ...prev }; delete n.website; return n; });
+                          }}
                         />
                       </div>
+                      {fieldErrors.website && <p className="text-xs text-[#c0392b]">{fieldErrors.website}</p>}
                     </div>
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <p className={labelClass}>Niche / Category</p>
-                      <input
-                        className={inputClass}
-                        value={profile.niche}
-                        onChange={(e) => setProfile((p) => ({ ...p, niche: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <p className={labelClass}>Response Time</p>
-                      <input
-                        className={inputClass}
-                        value={profile.responseTime}
-                        onChange={(e) => setProfile((p) => ({ ...p, responseTime: e.target.value }))}
-                      />
-                    </div>
+                  <div className="space-y-1.5">
+                    <p className={labelClass}>Response Time</p>
+                    <DesignSelect
+                      value={profile.responseTime}
+                      onValueChange={(v) => setProfile((p) => ({ ...p, responseTime: v }))}
+                      options={responseTimes}
+                    />
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -953,7 +992,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
               {/* Categories */}
               <div className={panelClass}>
                 <PanelHeader eyebrow="Content" title="Categories" />
-                <p className="mb-3 text-sm text-[#496159]">Select the niches you create content for</p>
+                <p className="mb-3 text-sm text-[#496159]">Select all the niches you create content in</p>
                 <div className="flex flex-wrap gap-2">
                   {categories.map((category) => (
                     <button

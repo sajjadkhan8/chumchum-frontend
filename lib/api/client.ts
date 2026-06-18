@@ -85,6 +85,13 @@ export const tokenStorage = {
   },
 };
 
+const redirectToLogin = () => {
+  tokenStorage.clear();
+  if (typeof window !== 'undefined') {
+    window.location.href = '/login';
+  }
+};
+
 let refreshPromise: Promise<string | null> | null = null;
 
 const refreshAccessToken = async (): Promise<string | null> => {
@@ -176,11 +183,13 @@ export const apiClient = {
       credentials: 'include',
     });
 
-    if (response.status === 401 && auth && allowRetry) {
+    if ((response.status === 401 || response.status === 403) && auth && allowRetry) {
       const nextToken = await refreshAccessToken();
       if (nextToken) {
         return this.request<T>(path, options, false);
       }
+      redirectToLogin();
+      throw new ApiError('Session expired. Please log in again.', response.status);
     }
 
     const contentType = response.headers.get('content-type') || '';

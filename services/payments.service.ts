@@ -120,4 +120,47 @@ export const paymentsService = {
   async updateBrandPayoutControls(payload: BrandPayoutControls): Promise<BrandPayoutControls> {
     return apiClient.patch<BrandPayoutControls>('/api/v1/brands/me/payments/controls', payload);
   },
+
+  // ─── Safepay Express Checkout ──────────────────────────────────────────────
+
+  /**
+   * Initiates a Safepay checkout session for a wallet top-up.
+   * Returns a checkoutUrl to redirect the brand to Safepay's hosted payment page.
+   */
+  async initiateSafepayTopup(amount: number): Promise<SafepayCheckoutSession> {
+    return apiClient.post<SafepayCheckoutSession>('/api/v1/payments/safepay/initiate-topup', { amount });
+  },
+
+  /**
+   * Polls the status of a Safepay payment session.
+   * Call after redirect from Safepay until status is 'completed' or 'failed'.
+   */
+  async getSafepaySessionStatus(sessionId: string): Promise<SafepaySessionStatus> {
+    return apiClient.get<SafepaySessionStatus>(`/api/v1/payments/safepay/session/${sessionId}`);
+  },
+
+  /** Records a cancellation when the brand returns via the cancel URL. */
+  async cancelSafepaySession(sessionId: string): Promise<void> {
+    await apiClient.post(`/api/v1/payments/safepay/session/${sessionId}/cancel`, {});
+  },
 };
+
+// ─── Safepay types ─────────────────────────────────────────────────────────────
+
+export interface SafepayCheckoutSession {
+  sessionId: string;
+  checkoutUrl: string;
+  trackerToken: string;
+  expiresAt: string;
+}
+
+export type SafepayPaymentStatus = 'initiated' | 'completed' | 'failed' | 'cancelled' | 'expired';
+
+export interface SafepaySessionStatus {
+  sessionId: string;
+  status: SafepayPaymentStatus;
+  amountPkr: number;
+  paymentType: 'wallet_topup' | 'order_payment';
+  completedAt: string | null;
+  failureReason: string | null;
+}

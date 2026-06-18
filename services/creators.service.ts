@@ -108,6 +108,10 @@ export const creatorsService = {
       instagram_url: payload.instagramUrl,
       youtube_url: payload.youtubeUrl,
       facebook_url: payload.facebookUrl,
+      rate_card_reel: payload.rateCardReel,
+      rate_card_story: payload.rateCardStory,
+      rate_card_post: payload.rateCardPost,
+      rate_card_video: payload.rateCardVideo,
     });
 
     return mapCreator(response as never);
