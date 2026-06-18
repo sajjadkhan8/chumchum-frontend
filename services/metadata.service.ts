@@ -43,7 +43,7 @@ export const defaultCreatorFilterMetadata: CreatorFilterMetadata = {
     'Reviews',
   ],
   cities: ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'],
-  platforms: ['instagram', 'tiktok', 'youtube', 'facebook'],
+  platforms: ['instagram', 'tiktok', 'youtube', 'facebook', 'snapchat'],
   dealTypes: [
     { value: 'paid', label: 'Paid' },
     { value: 'barter', label: 'Barter' },

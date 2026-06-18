@@ -415,7 +415,7 @@ export const categories = [
 
 export const cities: City[] = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'];
 
-export const platforms: Platform[] = ['instagram', 'tiktok', 'youtube', 'facebook'];
+export const platforms: Platform[] = ['instagram', 'tiktok', 'youtube', 'facebook', 'snapchat'];
 
 export const dealTypes: { value: DealType; label: string }[] = [
   { value: 'paid', label: 'Paid' },

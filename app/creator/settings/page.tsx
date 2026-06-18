@@ -244,6 +244,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     platform: 'instagram',
   });
   const [isAddingPortfolioItem, setIsAddingPortfolioItem] = useState(false);
+  const [portfolioErrors, setPortfolioErrors] = useState<{ mediaUrl?: string; thumbnailUrl?: string }>({});
 
   const [creatorPreferences, setCreatorPreferences] = useState({
     acceptsBarter: true,
@@ -568,24 +569,41 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     }));
   };
 
+  const isValidUrl = (value: string) => {
+    try {
+      const url = new URL(value.trim());
+      return ['http:', 'https:'].includes(url.protocol);
+    } catch {
+      return false;
+    }
+  };
+
   const handleAddPortfolioItem = async () => {
+    const errs: { mediaUrl?: string; thumbnailUrl?: string } = {};
     if (!newPortfolioItem.mediaUrl.trim()) {
-      toast.error("Media URL is required");
+      errs.mediaUrl = 'Media URL is required';
+    } else if (!isValidUrl(newPortfolioItem.mediaUrl)) {
+      errs.mediaUrl = 'Enter a valid URL starting with https://';
+    }
+    if (newPortfolioItem.thumbnailUrl.trim() && !isValidUrl(newPortfolioItem.thumbnailUrl)) {
+      errs.thumbnailUrl = 'Enter a valid URL starting with https://';
+    }
+    if (Object.keys(errs).length > 0) {
+      setPortfolioErrors(errs);
+      toast.error(Object.values(errs)[0]);
       return;
     }
+    setPortfolioErrors({});
     setIsAddingPortfolioItem(true);
     try {
-      const added = await creatorsService.addPortfolioItem({
+      await creatorsService.addPortfolioItem({
         type: newPortfolioItem.type,
-        thumbnailUrl: newPortfolioItem.thumbnailUrl || newPortfolioItem.mediaUrl,
-        mediaUrl: newPortfolioItem.mediaUrl,
+        thumbnailUrl: newPortfolioItem.thumbnailUrl.trim() || newPortfolioItem.mediaUrl.trim(),
+        mediaUrl: newPortfolioItem.mediaUrl.trim(),
         platform: newPortfolioItem.platform,
       });
-      setPortfolioItems((items) => [
-        ...items,
-        { id: added.id, type: added.type, thumbnailUrl: added.thumbnailUrl, mediaUrl: added.mediaUrl, platform: added.platform },
-      ]);
       setNewPortfolioItem({ type: 'image', thumbnailUrl: '', mediaUrl: '', platform: 'instagram' });
+      await loadCreatorProfile();
       toast.success("Portfolio item added");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not add portfolio item";
@@ -1090,7 +1108,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                       <DesignSelect
                         value={newPortfolioItem.platform}
                         onValueChange={(v) => setNewPortfolioItem((p) => ({ ...p, platform: v }))}
-                        options={['instagram', 'tiktok', 'youtube', 'facebook']}
+                        options={['instagram', 'tiktok', 'youtube', 'facebook', 'snapchat']}
                         capitalize
                       />
                     </div>
@@ -1098,20 +1116,28 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                   <div className="space-y-1.5">
                     <p className={labelClass}>Media URL</p>
                     <input
-                      className={inputClass}
+                      className={cn(inputClass, portfolioErrors.mediaUrl && 'border-[#c0392b] focus:border-[#c0392b] focus:ring-[#c0392b]/10')}
                       placeholder="https://..."
                       value={newPortfolioItem.mediaUrl}
-                      onChange={(e) => setNewPortfolioItem((p) => ({ ...p, mediaUrl: e.target.value }))}
+                      onChange={(e) => {
+                        setNewPortfolioItem((p) => ({ ...p, mediaUrl: e.target.value }));
+                        if (portfolioErrors.mediaUrl) setPortfolioErrors((prev) => ({ ...prev, mediaUrl: undefined }));
+                      }}
                     />
+                    {portfolioErrors.mediaUrl && <p className="text-xs text-[#c0392b]">{portfolioErrors.mediaUrl}</p>}
                   </div>
                   <div className="space-y-1.5">
                     <p className={labelClass}>Thumbnail URL <span className="normal-case font-normal text-[#b0bfb8]">(optional — defaults to media URL)</span></p>
                     <input
-                      className={inputClass}
+                      className={cn(inputClass, portfolioErrors.thumbnailUrl && 'border-[#c0392b] focus:border-[#c0392b] focus:ring-[#c0392b]/10')}
                       placeholder="https://..."
                       value={newPortfolioItem.thumbnailUrl}
-                      onChange={(e) => setNewPortfolioItem((p) => ({ ...p, thumbnailUrl: e.target.value }))}
+                      onChange={(e) => {
+                        setNewPortfolioItem((p) => ({ ...p, thumbnailUrl: e.target.value }));
+                        if (portfolioErrors.thumbnailUrl) setPortfolioErrors((prev) => ({ ...prev, thumbnailUrl: undefined }));
+                      }}
                     />
+                    {portfolioErrors.thumbnailUrl && <p className="text-xs text-[#c0392b]">{portfolioErrors.thumbnailUrl}</p>}
                   </div>
                   <button
                     type="button"
