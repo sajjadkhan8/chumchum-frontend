@@ -156,12 +156,9 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   };
 
   const publicNavLinks = [
-    { href: '/brand/explore', label: 'Explore Creators' },
-    { href: '/brand/ambassadors', label: 'Platform Ambassadors' },
-    { href: '/#how-it-works', label: 'How It Works' },
-    { href: '/about', label: 'About' },
-    { href: '/help', label: 'Help Center' },
-    { href: '/resources', label: 'Resources' },
+    { href: '/#how-it-works', label: 'How it works' },
+    { href: '/#opportunity', label: 'Opportunities' },
+    { href: '/#creators', label: 'Creators' },
     { href: '/pricing', label: 'Pricing' },
   ];
 
@@ -562,13 +559,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
           ) : (
             <>
               <Link href="/login" className="hidden sm:block">
-                <Button variant="ghost" className="font-semibold text-[#526259] hover:bg-[#e8ede9] hover:text-[#1e3d2e]">Log in</Button>
-              </Link>
-              <Link href="/brand/explore" className="hidden lg:block">
-                <Button variant="outline" className="rounded-full border-[#d1ddd6] font-semibold text-[#526259] hover:border-[#2d6b4e] hover:text-[#2d6b4e]">Find Creators</Button>
+                <Button variant="ghost" className="font-semibold text-[#526259] hover:bg-[#e8ede9] hover:text-[#1e3d2e]">Sign in</Button>
               </Link>
               <Link href="/signup">
-                <Button className="rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]">Sign Up</Button>
+                <Button className="rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]">Join ZingZing</Button>
               </Link>
             </>
           )}
@@ -632,17 +626,12 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
                   <>
                     <SheetClose asChild>
                       <Link href="/login" className="min-h-11 rounded-xl px-3 py-2 text-base font-semibold text-[#526259] transition-colors hover:bg-[#e8ede9] hover:text-[#1e3d2e]">
-                        Log in
+                        Sign in
                       </Link>
                     </SheetClose>
                     <SheetClose asChild>
                       <Link href="/signup">
-                        <Button className="mt-3 min-h-11 w-full rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]">Create Account</Button>
-                      </Link>
-                    </SheetClose>
-                    <SheetClose asChild>
-                      <Link href="/brand/explore">
-                        <Button className="mt-2 min-h-11 w-full rounded-full border-[#d1ddd6] font-semibold text-[#526259] hover:border-[#2d6b4e] hover:text-[#2d6b4e]" variant="outline">Find Creators</Button>
+                        <Button className="mt-3 min-h-11 w-full rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]">Join ZingZing</Button>
                       </Link>
                     </SheetClose>
                   </>
