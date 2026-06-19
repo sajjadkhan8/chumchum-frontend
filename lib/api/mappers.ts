@@ -251,6 +251,8 @@ interface BackendBrandResponse {
     id?: string;
     city?: string;
   };
+  total_campaigns?: number;
+  active_orders?: number;
 }
 
 export const mapBrand = (input: BackendBrandResponse): Brand => ({
@@ -277,8 +279,8 @@ export const mapBrand = (input: BackendBrandResponse): Brand => ({
   contactName: input.contact_name,
   contactEmail: input.contact_email,
   contactPhone: input.contact_phone,
-  totalCampaigns: 0,
-  activeOrders: 0,
+  totalCampaigns: input.total_campaigns ?? 0,
+  activeOrders: input.active_orders ?? 0,
 });
 
 interface BackendPackageResponse {

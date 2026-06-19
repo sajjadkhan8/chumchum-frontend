@@ -118,9 +118,10 @@ export default function BrandCampaignsPage() {
   const [totalElements, setTotalElements] = useState(0);
   const [brand, setBrand] = useState<Brand | null>(null);
 
-  const load = useCallback(async (nextPage = 0, append = false) => {
+  const load = useCallback(async (nextPage = 0, append = false, tab: 'all' | BrandCampaignStatus = 'all') => {
     setIsLoading(true);
-    const result = await campaignsService.getBrandCampaigns(nextPage, 20).catch(() => ({ content: [], totalElements: 0, totalPages: 1, last: true }));
+    const status = tab === 'all' ? undefined : tab.toUpperCase();
+    const result = await campaignsService.getBrandCampaigns(nextPage, 20, status).catch(() => ({ content: [], totalElements: 0, totalPages: 1, last: true }));
     setCampaigns(append ? (prev) => [...prev, ...result.content] : result.content);
     setTotalElements(result.totalElements);
     setTotalPages(result.totalPages);
@@ -129,19 +130,21 @@ export default function BrandCampaignsPage() {
   }, []);
 
   useEffect(() => {
-    void load(0);
+    void load(0, false, 'all');
     brandsService.getMe().then(setBrand).catch(() => null);
   }, [load]);
 
-  const filtered = useMemo(() => {
-    if (activeTab === 'all') return campaigns;
-    return campaigns.filter((item) => item.status === activeTab);
-  }, [activeTab, campaigns]);
+  useEffect(() => {
+    void load(0, false, activeTab);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const filtered = campaigns;
 
   const statusCounts = useMemo(() => {
     return campaigns.reduce(
       (counts, campaign) => {
-        counts[campaign.status] += 1;
+        counts[campaign.status] = (counts[campaign.status] || 0) + 1;
         return counts;
       },
       { draft: 0, published: 0, paused: 0, closed: 0, archived: 0 } as Record<BrandCampaignStatus, number>
@@ -244,7 +247,7 @@ export default function BrandCampaignsPage() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
               {statusTabs.map((tab) => {
-                const count = tab.value === 'all' ? campaigns.length : statusCounts[tab.value];
+                const count = tab.value === 'all' ? totalElements : (activeTab === tab.value ? totalElements : statusCounts[tab.value]);
                 const isActive = activeTab === tab.value;
                 return (
                   <button
@@ -365,11 +368,11 @@ export default function BrandCampaignsPage() {
             </div>
           )}
 
-          {page < totalPages - 1 && activeTab === 'all' && (
+          {page < totalPages - 1 && (
             <div className="mt-4 text-center">
               <Button
                 variant="outline"
-                onClick={() => void load(page + 1, true)}
+                onClick={() => void load(page + 1, true, activeTab)}
                 disabled={isLoading}
                 className="rounded-full border-[#d9e0d8] bg-white px-6 font-black text-[#185c39] hover:bg-[#e7f0ea]"
               >

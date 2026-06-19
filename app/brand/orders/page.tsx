@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   AlertCircle,
@@ -20,7 +20,6 @@ import {
   Sparkles,
   Star,
   TrendingUp,
-  Users,
   Wallet,
   XCircle,
 } from "lucide-react";
@@ -151,13 +150,19 @@ function HeroStat({ label, value, icon: Icon }: { label: string; value: string; 
   );
 }
 
-export default function BrandOrdersPage() {
+function BrandOrdersContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const deepLinkOrderId = searchParams.get("orderId");
+  const [selectedOrder, setSelectedOrder] = useState<string | null>(deepLinkOrderId);
+  const deepLinkScrolledRef = useRef(false);
   const [reviewTarget, setReviewTarget] = useState<Order | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
@@ -167,22 +172,39 @@ export default function BrandOrdersPage() {
   const [isSubmittingRevision, setIsSubmittingRevision] = useState(false);
   const [downloadingReceiptIds, setDownloadingReceiptIds] = useState<Set<string>>(new Set());
 
-  const loadOrders = async () => {
-    setIsLoading(true);
+  const loadOrders = async (nextPage = 0, append = false) => {
+    if (append) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+    }
     try {
-      const result = await ordersService.getAll();
-      setOrders(result.orders);
+      const result = await ordersService.getAll({ page: nextPage, limit: 20 });
+      setOrders(append ? (prev) => [...prev, ...result.orders] : result.orders);
+      setPage(nextPage);
+      setHasMore(result.hasMore);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load orders";
       toast.error(message);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    void loadOrders();
+    void loadOrders(0);
   }, []);
+
+  useEffect(() => {
+    if (deepLinkOrderId && orders.length > 0 && !deepLinkScrolledRef.current) {
+      const el = document.getElementById(`order-${deepLinkOrderId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        deepLinkScrolledRef.current = true;
+      }
+    }
+  }, [deepLinkOrderId, orders]);
 
   const filteredOrders = orders.filter((order) => {
     const creatorName = order.creator.name.toLowerCase();
@@ -419,6 +441,7 @@ export default function BrandOrdersPage() {
 
             return (
               <motion.article
+                id={`order-${order.id}`}
                 key={order.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -426,6 +449,7 @@ export default function BrandOrdersPage() {
                 className={cn(
                   "rounded-[1.45rem] border bg-white shadow-[0_14px_45px_rgba(38,70,50,0.055)] transition hover:-translate-y-0.5 hover:border-[#b7c8bd] hover:shadow-[0_22px_70px_rgba(38,70,50,0.10)]",
                   isExpanded ? "border-[#185c39] ring-4 ring-[#185c39]/10" : "border-[#d9e0d8]",
+                  deepLinkOrderId === order.id ? "ring-4 ring-[#e6aa38]/40" : "",
                 )}
               >
                 <div
@@ -650,6 +674,19 @@ export default function BrandOrdersPage() {
               </Button>
             </div>
           )}
+
+          {hasMore && !isLoading && (
+            <div className="mt-4 text-center">
+              <Button
+                variant="outline"
+                onClick={() => void loadOrders(page + 1, true)}
+                disabled={isLoadingMore}
+                className="rounded-full border-[#d9e0d8] bg-white px-6 font-black text-[#185c39] hover:bg-[#e7f0ea]"
+              >
+                {isLoadingMore ? "Loading…" : "Load more orders"}
+              </Button>
+            </div>
+          )}
         </section>
 
         <Dialog open={Boolean(reviewTarget)} onOpenChange={(open) => !open && setReviewTarget(null)}>
@@ -727,5 +764,13 @@ export default function BrandOrdersPage() {
         </Dialog>
       </div>
     </div>
+  );
+}
+
+export default function BrandOrdersPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#fbfaf5]" />}>
+      <BrandOrdersContent />
+    </Suspense>
   );
 }

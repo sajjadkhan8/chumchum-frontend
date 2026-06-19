@@ -299,8 +299,8 @@ export const campaignsService = {
     return mapCampaign(response);
   },
 
-  async getBrandCampaigns(page = 0, size = 20): Promise<{ content: BrandCampaign[]; totalElements: number; totalPages: number; last: boolean }> {
-    const response = await apiClient.get<{ content: BackendBrandCampaign[]; totalElements: number; totalPages: number; last: boolean }>('/api/v1/brand/campaigns', { query: { page, size } });
+  async getBrandCampaigns(page = 0, size = 20, status?: string): Promise<{ content: BrandCampaign[]; totalElements: number; totalPages: number; last: boolean }> {
+    const response = await apiClient.get<{ content: BackendBrandCampaign[]; totalElements: number; totalPages: number; last: boolean }>('/api/v1/brand/campaigns', { query: { page, size, status: status || undefined } });
     return {
       content: (response.content || []).map(mapCampaign),
       totalElements: response.totalElements || 0,

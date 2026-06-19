@@ -15,6 +15,9 @@ import {
   ShieldCheck,
   Layers,
   UserCircle2,
+  History,
+  CalendarClock,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,12 +33,14 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { brandsService } from "@/services/brands.service";
+import { apiClient } from "@/lib/api/client";
 import { usersService } from "@/services/users.service";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 
 const TABS = [
   { id: "billing", label: "Billing", icon: CreditCard },
+  { id: "subscriptions", label: "Subscriptions", icon: History },
   { id: "campaigns", label: "Campaigns", icon: Layers },
   { id: "verification", label: "Verification", icon: CheckCircle },
   { id: "notifications", label: "Notifications", icon: Bell },
@@ -119,6 +124,18 @@ function ToggleRow({
   );
 }
 
+interface SubscriptionRecord {
+  id: string;
+  packageTitle: string;
+  status: string;
+  interval: string;
+  duration: number;
+  cyclesCompleted: number;
+  nextRenewalAt?: string;
+  cancelledAt?: string;
+  createdAt?: string;
+}
+
 function BrandSettingsPageContent() {
   const searchParams = useSearchParams();
   const { logout } = useAuthStore();
@@ -157,6 +174,9 @@ function BrandSettingsPageContent() {
     confirmPassword: "",
     deleteConfirmPassword: "",
   });
+
+  const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>([]);
+  const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
 
   const loadBrandProfile = useCallback(async () => {
     try {
@@ -256,6 +276,18 @@ function BrandSettingsPageContent() {
     }
   };
 
+  const loadSubscriptions = useCallback(async () => {
+    setSubscriptionsLoading(true);
+    try {
+      const data = await apiClient.get<SubscriptionRecord[]>("/api/v1/subscriptions");
+      setSubscriptions(Array.isArray(data) ? data : []);
+    } catch {
+      // silently fall back
+    } finally {
+      setSubscriptionsLoading(false);
+    }
+  }, []);
+
   const handlePasswordChange = async () => {
     if (!security.currentPassword || !security.newPassword || !security.confirmPassword) {
       toast.error("All password fields are required");
@@ -304,6 +336,13 @@ function BrandSettingsPageContent() {
     void loadBrandProfile();
     void loadNotificationPreferences();
   }, [loadBrandProfile, loadNotificationPreferences]);
+
+  useEffect(() => {
+    if (activeTab === "subscriptions" && subscriptions.length === 0 && !subscriptionsLoading) {
+      void loadSubscriptions();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   useEffect(() => {
     const tab = searchParams.get("tab") as TabId | null;
@@ -393,6 +432,69 @@ function BrandSettingsPageContent() {
               </Button>
             </SectionCard>
           </div>
+        )}
+
+        {/* ── Subscriptions ── */}
+        {activeTab === "subscriptions" && (
+          <SectionCard title="Subscription History" description="Past and active platform subscriptions" icon={History}>
+            {subscriptionsLoading ? (
+              <div className="flex items-center justify-center py-10 text-sm text-[#8fa098]">
+                <RefreshCw className="mr-2 size-4 animate-spin" />
+                Loading subscriptions…
+              </div>
+            ) : subscriptions.length === 0 ? (
+              <div className="rounded-[1.15rem] border border-dashed border-[#d9e0d8] p-6 text-center">
+                <History className="mx-auto size-8 text-[#b77a12] opacity-60" />
+                <p className="mt-3 text-sm font-semibold text-[#526259]">No subscriptions yet</p>
+                <p className="mt-1 text-[11px] text-[#8fa098]">Your plan history will appear here once you subscribe.</p>
+                <Button asChild size="sm" className="mt-4 rounded-full bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#185c39]">
+                  <Link href="/pricing">View Plans</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#f0f4f0]">
+                {subscriptions.map((sub) => {
+                  const statusColor: Record<string, string> = {
+                    ACTIVE: "bg-[#e7f0ea] text-[#185c39]",
+                    CANCELLED: "bg-[#f9ebe8] text-[#9d3c36]",
+                    EXPIRED: "bg-[#f0f0f0] text-[#6b7c72]",
+                    TRIAL: "bg-[#fff1cd] text-[#8b5e12]",
+                  };
+                  const badge = statusColor[sub.status] ?? "bg-[#f0f0f0] text-[#526259]";
+                  return (
+                    <div key={sub.id} className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                      <div className="min-w-0 space-y-1">
+                        <p className="text-sm font-bold text-[#1a2e22]">{sub.packageTitle}</p>
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#8fa098]">
+                          <span className="capitalize">{sub.interval.toLowerCase()} · {sub.duration} {sub.interval.toLowerCase() === "monthly" ? "mo" : "yr"}</span>
+                          <span>·</span>
+                          <span>{sub.cyclesCompleted} cycle{sub.cyclesCompleted !== 1 ? "s" : ""} completed</span>
+                          {sub.nextRenewalAt && sub.status === "ACTIVE" && (
+                            <>
+                              <span>·</span>
+                              <span className="inline-flex items-center gap-1">
+                                <CalendarClock className="size-3" />
+                                Renews {new Date(sub.nextRenewalAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
+                              </span>
+                            </>
+                          )}
+                          {sub.cancelledAt && (
+                            <>
+                              <span>·</span>
+                              <span>Cancelled {new Date(sub.cancelledAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold", badge)}>
+                        {sub.status.charAt(0) + sub.status.slice(1).toLowerCase()}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </SectionCard>
         )}
 
         {/* ── Campaigns ── */}

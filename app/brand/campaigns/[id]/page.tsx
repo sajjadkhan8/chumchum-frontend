@@ -241,7 +241,7 @@ export default function BrandCampaignDetailPage() {
                       <div className="flex flex-wrap gap-2">
                         {reaction.orderId ? (
                           <Button size="sm" asChild>
-                            <Link href="/brand/orders">View Order</Link>
+                            <Link href={`/brand/orders?orderId=${reaction.orderId}`}>View Order</Link>
                           </Button>
                         ) : null}
                         {!['accepted', 'rejected', 'withdrawn'].includes(reaction.status) ? (
