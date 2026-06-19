@@ -2,29 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Banknote, Sparkles, Send, Loader2 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { Gift, Banknote, Sparkles, Send, Loader2, ChevronDown } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from 'sonner';
 import type { BarterType, Creator, DealType } from '@/types';
-import { cn, formatPrice } from '@/lib/utils';
+import { cn, formatFollowers, formatPrice } from '@/lib/utils';
 import { messagesService } from '@/services/messages.service';
 import { metadataService, defaultCreatorFilterMetadata } from '@/services/metadata.service';
 
@@ -35,26 +18,55 @@ interface QuickDealModalProps {
   onCreated?: (result: { conversationId: string; messageId: string; offerId: string }) => void;
 }
 
-const dealTypeOptions: { value: DealType; label: string; icon: React.ElementType; description: string }[] = [
+type DealOption = {
+  value: DealType;
+  label: string;
+  icon: React.ElementType;
+  description: string;
+  selectedBg: string;
+  selectedBorder: string;
+  selectedText: string;
+  iconBg: string;
+};
+
+const dealTypeOptions: DealOption[] = [
   {
     value: 'paid',
-    label: 'Paid Deal',
+    label: 'Paid',
     icon: Banknote,
-    description: 'Pay for content creation',
+    description: 'Pay for content',
+    selectedBg: 'bg-[#e7f0ea]',
+    selectedBorder: 'border-[#2d6b4e]',
+    selectedText: 'text-[#185c39]',
+    iconBg: 'bg-[#2d6b4e]',
   },
   {
     value: 'barter',
-    label: 'Barter Deal',
+    label: 'Barter',
     icon: Gift,
-    description: 'Exchange products/services',
+    description: 'Exchange products',
+    selectedBg: 'bg-[#f7e8c8]',
+    selectedBorder: 'border-[#e6aa38]',
+    selectedText: 'text-[#8b5e12]',
+    iconBg: 'bg-[#e6aa38]',
   },
   {
     value: 'hybrid',
-    label: 'Hybrid Deal',
+    label: 'Hybrid',
     icon: Sparkles,
-    description: 'Combine cash and barter',
+    description: 'Cash + barter',
+    selectedBg: 'bg-[#e7f0ea]',
+    selectedBorder: 'border-[#2d6b4e]',
+    selectedText: 'text-[#185c39]',
+    iconBg: 'bg-[#2d6b4e]',
   },
 ];
+
+const inputCls =
+  'h-10 w-full rounded-xl border border-[#d9e0d8] bg-[#f4f2e9] px-3 text-sm text-[#1e3d2e] placeholder:text-[#8fa098] focus:border-[#2d6b4e] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2d6b4e]/15 transition-colors';
+const labelCls = 'mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-[#8fa098]';
+const textareaCls =
+  'w-full rounded-xl border border-[#d9e0d8] bg-[#f4f2e9] px-3 py-2.5 text-sm text-[#1e3d2e] placeholder:text-[#8fa098] focus:border-[#2d6b4e] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2d6b4e]/15 resize-none transition-colors';
 
 export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDealModalProps) {
   const [dealType, setDealType] = useState<DealType>('paid');
@@ -74,7 +86,6 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
       const metadata = await metadataService.getCreatorFilterMetadata();
       setBarterTypeOptions(metadata.barterTypes);
     };
-
     void loadBarterTypes();
   }, []);
 
@@ -83,19 +94,16 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
       toast.error('Please add a message before sending the offer.');
       return;
     }
-
     if ((dealType === 'paid' || dealType === 'hybrid') && !budget) {
       toast.error('Please enter a budget for paid or hybrid deals.');
       return;
     }
-
     if ((dealType === 'barter' || dealType === 'hybrid') && !barterDescription.trim()) {
       toast.error('Please describe your barter offer.');
       return;
     }
 
     setIsSubmitting(true);
-
     try {
       const primaryPlatform = creator.platforms?.[0]?.platform?.toUpperCase() ?? 'INSTAGRAM';
       const result = await messagesService.createQuickDeal({
@@ -110,11 +118,10 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
         platform: primaryPlatform,
       });
 
-      toast.success('Offer sent successfully!', {
-        description: `${creator.name} will be notified of your ${dealType} deal request.`,
+      toast.success('Offer sent!', {
+        description: `${creator.name} will be notified of your ${dealType} deal offer.`,
       });
 
-      // Reset form
       setDealType('paid');
       setBudget('');
       setBarterDescription('');
@@ -125,185 +132,174 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
       onCreated?.(result);
       onClose();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to send offer';
-      toast.error(errorMessage);
+      toast.error(error instanceof Error ? error.message : 'Failed to send offer');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const availableDealTypes = dealTypeOptions.filter((option) =>
-    creator.dealTypes.includes(option.value)
-  );
+  const availableDealTypes = dealTypeOptions.filter((opt) => creator.dealTypes.includes(opt.value));
+  const cols = availableDealTypes.length === 1 ? 'grid-cols-1' : availableDealTypes.length === 2 ? 'grid-cols-2' : 'grid-cols-3';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-hidden rounded-2xl p-0 sm:max-h-[90dvh] sm:max-w-lg">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl">Quick Deal</DialogTitle>
-            <DialogDescription>
-              Send a collaboration offer to {creator.name}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="mt-3 flex items-center gap-3 sm:mt-4">
-            <Avatar className="h-12 w-12 border-2 border-background">
+      <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-hidden rounded-[1.75rem] p-0 sm:max-h-[90dvh] sm:max-w-lg [&>button]:text-white/70 [&>button]:hover:text-white">
+
+        {/* Dark green header */}
+        <div className="bg-[#1e3d2e] px-5 pb-5 pt-5 sm:px-6">
+          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-[#f0c56e]">
+            <span className="size-1.5 rounded-full bg-[#e6aa38]" />
+            Quick Deal
+          </div>
+          <p className="text-sm text-[#8fa098]">Send a collaboration offer to</p>
+          <div className="mt-3 flex items-center gap-3">
+            <Avatar className="h-12 w-12 ring-2 ring-white/20 ring-offset-2 ring-offset-[#1e3d2e]">
               <AvatarImage src={creator.avatar} alt={creator.name} />
-              <AvatarFallback>{creator.name.charAt(0)}</AvatarFallback>
+              <AvatarFallback className="bg-[#244c39] text-sm font-extrabold text-white">
+                {creator.name.charAt(0)}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-semibold">{creator.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {creator.city} • {creator.totalFollowers.toLocaleString()} followers
+              <p className="font-extrabold tracking-[-0.02em] text-white">{creator.name}</p>
+              <p className="mt-0.5 text-xs text-[#8fa098]">
+                {creator.city} · {formatFollowers(creator.totalFollowers)} followers
               </p>
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="max-h-[calc(100dvh-15rem)] space-y-5 overflow-y-auto p-4 sm:max-h-[calc(90dvh-14rem)] sm:space-y-6 sm:p-6">
-          {/* Deal Type Selection */}
+        {/* Scrollable form body */}
+        <div className="max-h-[calc(100dvh-13rem)] space-y-5 overflow-y-auto bg-white px-5 py-5 sm:max-h-[calc(90dvh-12rem)] sm:px-6 sm:py-6">
+
+          {/* Deal type selector */}
           <div>
-            <Label className="text-sm font-medium">Deal Type</Label>
-            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-              {availableDealTypes.map((option) => {
-                const Icon = option.icon;
-                const isSelected = dealType === option.value;
-                
+            <label className={labelCls}>Deal Type</label>
+            <div className={cn('mt-2 grid gap-2', cols)}>
+              {availableDealTypes.map((opt) => {
+                const Icon = opt.icon;
+                const active = dealType === opt.value;
                 return (
-                  <motion.button
-                    key={option.value}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setDealType(option.value)}
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setDealType(opt.value)}
                     className={cn(
-                      'relative flex min-h-11 flex-row items-center justify-start gap-2 rounded-xl border-2 p-3 text-left transition-all sm:min-h-0 sm:flex-col sm:justify-center sm:p-4',
-                      isSelected
-                        ? option.value === 'barter'
-                          ? 'border-accent bg-accent/10'
-                          : 'border-primary bg-primary/10'
-                        : 'border-border hover:border-muted-foreground/50'
+                      'flex flex-col items-center gap-1.5 rounded-2xl border p-3 text-center transition-all',
+                      active
+                        ? cn(opt.selectedBg, opt.selectedBorder, opt.selectedText, 'shadow-sm')
+                        : 'border-[#d9e0d8] bg-[#fbfaf5] text-[#526259] hover:border-[#b8c9be] hover:bg-[#f4f8f4]'
                     )}
                   >
-                    <Icon
-                      className={cn(
-                        'h-5 w-5',
-                        isSelected
-                          ? option.value === 'barter'
-                            ? 'text-accent-foreground'
-                            : 'text-primary'
-                          : 'text-muted-foreground'
-                      )}
-                    />
-                    <span className="text-xs font-medium sm:text-[11px]">{option.label}</span>
-                  </motion.button>
+                    <span className={cn('grid size-8 place-items-center rounded-xl text-white transition-colors', active ? opt.iconBg : 'bg-[#e7f0ea] text-[#2d6b4e]')}>
+                      <Icon className="size-4" />
+                    </span>
+                    <span className="text-[11px] font-bold leading-tight">{opt.label}</span>
+                    <span className="text-[10px] leading-tight opacity-60">{opt.description}</span>
+                  </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Budget Input (for paid and hybrid) */}
+          {/* Budget — paid / hybrid */}
           <AnimatePresence mode="wait">
             {(dealType === 'paid' || dealType === 'hybrid') && (
               <motion.div
+                key="budget"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
               >
-                <Label htmlFor="budget" className="text-sm font-medium">
-                  Budget (PKR)
-                </Label>
-                <div className="relative mt-2">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                <label htmlFor="budget" className={labelCls}>Budget (PKR)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#8fa098]">
                     PKR
                   </span>
-                  <Input
+                  <input
                     id="budget"
                     type="number"
-                    placeholder={`Min ${formatPrice(creator.minPrice || 250000)}`}
+                    placeholder={creator.minPrice ? String(creator.minPrice) : '25000'}
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
-                    className="pl-12"
+                    className={cn(inputCls, 'pl-12')}
                   />
                 </div>
                 {creator.minPrice && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Creator&apos;s typical range: {formatPrice(creator.minPrice)} - {formatPrice(creator.maxPrice || creator.minPrice * 5)}
+                  <p className="mt-1.5 text-[11px] text-[#8fa098]">
+                    Typical range: {formatPrice(creator.minPrice)} – {formatPrice(creator.maxPrice || creator.minPrice * 5)}
                   </p>
                 )}
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Barter Details (for barter and hybrid) */}
+          {/* Barter details — barter / hybrid */}
           <AnimatePresence mode="wait">
             {(dealType === 'barter' || dealType === 'hybrid') && (
               <motion.div
+                key="barter"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="space-y-3"
+                className="space-y-3 overflow-hidden"
               >
-                <Label htmlFor="barter-description" className="text-sm font-medium">
-                  Barter Description
-                </Label>
-                <Textarea
-                  id="barter-description"
-                  placeholder="Describe the item/service you are offering in exchange"
-                  value={barterDescription}
-                  onChange={(e) => setBarterDescription(e.target.value)}
-                  className="min-h-[84px] resize-none"
-                />
+                <div>
+                  <label htmlFor="barter-desc" className={labelCls}>What you&apos;re offering</label>
+                  <textarea
+                    id="barter-desc"
+                    placeholder="Describe the product or service you're offering in exchange…"
+                    value={barterDescription}
+                    onChange={(e) => setBarterDescription(e.target.value)}
+                    rows={3}
+                    className={textareaCls}
+                  />
+                </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <Label className="text-sm font-medium">Barter Category</Label>
-                    <Select value={barterCategory} onValueChange={setBarterCategory}>
-                      <SelectTrigger className="mt-2">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <label className={labelCls}>Category</label>
+                    <div className="relative">
+                      <select
+                        value={barterCategory}
+                        onChange={(e) => setBarterCategory(e.target.value)}
+                        className={cn(inputCls, 'appearance-none pr-8')}
+                      >
                         {barterTypeOptions.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
+                          <option key={type.value} value={type.value}>{type.label}</option>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#8fa098]" />
+                    </div>
                   </div>
                   <div>
-                    <Label htmlFor="barter-value" className="text-sm font-medium">
-                      Estimated Value (PKR)
-                    </Label>
-                    <Input
+                    <label htmlFor="barter-value" className={labelCls}>Est. value (PKR)</label>
+                    <input
                       id="barter-value"
                       type="number"
-                      placeholder="1250000"
+                      placeholder="e.g. 15000"
                       value={barterValue}
                       onChange={(e) => setBarterValue(e.target.value)}
-                      className="mt-2"
+                      className={inputCls}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="expectation" className="text-sm font-medium">
-                    What do you need from creator?
-                  </Label>
-                  <Input
+                  <label htmlFor="expectation" className={labelCls}>What you need from creator</label>
+                  <input
                     id="expectation"
-                    placeholder="e.g., 1 reel, 3 stories, and usage rights for 30 days"
+                    type="text"
+                    placeholder="e.g. 1 reel + 3 stories, usage rights 30 days"
                     value={creatorExpectation}
                     onChange={(e) => setCreatorExpectation(e.target.value)}
-                    className="mt-2"
+                    className={inputCls}
                   />
                 </div>
 
                 {creator.barterTypes && creator.barterTypes.length > 0 && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Interested in: {creator.barterTypes.join(', ')}
+                  <p className="text-[11px] text-[#8fa098]">
+                    Creator accepts: {creator.barterTypes.join(', ')}
                   </p>
                 )}
               </motion.div>
@@ -312,37 +308,36 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
 
           {/* Message */}
           <div>
-            <Label htmlFor="message" className="text-sm font-medium">
-              Message
-            </Label>
-            <Textarea
+            <label htmlFor="message" className={labelCls}>Message</label>
+            <textarea
               id="message"
-              placeholder="Introduce yourself and describe what you're looking for..."
+              placeholder="Introduce yourself and describe the collaboration you have in mind…"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="mt-2 min-h-[100px] resize-none"
+              rows={4}
+              className={textareaCls}
             />
           </div>
 
-          {/* Submit Button */}
-          <Button
+          {/* Submit */}
+          <button
+            type="button"
             onClick={handleSubmit}
-            disabled={isSubmitting || !message}
-            className="sticky bottom-0 w-full gap-2 rounded-full"
-            size="lg"
+            disabled={isSubmitting || !message.trim()}
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#2d6b4e] text-sm font-bold text-white transition hover:bg-[#1f5239] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Sending...
+                <Loader2 className="size-4 animate-spin" />
+                Sending…
               </>
             ) : (
               <>
-                <Send className="h-4 w-4" />
-                Send Offer
+                <Send className="size-4" />
+                Send Offer to {creator.name.split(' ')[0]}
               </>
             )}
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>

@@ -15,8 +15,11 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { cn, formatFollowers, formatPrice, formatRelativeTime } from '@/lib/utils';
-import { getCreatorGlobalSearchResults, type CreatorGlobalSearchResults as CreatorGlobalSearchPayload, type CreatorSearchBrandResult } from '@/lib/search/creator-search';
-import type { BrandCampaign, Creator } from '@/types';
+import { pakistanLanguages } from '@/lib/localization';
+import { getCreatorGlobalSearchResults, rankCreators, type CreatorGlobalSearchResults as CreatorGlobalSearchPayload, type CreatorSearchBrandResult } from '@/lib/search/creator-search';
+import { creatorsService } from '@/services/creators.service';
+import { metadataService } from '@/services/metadata.service';
+import type { BrandCampaign, Creator, CreatorBadgeLevel } from '@/types';
 
 type SearchTab = 'brands' | 'campaigns' | 'creators';
 type SortOption = 'relevant' | 'top-rated' | 'budget-high';
@@ -30,7 +33,49 @@ type SearchFilters = {
   budgetRange: [number, number];
 };
 
+type CreatorSearchFilters = {
+  badgeLevel: CreatorBadgeLevel | 'any';
+  availableOnly: boolean;
+  acceptsBarterOnly: boolean;
+  languages: string[];
+  minRating: number;
+  minFollowers: number | null;
+  maxFollowers: number | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+  minEngagementRate: number;
+  minReviews: number;
+  minCompletionRate: number;
+  rateCardFormat: 'any' | 'reel' | 'story' | 'post' | 'video';
+  maxRateCard: number | null;
+};
+
 const DEFAULT_BUDGET_RANGE: [number, number] = [10000, 200000];
+
+const DEFAULT_CREATOR_FILTERS: CreatorSearchFilters = {
+  badgeLevel: 'any',
+  availableOnly: false,
+  acceptsBarterOnly: false,
+  languages: [],
+  minRating: 0,
+  minFollowers: null,
+  maxFollowers: null,
+  minPrice: null,
+  maxPrice: null,
+  minEngagementRate: 0,
+  minReviews: 0,
+  minCompletionRate: 0,
+  rateCardFormat: 'any',
+  maxRateCard: null,
+};
+
+const BADGE_LEVEL_OPTIONS: Array<{ value: CreatorBadgeLevel | 'any'; label: string }> = [
+  { value: 'any', label: 'Any' },
+  { value: 'verified', label: 'Verified' },
+  { value: 'rising_star', label: 'Rising Star' },
+  { value: 'pro', label: 'Pro' },
+  { value: 'elite', label: 'Elite' },
+];
 const SORT_OPTIONS: Array<{ value: SortOption; label: string }> = [
   { value: 'relevant', label: 'Most relevant' },
   { value: 'top-rated', label: 'Top rated' },
@@ -452,9 +497,14 @@ export function CreatorGlobalSearchResults() {
   const currentSort = (searchParams.get('sort') as SortOption | null) ?? 'relevant';
   const brandFocus = searchParams.get('brand') ?? '';
 
-  const [results, setResults] = useState<CreatorGlobalSearchPayload>({ brands: [], campaigns: [], creators: [] });
+  const [results, setResults] = useState<CreatorGlobalSearchPayload>({ brands: [], campaigns: [] });
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [creators, setCreators] = useState<Creator[]>([]);
+  const [isCreatorsLoading, setIsCreatorsLoading] = useState(true);
+  const [creatorsError, setCreatorsError] = useState(false);
+  const [creatorFilters, setCreatorFilters] = useState<CreatorSearchFilters>(DEFAULT_CREATOR_FILTERS);
+  const [metadataCategories, setMetadataCategories] = useState<string[]>([]);
   const [filters, setFilters] = useState<SearchFilters>({
     industries: [],
     contentTypes: [],
@@ -464,11 +514,19 @@ export function CreatorGlobalSearchResults() {
     budgetRange: DEFAULT_BUDGET_RANGE,
   });
 
+  // Fetch live filter metadata once on mount
+  useEffect(() => {
+    metadataService.getSearchFilters()
+      .then(({ categories }) => { if (categories.length > 0) setMetadataCategories(categories); })
+      .catch(() => {});
+  }, []);
+
+  // Fetch brands + campaigns
   useEffect(() => {
     let cancelled = false;
 
     if (!searchTerm) {
-      setResults({ brands: [], campaigns: [], creators: [] });
+      setResults({ brands: [], campaigns: [] });
       setIsLoading(false);
       setHasError(false);
       return () => { cancelled = true; };
@@ -479,11 +537,61 @@ export function CreatorGlobalSearchResults() {
 
     void getCreatorGlobalSearchResults(searchTerm)
       .then((nextResults) => { if (!cancelled) setResults(nextResults); })
-      .catch(() => { if (!cancelled) { setResults({ brands: [], campaigns: [], creators: [] }); setHasError(true); } })
+      .catch(() => { if (!cancelled) { setResults({ brands: [], campaigns: [] }); setHasError(true); } })
       .finally(() => { if (!cancelled) setIsLoading(false); });
 
     return () => { cancelled = true; };
   }, [searchTerm]);
+
+  // Fetch creators separately so creator filters don't re-trigger brand/campaign fetch
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!searchTerm) {
+      setCreators([]);
+      setIsCreatorsLoading(false);
+      setCreatorsError(false);
+      return () => { cancelled = true; };
+    }
+
+    setIsCreatorsLoading(true);
+    setCreatorsError(false);
+
+    const sortBy =
+      currentSort === 'top-rated' ? 'top_rated' :
+      currentSort === 'budget-high' ? 'budget_high' :
+      undefined;
+
+    void creatorsService.getAll({
+      search: searchTerm,
+      badgeLevel: creatorFilters.badgeLevel !== 'any' ? creatorFilters.badgeLevel as CreatorBadgeLevel : undefined,
+      availabilityStatus: creatorFilters.availableOnly ? 'available' : undefined,
+      acceptsBarter: creatorFilters.acceptsBarterOnly ? true : undefined,
+      languages: creatorFilters.languages.length > 0 ? creatorFilters.languages : undefined,
+      minRating: creatorFilters.minRating > 0 ? creatorFilters.minRating : undefined,
+      minFollowers: creatorFilters.minFollowers ?? undefined,
+      maxFollowers: creatorFilters.maxFollowers ?? undefined,
+      minPrice: creatorFilters.minPrice ?? undefined,
+      maxPrice: creatorFilters.maxPrice ?? undefined,
+      minEngagementRate: creatorFilters.minEngagementRate > 0 ? creatorFilters.minEngagementRate : undefined,
+      minReviews: creatorFilters.minReviews > 0 ? creatorFilters.minReviews : undefined,
+      minCompletionRate: creatorFilters.minCompletionRate > 0 ? creatorFilters.minCompletionRate : undefined,
+      maxRateCardReel: creatorFilters.rateCardFormat === 'reel' && creatorFilters.maxRateCard ? creatorFilters.maxRateCard : undefined,
+      maxRateCardStory: creatorFilters.rateCardFormat === 'story' && creatorFilters.maxRateCard ? creatorFilters.maxRateCard : undefined,
+      maxRateCardPost: creatorFilters.rateCardFormat === 'post' && creatorFilters.maxRateCard ? creatorFilters.maxRateCard : undefined,
+      maxRateCardVideo: creatorFilters.rateCardFormat === 'video' && creatorFilters.maxRateCard ? creatorFilters.maxRateCard : undefined,
+      sortBy,
+    })
+      .then(({ creators: fetched }) => {
+        // When the user picks an explicit sort the backend already orders correctly;
+        // skip rankCreators so text-match re-ranking doesn't scramble that order.
+        if (!cancelled) setCreators(sortBy ? fetched : rankCreators(fetched, searchTerm));
+      })
+      .catch(() => { if (!cancelled) { setCreators([]); setCreatorsError(true); } })
+      .finally(() => { if (!cancelled) setIsCreatorsLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [searchTerm, creatorFilters, currentSort]);
 
   const brandMap = useMemo(
     () => new Map(results.brands.map((brand) => [brand.id, brand] as const)),
@@ -494,7 +602,6 @@ export function CreatorGlobalSearchResults() {
     const values = [
       ...results.brands.map((b) => b.avgBudget).filter((v) => v > 0),
       ...results.campaigns.map((o) => Math.round((o.budgetMin + o.budgetMax) / 2)).filter((v) => v > 0),
-      ...results.creators.map((c) => Math.round(((c.minPrice ?? 0) + (c.maxPrice ?? c.minPrice ?? 0)) / 2)).filter((v) => v > 0),
     ];
     if (values.length === 0) return DEFAULT_BUDGET_RANGE;
     const min = Math.max(0, Math.floor(Math.min(...values) / 10000) * 10000);
@@ -507,11 +614,12 @@ export function CreatorGlobalSearchResults() {
   }, [budgetBounds, searchTerm]);
 
   const industryOptions = useMemo(() => {
-    const options = new Set<string>(FALLBACK_INDUSTRIES);
+    const seed = metadataCategories.length > 0 ? metadataCategories : FALLBACK_INDUSTRIES;
+    const options = new Set<string>(seed);
     results.brands.forEach((b) => options.add(b.industry));
     results.campaigns.forEach((o) => offerIndustryTokens(o).forEach((t) => options.add(t)));
     return Array.from(options).filter(Boolean).slice(0, 8);
-  }, [results.brands, results.campaigns]);
+  }, [results.brands, results.campaigns, metadataCategories]);
 
   const contentTypeOptions = useMemo(() => {
     const options = new Set<string>(FALLBACK_CONTENT_TYPES);
@@ -538,6 +646,14 @@ export function CreatorGlobalSearchResults() {
   const clearAllFilters = () => {
     setFilters((current) => ({ ...current, industries: [], contentTypes: [], verifiedOnly: false, fourStarPlus: false, paysOnTime: false, budgetRange: budgetBounds }));
   };
+
+  const clearCreatorFilters = () => setCreatorFilters(DEFAULT_CREATOR_FILTERS);
+
+  const toggleCreatorLanguage = (lang: string) =>
+    setCreatorFilters((c) => ({
+      ...c,
+      languages: c.languages.includes(lang) ? c.languages.filter((l) => l !== lang) : [...c.languages, lang],
+    }));
 
   const filteredBrands = useMemo(() => {
     const [budgetMin, budgetMax] = filters.budgetRange;
@@ -591,23 +707,8 @@ export function CreatorGlobalSearchResults() {
       });
   }, [brandFocus, brandMap, currentSort, filters, results.campaigns]);
 
-  const filteredCreators = useMemo(() => {
-    const [budgetMin, budgetMax] = filters.budgetRange;
-    return results.creators
-      .filter((creator) => {
-        const budget = Math.round(((creator.minPrice ?? 0) + (creator.maxPrice ?? creator.minPrice ?? 0)) / 2);
-        if (budget > 0 && (budget < budgetMin || budget > budgetMax)) return false;
-        if (!creatorMatchesIndustry(creator, filters.industries)) return false;
-        if (!creatorMatchesContentType(creator, filters.contentTypes)) return false;
-        if (filters.verifiedOnly && !creator.isVerified) return false;
-        return !filters.fourStarPlus || creator.rating >= 4;
-      })
-      .sort((l, r) => {
-        if (currentSort === 'top-rated') return r.rating - l.rating;
-        if (currentSort === 'budget-high') return (r.maxPrice ?? r.minPrice ?? 0) - (l.maxPrice ?? l.minPrice ?? 0);
-        return r.totalFollowers - l.totalFollowers;
-      });
-  }, [currentSort, filters, results.creators]);
+  // Creators are fully filtered and sorted by the backend; no client-side reduction needed.
+  const filteredCreators = creators;
 
   const activeOffersFromBrands = useMemo(
     () => dedupeOffers(filteredBrands.flatMap((b) => b.activeOffers))
@@ -616,17 +717,13 @@ export function CreatorGlobalSearchResults() {
     [brandFocus, brandMap, filteredBrands],
   );
 
-  const counts = { brands: filteredBrands.length, campaigns: filteredOffers.length, creators: filteredCreators.length };
+  const counts = { brands: filteredBrands.length, campaigns: filteredOffers.length, creators: isCreatorsLoading ? 0 : filteredCreators.length };
   const focusedBrand = brandFocus ? brandMap.get(brandFocus) : undefined;
 
   // ─── Sidebar ────────────────────────────────────────────────────────────────
 
-  const SidebarContent = (
-    <div className="space-y-7">
-      <div>
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Filters</p>
-      </div>
-
+  const BrandCampaignSidebar = (
+    <>
       <section className="space-y-3">
         <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Industry</h2>
         <div className="space-y-2.5">
@@ -704,6 +801,244 @@ export function CreatorGlobalSearchResults() {
           ))}
         </div>
       </section>
+    </>
+  );
+
+  const CreatorSidebar = (
+    <>
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Badge level</h2>
+        <div className="flex flex-wrap gap-1.5">
+          {BADGE_LEVEL_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setCreatorFilters((c) => ({ ...c, badgeLevel: opt.value }))}
+              className={cn(
+                'rounded-full border px-3 py-1 text-xs font-semibold transition',
+                creatorFilters.badgeLevel === opt.value
+                  ? 'border-[#2d6b4e] bg-[#e4f1e8] text-[#1e3d2e]'
+                  : 'border-[#d1ddd6] text-[#87938b] hover:border-[#b0c5ba] hover:text-[#1e3d2e]',
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Availability</h2>
+        <div className="space-y-2.5">
+          <label className="flex cursor-pointer items-center gap-3 text-sm text-[#496159]">
+            <Checkbox
+              checked={creatorFilters.availableOnly}
+              onCheckedChange={() => setCreatorFilters((c) => ({ ...c, availableOnly: !c.availableOnly }))}
+              className="size-4 rounded-[3px] border-[#d1ddd6] data-[state=checked]:border-[#2d6b4e] data-[state=checked]:bg-[#2d6b4e]"
+            />
+            <span className={cn(creatorFilters.availableOnly && 'font-bold text-[#2d6b4e]')}>Available now</span>
+          </label>
+          <label className="flex cursor-pointer items-center gap-3 text-sm text-[#496159]">
+            <Checkbox
+              checked={creatorFilters.acceptsBarterOnly}
+              onCheckedChange={() => setCreatorFilters((c) => ({ ...c, acceptsBarterOnly: !c.acceptsBarterOnly }))}
+              className="size-4 rounded-[3px] border-[#d1ddd6] data-[state=checked]:border-[#2d6b4e] data-[state=checked]:bg-[#2d6b4e]"
+            />
+            <span className={cn(creatorFilters.acceptsBarterOnly && 'font-bold text-[#2d6b4e]')}>Accepts barter</span>
+          </label>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Languages</h2>
+        <div className="space-y-2">
+          {pakistanLanguages.map((lang) => (
+            <label key={lang} className="flex cursor-pointer items-center gap-3 text-sm text-[#496159]">
+              <Checkbox
+                checked={creatorFilters.languages.includes(lang)}
+                onCheckedChange={() => toggleCreatorLanguage(lang)}
+                className="size-4 rounded-[3px] border-[#d1ddd6] data-[state=checked]:border-[#2d6b4e] data-[state=checked]:bg-[#2d6b4e]"
+              />
+              <span className={cn(creatorFilters.languages.includes(lang) && 'font-bold text-[#2d6b4e]')}>{lang}</span>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Min rating</h2>
+        <div className="space-y-3 pr-2">
+          <Slider
+            value={[creatorFilters.minRating]}
+            min={0}
+            max={5}
+            step={0.5}
+            onValueChange={([value]) => setCreatorFilters((c) => ({ ...c, minRating: value ?? 0 }))}
+            className="[&_[data-slot=slider-range]]:bg-[#2d6b4e] [&_[data-slot=slider-thumb]]:border-[#2d6b4e] [&_[data-slot=slider-thumb]]:bg-[#2d6b4e] [&_[data-slot=slider-track]]:bg-[#e8ede9]"
+          />
+          <div className="flex items-center justify-between text-xs text-[#87938b]">
+            <span>{creatorFilters.minRating > 0 ? `${creatorFilters.minRating}★ min` : 'Any rating'}</span>
+            <span>5★</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Follower range</h2>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#b0bfb8]">Min</label>
+            <input
+              type="number"
+              placeholder="e.g. 5000"
+              value={creatorFilters.minFollowers ?? ''}
+              onChange={(e) => setCreatorFilters((c) => ({ ...c, minFollowers: e.target.value ? Number(e.target.value) : null }))}
+              className="h-8 w-full rounded-lg border border-[#d9e0d8] bg-[#f4f2e9] px-2 text-xs text-[#1e3d2e] placeholder:text-[#b0bfb8] focus:border-[#2d6b4e] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#b0bfb8]">Max</label>
+            <input
+              type="number"
+              placeholder="e.g. 500k"
+              value={creatorFilters.maxFollowers ?? ''}
+              onChange={(e) => setCreatorFilters((c) => ({ ...c, maxFollowers: e.target.value ? Number(e.target.value) : null }))}
+              className="h-8 w-full rounded-lg border border-[#d9e0d8] bg-[#f4f2e9] px-2 text-xs text-[#1e3d2e] placeholder:text-[#b0bfb8] focus:border-[#2d6b4e] focus:outline-none"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Price range</h2>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#b0bfb8]">Min (Rs)</label>
+            <input
+              type="number"
+              min={0}
+              placeholder="e.g. 5000"
+              value={creatorFilters.minPrice ?? ''}
+              onChange={(e) => setCreatorFilters((c) => ({ ...c, minPrice: e.target.value ? Math.max(0, Number(e.target.value)) : null }))}
+              className="h-8 w-full rounded-lg border border-[#d9e0d8] bg-[#f4f2e9] px-2 text-xs text-[#1e3d2e] placeholder:text-[#b0bfb8] focus:border-[#2d6b4e] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#b0bfb8]">Max (Rs)</label>
+            <input
+              type="number"
+              min={0}
+              placeholder="e.g. 50000"
+              value={creatorFilters.maxPrice ?? ''}
+              onChange={(e) => setCreatorFilters((c) => ({ ...c, maxPrice: e.target.value ? Math.max(0, Number(e.target.value)) : null }))}
+              className="h-8 w-full rounded-lg border border-[#d9e0d8] bg-[#f4f2e9] px-2 text-xs text-[#1e3d2e] placeholder:text-[#b0bfb8] focus:border-[#2d6b4e] focus:outline-none"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Engagement rate</h2>
+        <div className="space-y-3 pr-2">
+          <Slider
+            value={[creatorFilters.minEngagementRate]}
+            min={0}
+            max={20}
+            step={0.5}
+            onValueChange={([value]) => setCreatorFilters((c) => ({ ...c, minEngagementRate: value ?? 0 }))}
+            className="[&_[data-slot=slider-range]]:bg-[#2d6b4e] [&_[data-slot=slider-thumb]]:border-[#2d6b4e] [&_[data-slot=slider-thumb]]:bg-[#2d6b4e] [&_[data-slot=slider-track]]:bg-[#e8ede9]"
+          />
+          <div className="flex items-center justify-between text-xs text-[#87938b]">
+            <span>{creatorFilters.minEngagementRate > 0 ? `≥ ${creatorFilters.minEngagementRate}%` : 'Any'}</span>
+            <span>20%+</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Min reviews</h2>
+        <input
+          type="number"
+          min={0}
+          placeholder="e.g. 5"
+          value={creatorFilters.minReviews > 0 ? creatorFilters.minReviews : ''}
+          onChange={(e) => setCreatorFilters((c) => ({ ...c, minReviews: e.target.value ? Math.max(0, Number(e.target.value)) : 0 }))}
+          className="h-8 w-full rounded-lg border border-[#d9e0d8] bg-[#f4f2e9] px-2 text-xs text-[#1e3d2e] placeholder:text-[#b0bfb8] focus:border-[#2d6b4e] focus:outline-none"
+        />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Completion rate</h2>
+        <div className="space-y-3 pr-2">
+          <Slider
+            value={[creatorFilters.minCompletionRate]}
+            min={0}
+            max={100}
+            step={5}
+            onValueChange={([value]) => setCreatorFilters((c) => ({ ...c, minCompletionRate: value ?? 0 }))}
+            className="[&_[data-slot=slider-range]]:bg-[#2d6b4e] [&_[data-slot=slider-thumb]]:border-[#2d6b4e] [&_[data-slot=slider-thumb]]:bg-[#2d6b4e] [&_[data-slot=slider-track]]:bg-[#e8ede9]"
+          />
+          <div className="flex items-center justify-between text-xs text-[#87938b]">
+            <span>{creatorFilters.minCompletionRate > 0 ? `≥ ${creatorFilters.minCompletionRate}%` : 'Any'}</span>
+            <span>100%</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Rate card</h2>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-1.5">
+            {(['any', 'reel', 'story', 'post', 'video'] as const).map((fmt) => (
+              <button
+                key={fmt}
+                onClick={() => setCreatorFilters((c) => ({ ...c, rateCardFormat: fmt, maxRateCard: fmt === 'any' ? null : c.maxRateCard }))}
+                className={cn(
+                  'rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors',
+                  creatorFilters.rateCardFormat === fmt
+                    ? 'border-[#2d6b4e] bg-[#2d6b4e] text-white'
+                    : 'border-[#d9e0d8] bg-[#f4f2e9] text-[#496159] hover:border-[#2d6b4e]',
+                )}
+              >
+                {fmt === 'any' ? 'Any' : fmt.charAt(0).toUpperCase() + fmt.slice(1)}
+              </button>
+            ))}
+          </div>
+          {creatorFilters.rateCardFormat !== 'any' && (
+            <div>
+              <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#b0bfb8]">
+                Max {creatorFilters.rateCardFormat} price (Rs)
+              </label>
+              <input
+                type="number"
+                min={0}
+                placeholder="e.g. 30000"
+                value={creatorFilters.maxRateCard ?? ''}
+                onChange={(e) => setCreatorFilters((c) => ({ ...c, maxRateCard: e.target.value ? Math.max(0, Number(e.target.value)) : null }))}
+                className="h-8 w-full rounded-lg border border-[#d9e0d8] bg-[#f4f2e9] px-2 text-xs text-[#1e3d2e] placeholder:text-[#b0bfb8] focus:border-[#2d6b4e] focus:outline-none"
+              />
+            </div>
+          )}
+        </div>
+      </section>
+    </>
+  );
+
+  const SidebarContent = (
+    <div className="space-y-7">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Filters</p>
+        {currentTab === 'creators' && (
+          <button
+            type="button"
+            onClick={clearCreatorFilters}
+            className="text-[10px] font-bold uppercase tracking-wide text-[#87938b] hover:text-[#1e3d2e]"
+          >
+            Reset
+          </button>
+        )}
+      </div>
+      {currentTab === 'creators' ? CreatorSidebar : BrandCampaignSidebar}
     </div>
   );
 
@@ -826,9 +1161,9 @@ export function CreatorGlobalSearchResults() {
             )}
 
             {/* Results */}
-            {isLoading ? (
+            {isLoading && currentTab !== 'creators' ? (
               <SearchResultsSkeleton />
-            ) : hasError ? (
+            ) : hasError && currentTab !== 'creators' ? (
               <EmptyState
                 title="Couldn't load results"
                 description="The search service didn't respond. Please try again in a moment."
@@ -872,8 +1207,15 @@ export function CreatorGlobalSearchResults() {
                   })}
                 </div>
               )
+            ) : isCreatorsLoading ? (
+              <SearchResultsSkeleton />
+            ) : creatorsError ? (
+              <EmptyState
+                title="Couldn't load creators"
+                description="The creator search didn't respond. Please try again in a moment."
+              />
             ) : filteredCreators.length === 0 ? (
-              <EmptyState title="No creators match these filters" description="Broaden the industry or content type filters to discover more creator matches." onReset={clearAllFilters} />
+              <EmptyState title="No creators match these filters" description="Try adjusting the badge level, availability, or follower range filters." onReset={clearCreatorFilters} />
             ) : (
               <div className="space-y-4">
                 {filteredCreators.map((creator) => (

@@ -132,32 +132,56 @@ export const creatorsService = {
   },
 
   async getAll(filters?: CreatorFilters): Promise<{ creators: Creator[]; total: number }> {
-    // Send a single city to the backend when exactly one is selected; otherwise let the
-    // backend return unfiltered results and rely on client-side city filtering below.
+    // Send a single city when exactly one is selected; otherwise rely on client-side city filter.
     const backendCity = filters?.cities?.length === 1 ? filters.cities[0] : undefined;
+
+    // acceptsBarter: explicit flag takes precedence, then derive from dealTypes
+    const acceptsBarter =
+      filters?.acceptsBarter === true
+        ? true
+        : filters?.dealTypes?.includes('barter')
+          ? true
+          : undefined;
+
+    // Map frontend badgeLevel ('rising_star') → backend enum name ('RISING_STAR')
+    const badgeLevelParam =
+      !filters?.badgeLevel || filters.badgeLevel === 'none'
+        ? undefined
+        : filters.badgeLevel.toUpperCase();
+
+    // Map frontend availabilityStatus ('available') → backend enum name ('AVAILABLE')
+    const availabilityParam = filters?.availabilityStatus?.toUpperCase();
 
     const payload = await apiClient.get<SearchResponse | unknown[]>('/api/v1/creators', {
       query: {
         search: filters?.search,
         city: backendCity,
-        category: filters?.categories?.[0],
+        categories: filters?.categories,
+        languages: filters?.languages,
         platform: filters?.platforms?.[0]?.toLowerCase(),
         minFollowers: filters?.minFollowers,
         maxFollowers: filters?.maxFollowers,
         minRating: filters?.minRating,
+        minReviews: filters?.minReviews,
         minPrice: filters?.minPrice,
         maxPrice: filters?.maxPrice,
-        badgeLevel: filters?.badgeLevel === 'none' ? undefined : filters?.badgeLevel?.toUpperCase(),
-        availabilityStatus: filters?.availabilityStatus,
-        acceptsBarter: filters?.dealTypes?.includes('barter') ? true : undefined,
+        badgeLevel: badgeLevelParam,
+        availabilityStatus: availabilityParam,
+        acceptsBarter,
+        minEngagementRate: filters?.minEngagementRate,
+        minCompletionRate: filters?.minCompletionRate,
+        maxRateCardReel: filters?.maxRateCardReel,
+        maxRateCardStory: filters?.maxRateCardStory,
+        maxRateCardPost: filters?.maxRateCardPost,
+        maxRateCardVideo: filters?.maxRateCardVideo,
         sortBy: filters?.sortBy,
-        limit: 50,
+        limit: 100,
       },
       auth: false,
     });
 
     const raw = payload as SearchResponse;
-    const backendTotal: number = (typeof raw?.total === 'number' ? raw.total : 0);
+    const backendTotal: number = typeof raw?.total === 'number' ? raw.total : 0;
     let results = unwrapCreators(payload).map((creator) => mapCreator(creator as never));
 
     // Multi-city client-side filter (backend only handles single city)
@@ -165,22 +189,12 @@ export const creatorsService = {
       results = results.filter((creator) => filters!.cities!.includes(creator.city));
     }
 
-    if (filters?.dealTypes?.length) {
-      results = results.filter((creator) => creator.dealTypes.some((type) => filters.dealTypes?.includes(type)));
-    }
-
+    // barterTypes is still client-side (backend only filters acceptsBarter boolean)
     if (filters?.barterTypes?.length) {
       results = results.filter((creator) => creator.barterTypes?.some((type) => filters.barterTypes?.includes(type)));
     }
 
-    if (filters?.sortBy === 'budget_friendly') {
-      results.sort((a, b) => (a.minPrice || 0) - (b.minPrice || 0));
-    }
-
-    if (filters?.sortBy === 'top_rated') {
-      results.sort((a, b) => b.rating - a.rating);
-    }
-
+    // near_you stays client-side
     if (filters?.sortBy === 'near_you') {
       results.sort((a, b) => a.city.localeCompare(b.city));
     }

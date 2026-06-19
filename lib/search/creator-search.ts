@@ -1,7 +1,6 @@
 'use client';
 
 import { getInitials } from '@/lib/utils';
-import { creatorsService } from '@/services/creators.service';
 import { campaignsService } from '@/services/campaigns.service';
 import { brandsService } from '@/services/brands.service';
 import type { Brand, BrandCampaign, Creator } from '@/types';
@@ -29,7 +28,6 @@ export interface CreatorSearchBrandResult {
 export interface CreatorGlobalSearchResults {
   brands: CreatorSearchBrandResult[];
   campaigns: BrandCampaign[];
-  creators: Creator[];
 }
 
 const normalize = (value?: string | null) => value?.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() ?? '';
@@ -97,7 +95,7 @@ const rankOffers = (offers: BrandCampaign[], searchTerm: string) =>
     return right.updatedAt.getTime() - left.updatedAt.getTime();
   });
 
-const rankCreators = (creators: Creator[], searchTerm: string) =>
+export const rankCreators = (creators: Creator[], searchTerm: string) =>
   [...creators].sort((left, right) => {
     const rightScore = calculateMatchScore(searchTerm, [
       right.name,
@@ -239,16 +237,14 @@ const mergeBrandCampaigns = (offers: BrandCampaign[], brand: Brand | undefined, 
 export async function getCreatorGlobalSearchResults(searchTerm: string): Promise<CreatorGlobalSearchResults> {
   const term = searchTerm.trim();
   if (!term) {
-    return { brands: [], campaigns: [], creators: [] };
+    return { brands: [], campaigns: [] };
   }
 
-  const [offersResult, creatorsResult] = await Promise.allSettled([
+  const [offersResult] = await Promise.allSettled([
     campaignsService.getCreatorCampaignFeed({ search: term, page: 0, size: 48 }),
-    creatorsService.getAll({ search: term }),
   ]);
 
   const offers = offersResult.status === 'fulfilled' ? rankOffers(offersResult.value.content || [], term) : [];
-  const creators = creatorsResult.status === 'fulfilled' ? rankCreators(creatorsResult.value.creators, term) : [];
 
   const brandsResult = await brandsService.getAll().catch(() => []);
   const matchedBrands = brandsResult.filter((brand) => calculateMatchScore(term, [brand.name, brand.industry, brand.description, brand.city]) > 0);
@@ -333,6 +329,5 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
   return {
     brands,
     campaigns: offers,
-    creators,
   };
 }

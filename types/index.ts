@@ -379,6 +379,7 @@ export interface Review {
 export interface CreatorFilters {
   search?: string;
   categories?: string[];
+  languages?: string[];
   platforms?: Platform[];
   cities?: City[];
   dealTypes?: DealType[];
@@ -386,11 +387,19 @@ export interface CreatorFilters {
   minFollowers?: number;
   maxFollowers?: number;
   minRating?: number;
+  minReviews?: number;
   minPrice?: number;
   maxPrice?: number;
   badgeLevel?: CreatorBadgeLevel;
   availabilityStatus?: 'available' | 'busy';
-  sortBy?: 'trending' | 'budget_friendly' | 'top_rated' | 'near_you';
+  acceptsBarter?: boolean;
+  minEngagementRate?: number;
+  minCompletionRate?: number;
+  maxRateCardReel?: number;
+  maxRateCardStory?: number;
+  maxRateCardPost?: number;
+  maxRateCardVideo?: number;
+  sortBy?: 'trending' | 'budget_friendly' | 'budget_high' | 'top_rated' | 'near_you';
 }
 
 // Earnings Types

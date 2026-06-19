@@ -82,7 +82,21 @@ const normalizeMetadata = (payload: Partial<CreatorFilterMetadata> | null | unde
   priceRanges: payload?.priceRanges?.length ? payload.priceRanges : defaultCreatorFilterMetadata.priceRanges,
 });
 
+export interface SearchFilterMeta {
+  categories: string[];
+  languages: string[];
+}
+
 export const metadataService = {
+  async getSearchFilters(): Promise<SearchFilterMeta> {
+    try {
+      const response = await apiClient.get<SearchFilterMeta>('/api/v1/metadata/search-filters', { auth: false });
+      return response ?? { categories: [], languages: [] };
+    } catch {
+      return { categories: [], languages: [] };
+    }
+  },
+
   async getCreatorFilterMetadata(): Promise<CreatorFilterMetadata> {
     const endpoints = ['/api/v1/creators/metadata', '/api/v1/creators/filters', '/api/v1/metadata/creators'];
 
