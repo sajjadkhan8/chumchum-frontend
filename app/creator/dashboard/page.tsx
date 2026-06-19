@@ -31,14 +31,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreatorMetricCard } from "@/components/creator-metric-card";
 import { calculateCreatorAmbassadorMetrics } from "@/lib/ambassador-scoring";
 import { formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
-import { analyticsService, type CreatorDashboardAnalytics } from "@/services/analytics.service";
+import { analyticsService, type CreatorDashboardAnalytics, type CreatorInsightsAnalytics } from "@/services/analytics.service";
 import { affiliateService, type AffiliateOverview } from "@/services/affiliate.service";
+import { ambassadorService } from "@/services/ambassador.service";
 import { creatorsService } from "@/services/creators.service";
 import { earningsService, type EarningsSummary } from "@/services/earnings.service";
 import { messagesService } from "@/services/messages.service";
 import { ordersService } from "@/services/orders.service";
 import { useAuthStore } from "@/store/auth-store";
-import type { Conversation, Creator, Order } from "@/types";
+import type { Conversation, Creator, CreatorAmbassadorMetrics, Order } from "@/types";
 
 /* ─── abbreviate PKR for compact display ─── */
 function abbrevPKR(v: number): string {
@@ -127,6 +128,8 @@ export default function CreatorDashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [convos, setConvos] = useState<Conversation[]>([]);
   const [affiliate, setAffiliate] = useState<AffiliateOverview>(emptyAffiliate);
+  const [insights, setInsights] = useState<CreatorInsightsAnalytics | null>(null);
+  const [ambScore, setAmbScore] = useState<CreatorAmbassadorMetrics | null>(null);
   const [affiliateCopied, setAffiliateCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const isAmbassador = user?.creatorProgramStatus === "active_ambassador";
@@ -134,13 +137,15 @@ export default function CreatorDashboardPage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const [profile, anal, earn, ords, msgs, aff] = await Promise.all([
+      const [profile, anal, earn, ords, msgs, aff, insightsData, ambData] = await Promise.all([
         creatorsService.getMe().catch(() => null),
         analyticsService.getCreatorDashboard().catch(() => emptyAnalytics),
         earningsService.getSummary().catch(() => emptyEarnings),
         ordersService.getAll().catch(() => []),
         messagesService.getConversations(user?.id || "", "creator").catch(() => []),
         affiliateService.getOverview().catch(() => emptyAffiliate),
+        analyticsService.getCreatorInsights().catch(() => null),
+        ambassadorService.getScore().catch(() => null),
       ]);
       setCreatorProfile(profile);
       setAnalytics(anal);
@@ -148,6 +153,8 @@ export default function CreatorDashboardPage() {
       setOrders(ords);
       setConvos(msgs && 'items' in msgs ? msgs.items : (msgs as unknown as Conversation[]) ?? []);
       setAffiliate(aff);
+      setInsights(insightsData);
+      setAmbScore(ambData);
       setLoading(false);
     };
     void load();
@@ -166,13 +173,13 @@ export default function CreatorDashboardPage() {
     contentPreviews: [], createdAt: new Date(),
   }, [creatorProfile, user]);
 
-  const amb = calculateCreatorAmbassadorMetrics(creator);
+  const amb = ambScore ?? calculateCreatorAmbassadorMetrics(creator);
   const totalEarned = earnings.totalEarned || analytics.totalEarnings;
   const earningsTarget = Math.max(600000, totalEarned || 1);
   const ordersTarget = Math.max(10, analytics.totalOrders || 1);
   const earningsPct = Math.min(100, Math.round((totalEarned / earningsTarget) * 100));
   const ordersPct = Math.min(100, Math.round((analytics.totalOrders / ordersTarget) * 100));
-  const views = Math.max(0, creator.totalFollowers ? Math.round(creator.totalFollowers * 0.02) : 0);
+  const views = insights?.totals.packageViews ?? Math.max(0, creator.totalFollowers ? Math.round(creator.totalFollowers * 0.02) : 0);
   const rating = analytics.avgRating || creator.rating;
   const recentOrders = orders.slice().sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 5);
   const recentMsgs = convos.slice().sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()).slice(0, 4).map((c) => ({

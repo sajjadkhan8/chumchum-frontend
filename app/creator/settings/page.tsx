@@ -1,25 +1,35 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
+  AlertCircle,
+  Award,
+  BadgeCheck,
   Bell,
+  ChevronDown,
+  ChevronUp,
+  Check,
+  Camera,
+  ExternalLink,
+  GripVertical,
+  Globe,
+  Info,
+  Instagram,
+  Image as ImageIcon,
   Lock,
   Link as LinkIcon,
-  Globe,
-  Camera,
-  Instagram,
-  Youtube,
   Music2,
+  Package,
   Plus,
   Save,
   Share2,
   Trash2,
-  Check,
-  ChevronDown,
-  Image as ImageIcon,
   Video,
+  Youtube,
 } from "lucide-react";
+import { Reorder } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
@@ -27,10 +37,13 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { cn, getInitials } from "@/lib/utils";
 import { pakistanCities, pakistanLanguages } from "@/lib/localization";
 import { useAuthStore } from "@/store/auth-store";
+import { ambassadorService } from "@/services/ambassador.service";
 import { creatorsService, type CreatorSocialAccountPayload } from "@/services/creators.service";
+import { packagesService } from "@/services/packages.service";
 import { uploadsService } from "@/services/uploads.service";
 import { usersService } from "@/services/users.service";
-import type { Creator, Platform } from "@/types";
+import { calculateCreatorAmbassadorMetrics, AMBASSADOR_TIERS } from "@/lib/ambassador-scoring";
+import type { Creator, CreatorAmbassadorMetrics, DealType, BarterCategory, Platform, VerificationSource } from "@/types";
 import { toast } from "sonner";
 import { ShareProfileModal } from "@/components/share-profile-modal";
 
@@ -79,6 +92,7 @@ const cities = [...pakistanCities];
 type EditableSocialAccount = CreatorSocialAccountPayload & {
   platform: Platform;
   verified?: boolean;
+  verifiedBy?: VerificationSource;
 };
 
 const defaultProfile = {
@@ -223,17 +237,25 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isOAuthConnecting, setIsOAuthConnecting] = useState<string | null>(null);
+  const [coverCropState, setCoverCropState] = useState<{
+    file: File;
+    previewUrl: string;
+    croppedUrl: string;
+  } | null>(null);
 
   const [profile, setProfile] = useState(defaultProfile);
   const [socialAccounts, setSocialAccounts] = useState<EditableSocialAccount[]>([]);
   const [portfolioItems, setPortfolioItems] = useState<Array<{
-    id: string; type: string; thumbnailUrl: string; mediaUrl: string; platform: string;
+    id: string; type: string; thumbnailUrl: string; mediaUrl: string; platform: string; views?: number; likes?: number;
   }>>([]);
   const [newPortfolioItem, setNewPortfolioItem] = useState({
     type: 'image' as 'image' | 'video',
     thumbnailUrl: '',
     mediaUrl: '',
     platform: 'instagram',
+    views: '',
+    likes: '',
   });
   const [isAddingPortfolioItem, setIsAddingPortfolioItem] = useState(false);
   const [portfolioErrors, setPortfolioErrors] = useState<{ mediaUrl?: string; thumbnailUrl?: string }>({});
@@ -242,7 +264,22 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     acceptsBarter: true,
     acceptsHybridDeals: true,
     minimumBudget: "25000",
+    dealTypes: [] as string[],
+    barterTypes: [] as string[],
   });
+  const [loadedCreator, setLoadedCreator] = useState<Creator | null>(null);
+  const [ambassadorMetrics, setAmbassadorMetrics] = useState<CreatorAmbassadorMetrics | null>(null);
+  const [originalEmail, setOriginalEmail] = useState("");
+  const [originalPhone, setOriginalPhone] = useState("");
+  const [contactChangedBanner, setContactChangedBanner] = useState<"email" | "phone" | "both" | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [activePackageCount, setActivePackageCount] = useState<number | null>(null);
+  const [creatorVerified, setCreatorVerified] = useState<{ isVerified: boolean; badgeLevel?: string } | null>(null);
+  const [showBadgeExplainer, setShowBadgeExplainer] = useState(false);
+  const [showFilerInfo, setShowFilerInfo] = useState(false);
+  const skipDirty = useRef(1);
+  const reorderTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const profileSnapshotRef = useRef<typeof defaultProfile | null>(null);
 
   const [notifications, setNotifications] = useState({
     newOrders: true,
@@ -262,21 +299,34 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
   });
 
   const loadCreatorProfile = useCallback(async () => {
-    const creator = await creatorsService.getMe();
+    const [creator, packages] = await Promise.all([
+      creatorsService.getMe(),
+      packagesService.getMine().catch(() => [] as Awaited<ReturnType<typeof packagesService.getMine>>),
+    ]);
     if (!creator) return;
 
-    setProfile((current) => ({
-      ...current,
+    skipDirty.current += 1;
+
+    setLoadedCreator(creator);
+    setCreatorVerified({ isVerified: Boolean(creator.isVerified), badgeLevel: creator.badgeLevel });
+    setActivePackageCount(packages.filter((p) => p.status === 'active').length);
+
+    const email = creator.email || user?.email || "";
+    const phone = creator.phone || user?.phone || "";
+    setOriginalEmail(email);
+    setOriginalPhone(phone);
+
+    const nextProfile: typeof defaultProfile = {
       name: creator.name || user?.name || "",
       handle: creator.username || user?.email?.split("@")[0] || "",
       bio: creator.bio || "",
-      email: creator.email || user?.email || "",
-      phone: creator.phone || user?.phone || "",
+      email,
+      phone,
       city: creator.city || "Karachi",
       categories: creator.categories || [],
-      languages: creator.languages?.length ? creator.languages : current.languages,
+      languages: creator.languages?.length ? creator.languages : defaultProfile.languages,
       website: creator.website || "",
-      availabilityStatus: creator.availabilityStatus || current.availabilityStatus,
+      availabilityStatus: creator.availabilityStatus || defaultProfile.availabilityStatus,
       isFiler: Boolean(creator.isFiler),
       avatar: creator.avatar || "",
       coverImage: creator.coverImage || "",
@@ -285,11 +335,15 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       rateCardStory: creator.rateCardStory,
       rateCardPost: creator.rateCardPost,
       rateCardVideo: creator.rateCardVideo,
-    }));
+    };
+    profileSnapshotRef.current = nextProfile;
+    setProfile(nextProfile);
     setCreatorPreferences({
       acceptsBarter: Boolean(creator.acceptsBarter),
       acceptsHybridDeals: Boolean(creator.acceptsHybridDeals),
       minimumBudget: creator.minimumBudget ? String(creator.minimumBudget) : "",
+      dealTypes: creator.dealTypes || [],
+      barterTypes: (creator.barterTypes as string[]) || [],
     });
 
     setSocialAccounts(
@@ -303,6 +357,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
           avgViews: platform.avgViews,
           engagementRate: platform.engagementRate,
           verified: false,
+          verifiedBy: platform.verified_by,
         })),
     );
     setPortfolioItems(creator.contentPreviews.map((p) => ({
@@ -311,6 +366,8 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       thumbnailUrl: p.thumbnail,
       mediaUrl: p.url,
       platform: p.platform,
+      views: p.views,
+      likes: p.likes,
     })));
   }, [user]);
 
@@ -358,26 +415,43 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     setPortfolioErrors({});
     setIsSaving(true);
     try {
-      await creatorsService.updateMe({
-        name: profile.name,
-        username: profile.handle,
-        email: profile.email,
-        phone: profile.phone,
-        city: profile.city,
-        avatarUrl: profile.avatar,
-        bio: profile.bio,
-        coverImageUrl: profile.coverImage,
-        website: profile.website,
-        availabilityStatus: profile.availabilityStatus,
-        isFiler: profile.isFiler,
-        responseTime: profile.responseTime,
-        languages: profile.languages,
-        categories: profile.categories,
-        rateCardReel: profile.rateCardReel,
-        rateCardStory: profile.rateCardStory,
-        rateCardPost: profile.rateCardPost,
-        rateCardVideo: profile.rateCardVideo,
-      });
+      const emailChanged = profile.email !== originalEmail && originalEmail !== "";
+      const phoneChanged = profile.phone !== originalPhone && originalPhone !== "";
+
+      const snap = profileSnapshotRef.current;
+      const changed = (key: keyof typeof defaultProfile) => {
+        if (!snap) return true;
+        const a = profile[key];
+        const b = snap[key];
+        if (Array.isArray(a) && Array.isArray(b)) {
+          return JSON.stringify([...(a as string[]).sort()]) !== JSON.stringify([...(b as string[]).sort()]);
+        }
+        return a !== b;
+      };
+
+      const patch: Parameters<typeof creatorsService.updateMe>[0] = {};
+      if (changed('name')) patch.name = profile.name;
+      if (changed('handle')) patch.username = profile.handle;
+      if (changed('email')) patch.email = profile.email;
+      if (changed('phone')) patch.phone = profile.phone;
+      if (changed('city')) patch.city = profile.city;
+      if (changed('avatar')) patch.avatarUrl = profile.avatar;
+      if (changed('bio')) patch.bio = profile.bio;
+      if (changed('coverImage')) patch.coverImageUrl = profile.coverImage;
+      if (changed('website')) patch.website = profile.website;
+      if (changed('availabilityStatus')) patch.availabilityStatus = profile.availabilityStatus;
+      if (changed('isFiler')) patch.isFiler = profile.isFiler;
+      if (changed('responseTime')) patch.responseTime = profile.responseTime;
+      if (changed('languages')) patch.languages = profile.languages;
+      if (changed('categories')) patch.categories = profile.categories;
+      if (changed('rateCardReel')) patch.rateCardReel = profile.rateCardReel;
+      if (changed('rateCardStory')) patch.rateCardStory = profile.rateCardStory;
+      if (changed('rateCardPost')) patch.rateCardPost = profile.rateCardPost;
+      if (changed('rateCardVideo')) patch.rateCardVideo = profile.rateCardVideo;
+
+      if (Object.keys(patch).length > 0) {
+        await creatorsService.updateMe(patch);
+      }
 
       // Save pending portfolio item if the user filled in the form but didn't click "Add to portfolio"
       if (pendingMedia) {
@@ -386,11 +460,20 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
           thumbnailUrl: pendingThumb || pendingMedia,
           mediaUrl: pendingMedia,
           platform: newPortfolioItem.platform,
+          views: newPortfolioItem.views ? Number(newPortfolioItem.views) : undefined,
+          likes: newPortfolioItem.likes ? Number(newPortfolioItem.likes) : undefined,
         });
-        setNewPortfolioItem({ type: 'image', thumbnailUrl: '', mediaUrl: '', platform: 'instagram' });
+        setNewPortfolioItem({ type: 'image', thumbnailUrl: '', mediaUrl: '', platform: 'instagram', views: '', likes: '' });
       }
 
+      skipDirty.current += 1;
+      setIsDirty(false);
       await loadCreatorProfile();
+
+      if (emailChanged || phoneChanged) {
+        setContactChangedBanner(emailChanged && phoneChanged ? "both" : emailChanged ? "email" : "phone");
+      }
+
       toast.success("Profile saved");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not save profile";
@@ -420,18 +503,33 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
   };
 
   const handleCreatorPreferencesSave = async () => {
+    const budget = creatorPreferences.minimumBudget ? Number(creatorPreferences.minimumBudget) : undefined;
+    if (budget !== undefined && budget < 5000) {
+      toast.error("Minimum budget must be at least PKR 5,000");
+      return;
+    }
+
     setIsSaving(true);
     try {
-      const saved = await creatorsService.updatePreferences({
-        acceptsBarter: creatorPreferences.acceptsBarter,
-        acceptsHybridDeals: creatorPreferences.acceptsHybridDeals,
-        minimumBudget: creatorPreferences.minimumBudget ? Number(creatorPreferences.minimumBudget) : undefined,
-      });
-      setCreatorPreferences({
+      const [saved] = await Promise.all([
+        creatorsService.updatePreferences({
+          acceptsBarter: creatorPreferences.acceptsBarter,
+          acceptsHybridDeals: creatorPreferences.acceptsHybridDeals,
+          minimumBudget: budget,
+        }),
+        creatorsService.updateMe({
+          dealTypes: creatorPreferences.dealTypes as DealType[],
+          barterTypes: creatorPreferences.barterTypes as BarterCategory[],
+        }),
+      ]);
+      skipDirty.current += 1;
+      setIsDirty(false);
+      setCreatorPreferences((p) => ({
+        ...p,
         acceptsBarter: Boolean(saved.acceptsBarter),
         acceptsHybridDeals: Boolean(saved.acceptsHybridDeals),
         minimumBudget: saved.minimumBudget ? String(saved.minimumBudget) : "",
-      });
+      }));
       toast.success("Creator preferences saved");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not save creator preferences";
@@ -516,15 +614,91 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     }
   };
 
-  const uploadCoverImage = async (file?: File | null) => {
-    if (!file) return;
+  const cropImageToAspectRatio = (source: HTMLImageElement, targetWidth = 1500): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const TARGET_RATIO = 3;
+      const targetHeight = Math.round(targetWidth / TARGET_RATIO);
+      const srcW = source.naturalWidth;
+      const srcH = source.naturalHeight;
+      const srcRatio = srcW / srcH;
+      let sx: number, sy: number, sw: number, sh: number;
+      if (srcRatio >= TARGET_RATIO) {
+        sh = srcH;
+        sw = Math.round(srcH * TARGET_RATIO);
+        sx = Math.round((srcW - sw) / 2);
+        sy = 0;
+      } else {
+        sw = srcW;
+        sh = Math.round(srcW / TARGET_RATIO);
+        sx = 0;
+        sy = Math.round((srcH - sh) / 2);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('Canvas not supported')); return; }
+      ctx.drawImage(source, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('Canvas export failed'));
+      }, 'image/jpeg', 0.92);
+    });
 
+  const handleCoverFileSelected = (file?: File | null) => {
+    if (!file) return;
+    const previewUrl = URL.createObjectURL(file);
+    const img = document.createElement('img');
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const TARGET_RATIO = 3;
+      const targetWidth = Math.min(img.naturalWidth, 1500);
+      const targetHeight = Math.round(targetWidth / TARGET_RATIO);
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const srcW = img.naturalWidth;
+      const srcH = img.naturalHeight;
+      const srcRatio = srcW / srcH;
+      let sx: number, sy: number, sw: number, sh: number;
+      if (srcRatio >= TARGET_RATIO) {
+        sh = srcH;
+        sw = Math.round(srcH * TARGET_RATIO);
+        sx = Math.round((srcW - sw) / 2);
+        sy = 0;
+      } else {
+        sw = srcW;
+        sh = Math.round(srcW / TARGET_RATIO);
+        sx = 0;
+        sy = Math.round((srcH - sh) / 2);
+      }
+      const ctx = canvas.getContext('2d');
+      if (ctx) ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
+      const croppedUrl = canvas.toDataURL('image/jpeg', 0.92);
+      setCoverCropState({ file, previewUrl, croppedUrl });
+    };
+    img.onerror = () => { URL.revokeObjectURL(previewUrl); toast.error('Could not read image file'); };
+    img.src = previewUrl;
+  };
+
+  const confirmCoverCrop = async () => {
+    if (!coverCropState) return;
+    setCoverCropState(null);
     setIsUploadingCover(true);
     try {
-      const uploaded = await uploadsService.coverImage(file);
+      const img = document.createElement('img');
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = coverCropState.previewUrl;
+      });
+      const blob = await cropImageToAspectRatio(img);
+      URL.revokeObjectURL(coverCropState.previewUrl);
+      const croppedFile = new File([blob], coverCropState.file.name, { type: 'image/jpeg' });
+      const uploaded = await uploadsService.coverImage(croppedFile);
       setProfile((current) => ({ ...current, coverImage: uploaded.url }));
       toast.success("Cover image uploaded");
     } catch (error) {
+      URL.revokeObjectURL(coverCropState.previewUrl);
       const message = error instanceof Error ? error.message : "Could not upload cover image";
       toast.error(message);
     } finally {
@@ -532,21 +706,43 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     }
   };
 
+
   const handleSocialSave = async () => {
     setIsSaving(true);
     try {
-      const accounts = socialAccounts
-        .filter((account) => account.platform && (account.username || account.profileUrl))
-        .map(({ platform, username, profileUrl, followers, avgViews, engagementRate }) => ({
+      const filtered = socialAccounts.filter(
+        (account) => account.platform && (account.username || account.profileUrl),
+      );
+
+      const patchResults = await Promise.allSettled(
+        filtered.map((account) =>
+          creatorsService.patchSocialAccount(account.platform, {
+            username: account.username,
+            profileUrl: account.profileUrl,
+            followers: Number(account.followers) || 0,
+            avgViews: Number(account.avgViews) || 0,
+            engagementRate: Number(account.engagementRate) || 0,
+            verifiedBy: account.verifiedBy,
+          }),
+        ),
+      );
+
+      const allPatched = patchResults.every((r) => r.status === 'fulfilled');
+      if (!allPatched) {
+        const accounts = filtered.map(({ platform, username, profileUrl, followers, avgViews, engagementRate, verifiedBy }) => ({
           platform,
           username,
           profileUrl,
           followers: Number(followers) || 0,
           avgViews: Number(avgViews) || 0,
           engagementRate: Number(engagementRate) || 0,
+          verifiedBy,
         }));
+        await creatorsService.updateSocialAccounts(accounts);
+      }
 
-      await creatorsService.updateSocialAccounts(accounts);
+      skipDirty.current += 1;
+      setIsDirty(false);
       await loadCreatorProfile();
       toast.success("Social accounts saved");
     } catch (error) {
@@ -554,6 +750,18 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       toast.error(message);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleOAuthConnect = async (platform: string) => {
+    setIsOAuthConnecting(platform);
+    try {
+      const { redirectUrl } = await creatorsService.initiateOAuthConnect(platform);
+      window.location.assign(redirectUrl);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : `Could not connect ${platform}`;
+      toast.error(message);
+      setIsOAuthConnecting(null);
     }
   };
 
@@ -607,8 +815,10 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
         thumbnailUrl: newPortfolioItem.thumbnailUrl.trim() || newPortfolioItem.mediaUrl.trim(),
         mediaUrl: newPortfolioItem.mediaUrl.trim(),
         platform: newPortfolioItem.platform,
+        views: newPortfolioItem.views ? Number(newPortfolioItem.views) : undefined,
+        likes: newPortfolioItem.likes ? Number(newPortfolioItem.likes) : undefined,
       });
-      setNewPortfolioItem({ type: 'image', thumbnailUrl: '', mediaUrl: '', platform: 'instagram' });
+      setNewPortfolioItem({ type: 'image', thumbnailUrl: '', mediaUrl: '', platform: 'instagram', views: '', likes: '' });
       await loadCreatorProfile();
       toast.success("Portfolio item added");
     } catch (error) {
@@ -700,6 +910,52 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     });
   }, [loadCreatorProfile, loadNotificationPreferences, user]);
 
+  useEffect(() => {
+    if (!loadedCreator) return;
+    ambassadorService
+      .getScore()
+      .then(setAmbassadorMetrics)
+      .catch(() => setAmbassadorMetrics(calculateCreatorAmbassadorMetrics(loadedCreator)));
+  }, [loadedCreator]);
+
+  // Dirty tracking — skips fires triggered by load/save (controlled via skipDirty ref)
+  useEffect(() => {
+    if (skipDirty.current > 0) {
+      skipDirty.current -= 1;
+      return;
+    }
+    setIsDirty(true);
+  }, [profile, socialAccounts, creatorPreferences]);
+
+  // Browser navigation guard when there are unsaved changes
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
+
+  const profileCompleteness = useMemo(() => {
+    let score = 0;
+    if (profile.bio && profile.bio.length > 20) score += 3;
+    if (profile.coverImage) score += 3;
+    if (socialAccounts.length >= 2) score += 2;
+    if (portfolioItems.length >= 6) score += 2;
+    const pct = Math.round((score / 10) * 100);
+    const missing: string[] = [];
+    if (!profile.bio || profile.bio.length <= 20) missing.push("Add a bio (20+ characters)");
+    if (!profile.coverImage) missing.push("Upload a cover image");
+    if (socialAccounts.length < 2) missing.push("Connect 2+ social platforms");
+    if (portfolioItems.length < 6) {
+      const need = 6 - portfolioItems.length;
+      missing.push(`Add ${need} more portfolio item${need > 1 ? "s" : ""}`);
+    }
+    return { pct, missing };
+  }, [profile.bio, profile.coverImage, socialAccounts.length, portfolioItems.length]);
+
   // ─── Page header ────────────────────────────────────────────────────────────
 
   const pageEyebrow =
@@ -729,13 +985,26 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
             <p className="mt-1 text-sm text-[#496159]">{pageSubtitle}</p>
           </div>
           {section === "profile" && (
-            <button
-              onClick={() => setShareOpen(true)}
-              className="mt-4 flex shrink-0 items-center gap-2 rounded-full border-2 border-[#2d6b4e] bg-[#2d6b4e] px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#1f5239]"
-            >
-              <Share2 className="size-4" />
-              Share Profile
-            </button>
+            <div className="mt-4 flex shrink-0 gap-2">
+              {profile.handle && (
+                <Link
+                  href={`/p/${profile.handle}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 rounded-full border-2 border-[#2d6b4e] bg-white px-4 py-2 text-sm font-bold text-[#2d6b4e] shadow-sm transition-colors hover:bg-[#e4f1e8]"
+                >
+                  <ExternalLink className="size-4" />
+                  Preview
+                </Link>
+              )}
+              <button
+                onClick={() => setShareOpen(true)}
+                className="flex items-center gap-2 rounded-full border-2 border-[#2d6b4e] bg-[#2d6b4e] px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#1f5239]"
+              >
+                <Share2 className="size-4" />
+                Share
+              </button>
+            </div>
           )}
         </div>
 
@@ -770,6 +1039,140 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
           {/* ── Profile Tab ───────────────────────────────────────────────────── */}
           {section === "profile" && (
             <TabsPrimitive.Content value="profile" className="space-y-5">
+
+              {/* Email / phone change banner */}
+              {contactChangedBanner && (
+                <div className="flex items-start justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5">
+                  <div className="flex gap-2.5">
+                    <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+                    <div>
+                      <p className="text-sm font-bold text-amber-800">
+                        {contactChangedBanner === "both"
+                          ? "Email and phone changed — verify both to keep your account secure"
+                          : contactChangedBanner === "email"
+                          ? "Email changed — check your inbox to verify your new address"
+                          : "Phone number changed — you may need to re-verify via SMS"}
+                      </p>
+                      <p className="mt-0.5 text-xs text-amber-700">Some features may be limited until verification is complete.</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setContactChangedBanner(null)}
+                    className="shrink-0 rounded-full p-1 text-amber-500 hover:bg-amber-100 hover:text-amber-700"
+                    aria-label="Dismiss"
+                  >
+                    <Check className="size-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {/* Profile completeness */}
+              <div className={panelClass}>
+                <div className="flex items-center justify-between gap-4 mb-3">
+                  <div>
+                    <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Profile Health</p>
+                    <h2 className="mt-0.5 text-lg font-extrabold tracking-[-0.025em] text-[#1e3d2e]">
+                      {profileCompleteness.pct}% complete
+                    </h2>
+                  </div>
+                  <div className="flex size-14 items-center justify-center rounded-full border-4 border-[#e5eae4]"
+                    style={{ background: `conic-gradient(#2d6b4e ${profileCompleteness.pct}%, transparent 0)` }}>
+                    <div className="flex size-10 items-center justify-center rounded-full bg-white">
+                      <span className="text-[11px] font-extrabold text-[#1e3d2e]">{profileCompleteness.pct}%</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-[#e5eae4] mb-3">
+                  <div
+                    className="h-full rounded-full bg-[#2d6b4e] transition-all duration-700"
+                    style={{ width: `${profileCompleteness.pct}%` }}
+                  />
+                </div>
+                {profileCompleteness.missing.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7a8f82]">To improve your profile</p>
+                    {profileCompleteness.missing.map((item) => (
+                      <div key={item} className="flex items-center gap-2 text-xs text-[#496159]">
+                        <div className="size-1.5 shrink-0 rounded-full bg-[#b77a12]" />
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs font-semibold text-[#2d6b4e]">Your profile is fully complete.</p>
+                )}
+              </div>
+
+              {/* Verification status */}
+              {creatorVerified && (
+                <div className={panelClass}>
+                  <PanelHeader eyebrow="Account" title="Verification Status" />
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "grid size-10 shrink-0 place-items-center rounded-xl",
+                        creatorVerified.isVerified ? "bg-[#e4f1e8]" : "bg-[#f4f7f5]"
+                      )}>
+                        <BadgeCheck className={cn("size-5", creatorVerified.isVerified ? "text-[#2d6b4e]" : "text-[#87938b]")} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-[#1e3d2e]">
+                          {creatorVerified.isVerified ? "Verified" : "Not verified"}
+                        </p>
+                        <p className="text-xs text-[#87938b]">
+                          {creatorVerified.isVerified
+                            ? `Badge level: ${(creatorVerified.badgeLevel ?? 'verified').replace(/_/g, ' ')}`
+                            : "Apply to get a verified badge on your public profile"}
+                        </p>
+                      </div>
+                    </div>
+                    {!creatorVerified.isVerified && (
+                      <a
+                        href="mailto:support@zingzing.pk?subject=Verification%20Request"
+                        className="shrink-0 rounded-full border-2 border-[#d1ddd6] bg-white px-3.5 py-1.5 text-xs font-bold text-[#496159] transition-colors hover:border-[#b0c5ba]"
+                      >
+                        Apply
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Active packages indicator */}
+              <div className={panelClass}>
+                <PanelHeader eyebrow="Marketplace" title="Package Visibility" />
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "grid size-10 shrink-0 place-items-center rounded-xl",
+                      activePackageCount ? "bg-[#e4f1e8]" : "bg-amber-50"
+                    )}>
+                      <Package className={cn("size-5", activePackageCount ? "text-[#2d6b4e]" : "text-amber-600")} />
+                    </div>
+                    <div>
+                      {activePackageCount === null ? (
+                        <p className="text-sm text-[#87938b]">Loading…</p>
+                      ) : activePackageCount > 0 ? (
+                        <>
+                          <p className="text-sm font-bold text-[#1e3d2e]">{activePackageCount} active package{activePackageCount !== 1 ? 's' : ''}</p>
+                          <p className="text-xs text-[#496159]">Brands can find and book you in the marketplace</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm font-bold text-amber-700">No active packages</p>
+                          <p className="text-xs text-amber-600">You are not currently visible in the marketplace</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <Link
+                    href="/creator/packages"
+                    className="shrink-0 rounded-full border-2 border-[#d1ddd6] bg-white px-3.5 py-1.5 text-xs font-bold text-[#496159] transition-colors hover:border-[#b0c5ba]"
+                  >
+                    {activePackageCount === 0 ? "Create package" : "Manage"}
+                  </Link>
+                </div>
+              </div>
 
               {/* Avatar section */}
               <div className={panelClass}>
@@ -996,10 +1399,13 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                         <input
                           id="creator-cover-upload"
                           type="file"
-                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          accept="image/jpeg,image/png,image/webp"
                           className="hidden"
                           disabled={isUploadingCover}
-                          onChange={(event) => void uploadCoverImage(event.target.files?.[0])}
+                          onChange={(event) => {
+                            handleCoverFileSelected(event.target.files?.[0]);
+                            event.target.value = '';
+                          }}
                         />
                       </div>
                     </div>
@@ -1011,6 +1417,24 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                     checked={profile.isFiler}
                     onCheckedChange={(checked) => setProfile((p) => ({ ...p, isFiler: checked }))}
                   />
+                  <div className="mt-1 pl-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowFilerInfo((s) => !s)}
+                      className="flex items-center gap-1.5 text-[11px] font-semibold text-[#87938b] transition-colors hover:text-[#1e3d2e]"
+                    >
+                      <Info className="size-3.5" />
+                      {showFilerInfo ? "Hide tax details" : "What does this affect?"}
+                      {showFilerInfo ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+                    </button>
+                    {showFilerInfo && (
+                      <div className="mt-2 rounded-xl bg-[#f4f7f5] p-3 text-xs text-[#496159] space-y-1.5">
+                        <p><strong className="font-bold text-[#1e3d2e]">Filer (12.5% WHT):</strong> Your earnings will have 12.5% withholding tax deducted at source by ZingZing.</p>
+                        <p><strong className="font-bold text-[#1e3d2e]">Non-filer (15% WHT):</strong> A higher 15% withholding tax applies. Registering with FBR as a filer reduces this to 12.5%.</p>
+                        <p className="text-[#87938b]">WHT is deducted from each payout. Your annual tax certificate is available from FBR&apos;s IRIS portal at iris.fbr.gov.pk.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1056,24 +1480,79 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                 </div>
               </div>
 
+              {/* How badges work */}
+              <div className={panelClass}>
+                <button
+                  type="button"
+                  onClick={() => setShowBadgeExplainer((s) => !s)}
+                  className="flex w-full items-center justify-between text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <Info className="size-4 text-[#87938b]" />
+                    <span className="text-sm font-bold text-[#1e3d2e]">How badges work</span>
+                  </div>
+                  {showBadgeExplainer ? <ChevronUp className="size-4 text-[#87938b]" /> : <ChevronDown className="size-4 text-[#87938b]" />}
+                </button>
+                {showBadgeExplainer && (
+                  <div className="mt-4 space-y-3">
+                    <div className="space-y-1 rounded-xl bg-[#f4f7f5] p-3">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#7a8f82]">Fast Responder</p>
+                      <p className="text-xs text-[#496159]">Earned automatically when your average response time to brand messages is under 1 hour. Tracked from your message history — no action needed.</p>
+                    </div>
+                    <div className="space-y-1 rounded-xl bg-[#f4f7f5] p-3">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#7a8f82]">Trending</p>
+                      <p className="text-xs text-[#496159]">Awarded to creators with strong recent activity — high order volume, positive reviews, and follower growth over the past 30 days.</p>
+                    </div>
+                    <div className="space-y-1 rounded-xl bg-[#f4f7f5] p-3">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#7a8f82]">Verified</p>
+                      <p className="text-xs text-[#496159]">Applied for manually. ZingZing reviews your identity and social profiles before issuing a verified badge. Use the Apply button above or email support@zingzing.pk.</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Portfolio */}
               <div className={panelClass}>
                 <PanelHeader eyebrow="Work Samples" title="Portfolio" />
                 <p className="mb-4 text-sm text-[#496159]">Showcase your best content. Brands browse these before reaching out.</p>
 
                 {portfolioItems.length > 0 && (
-                  <div className="mb-4 grid gap-2 sm:grid-cols-2">
+                  <Reorder.Group
+                    axis="y"
+                    values={portfolioItems}
+                    onReorder={(newOrder) => {
+                      setPortfolioItems(newOrder);
+                      if (reorderTimer.current) clearTimeout(reorderTimer.current);
+                      reorderTimer.current = setTimeout(() => {
+                        void creatorsService.reorderPortfolio(newOrder.map((i) => i.id)).catch(() => null);
+                      }, 600);
+                    }}
+                    className="mb-4 space-y-2"
+                    as="div"
+                  >
                     {portfolioItems.map((item) => (
-                      <div
+                      <Reorder.Item
                         key={item.id}
-                        className="group relative flex items-center gap-3 rounded-2xl border border-[#d1ddd6] bg-[#f4f7f5] p-3"
+                        value={item}
+                        as="div"
+                        className="group flex items-center gap-3 rounded-2xl border border-[#d1ddd6] bg-[#f4f7f5] p-3 select-none"
                       >
+                        <span className="shrink-0 cursor-grab touch-none text-[#c0cfc7] hover:text-[#496159] active:cursor-grabbing">
+                          <GripVertical className="size-4" />
+                        </span>
                         <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e6eceb] text-[#2d6b4e]">
                           {item.type === 'video' ? <Video className="size-4" /> : <ImageIcon className="size-4" />}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-xs font-extrabold capitalize text-[#1e3d2e]">{item.platform}</p>
                           <p className="truncate text-[11px] text-[#87938b]">{item.type}</p>
+                          {(item.views != null || item.likes != null) && (
+                            <p className="mt-0.5 text-[10px] text-[#87938b]">
+                              {item.views != null && `${item.views.toLocaleString()} views`}
+                              {item.views != null && item.likes != null && ' · '}
+                              {item.likes != null && `${item.likes.toLocaleString()} likes`}
+                            </p>
+                          )}
                         </div>
                         <button
                           onClick={() => void handleDeletePortfolioItem(item.id)}
@@ -1082,9 +1561,9 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                         >
                           <Trash2 className="size-3.5" />
                         </button>
-                      </div>
+                      </Reorder.Item>
                     ))}
-                  </div>
+                  </Reorder.Group>
                 )}
 
                 <div className="space-y-3 rounded-2xl border border-dashed border-[#cddad1] bg-white p-4">
@@ -1146,6 +1625,30 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                     />
                     {portfolioErrors.thumbnailUrl && <p className="text-xs text-[#c0392b]">{portfolioErrors.thumbnailUrl}</p>}
                   </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <p className={labelClass}>Views <span className="normal-case font-normal text-[#b0bfb8]">(optional)</span></p>
+                      <input
+                        type="number"
+                        min="0"
+                        className={inputClass}
+                        placeholder="e.g. 12500"
+                        value={newPortfolioItem.views}
+                        onChange={(e) => setNewPortfolioItem((p) => ({ ...p, views: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className={labelClass}>Likes <span className="normal-case font-normal text-[#b0bfb8]">(optional)</span></p>
+                      <input
+                        type="number"
+                        min="0"
+                        className={inputClass}
+                        placeholder="e.g. 890"
+                        value={newPortfolioItem.likes}
+                        onChange={(e) => setNewPortfolioItem((p) => ({ ...p, likes: e.target.value }))}
+                      />
+                    </div>
+                  </div>
                   <button
                     type="button"
                     disabled={isAddingPortfolioItem || !newPortfolioItem.mediaUrl.trim()}
@@ -1158,6 +1661,74 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                 </div>
               </div>
 
+              {/* Ambassador status */}
+              {ambassadorMetrics && (
+                <div className={panelClass}>
+                  <PanelHeader eyebrow="Ambassador" title="Program Status" />
+                  <div className="mb-4 flex items-center gap-4">
+                    <div className="relative shrink-0">
+                      <svg width="64" height="64" viewBox="0 0 64 64" style={{ transform: "rotate(-90deg)" }} aria-hidden>
+                        <circle cx="32" cy="32" r="28" fill="none" stroke="#e5eae4" strokeWidth="5" />
+                        <circle
+                          cx="32" cy="32" r="28" fill="none"
+                          stroke={AMBASSADOR_TIERS[ambassadorMetrics.tier].color}
+                          strokeWidth="5" strokeLinecap="round"
+                          strokeDasharray={`${(ambassadorMetrics.score.total / 100) * 2 * Math.PI * 28} ${2 * Math.PI * 28}`}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-lg font-extrabold leading-none text-[#1e3d2e]">{ambassadorMetrics.score.total}</span>
+                        <span className="text-[9px] text-[#87938b]">/100</span>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Award className="size-4 text-[#b77a12]" />
+                        <p className="text-sm font-extrabold text-[#1e3d2e]">{AMBASSADOR_TIERS[ambassadorMetrics.tier].name}</p>
+                      </div>
+                      <p className="mt-0.5 text-xs text-[#87938b]">
+                        Top {Math.max(1, 100 - ambassadorMetrics.percentileRank)}% of creators
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mb-4 space-y-2">
+                    {[
+                      { label: "Delivery",    val: ambassadorMetrics.score.deliveryScore,            max: 35 },
+                      { label: "Rating",      val: ambassadorMetrics.score.ratingScore,              max: 25 },
+                      { label: "Profile",     val: ambassadorMetrics.score.profileCompletenessScore, max: 10 },
+                      { label: "Consistency", val: ambassadorMetrics.score.consistencyScore,         max: 5  },
+                    ].map(({ label, val, max }) => (
+                      <div key={label}>
+                        <div className="mb-0.5 flex justify-between text-[10px]">
+                          <span className="text-[#7a8f82]">{label}</span>
+                          <span className="font-bold text-[#1e3d2e]">{val}/{max}</span>
+                        </div>
+                        <div className="h-1 overflow-hidden rounded-full bg-[#e5eae4]">
+                          <div className="h-full rounded-full bg-[#2d6b4e]" style={{ width: `${(val / max) * 100}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {ambassadorMetrics.improvements.length > 0 && (
+                    <div className="mb-4 space-y-1.5 rounded-xl bg-[#f4f7f5] p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7a8f82]">Next steps</p>
+                      {ambassadorMetrics.improvements.slice(0, 2).map((imp) => (
+                        <div key={imp} className="flex items-start gap-2 text-xs text-[#496159]">
+                          <div className="mt-1 size-1.5 shrink-0 rounded-full bg-[#b77a12]" />
+                          {imp}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <Link
+                    href="/creator/ambassador-program"
+                    className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#2d6b4e] bg-white text-sm font-bold text-[#2d6b4e] transition-colors hover:bg-[#e4f1e8]"
+                  >
+                    View Full Program <ExternalLink className="size-3.5" />
+                  </Link>
+                </div>
+              )}
+
               <SaveButton isSaving={isSaving} onClick={handleSave} />
             </TabsPrimitive.Content>
           )}
@@ -1165,6 +1736,42 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
           {/* ── Social Tab ────────────────────────────────────────────────────── */}
           {section === "social" && (
             <TabsPrimitive.Content value="social" className="space-y-5">
+              {/* OAuth quick-connect */}
+              <div className={panelClass}>
+                <PanelHeader eyebrow="Quick Connect" title="Link via OAuth" />
+                <p className="mb-4 text-sm text-[#496159]">
+                  Connect directly to verify follower counts and engagement automatically.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {([
+                    { platform: 'instagram', label: 'Instagram', Icon: Instagram },
+                    { platform: 'youtube',   label: 'YouTube',   Icon: Youtube },
+                    { platform: 'tiktok',    label: 'TikTok',    Icon: Music2 },
+                  ] as const).map(({ platform, label, Icon }) => {
+                    const alreadyConnected = socialAccounts.some(
+                      (a) => a.platform === platform && a.verifiedBy === 'API_CONNECTED',
+                    );
+                    const isConnecting = isOAuthConnecting === platform;
+                    return (
+                      <button
+                        key={platform}
+                        disabled={isConnecting || alreadyConnected}
+                        onClick={() => void handleOAuthConnect(platform)}
+                        className={cn(
+                          "flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-bold transition-colors",
+                          alreadyConnected
+                            ? "border-[#2d6b4e] bg-[#e4f1e8] text-[#1e5c3e] cursor-default"
+                            : "border-[#dce6df] bg-white text-[#2d6b4e] hover:border-[#2d6b4e] hover:bg-[#e4f1e8] disabled:opacity-50",
+                        )}
+                      >
+                        <Icon className="size-4" />
+                        {isConnecting ? 'Redirecting…' : alreadyConnected ? `${label} connected` : `Connect ${label}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className={panelClass}>
                 <PanelHeader eyebrow="Social" title="Connected Accounts" />
                 <div className="space-y-4">
@@ -1185,6 +1792,18 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                                 {account.platform}
                               </span>
                               {account.verified && <Check className="size-3.5 text-[#2d6b4e]" />}
+                              {account.verifiedBy && (
+                                <span className={cn(
+                                  "rounded-full px-2 py-0.5 text-[9px] font-bold",
+                                  account.verifiedBy === "API_CONNECTED"     ? "bg-sky-50 text-sky-700"         :
+                                  account.verifiedBy === "PLATFORM_REVIEWED" ? "bg-[#e4f1e8] text-[#1e5c3e]"   :
+                                                                                "bg-[#f4f7f5] text-[#87938b]"
+                                )}>
+                                  {account.verifiedBy === "API_CONNECTED"     ? "API-connected"  :
+                                   account.verifiedBy === "PLATFORM_REVIEWED" ? "Team-verified"  :
+                                                                                 "Self-reported"}
+                                </span>
+                              )}
                             </div>
                           </div>
                           <button
@@ -1298,15 +1917,82 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                     <p className={labelClass}>Minimum Collaboration Budget (PKR)</p>
                     <input
                       type="number"
+                      min="5000"
                       className={inputClass}
+                      placeholder="e.g. 25000"
                       value={creatorPreferences.minimumBudget}
                       onChange={(e) =>
                         setCreatorPreferences((p) => ({ ...p, minimumBudget: e.target.value }))
                       }
                     />
+                    <p className="text-[11px] text-[#87938b]">Minimum PKR 5,000. Brands below this threshold won&apos;t see you in filtered searches.</p>
                   </div>
                 </div>
               </div>
+
+              {/* Deal types */}
+              <div className={panelClass}>
+                <PanelHeader eyebrow="Marketplace" title="Deal Types" />
+                <p className="mb-4 text-sm text-[#496159]">
+                  Brands filter the marketplace by deal type. Keep this up to date — it directly affects your discoverability.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(["paid", "barter", "hybrid"] as const).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() =>
+                        setCreatorPreferences((p) => ({
+                          ...p,
+                          dealTypes: p.dealTypes.includes(type)
+                            ? p.dealTypes.filter((t) => t !== type)
+                            : [...p.dealTypes, type],
+                        }))
+                      }
+                      className={
+                        creatorPreferences.dealTypes.includes(type)
+                          ? "rounded-full border-2 border-[#2d6b4e] bg-[#e4f1e8] px-5 py-2 text-sm font-bold capitalize text-[#1e5c3e] transition-all"
+                          : "rounded-full border-2 border-[#d1ddd6] bg-white px-5 py-2 text-sm font-semibold capitalize text-[#496159] transition-all hover:border-[#b0c5ba]"
+                      }
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Barter categories — conditional */}
+              {creatorPreferences.acceptsBarter && (
+                <div className={panelClass}>
+                  <PanelHeader eyebrow="Barter" title="Barter Categories" />
+                  <p className="mb-4 text-sm text-[#496159]">
+                    What kinds of barter products do you accept? Brands search by category to find the right match.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {(["food", "hotel", "salon", "events", "products", "services", "travel", "education"] as const).map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() =>
+                          setCreatorPreferences((p) => ({
+                            ...p,
+                            barterTypes: p.barterTypes.includes(type)
+                              ? p.barterTypes.filter((t) => t !== type)
+                              : [...p.barterTypes, type],
+                          }))
+                        }
+                        className={
+                          creatorPreferences.barterTypes.includes(type)
+                            ? "rounded-full border-2 border-[#b77a12] bg-[#fdf4e1] px-5 py-2 text-sm font-bold capitalize text-[#9a6b00] transition-all"
+                            : "rounded-full border-2 border-[#d1ddd6] bg-white px-5 py-2 text-sm font-semibold capitalize text-[#496159] transition-all hover:border-[#b0c5ba]"
+                        }
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <SaveButton isSaving={isSaving} onClick={handleCreatorPreferencesSave} />
             </TabsPrimitive.Content>
@@ -1503,6 +2189,76 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
           )}
         </TabsPrimitive.Root>
       </div>
+
+      {/* Unsaved-changes banner */}
+      {isDirty && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 px-4">
+          <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-xl">
+            <AlertCircle className="size-4 shrink-0 text-amber-600" />
+            <p className="whitespace-nowrap text-sm font-semibold text-amber-800">Unsaved changes</p>
+            <button
+              onClick={() => {
+                if (section === "profile") void handleSave();
+                else if (section === "social") void handleSocialSave();
+                else void handleCreatorPreferencesSave();
+              }}
+              className="rounded-full bg-amber-600 px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-amber-700"
+            >
+              Save now
+            </button>
+            <button
+              onClick={() => {
+                skipDirty.current += 1;
+                setIsDirty(false);
+                void loadCreatorProfile();
+              }}
+              className="rounded-full border border-amber-200 bg-white px-3.5 py-1.5 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-100"
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Cover crop preview modal */}
+      {coverCropState && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-xl rounded-[1.6rem] bg-white p-6 shadow-2xl">
+            <h2 className="mb-1 text-lg font-extrabold tracking-[-0.03em] text-[#1e3d2e]">
+              Crop cover image
+            </h2>
+            <p className="mb-4 text-sm text-[#87938b]">
+              Your image will be center-cropped to a 3:1 banner ratio.
+            </p>
+            {/* Cropped preview at 3:1 */}
+            <div className="overflow-hidden rounded-xl" style={{ aspectRatio: '3/1' }}>
+                {/* Using img tag intentionally for canvas dataURL blob preview */}
+              <img
+                src={coverCropState.croppedUrl}
+                alt="Cover crop preview"
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="mt-5 flex gap-3">
+              <button
+                onClick={() => {
+                  URL.revokeObjectURL(coverCropState.previewUrl);
+                  setCoverCropState(null);
+                }}
+                className="flex-1 rounded-full border border-[#d1ddd6] py-2.5 text-sm font-bold text-[#496159] transition-colors hover:border-[#c0392b] hover:text-[#c0392b]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void confirmCoverCrop()}
+                className="flex-1 rounded-full bg-[#2d6b4e] py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#1f5239]"
+              >
+                Use this crop
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {section === "profile" && shareOpen && (
         <ShareProfileModal

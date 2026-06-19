@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle, Clock, MessageSquare, Star } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, MessageSquare, Star, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CreatorMetricCard } from '@/components/creator-metric-card';
 import { campaignsService } from '@/services/campaigns.service';
@@ -61,6 +61,27 @@ export default function CreatorCampaignReactionsPage() {
     void load(0);
   }, [load]);
 
+  const analytics = useMemo(() => {
+    if (reactions.length === 0) return null;
+    const total = reactions.length;
+    const accepted = reactions.filter((r) => r.status?.toLowerCase() === 'accepted').length;
+    const shortlisted = reactions.filter((r) => r.status?.toLowerCase() === 'shortlisted').length;
+    const rejected = reactions.filter((r) => r.status?.toLowerCase() === 'rejected').length;
+    const responded = accepted + shortlisted + rejected;
+    const activeTotal = reactions.filter((r) => r.status?.toLowerCase() !== 'withdrawn').length;
+    const typeCounts = (['interested', 'proposal', 'question', 'decline'] as const).map((type) => ({
+      type,
+      count: reactions.filter((r) => r.reactionType?.toLowerCase() === type).length,
+    }));
+    return {
+      total,
+      acceptanceRate: activeTotal > 0 ? Math.round((accepted / activeTotal) * 100) : 0,
+      shortlistRate: activeTotal > 0 ? Math.round((shortlisted / activeTotal) * 100) : 0,
+      responseRate: total > 0 ? Math.round((responded / total) * 100) : 0,
+      typeCounts,
+    };
+  }, [reactions]);
+
   const withdraw = async (reaction: BrandCampaignReaction) => {
     if (reaction.status === 'withdrawn') return;
     setReactions((prev) => prev.map((item) => (item.id === reaction.id ? { ...item, status: 'withdrawn' as BrandCampaignReaction['status'] } : item)));
@@ -112,6 +133,63 @@ export default function CreatorCampaignReactionsPage() {
             </div>
           );
         })()}
+
+        {/* Proposal Performance */}
+        {analytics && (
+          <div className={`${panelClass} p-5`}>
+            <div className="mb-4 flex items-center gap-2">
+              <TrendingUp className="size-4 text-[#2d6b4e]" />
+              <h2 className="text-sm font-extrabold tracking-[-0.02em] text-[#1e3d2e]">
+                Proposal Performance
+              </h2>
+              <span className="ml-auto text-[10px] font-bold uppercase tracking-[0.14em] text-[#87938b]">
+                Based on {analytics.total} reaction{analytics.total !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            {/* Rate bars */}
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                { label: 'Acceptance rate', value: analytics.acceptanceRate, color: '#2d6b4e', bg: '#e4f1e8' },
+                { label: 'Shortlist rate', value: analytics.shortlistRate, color: '#1e4db7', bg: '#e0edff' },
+                { label: 'Response rate', value: analytics.responseRate, color: '#b77a12', bg: '#fdf3dc' },
+              ].map(({ label, value, color, bg }) => (
+                <div key={label} className="rounded-xl p-3" style={{ backgroundColor: bg }}>
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.14em]" style={{ color }}>
+                    {label}
+                  </p>
+                  <p className="mt-0.5 text-2xl font-extrabold tracking-[-0.03em]" style={{ color }}>
+                    {value}%
+                  </p>
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-white/60">
+                    <div
+                      className="h-1.5 rounded-full transition-all duration-700"
+                      style={{ width: `${value}%`, backgroundColor: color }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Type breakdown */}
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {analytics.typeCounts.map(({ type, count }) => (
+                <div key={type} className="rounded-xl border border-[#e8eeeb] bg-[#f7f9f8] p-3">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#87938b]">
+                    {type}
+                  </p>
+                  <p className="mt-0.5 text-lg font-extrabold text-[#1e3d2e]">{count}</p>
+                  <div className="mt-1 h-1 w-full rounded-full bg-[#e8eeeb]">
+                    <div
+                      className="h-1 rounded-full bg-[#2d6b4e] transition-all duration-700"
+                      style={{ width: analytics.total > 0 ? `${Math.round((count / analytics.total) * 100)}%` : '0%' }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Loading state */}
         {isLoading && reactions.length === 0 && (

@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api/client';
 import { mapCreator } from '@/lib/api/mappers';
-import type { Creator, CreatorFilters } from '@/types';
+import type { Creator, CreatorFilters, DealType, BarterCategory } from '@/types';
 
 interface SearchResponse {
   creators?: unknown[];
@@ -32,6 +32,8 @@ interface CreatorProfileUpdatePayload {
   rateCardStory?: number;
   rateCardPost?: number;
   rateCardVideo?: number;
+  dealTypes?: DealType[];
+  barterTypes?: BarterCategory[];
 }
 
 export interface CreatorSocialAccountPayload {
@@ -41,6 +43,7 @@ export interface CreatorSocialAccountPayload {
   followers?: number;
   avgViews?: number;
   engagementRate?: number;
+  verifiedBy?: string;
 }
 
 interface CreatorPreferencesPayload {
@@ -97,6 +100,8 @@ rate_card_reel: payload.rateCardReel,
       rate_card_story: payload.rateCardStory,
       rate_card_post: payload.rateCardPost,
       rate_card_video: payload.rateCardVideo,
+      deal_types: payload.dealTypes,
+      barter_types: payload.barterTypes,
     });
 
     return mapCreator(response as never);
@@ -108,6 +113,24 @@ rate_card_reel: payload.rateCardReel,
     });
 
     return Array.isArray(response) ? response : [];
+  },
+
+  async patchSocialAccount(platform: string, data: Omit<CreatorSocialAccountPayload, 'platform'>): Promise<void> {
+    await apiClient.patch(`/api/v1/creators/me/social-accounts/${platform}`, data);
+  },
+
+  async initiateOAuthConnect(platform: string): Promise<{ redirectUrl: string }> {
+    const redirectUri = typeof window !== 'undefined'
+      ? `${window.location.origin}/creator/social/oauth/callback`
+      : '';
+    return apiClient.get<{ redirectUrl: string }>(`/api/v1/oauth/${platform}/authorize`, {
+      query: { redirect_uri: redirectUri },
+    });
+  },
+
+  async completeSocialOAuthConnect(platform: string, code: string, state?: string): Promise<Creator> {
+    const response = await apiClient.post<unknown>(`/api/v1/oauth/${platform}/callback`, { code, state });
+    return mapCreator(response as never);
   },
 
   async updatePreferences(payload: CreatorPreferencesPayload): Promise<Creator> {
@@ -255,9 +278,15 @@ rate_card_reel: payload.rateCardReel,
     thumbnailUrl: string;
     mediaUrl: string;
     platform: string;
+    views?: number;
+    likes?: number;
   }): Promise<{ id: string; type: string; thumbnailUrl: string; mediaUrl: string; platform: string }> {
     const response = await apiClient.post<{ id: string; type: string; thumbnailUrl: string; mediaUrl: string; platform: string }>('/api/v1/creators/me/portfolio', item);
     return response;
+  },
+
+  async reorderPortfolio(ids: string[]): Promise<void> {
+    await apiClient.put('/api/v1/creators/me/portfolio/reorder', { ids });
   },
 
   async deletePortfolioItem(itemId: string): Promise<void> {

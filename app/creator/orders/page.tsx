@@ -130,6 +130,9 @@ function CreatorOrdersPageContent() {
   const user = useAuthStore((state) => state.user);
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [ordersPage, setOrdersPage] = useState(0);
+  const [hasMoreOrders, setHasMoreOrders] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
@@ -144,15 +147,21 @@ function CreatorOrdersPageContent() {
   const [reviewComment, setReviewComment] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-  const loadOrders = async () => {
-    setIsLoading(true);
+  const loadOrders = async (status?: string, append = false, page = 0) => {
+    if (append) setIsLoadingMore(true);
+    else setIsLoading(true);
     try {
-      setOrders(await ordersService.getAll());
+      const statusFilter = (!status || status === 'all') ? undefined : status as Order['status'];
+      const result = await ordersService.getAll({ status: statusFilter, page, limit: 20 });
+      setOrders((prev) => append ? [...prev, ...result.orders] : result.orders);
+      setHasMoreOrders(result.hasMore);
+      setOrdersPage(page);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load orders";
       toast.error(message);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
@@ -162,14 +171,11 @@ function CreatorOrdersPageContent() {
 
   useEffect(() => {
     const status = searchParams.get('status');
-    if (!status) {
-      setStatusFilter('all');
-      return;
-    }
     const allowed = new Set(['all', 'pending', 'accepted', 'in_progress', 'delivered', 'review', 'revision', 'completed', 'cancelled']);
-    if (allowed.has(status)) {
-      setStatusFilter(status);
-    }
+    const next = status && allowed.has(status) ? status : 'all';
+    setStatusFilter(next);
+    void loadOrders(next, false, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const filteredOrders = orders.filter((order) => {
@@ -667,6 +673,19 @@ function CreatorOrdersPageContent() {
             <Package className="mb-4 h-12 w-12 text-[#87938b]" />
             <h3 className="mb-1 text-lg font-extrabold text-[#1e3d2e]">No orders found</h3>
             <p className="text-sm text-[#87938b]">No orders match your current filters.</p>
+          </div>
+        )}
+
+        {/* Load more */}
+        {hasMoreOrders && !isLoading && (
+          <div className="flex justify-center pt-2">
+            <button
+              disabled={isLoadingMore}
+              onClick={() => void loadOrders(statusFilter, true, ordersPage + 1)}
+              className="rounded-full border border-[#d1ddd6] bg-white px-6 py-2.5 text-sm font-bold text-[#2d6b4e] transition-colors hover:bg-[#e6eceb] disabled:opacity-50"
+            >
+              {isLoadingMore ? "Loading…" : "Load more orders"}
+            </button>
           </div>
         )}
       </div>

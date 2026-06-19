@@ -134,18 +134,34 @@ export const ordersService = {
     return enriched[0] || null;
   },
 
-  async getAll(filters?: { status?: OrderStatus; search?: string; page?: number; limit?: number }): Promise<Order[]> {
-    const response = await apiClient.get<BackendOrderResponse[] | { orders?: BackendOrderResponse[] }>('/api/v1/orders', {
+  async getAll(filters?: { status?: OrderStatus; search?: string; page?: number; limit?: number }): Promise<{ orders: Order[]; total: number; hasMore: boolean }> {
+    type PaginatedResponse = { orders?: BackendOrderResponse[]; content?: BackendOrderResponse[]; total?: number; totalElements?: number };
+    const page = filters?.page ?? 0;
+    const limit = filters?.limit ?? 20;
+
+    const response = await apiClient.get<BackendOrderResponse[] | PaginatedResponse>('/api/v1/orders', {
       query: {
-        status: filters?.status,
-        search: filters?.search,
-        page: filters?.page ?? 0,
-        limit: filters?.limit ?? 100,
+        status: filters?.status ? filters.status.toUpperCase() : undefined,
+        search: filters?.search || undefined,
+        page,
+        limit,
       },
     });
 
-    const orders = Array.isArray(response) ? response : response.orders || [];
-    return enrichOrders(orders);
+    let raw: BackendOrderResponse[];
+    let total: number;
+
+    if (Array.isArray(response)) {
+      raw = response;
+      total = response.length < limit ? page * limit + response.length : (page + 1) * limit + 1;
+    } else {
+      const r = response as PaginatedResponse;
+      raw = r.orders ?? r.content ?? [];
+      total = r.total ?? r.totalElements ?? raw.length;
+    }
+
+    const orders = await enrichOrders(raw);
+    return { orders, total, hasMore: (page + 1) * limit < total };
   },
 
   async getById(id: string): Promise<Order | null> {
@@ -155,17 +171,18 @@ export const ordersService = {
   },
 
   async getByCreatorId(creatorId: string): Promise<Order[]> {
-    const orders = await this.getAll();
+    const { orders } = await this.getAll({ limit: 200 });
     return orders.filter((order) => order.creatorId === creatorId);
   },
 
   async getByBrandId(brandId: string): Promise<Order[]> {
-    const orders = await this.getAll();
+    const { orders } = await this.getAll({ limit: 200 });
     return orders.filter((order) => order.brandId === brandId);
   },
 
   async getByStatus(status: OrderStatus): Promise<Order[]> {
-    return this.getAll({ status });
+    const { orders } = await this.getAll({ status });
+    return orders;
   },
 
   async updateStatus(orderId: string, status: OrderStatus): Promise<Order | null> {

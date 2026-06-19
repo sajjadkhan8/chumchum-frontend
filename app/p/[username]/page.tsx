@@ -20,7 +20,6 @@ import {
   Youtube,
   Music2,
   Facebook,
-  CheckCircle2,
   Zap,
   ArrowRight,
   Users,
@@ -196,7 +195,19 @@ export default function PublicCreatorProfilePage({
     try { await toggleSavedCreator(creator.id); } finally { setIsSaving(false); }
   };
 
-  const isAvailable = creator.availabilityStatus === "AVAILABLE" || !creator.availabilityStatus;
+  const availabilityDisplay: Record<string, { label: string; cls: string; pulse: boolean }> = {
+    AVAILABLE:    { label: "Available Now", cls: "border-emerald-400/30 bg-emerald-500/20 text-emerald-300", pulse: true  },
+    BUSY:         { label: "Busy",          cls: "border-amber-400/30 bg-amber-500/20 text-amber-300",       pulse: false },
+    ON_VACATION:  { label: "On Vacation",   cls: "border-sky-400/30 bg-sky-500/20 text-sky-300",             pulse: false },
+    UNAVAILABLE:  { label: "Unavailable",   cls: "border-white/20 bg-black/30 text-white/70",                pulse: false },
+  };
+  const avail = availabilityDisplay[creator.availabilityStatus ?? "AVAILABLE"] ?? availabilityDisplay.AVAILABLE;
+
+  const verifiedByLabel: Record<string, { label: string; cls: string }> = {
+    SELF:              { label: "Self-reported",    cls: "bg-[#f4f7f5] text-[#87938b]"  },
+    PLATFORM_REVIEWED: { label: "Team-verified",    cls: "bg-[#e4f1e8] text-[#1e5c3e]"  },
+    API_CONNECTED:     { label: "API-connected",    cls: "bg-sky-50 text-sky-600"        },
+  };
 
   /* ═══════════════════════════════════════ RENDER ══════════════════════════════════════ */
   return (
@@ -216,16 +227,10 @@ export default function PublicCreatorProfilePage({
 
           {/* Availability badge — top right of cover */}
           <div className="absolute right-4 top-4">
-            {isAvailable ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-500/20 px-3 py-1 text-[11px] font-bold text-emerald-300 backdrop-blur-sm">
-                <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Available
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/30 px-3 py-1 text-[11px] font-bold text-white/70 backdrop-blur-sm">
-                Unavailable
-              </span>
-            )}
+            <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-bold backdrop-blur-sm ${avail.cls}`}>
+              {avail.pulse && <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+              {avail.label}
+            </span>
           </div>
         </div>
 
@@ -286,6 +291,20 @@ export default function PublicCreatorProfilePage({
                       </a>
                     )}
                   </div>
+                  {/* Deal type chips */}
+                  {(creator.dealTypes.length > 0 || creator.acceptsBarter || creator.acceptsHybridDeals) && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {creator.dealTypes.includes("paid") && (
+                        <span className="rounded-full bg-[#e4f1e8] px-2.5 py-0.5 text-[10px] font-bold text-[#1e5c3e]">Paid</span>
+                      )}
+                      {(creator.dealTypes.includes("barter") || creator.acceptsBarter) && (
+                        <span className="rounded-full bg-[#fdf4e1] px-2.5 py-0.5 text-[10px] font-bold text-[#9a6b00]">Barter</span>
+                      )}
+                      {(creator.dealTypes.includes("hybrid") || creator.acceptsHybridDeals) && (
+                        <span className="rounded-full border border-sky-100 bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold text-sky-600">Hybrid</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -382,7 +401,8 @@ export default function PublicCreatorProfilePage({
                   {creator.platforms.map((p) => {
                     const meta = platformMeta[p.platform];
                     const Icon = meta?.icon ?? Users;
-                    return (
+                    const trustInfo = p.verified_by ? verifiedByLabel[p.verified_by] : verifiedByLabel.SELF;
+                  return (
                       <div key={p.platform} className="flex items-center gap-3 px-5 py-3.5">
                         <div
                           className="grid size-9 shrink-0 place-items-center rounded-xl"
@@ -397,6 +417,11 @@ export default function PublicCreatorProfilePage({
                         <div className="shrink-0 text-right">
                           <p className="text-[13px] font-extrabold text-[#1e3d2e]">{formatFollowers(p.followers)}</p>
                           <p className="text-[11px] font-semibold text-[#2d6b4e]">{p.engagementRate}% eng</p>
+                          {trustInfo && (
+                            <span className={`mt-0.5 inline-block rounded-full px-1.5 py-0.5 text-[9px] font-bold ${trustInfo.cls}`}>
+                              {trustInfo.label}
+                            </span>
+                          )}
                         </div>
                       </div>
                     );
@@ -430,9 +455,12 @@ export default function PublicCreatorProfilePage({
               <SectionHeader eyebrow="Track record" title="Stats" />
               <div className="divide-y divide-[#f4f6f4]">
                 {[
-                  { label: "Response Time", value: creator.responseTime, Icon: Clock },
-                  { label: "Deal Types",    value: creator.dealTypes.join(", "), Icon: Package },
-                  { label: "Languages",     value: (creator.languages ?? []).join(", ") || "—", Icon: Globe },
+                  { label: "Response Time",  value: creator.responseTime,                                                         Icon: Clock     },
+                  { label: "Deal Types",     value: creator.dealTypes.join(", ") || "—",                                          Icon: Package   },
+                  { label: "Languages",      value: (creator.languages ?? []).join(", ") || "—",                                  Icon: Globe     },
+                  ...(creator.repeatClients != null
+                    ? [{ label: "Repeat Clients", value: `${creator.repeatClients}%`, Icon: Users }]
+                    : []),
                 ].map(({ label, value, Icon }) => (
                   <div key={label} className="flex items-center gap-3 px-5 py-3.5">
                     <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#e8f0ec]">
