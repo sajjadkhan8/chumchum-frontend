@@ -160,7 +160,7 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
                       <h3 className="line-clamp-1 text-sm font-semibold text-white sm:text-base">{creator.name}</h3>
                     <div className="flex items-center gap-1 text-xs text-white/80">
                       <MapPin className="h-3 w-3" />
-                      {creator.city}
+                      {creator.city ?? '—'}
                     </div>
                   </div>
                 </div>

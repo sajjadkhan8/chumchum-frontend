@@ -18,8 +18,6 @@ import type {
   VerificationSource,
 } from '@/types';
 
-const DEFAULT_CITY: City = 'Karachi';
-
 const safeDate = (value?: string | Date | null): Date => {
   if (!value) return new Date();
   if (value instanceof Date) return value;
@@ -103,10 +101,6 @@ interface BackendCreatorResponse {
   minimum_budget?: number;
   languages?: string[];
   categories?: string[];
-  tiktok_url?: string;
-  instagram_url?: string;
-  youtube_url?: string;
-  facebook_url?: string;
   followers?: number;
   avg_views?: number;
   engagement_rate?: number;
@@ -169,21 +163,7 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
         avgViews: account.avg_views || 0,
         verified_by: account.verified_by as VerificationSource | undefined,
       }))
-    : [
-        { key: 'instagram', url: input.instagram_url },
-        { key: 'tiktok', url: input.tiktok_url },
-        { key: 'youtube', url: input.youtube_url },
-        { key: 'facebook', url: input.facebook_url },
-      ]
-        .filter((entry) => Boolean(entry.url))
-        .map((entry) => ({
-          platform: normalizePlatform(entry.key),
-          followers,
-          engagementRate,
-          username,
-          profileUrl: entry.url,
-          avgViews: input.avg_views || 0,
-        }));
+    : [{ platform: 'instagram' as const, followers, engagementRate, username, avgViews: 0 }];
 
   return {
     id: input.id,
@@ -195,7 +175,7 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
     avatar,
     coverImage: input.cover_image_url || avatar,
     bio: input.bio || '',
-    city: (input.city as City) || (input.user?.city as City) || DEFAULT_CITY,
+    city: (input.city as City | null) || (input.user?.city as City | null) || null,
     categories,
     languages: input.languages || [],
     website: input.website,
@@ -274,7 +254,7 @@ export const mapBrand = (input: BackendBrandResponse): Brand => ({
   logo: input.logo_url || '',
   industry: input.industry || 'General',
   website: input.website,
-  city: (input.user?.city as City) || DEFAULT_CITY,
+  city: (input.user?.city as City | null) || null,
   description: input.description || '',
   monthlyBudget: input.monthly_budget,
   preferredCreatorCategories: input.preferred_creator_categories,
@@ -448,7 +428,7 @@ export const mapOrder = (input: BackendOrderResponse, packageMap: Record<string,
     name: input.creatorName || 'Creator',
     avatar: '',
     bio: '',
-    city: DEFAULT_CITY,
+    city: null,
     categories: [],
     platforms: [{ platform: 'instagram', followers: 0, engagementRate: 0, username: 'creator' }],
     totalFollowers: 0,
@@ -471,7 +451,7 @@ export const mapOrder = (input: BackendOrderResponse, packageMap: Record<string,
     name: input.brandName || 'Brand',
     logo: '',
     industry: '',
-    city: DEFAULT_CITY,
+    city: null,
     description: '',
     totalCampaigns: 0,
     activeOrders: 0,
@@ -584,7 +564,7 @@ export const mapConversation = (
       name: 'Creator',
       avatar: '',
       bio: '',
-      city: DEFAULT_CITY,
+      city: null,
       categories: [],
       platforms: [{ platform: 'instagram', followers: 0, engagementRate: 0, username: 'creator' }],
       totalFollowers: 0,
@@ -607,7 +587,7 @@ export const mapConversation = (
       name: 'Brand',
       logo: '',
       industry: '',
-      city: DEFAULT_CITY,
+      city: null,
       description: '',
       totalCampaigns: 0,
       activeOrders: 0,

@@ -104,15 +104,6 @@ const defaultProfile = {
 
 const platformOrder: Platform[] = ["instagram", "youtube", "tiktok", "facebook", "snapchat"];
 
-const buildSocialLinks = (accounts: EditableSocialAccount[]) => {
-  const byPlatform = Object.fromEntries(accounts.map((account) => [account.platform, account.profileUrl || ""]));
-  return {
-    instagramUrl: byPlatform.instagram,
-    youtubeUrl: byPlatform.youtube,
-    tiktokUrl: byPlatform.tiktok,
-    facebookUrl: byPlatform.facebook,
-  };
-};
 
 export type CreatorSettingsSection = "profile" | "social" | "settings";
 
@@ -386,7 +377,6 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
         rateCardStory: profile.rateCardStory,
         rateCardPost: profile.rateCardPost,
         rateCardVideo: profile.rateCardVideo,
-        ...buildSocialLinks(socialAccounts),
       });
 
       // Save pending portfolio item if the user filled in the form but didn't click "Add to portfolio"
@@ -557,7 +547,6 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
         }));
 
       await creatorsService.updateSocialAccounts(accounts);
-      await creatorsService.updateMe(buildSocialLinks(accounts as EditableSocialAccount[]));
       await loadCreatorProfile();
       toast.success("Social accounts saved");
     } catch (error) {

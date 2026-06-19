@@ -104,9 +104,11 @@ async function renderShareCard(
   ctx.fillText(`@${creator.username}`, W / 2, avatarY + avatarR + 140);
 
   // City
-  ctx.fillStyle = "rgba(255,255,255,0.65)";
-  ctx.font = `400 38px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
-  ctx.fillText(`📍 ${creator.city}`, W / 2, avatarY + avatarR + 200);
+  if (creator.city) {
+    ctx.fillStyle = "rgba(255,255,255,0.65)";
+    ctx.font = `400 38px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
+    ctx.fillText(`📍 ${creator.city}`, W / 2, avatarY + avatarR + 200);
+  }
 
   // Categories pills
   const cats = creator.categories.slice(0, 4);

@@ -28,10 +28,6 @@ interface CreatorProfileUpdatePayload {
   minimumBudget?: number;
   languages?: string[];
   categories?: string[];
-  tiktokUrl?: string;
-  instagramUrl?: string;
-  youtubeUrl?: string;
-  facebookUrl?: string;
   rateCardReel?: number;
   rateCardStory?: number;
   rateCardPost?: number;
@@ -97,11 +93,7 @@ export const creatorsService = {
       minimum_budget: payload.minimumBudget,
       languages: payload.languages,
       categories: payload.categories,
-      tiktok_url: payload.tiktokUrl,
-      instagram_url: payload.instagramUrl,
-      youtube_url: payload.youtubeUrl,
-      facebook_url: payload.facebookUrl,
-      rate_card_reel: payload.rateCardReel,
+rate_card_reel: payload.rateCardReel,
       rate_card_story: payload.rateCardStory,
       rate_card_post: payload.rateCardPost,
       rate_card_video: payload.rateCardVideo,
@@ -189,7 +181,7 @@ export const creatorsService = {
 
     // by_city sort stays client-side: sort alphabetically by city name
     if (filters?.sortBy === 'by_city') {
-      results.sort((a, b) => a.city.localeCompare(b.city));
+      results.sort((a, b) => (a.city ?? '').localeCompare(b.city ?? ''));
     }
 
     return { creators: results, total: backendTotal || results.length };

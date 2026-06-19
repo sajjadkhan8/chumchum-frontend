@@ -16,11 +16,11 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { cn, formatFollowers, formatPrice, formatRelativeTime } from '@/lib/utils';
-import { pakistanLanguages } from '@/lib/localization';
+import { pakistanCities, pakistanLanguages } from '@/lib/localization';
 import { getCreatorGlobalSearchResults, rankCreators, type CreatorGlobalSearchResults as CreatorGlobalSearchPayload, type CreatorSearchBrandResult } from '@/lib/search/creator-search';
 import { creatorsService } from '@/services/creators.service';
 import { metadataService } from '@/services/metadata.service';
-import type { BrandCampaign, Creator, CreatorBadgeLevel } from '@/types';
+import type { BrandCampaign, City, Creator, CreatorBadgeLevel, Platform } from '@/types';
 
 type SearchTab = 'brands' | 'campaigns' | 'creators';
 type SortOption = 'relevant' | 'top-rated' | 'budget-high';
@@ -38,6 +38,8 @@ type CreatorSearchFilters = {
   badgeLevel: CreatorBadgeLevel | 'any';
   availableOnly: boolean;
   acceptsBarterOnly: boolean;
+  cities: City[];
+  platforms: Platform[];
   languages: string[];
   minRating: number;
   minFollowers: number | null;
@@ -57,6 +59,8 @@ const DEFAULT_CREATOR_FILTERS: CreatorSearchFilters = {
   badgeLevel: 'any',
   availableOnly: false,
   acceptsBarterOnly: false,
+  cities: [],
+  platforms: [],
   languages: [],
   minRating: 0,
   minFollowers: null,
@@ -69,6 +73,16 @@ const DEFAULT_CREATOR_FILTERS: CreatorSearchFilters = {
   rateCardFormat: 'any',
   maxRateCard: null,
 };
+
+const CREATOR_CITY_OPTIONS = pakistanCities.slice(0, 7) as City[];
+
+const PLATFORM_OPTIONS: Array<{ value: Platform; label: string }> = [
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'youtube', label: 'YouTube' },
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'snapchat', label: 'Snapchat' },
+];
 
 const BADGE_LEVEL_OPTIONS: Array<{ value: CreatorBadgeLevel | 'any'; label: string }> = [
   { value: 'any', label: 'Any' },
@@ -445,8 +459,7 @@ function CreatorResultCard({ creator }: { creator: Creator }) {
             </div>
             <p className="text-xs text-[#87938b]">
               {creator.categories.slice(0, 3).join(' • ')}
-              <span className="px-1.5 text-[#d1ddd6]">·</span>
-              {creator.city}
+              {creator.city && <><span className="px-1.5 text-[#d1ddd6]">·</span>{creator.city}</>}
             </p>
             <p className="max-w-2xl text-sm leading-6 text-[#87938b]">{creator.bio}</p>
             <div className="flex flex-wrap gap-1.5">
@@ -570,6 +583,8 @@ export function CreatorGlobalSearchResults() {
       badgeLevel: creatorFilters.badgeLevel !== 'any' ? creatorFilters.badgeLevel as CreatorBadgeLevel : undefined,
       availabilityStatus: creatorFilters.availableOnly ? 'available' : undefined,
       acceptsBarter: creatorFilters.acceptsBarterOnly ? true : undefined,
+      cities: creatorFilters.cities.length > 0 ? creatorFilters.cities : undefined,
+      platforms: creatorFilters.platforms.length > 0 ? creatorFilters.platforms : undefined,
       languages: creatorFilters.languages.length > 0 ? creatorFilters.languages : undefined,
       minRating: creatorFilters.minRating > 0 ? creatorFilters.minRating : undefined,
       minFollowers: creatorFilters.minFollowers ?? undefined,
@@ -614,6 +629,8 @@ export function CreatorGlobalSearchResults() {
         badgeLevel: creatorFilters.badgeLevel !== 'any' ? creatorFilters.badgeLevel as CreatorBadgeLevel : undefined,
         availabilityStatus: creatorFilters.availableOnly ? 'available' : undefined,
         acceptsBarter: creatorFilters.acceptsBarterOnly ? true : undefined,
+        cities: creatorFilters.cities.length > 0 ? creatorFilters.cities : undefined,
+        platforms: creatorFilters.platforms.length > 0 ? creatorFilters.platforms : undefined,
         languages: creatorFilters.languages.length > 0 ? creatorFilters.languages : undefined,
         minRating: creatorFilters.minRating > 0 ? creatorFilters.minRating : undefined,
         minFollowers: creatorFilters.minFollowers ?? undefined,
@@ -875,6 +892,57 @@ export function CreatorGlobalSearchResults() {
       </section>
 
       <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Platform</h2>
+        <div className="flex flex-wrap gap-1.5">
+          {PLATFORM_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() =>
+                setCreatorFilters((c) => ({
+                  ...c,
+                  platforms: c.platforms.includes(opt.value)
+                    ? c.platforms.filter((p) => p !== opt.value)
+                    : [...c.platforms, opt.value],
+                }))
+              }
+              className={cn(
+                'rounded-full border px-3 py-1 text-xs font-semibold transition',
+                creatorFilters.platforms.includes(opt.value)
+                  ? 'border-[#2d6b4e] bg-[#2d6b4e] text-white'
+                  : 'border-[#d1ddd6] text-[#87938b] hover:border-[#b0c5ba] hover:text-[#1e3d2e]',
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">City</h2>
+        <div className="space-y-2">
+          {CREATOR_CITY_OPTIONS.map((city) => (
+            <label key={city} className="flex cursor-pointer items-center gap-3 text-sm text-[#496159]">
+              <Checkbox
+                checked={creatorFilters.cities.includes(city)}
+                onCheckedChange={() =>
+                  setCreatorFilters((c) => ({
+                    ...c,
+                    cities: c.cities.includes(city)
+                      ? c.cities.filter((x) => x !== city)
+                      : [...c.cities, city],
+                  }))
+                }
+                className="size-4 rounded-[3px] border-[#d1ddd6] data-[state=checked]:border-[#2d6b4e] data-[state=checked]:bg-[#2d6b4e]"
+              />
+              <span className={cn(creatorFilters.cities.includes(city) && 'font-bold text-[#2d6b4e]')}>{city}</span>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
         <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Availability</h2>
         <div className="space-y-2.5">
           <label className="flex cursor-pointer items-center gap-3 text-sm text-[#496159]">
@@ -1106,7 +1174,7 @@ export function CreatorGlobalSearchResults() {
 
         {/* Desktop sidebar */}
         <aside className="hidden border-r border-[#d1ddd6] bg-white lg:block">
-          <div className="sticky top-[5.25rem] px-5 py-6">
+          <div className="sticky top-[5.25rem] h-[calc(100vh-5.25rem)] overflow-y-auto overscroll-contain px-5 py-6">
             {SidebarContent}
           </div>
         </aside>

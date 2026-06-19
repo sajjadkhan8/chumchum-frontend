@@ -162,7 +162,7 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
             <div>
               <p className="font-extrabold tracking-[-0.02em] text-white">{creator.name}</p>
               <p className="mt-0.5 text-xs text-[#8fa098]">
-                {creator.city} · {formatFollowers(creator.totalFollowers)} followers
+                {creator.city ? `${creator.city} · ` : ''}{formatFollowers(creator.totalFollowers)} followers
               </p>
             </div>
           </div>

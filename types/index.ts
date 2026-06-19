@@ -45,7 +45,7 @@ export interface Creator {
   avatar: string;
   coverImage?: string;
   bio: string;
-  city: City;
+  city: City | null;
   categories: string[];
   languages?: string[];
   website?: string;
@@ -225,7 +225,7 @@ export interface Brand {
   logo: string;
   industry: string;
   website?: string;
-  city: City;
+  city: City | null;
   description: string;
   monthlyBudget?: number;
   preferredCreatorCategories?: string;

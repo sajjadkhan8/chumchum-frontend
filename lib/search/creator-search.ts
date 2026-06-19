@@ -10,7 +10,7 @@ export interface CreatorSearchBrandResult {
   name: string;
   initials: string;
   industry: string;
-  city: string;
+  city: string | null;
   description: string;
   isVerified: boolean;
   rating: number;
@@ -101,7 +101,7 @@ export const rankCreators = (creators: Creator[], searchTerm: string) =>
       right.name,
       right.username,
       right.bio,
-      right.city,
+      right.city ?? undefined,
       right.categories.join(' '),
       right.platforms.map((platform) => platform.username).join(' '),
     ]);
@@ -109,7 +109,7 @@ export const rankCreators = (creators: Creator[], searchTerm: string) =>
       left.name,
       left.username,
       left.bio,
-      left.city,
+      left.city ?? undefined,
       left.categories.join(' '),
       left.platforms.map((platform) => platform.username).join(' '),
     ]);
@@ -205,7 +205,7 @@ const mergeBrandCampaigns = (offers: BrandCampaign[], brand: Brand | undefined, 
     brand?.name,
     brand?.industry,
     brand?.description,
-    brand?.city,
+    brand?.city ?? undefined,
     name,
     primaryOffer?.title,
     primaryOffer?.brief,
@@ -247,7 +247,7 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
   const offers = offersResult.status === 'fulfilled' ? rankOffers(offersResult.value.content || [], term) : [];
 
   const brandsResult = await brandsService.getAll().catch(() => []);
-  const matchedBrands = brandsResult.filter((brand) => calculateMatchScore(term, [brand.name, brand.industry, brand.description, brand.city]) > 0);
+  const matchedBrands = brandsResult.filter((brand) => calculateMatchScore(term, [brand.name, brand.industry, brand.description, brand.city ?? undefined]) > 0);
   const offersByBrand = new Map<string, BrandCampaign[]>();
 
   for (const offer of offers) {
@@ -267,7 +267,7 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
     if (merged) {
       brandResults.set(merged.id, merged);
     } else {
-      const matchScore = calculateMatchScore(term, [brand.name, brand.industry, brand.description, brand.city]);
+      const matchScore = calculateMatchScore(term, [brand.name, brand.industry, brand.description, brand.city ?? undefined]);
       brandResults.set(brand.id, {
         id: brand.id,
         name: brand.name,
