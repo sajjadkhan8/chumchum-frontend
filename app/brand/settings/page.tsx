@@ -135,7 +135,7 @@ function BrandSettingsPageContent() {
   });
 
   const [verification, setVerification] = useState({
-    businessStatus: "Verified",
+    businessStatus: "UNVERIFIED",
     contactEmail: "verification@karachigourmet.pk",
     phoneNumber: "+92 300 778 8899",
   });
@@ -173,7 +173,7 @@ function BrandSettingsPageContent() {
         campaignBudgetRange: brand.campaignBudgetRange || "",
       });
       setVerification({
-        businessStatus: brand.businessVerificationStatus || "Pending",
+        businessStatus: brand.businessVerificationStatus || "UNVERIFIED",
         contactEmail: brand.verificationContactEmail || "",
         phoneNumber: brand.verificationPhoneNumber || "",
       });
@@ -231,7 +231,7 @@ function BrandSettingsPageContent() {
         verificationPhoneNumber: verification.phoneNumber,
       });
       setVerification({
-        businessStatus: saved.businessVerificationStatus || "Pending",
+        businessStatus: saved.businessVerificationStatus || "UNVERIFIED",
         contactEmail: saved.verificationContactEmail || "",
         phoneNumber: saved.verificationPhoneNumber || "",
       });
@@ -456,9 +456,10 @@ function BrandSettingsPageContent() {
                 >
                   <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Verified">Verified</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Needs Review">Needs Review</SelectItem>
+                    <SelectItem value="UNVERIFIED">Unverified</SelectItem>
+                    <SelectItem value="PENDING">Pending Review</SelectItem>
+                    <SelectItem value="VERIFIED">Verified</SelectItem>
+                    <SelectItem value="REJECTED">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -488,7 +489,7 @@ function BrandSettingsPageContent() {
               </div>
               <div className="flex items-start gap-2 rounded-[1.15rem] border border-[#c8e0d0] bg-[#eef6f1] px-3.5 py-3 text-xs text-[#185c39]">
                 <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
-                <p><span className="font-bold">Verification badge</span> is shown to creators when your status is Verified.</p>
+                <p><span className="font-bold">Verification badge</span> is shown to creators when your status is set to Verified.</p>
               </div>
               <Button
                 onClick={() => void handleVerificationSave()}

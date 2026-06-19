@@ -233,7 +233,11 @@ function ExplorePageContent() {
     void fetchCreators();
   }, [filters]);
 
+  const savedFetchedRef = useRef(false);
   useEffect(() => {
+    if (creatorView !== 'saved') return;
+    if (savedFetchedRef.current) return;
+    savedFetchedRef.current = true;
     const fetchSavedCreators = async () => {
       setIsLoadingSaved(true);
       const response = await savedCreatorsService.getAll().catch(() => ({ creators: [], total: 0 }));
@@ -241,11 +245,14 @@ function ExplorePageContent() {
       await loadSavedCreators();
       setIsLoadingSaved(false);
     };
-
     void fetchSavedCreators();
-  }, [loadSavedCreators]);
+  }, [creatorView, loadSavedCreators]);
 
+  const ambassadorsFetchedRef = useRef(false);
   useEffect(() => {
+    if (creatorView !== 'ambassadors') return;
+    if (ambassadorsFetchedRef.current) return;
+    ambassadorsFetchedRef.current = true;
     const fetchAmbassadors = async () => {
       setIsLoadingAmbassadors(true);
       const data = await ambassadorService.listAmbassadors(24).catch(() => []);
@@ -253,7 +260,7 @@ function ExplorePageContent() {
       setIsLoadingAmbassadors(false);
     };
     void fetchAmbassadors();
-  }, []);
+  }, [creatorView]);
 
   const [featuredPackages, setFeaturedPackages] = useState<Package[]>([]);
   const [isLoadingFeatured, setIsLoadingFeatured] = useState(true);

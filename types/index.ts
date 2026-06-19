@@ -215,6 +215,7 @@ export interface Order {
   deliveryDate?: Date;
   barterProductReceived?: boolean;
   conversationId?: string;
+  hasReviewedByBrand?: boolean;
 }
 
 // Brand Types
@@ -238,8 +239,12 @@ export interface Brand {
   planTier?: 'STARTER' | 'GROWTH' | 'ENTERPRISE';
   totalCampaigns: number;
   activeOrders: number;
-  brandRating?: number;
-  brandTotalReviews?: number;
+  brandRating: number;
+  brandTotalReviews: number;
+  companySize?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
 }
 
 export type BrandCampaignStatus = 'draft' | 'published' | 'paused' | 'closed' | 'archived';

@@ -141,7 +141,7 @@ export default function CreatorDashboardPage() {
         creatorsService.getMe().catch(() => null),
         analyticsService.getCreatorDashboard().catch(() => emptyAnalytics),
         earningsService.getSummary().catch(() => emptyEarnings),
-        ordersService.getAll().catch(() => []),
+        ordersService.getAll().then((r) => r.orders).catch(() => []),
         messagesService.getConversations(user?.id || "", "creator").catch(() => []),
         affiliateService.getOverview().catch(() => emptyAffiliate),
         analyticsService.getCreatorInsights().catch(() => null),

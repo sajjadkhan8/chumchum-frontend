@@ -36,6 +36,8 @@ const fallbackBrand = (brandId: string): Brand => ({
   description: '',
   totalCampaigns: 0,
   activeOrders: 0,
+  brandRating: 0,
+  brandTotalReviews: 0,
 });
 
 const mapReview = (input: BackendReview, creatorId: string): Review => {

@@ -241,6 +241,12 @@ interface BackendBrandResponse {
   verification_contact_email?: string;
   verification_phone_number?: string;
   plan_tier?: 'STARTER' | 'GROWTH' | 'ENTERPRISE';
+  brand_rating?: number;
+  brand_total_reviews?: number;
+  company_size?: string;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
   user?: {
     id?: string;
     city?: string;
@@ -265,6 +271,12 @@ export const mapBrand = (input: BackendBrandResponse): Brand => ({
   verificationContactEmail: input.verification_contact_email,
   verificationPhoneNumber: input.verification_phone_number,
   planTier: input.plan_tier,
+  brandRating: input.brand_rating ?? 0,
+  brandTotalReviews: input.brand_total_reviews ?? 0,
+  companySize: input.company_size,
+  contactName: input.contact_name,
+  contactEmail: input.contact_email,
+  contactPhone: input.contact_phone,
   totalCampaigns: 0,
   activeOrders: 0,
 });
@@ -373,6 +385,7 @@ interface BackendOrderResponse {
   deliverables?: BackendOrderDeliverableResponse[];
   barterProductReceived?: boolean;
   conversationId?: string;
+  hasReviewedByBrand?: boolean;
 }
 
 interface BackendOrderDeliverableResponse {
@@ -455,6 +468,8 @@ export const mapOrder = (input: BackendOrderResponse, packageMap: Record<string,
     description: '',
     totalCampaigns: 0,
     activeOrders: 0,
+    brandRating: 0,
+    brandTotalReviews: 0,
   };
 
   return {
@@ -479,6 +494,7 @@ export const mapOrder = (input: BackendOrderResponse, packageMap: Record<string,
     deliveryDate: input.deliveryDate ? safeDate(input.deliveryDate) : undefined,
     barterProductReceived: Boolean(input.barterProductReceived),
     conversationId: input.conversationId,
+    hasReviewedByBrand: Boolean(input.hasReviewedByBrand),
   };
 };
 

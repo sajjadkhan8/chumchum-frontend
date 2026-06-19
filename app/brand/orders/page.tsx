@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   AlertCircle,
@@ -151,12 +152,12 @@ function HeroStat({ label, value, icon: Icon }: { label: string; value: string; 
 }
 
 export default function BrandOrdersPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
-  const [reviewedOrderIds, setReviewedOrderIds] = useState<Set<string>>(new Set());
   const [reviewTarget, setReviewTarget] = useState<Order | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
@@ -169,7 +170,8 @@ export default function BrandOrdersPage() {
   const loadOrders = async () => {
     setIsLoading(true);
     try {
-      setOrders(await ordersService.getAll());
+      const result = await ordersService.getAll();
+      setOrders(result.orders);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load orders";
       toast.error(message);
@@ -300,7 +302,7 @@ export default function BrandOrdersPage() {
         rating: reviewRating,
         comment: reviewComment.trim(),
       });
-      setReviewedOrderIds((prev) => new Set(prev).add(reviewTarget.id));
+      setOrders((prev) => prev.map((o) => o.id === reviewTarget.id ? { ...o, hasReviewedByBrand: true } : o));
       setReviewTarget(null);
       toast.success("Review submitted");
     } catch (error) {
@@ -493,7 +495,7 @@ export default function BrandOrdersPage() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => toast.success(`Opening chat with ${order.creator.name} soon.`)}>
+                              <DropdownMenuItem onSelect={() => router.push(order.conversationId ? `/brand/messages?conversation=${order.conversationId}` : `/brand/messages?creator=${order.creatorId}`)}>
                                 <MessageCircle className="mr-2 h-4 w-4" />
                                 Message Creator
                               </DropdownMenuItem>
@@ -577,7 +579,7 @@ export default function BrandOrdersPage() {
                       </div>
                     </div>
 
-                    {order.status === "completed" && !reviewedOrderIds.has(order.id) && (
+                    {order.status === "completed" && !order.hasReviewedByBrand && (
                       <div className="mt-4 rounded-[1.15rem] bg-[#e7f0ea] p-4">
                         <div className="mb-2 flex items-center gap-1">
                           {[...Array(5)].map((_, i) => (

@@ -73,6 +73,9 @@ export default function BrandProfilePage() {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [brandReviews, setBrandReviews] = useState<Review[]>([]);
 
+  const [brandRating, setBrandRating] = useState(0);
+  const [brandTotalReviews, setBrandTotalReviews] = useState(0);
+
   const [profile, setProfile] = useState({
     companyName: "Karachi Gourmet Group",
     website: "https://karachigourmet.pk",
@@ -99,7 +102,13 @@ export default function BrandProfilePage() {
         description: brand.description || "",
         logo: brand.logo || "",
         city: brand.city || current.city,
+        companySize: brand.companySize || current.companySize,
+        contactName: brand.contactName || current.contactName,
+        contactEmail: brand.contactEmail || current.contactEmail,
+        contactPhone: brand.contactPhone || current.contactPhone,
       }));
+      setBrandRating(brand.brandRating ?? 0);
+      setBrandTotalReviews(brand.brandTotalReviews ?? 0);
     } catch {
       // Silently fall back to defaults on load failure
     }
@@ -114,6 +123,11 @@ export default function BrandProfilePage() {
         industry: profile.industry,
         description: profile.description,
         logoUrl: profile.logo,
+        city: profile.city,
+        companySize: profile.companySize,
+        contactName: profile.contactName,
+        contactEmail: profile.contactEmail,
+        contactPhone: profile.contactPhone,
       });
       await loadBrandProfile();
       toast.success("Company profile saved");
@@ -186,6 +200,13 @@ export default function BrandProfilePage() {
               <p className="mt-0.5 text-sm font-medium text-[#8fb09a]">
                 {profile.industry}
               </p>
+              {brandTotalReviews > 0 && (
+                <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1">
+                  <Star className="size-3 fill-[#e6aa38] text-[#e6aa38]" />
+                  <span className="text-xs font-bold text-white">{brandRating.toFixed(1)}</span>
+                  <span className="text-xs text-[#8fb09a]">({brandTotalReviews})</span>
+                </div>
+              )}
               <Button
                 variant="ghost"
                 size="sm"

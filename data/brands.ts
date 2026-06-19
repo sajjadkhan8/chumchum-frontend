@@ -12,6 +12,8 @@ export const mockBrands: Brand[] = [
     description: 'Food delivery platform connecting Pakistani diners with top restaurants and cafes.',
     totalCampaigns: 156,
     activeOrders: 12,
+    brandRating: 0,
+    brandTotalReviews: 0,
   },
   {
     id: 'b2',
@@ -24,6 +26,8 @@ export const mockBrands: Brand[] = [
     description: 'Pakistani fashion label with premium seasonal collections and nationwide delivery.',
     totalCampaigns: 89,
     activeOrders: 5,
+    brandRating: 0,
+    brandTotalReviews: 0,
   },
   {
     id: 'b3',
@@ -36,6 +40,8 @@ export const mockBrands: Brand[] = [
     description: 'Fragrance and lifestyle brand focused on premium scent experiences in Pakistan.',
     totalCampaigns: 234,
     activeOrders: 18,
+    brandRating: 0,
+    brandTotalReviews: 0,
   },
   {
     id: 'b4',
@@ -48,6 +54,8 @@ export const mockBrands: Brand[] = [
     description: 'Automotive platform for accessories, detailing, and road trip campaigns.',
     totalCampaigns: 178,
     activeOrders: 8,
+    brandRating: 0,
+    brandTotalReviews: 0,
   },
   {
     id: 'b5',
@@ -60,6 +68,8 @@ export const mockBrands: Brand[] = [
     description: 'Hospitality group offering premium stays and seasonal guest experiences across Pakistan.',
     totalCampaigns: 67,
     activeOrders: 3,
+    brandRating: 0,
+    brandTotalReviews: 0,
   },
 ];
 

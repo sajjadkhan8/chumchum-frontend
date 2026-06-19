@@ -9,6 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -101,6 +111,7 @@ export default function BrandPaymentsPage() {
   const [newMethodLabel, setNewMethodLabel] = useState("Corporate Card");
   const [newMethodMask, setNewMethodMask] = useState("");
   const [newMethodHolder, setNewMethodHolder] = useState("");
+  const [pendingRemoveMethodId, setPendingRemoveMethodId] = useState<string | null>(null);
 
   const load = async () => {
     setIsLoading(true);
@@ -205,7 +216,6 @@ export default function BrandPaymentsPage() {
   };
 
   const removeMethod = async (methodId: string) => {
-    if (!window.confirm("Remove this payment method?")) return;
     try {
       await paymentsService.removeBrandMethod(methodId);
       setMethods((current) => {
@@ -217,6 +227,8 @@ export default function BrandPaymentsPage() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not remove payment method";
       toast.error(message);
+    } finally {
+      setPendingRemoveMethodId(null);
     }
   };
 
@@ -389,7 +401,7 @@ export default function BrandPaymentsPage() {
                         Set default
                       </Button>
                     )}
-                    <Button variant="ghost" size="sm" className="h-7 rounded-lg px-2.5 text-xs font-semibold text-[#c13a3a] hover:bg-[#fce4e4]" onClick={() => void removeMethod(m.id)}>
+                    <Button variant="ghost" size="sm" className="h-7 rounded-lg px-2.5 text-xs font-semibold text-[#c13a3a] hover:bg-[#fce4e4]" onClick={() => setPendingRemoveMethodId(m.id)}>
                       Remove
                     </Button>
                   </div>
@@ -514,6 +526,26 @@ export default function BrandPaymentsPage() {
         </div>
 
       </div>
+
+      <AlertDialog open={!!pendingRemoveMethodId} onOpenChange={(open) => { if (!open) setPendingRemoveMethodId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove payment method?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This payment method will be permanently removed from your account. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-[#c13a3a] text-white hover:bg-[#a12e2e]"
+              onClick={() => pendingRemoveMethodId && void removeMethod(pendingRemoveMethodId)}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

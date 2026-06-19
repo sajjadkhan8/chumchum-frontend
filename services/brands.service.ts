@@ -16,6 +16,11 @@ export interface BrandProfileUpdatePayload {
   businessVerificationStatus?: string;
   verificationContactEmail?: string;
   verificationPhoneNumber?: string;
+  city?: string;
+  companySize?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
 }
 
 export const brandsService = {
@@ -48,6 +53,11 @@ export const brandsService = {
       business_verification_status: payload.businessVerificationStatus,
       verification_contact_email: payload.verificationContactEmail,
       verification_phone_number: payload.verificationPhoneNumber,
+      city: payload.city,
+      company_size: payload.companySize,
+      contact_name: payload.contactName,
+      contact_email: payload.contactEmail,
+      contact_phone: payload.contactPhone,
     });
 
     return mapBrand(response as never);

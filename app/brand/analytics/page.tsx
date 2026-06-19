@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, Target, Users, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StatsCard } from "@/components/stats-card";
 import { formatPrice } from "@/lib/utils";
 import { analyticsService, type BrandCampaignAnalytics } from "@/services/analytics.service";
@@ -36,16 +37,24 @@ const formatLabel = (value: string) => {
 export default function BrandAnalyticsPage() {
   const [analytics, setAnalytics] = useState<BrandCampaignAnalytics>(emptyAnalytics);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
+  const loadAnalytics = async () => {
+    setIsLoading(true);
+    setHasError(false);
+    try {
+      const data = await analyticsService.getBrandCampaigns();
+      setAnalytics(data);
+    } catch {
+      setHasError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadAnalytics = async () => {
-      setIsLoading(true);
-      const data = await analyticsService.getBrandCampaigns().catch(() => emptyAnalytics);
-      setAnalytics(data);
-      setIsLoading(false);
-    };
-
     void loadAnalytics();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const totalDealCount = analytics.dealMix.paid + analytics.dealMix.hybrid + analytics.dealMix.barter;
@@ -54,6 +63,21 @@ export default function BrandAnalyticsPage() {
     { label: "Hybrid", value: analytics.dealMix.hybrid },
     { label: "Barter", value: analytics.dealMix.barter },
   ];
+
+  if (hasError) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
+        <p className="text-base font-extrabold text-[#173b2a]">Could not load analytics</p>
+        <p className="text-sm text-[#647168]">Check your connection and try again.</p>
+        <button
+          onClick={() => void loadAnalytics()}
+          className="rounded-full bg-[#185c39] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#12462b]"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4 md:p-6">
@@ -75,7 +99,19 @@ export default function BrandAnalyticsPage() {
             <CardTitle>Top Cities</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            {analytics.topCities.length > 0 ? analytics.topCities.map((item) => (
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-10" />
+                    </div>
+                    <Skeleton className="h-3 w-40" />
+                  </div>
+                ))}
+              </div>
+            ) : analytics.topCities.length > 0 ? analytics.topCities.map((item) => (
               <div key={item.city} className="space-y-1">
                 <div className="flex items-center justify-between">
                   <p className="font-medium text-foreground">{formatLabel(item.city)}</p>
@@ -95,7 +131,20 @@ export default function BrandAnalyticsPage() {
             <CardTitle>Deal Mix</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            {totalDealCount > 0 ? dealRows.map((item) => {
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-4 w-10" />
+                    </div>
+                    <Skeleton className="h-2 w-full rounded-full" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                ))}
+              </div>
+            ) : totalDealCount > 0 ? dealRows.map((item) => {
               const share = (item.value / totalDealCount) * 100;
               return (
                 <div key={item.label} className="space-y-1">

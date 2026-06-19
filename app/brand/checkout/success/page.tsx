@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, Loader2, ArrowRight, Wallet } from "lucide-react";
@@ -14,6 +14,18 @@ const POLL_INTERVAL_MS = 2000;
 const MAX_POLLS = 20; // 40 seconds before giving up
 
 export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#2d6b4e] border-t-transparent" />
+      </div>
+    }>
+      <CheckoutSuccessContent />
+    </Suspense>
+  );
+}
+
+function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 

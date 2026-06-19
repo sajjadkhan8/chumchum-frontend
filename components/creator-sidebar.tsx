@@ -85,7 +85,7 @@ function CreatorSidebarNav({ compact = false, closeOnNavigate = false, onNavigat
 
     const loadOrderBadgeCount = async () => {
       try {
-        const orders = await ordersService.getAll();
+        const { orders } = await ordersService.getAll();
         if (cancelled) return;
 
         const openStatuses = new Set(['pending', 'revision', 'review', 'in_progress']);

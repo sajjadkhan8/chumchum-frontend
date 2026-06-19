@@ -23,12 +23,14 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { analyticsService, type BrandDashboardAnalytics } from "@/services/analytics.service";
+import { brandsService } from "@/services/brands.service";
 import { creatorsService } from "@/services/creators.service";
 import { ordersService } from "@/services/orders.service";
 import { formatFollowers, formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
-import type { Creator, Order } from "@/types";
+import type { Brand, Creator, Order } from "@/types";
 
 const emptyStats: BrandDashboardAnalytics = {
   totalOrders: 0,
@@ -81,7 +83,10 @@ function MetricCard({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#7b867f]">{label}</p>
-          <p className="mt-3 text-2xl font-extrabold tracking-[-0.04em] text-[#173b2a]">{loading ? "..." : value}</p>
+          {loading
+            ? <Skeleton className="mt-3 h-7 w-20 rounded-lg" />
+            : <p className="mt-3 text-2xl font-extrabold tracking-[-0.04em] text-[#173b2a]">{value}</p>
+          }
           <p className="mt-1 text-xs font-semibold text-[#718077]">{note}</p>
         </div>
         <span className="grid size-11 place-items-center rounded-2xl bg-[#f4f2e9] text-[#b77a12]">
@@ -109,10 +114,12 @@ const HERO_DISMISSED_KEY = 'brand-hero-dismissed';
 export default function BrandDashboardPage() {
   const { savedCreators, user } = useAuthStore();
   const [stats, setStats] = useState<BrandDashboardAnalytics>(emptyStats);
+  const [brand, setBrand] = useState<Brand | null>(null);
   const [recommendedCreators, setRecommendedCreators] = useState<Creator[]>([]);
   const [savedCreatorsList, setSavedCreatorsList] = useState<Creator[]>([]);
   const [activeOrders, setActiveOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [showHero, setShowHero] = useState(true);
 
   useEffect(() => {
@@ -124,22 +131,30 @@ export default function BrandDashboardPage() {
     setShowHero(false);
   };
 
-  useEffect(() => {
-    const loadDashboard = async () => {
-      setIsLoading(true);
-      const [analytics, orders, recommended] = await Promise.all([
+  const loadDashboard = async () => {
+    setIsLoading(true);
+    setHasError(false);
+    try {
+      const [analytics, orders, recommended, fetchedBrand] = await Promise.all([
         analyticsService.getBrandDashboard().catch(() => emptyStats),
-        ordersService.getAll().catch(() => []),
+        ordersService.getAll().then((r) => r.orders).catch(() => []),
         creatorsService.getTrending(4).catch(() => []),
+        brandsService.getMe().catch(() => null),
       ]);
-
       setStats(analytics);
+      setBrand(fetchedBrand);
       setActiveOrders(orders.filter((order) => activeOrderStatuses.has(order.status)).slice(0, 4));
       setRecommendedCreators(recommended);
+    } catch {
+      setHasError(true);
+    } finally {
       setIsLoading(false);
-    };
+    }
+  };
 
+  useEffect(() => {
     void loadDashboard();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -154,9 +169,24 @@ export default function BrandDashboardPage() {
     void loadSavedCreators();
   }, [savedCreators]);
 
-  const monthlyBudget = Math.max(1000000, stats.totalSpent || 0);
-  const budgetUsed = stats.totalSpent ? Math.min(100, (stats.totalSpent / monthlyBudget) * 100) : 0;
+  const monthlyBudget = brand?.monthlyBudget ?? stats.totalSpent ?? 0;
+  const budgetUsed = monthlyBudget > 0 ? Math.min(100, ((stats.totalSpent ?? 0) / monthlyBudget) * 100) : 0;
   const firstName = useMemo(() => user?.name?.split(" ")[0] || "there", [user?.name]);
+
+  if (hasError) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
+        <p className="text-base font-extrabold text-[#173b2a]">Could not load dashboard</p>
+        <p className="text-sm text-[#647168]">Check your connection and try again.</p>
+        <button
+          onClick={() => void loadDashboard()}
+          className="rounded-full bg-[#185c39] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#12462b]"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#fbfaf5]">
