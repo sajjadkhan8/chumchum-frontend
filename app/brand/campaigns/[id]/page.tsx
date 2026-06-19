@@ -54,6 +54,7 @@ export default function BrandCampaignDetailPage() {
 
   const [actioningReactionId, setActioningReactionId] = useState<string | null>(null);
   const [reactionNotes, setReactionNotes] = useState<Record<string, string>>({});
+  const [isDuplicating, setIsDuplicating] = useState(false);
 
   const loadCampaign = useCallback(async () => {
     const result = await campaignsService.getBrandCampaign(campaignId).catch(() => null);
@@ -115,6 +116,19 @@ export default function BrandCampaignDetailPage() {
     }
   };
 
+  const onDuplicate = async () => {
+    setIsDuplicating(true);
+    try {
+      const cloned = await campaignsService.cloneCampaign(campaignId);
+      toast.success('Campaign duplicated — redirecting to edit…');
+      router.push(`/brand/campaigns/${cloned.id}/edit`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to duplicate campaign');
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
   if (isLoading || !campaign) {
     return (
       <div className="container mx-auto p-4 pb-6 md:p-6">
@@ -134,6 +148,9 @@ export default function BrandCampaignDetailPage() {
           <Button variant="outline" onClick={() => router.push('/brand/campaigns')}>Back</Button>
           <Button variant="outline" asChild>
             <Link href={`/brand/campaigns/${campaign.id}/edit`}>Edit Campaign</Link>
+          </Button>
+          <Button variant="outline" disabled={isDuplicating} onClick={() => void onDuplicate()}>
+            {isDuplicating ? 'Duplicating…' : 'Duplicate'}
           </Button>
           {statusActions[campaign.status]?.map((entry) => (
             <Button key={entry.next} onClick={() => void onStatusChange(entry.next)}>{entry.label}</Button>
@@ -164,6 +181,16 @@ export default function BrandCampaignDetailPage() {
             {campaign.usageRights ? <p><span className="font-medium">Usage rights:</span> {campaign.usageRights}</p> : null}
             {campaign.termsAndConditions ? <p><span className="font-medium">Terms & conditions:</span> {campaign.termsAndConditions}</p> : null}
             {campaign.expectedOutcomes ? <p><span className="font-medium">Expected outcomes:</span> {campaign.expectedOutcomes}</p> : null}
+            {campaign.customScreeningQuestions ? (
+              <div className="rounded-xl border border-[#e8f0ec] bg-[#f4f8f5] p-3">
+                <p className="mb-1 text-xs font-extrabold uppercase tracking-wider text-[#185c39]">Screening Questions</p>
+                <p className="whitespace-pre-line text-[#3a5244]">{campaign.customScreeningQuestions}</p>
+              </div>
+            ) : null}
+            {campaign.minProposedPrice ? <p><span className="font-medium">Minimum proposed price:</span> {campaign.minProposedPrice.toLocaleString()} {campaign.currency}</p> : null}
+            {campaign.goLiveDate ? <p><span className="font-medium">Go-live date:</span> {campaign.goLiveDate}</p> : null}
+            {campaign.contentSubmissionDeadline ? <p><span className="font-medium">Content submission deadline:</span> {campaign.contentSubmissionDeadline}</p> : null}
+            {campaign.campaignDuration ? <p><span className="font-medium">Campaign duration:</span> {campaign.campaignDuration} days</p> : null}
             <p><span className="font-medium">Target:</span> {locationLabel(campaign)} • {campaign.targetLanguage || 'Any language'}</p>
           </CardContent>
         </Card>

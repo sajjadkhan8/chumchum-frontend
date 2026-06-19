@@ -314,6 +314,57 @@ export const campaignsService = {
     return mapCampaign(response);
   },
 
+  async cloneCampaign(campaignId: string): Promise<BrandCampaign> {
+    const source = await this.getBrandCampaign(campaignId);
+    const response = await apiClient.post<BackendBrandCampaign>('/api/v1/brand/campaigns', {
+      title: `${source.title} (copy)`,
+      brief: source.brief,
+      offerType: source.offerType,
+      budgetMin: source.budgetMin,
+      budgetMax: source.budgetMax,
+      currency: source.currency,
+      budgetType: source.budgetType,
+      paymentStructure: source.paymentStructure,
+      barterProductDesc: source.barterProductDesc,
+      barterEstimatedValue: source.barterEstimatedValue,
+      travelCostsCovered: source.travelCostsCovered,
+      deliverables: source.deliverables,
+      contentFormats: source.contentFormats,
+      targetPlatforms: source.targetPlatforms,
+      campaignGoal: source.campaignGoal,
+      categories: source.categories,
+      niches: source.niches,
+      referenceUrls: source.referenceUrls,
+      keyMessage: source.keyMessage,
+      dosAndDonts: source.dosAndDonts,
+      hashtagsMentions: source.hashtagsMentions,
+      usageRights: source.usageRights,
+      termsAndConditions: source.termsAndConditions,
+      expectedOutcomes: source.expectedOutcomes,
+      locationTargetingMode: source.locationTargetingMode,
+      targetCities: source.targetCities,
+      targetRegion: source.targetRegion,
+      targetCity: source.targetCity,
+      targetLanguage: source.targetLanguage,
+      visibility: source.visibility,
+      creatorType: source.creatorType,
+      followerRange: source.followerRange,
+      creatorGenderPreference: source.creatorGenderPreference,
+      minAge: source.minAge,
+      maxAge: source.maxAge,
+      applicationType: source.applicationType,
+      maxApplicants: source.maxApplicants,
+      proposalRequired: source.proposalRequired,
+      portfolioRequired: source.portfolioRequired,
+      customScreeningQuestions: source.customScreeningQuestions,
+      contentSubmissionDeadline: source.contentSubmissionDeadline,
+      goLiveDate: source.goLiveDate,
+      campaignDuration: source.campaignDuration,
+      minProposedPrice: source.minProposedPrice,
+    });
+    return mapCampaign(response);
+  },
+
   async getCampaignReactions(campaignId: string, filters?: {
     status?: string;
     reactionType?: string;

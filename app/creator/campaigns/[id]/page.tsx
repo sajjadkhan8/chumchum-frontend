@@ -68,6 +68,16 @@ export default function CreatorCampaignDetailPage() {
           {offer.termsAndConditions ? <p><span className="font-medium">Terms & conditions:</span> {offer.termsAndConditions}</p> : null}
           {offer.expectedOutcomes ? <p><span className="font-medium">Expected outcomes:</span> {offer.expectedOutcomes}</p> : null}
           <p><span className="font-medium">Target:</span> {locationLabel(offer)} • {offer.targetLanguage || 'Any language'}</p>
+          {offer.customScreeningQuestions ? (
+            <div className="rounded-xl border border-[#e8f0ec] bg-[#f4f8f5] p-3">
+              <p className="mb-1 text-xs font-extrabold uppercase tracking-wider text-[#185c39]">Screening Questions</p>
+              <p className="whitespace-pre-line text-sm text-[#3a5244]">{offer.customScreeningQuestions}</p>
+            </div>
+          ) : null}
+          {offer.minProposedPrice ? <p><span className="font-medium">Minimum price:</span> {offer.minProposedPrice.toLocaleString()} {offer.currency}</p> : null}
+          {offer.goLiveDate ? <p><span className="font-medium">Expected go-live:</span> {offer.goLiveDate}</p> : null}
+          {offer.contentSubmissionDeadline ? <p><span className="font-medium">Content submission by:</span> {offer.contentSubmissionDeadline}</p> : null}
+          {offer.campaignDuration ? <p><span className="font-medium">Campaign duration:</span> {offer.campaignDuration} days</p> : null}
           <p><span className="font-medium">Deadline:</span> {offer.deadlineDate || 'Open'}</p>
         </CardContent>
       </Card>

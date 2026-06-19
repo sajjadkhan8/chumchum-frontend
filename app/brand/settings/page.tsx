@@ -24,13 +24,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { brandsService } from "@/services/brands.service";
 import { apiClient } from "@/lib/api/client";
@@ -246,15 +239,14 @@ function BrandSettingsPageContent() {
     setIsSaving(true);
     try {
       const saved = await brandsService.updateMe({
-        businessVerificationStatus: verification.businessStatus,
         verificationContactEmail: verification.contactEmail,
         verificationPhoneNumber: verification.phoneNumber,
       });
-      setVerification({
-        businessStatus: saved.businessVerificationStatus || "UNVERIFIED",
-        contactEmail: saved.verificationContactEmail || "",
-        phoneNumber: saved.verificationPhoneNumber || "",
-      });
+      setVerification((prev) => ({
+        ...prev,
+        contactEmail: saved.verificationContactEmail || '',
+        phoneNumber: saved.verificationPhoneNumber || '',
+      }));
       toast.success("Verification settings saved");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not save verification settings");
@@ -551,19 +543,22 @@ function BrandSettingsPageContent() {
           <SectionCard title="Brand Verification" description="Keep legal and contact details current for trust badges" icon={ShieldCheck}>
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label className={labelCls}>Business Verification Status</Label>
-                <Select
-                  value={verification.businessStatus}
-                  onValueChange={(v) => setVerification((p) => ({ ...p, businessStatus: v }))}
-                >
-                  <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="UNVERIFIED">Unverified</SelectItem>
-                    <SelectItem value="PENDING">Pending Review</SelectItem>
-                    <SelectItem value="VERIFIED">Verified</SelectItem>
-                    <SelectItem value="REJECTED">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label className={labelCls}>Verification Status</Label>
+                <div className={`flex h-9 items-center gap-2 rounded-xl border-2 px-3.5 text-sm font-bold ${
+                  verification.businessStatus === 'VERIFIED'
+                    ? 'border-[#bcd3c5] bg-[#eef6f1] text-[#185c39]'
+                    : verification.businessStatus === 'PENDING'
+                    ? 'border-[#efcf83] bg-[#fffbf0] text-[#8b5e12]'
+                    : verification.businessStatus === 'REJECTED'
+                    ? 'border-[#f5c2c2] bg-[#fff5f5] text-[#c13a3a]'
+                    : 'border-[#d9e0d8] bg-[#f4f2e9] text-[#8fa098]'
+                }`}>
+                  {verification.businessStatus === 'VERIFIED' ? '✓ Verified' :
+                   verification.businessStatus === 'PENDING' ? '⏳ Pending review' :
+                   verification.businessStatus === 'REJECTED' ? '✗ Verification rejected — contact support' :
+                   'Unverified'}
+                </div>
+                <p className="text-[11px] text-[#8fa098]">Managed by the ZingZing team. Contact support to start verification.</p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">

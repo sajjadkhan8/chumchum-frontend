@@ -9,6 +9,7 @@ import {
   Mail,
   Phone,
   Star,
+  Target,
   User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -88,6 +89,10 @@ export default function BrandProfilePage() {
     contactName: "Ali Raza",
     contactEmail: "ali@karachigourmet.pk",
     contactPhone: "+92 300 987 6543",
+    verificationStatus: '' as string,
+    monthlyBudget: '' as string,
+    targetPlatforms: '' as string,
+    targetCities: '' as string,
   });
 
   const loadBrandProfile = useCallback(async () => {
@@ -106,6 +111,10 @@ export default function BrandProfilePage() {
         contactName: brand.contactName || current.contactName,
         contactEmail: brand.contactEmail || current.contactEmail,
         contactPhone: brand.contactPhone || current.contactPhone,
+        verificationStatus: brand.businessVerificationStatus || '',
+        monthlyBudget: brand.monthlyBudget ? String(brand.monthlyBudget) : '',
+        targetPlatforms: brand.targetPlatforms || '',
+        targetCities: brand.targetCities || '',
       }));
       setBrandRating(brand.brandRating ?? 0);
       setBrandTotalReviews(brand.brandTotalReviews ?? 0);
@@ -128,6 +137,9 @@ export default function BrandProfilePage() {
         contactName: profile.contactName,
         contactEmail: profile.contactEmail,
         contactPhone: profile.contactPhone,
+        monthlyBudget: profile.monthlyBudget ? Number(profile.monthlyBudget) : undefined,
+        targetPlatforms: profile.targetPlatforms || undefined,
+        targetCities: profile.targetCities || undefined,
       });
       await loadBrandProfile();
       toast.success("Company profile saved");
@@ -205,6 +217,22 @@ export default function BrandProfilePage() {
                   <Star className="size-3 fill-[#e6aa38] text-[#e6aa38]" />
                   <span className="text-xs font-bold text-white">{brandRating.toFixed(1)}</span>
                   <span className="text-xs text-[#8fb09a]">({brandTotalReviews})</span>
+                </div>
+              )}
+              {profile.verificationStatus && (
+                <div className={`mt-1.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${
+                  profile.verificationStatus === 'VERIFIED'
+                    ? 'border-[#bcd3c5] bg-[#e7f0ea] text-[#185c39]'
+                    : profile.verificationStatus === 'PENDING'
+                    ? 'border-[#efcf83] bg-[#fff1cd] text-[#8b5e12]'
+                    : profile.verificationStatus === 'REJECTED'
+                    ? 'border-[#f5c2c2] bg-[#fce8e6] text-[#c0392b]'
+                    : 'border-white/15 bg-white/10 text-[#8fb09a]'
+                }`}>
+                  {profile.verificationStatus === 'VERIFIED' ? '✓ Verified' :
+                   profile.verificationStatus === 'PENDING' ? '⏳ Verification pending' :
+                   profile.verificationStatus === 'REJECTED' ? '✗ Verification rejected' :
+                   'Unverified'}
                 </div>
               )}
               <Button
@@ -447,31 +475,103 @@ export default function BrandProfilePage() {
             </div>
           </section>
 
-          {brandReviews.length > 0 && (
-            <section className="mt-6 rounded-[1.4rem] border border-[#d9e0d8] bg-[#f4f2e9] p-5">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Reputation</p>
-              <h3 className="mt-1 text-lg font-extrabold tracking-[-0.03em] text-[#1a2e22]">
-                Creator reviews ({brandReviews.length})
+          <div className="my-6 border-t border-[#e8ede9]" />
+
+          {/* Targeting & Budget */}
+          <section>
+            <div className="mb-4 flex items-center gap-2">
+              <span className="grid size-7 place-items-center rounded-lg bg-[#e7f0ea]">
+                <Target className="size-3.5 text-[#185c39]" />
+              </span>
+              <div>
+                <h2 className="text-sm font-extrabold text-[#1a2e22]">Targeting & Budget</h2>
+                <p className="text-[11px] text-[#8fa098]">Influences creator recommendations and campaign defaults</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="monthlyBudget" className={labelCls}>Monthly Budget (PKR)</Label>
+                <Input
+                  id="monthlyBudget"
+                  type="number"
+                  className={inputCls}
+                  value={profile.monthlyBudget}
+                  placeholder="e.g. 500000"
+                  onChange={(e) => setProfile((p) => ({ ...p, monthlyBudget: e.target.value }))}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="targetPlatforms" className={labelCls}>Target Platforms</Label>
+                  <Input
+                    id="targetPlatforms"
+                    className={inputCls}
+                    value={profile.targetPlatforms}
+                    placeholder="Instagram, TikTok, YouTube"
+                    onChange={(e) => setProfile((p) => ({ ...p, targetPlatforms: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="targetCities" className={labelCls}>Target Cities</Label>
+                  <Input
+                    id="targetCities"
+                    className={inputCls}
+                    value={profile.targetCities}
+                    placeholder="Karachi, Lahore, Islamabad"
+                    onChange={(e) => setProfile((p) => ({ ...p, targetCities: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="mt-6 rounded-[1.4rem] border border-[#d9e0d8] bg-[#f4f2e9] p-5">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Reputation</p>
+            <div className="mt-1 flex items-center justify-between gap-3">
+              <h3 className="text-lg font-extrabold tracking-[-0.03em] text-[#1a2e22]">
+                Creator Reviews
               </h3>
+              {brandTotalReviews > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Star className="size-4 fill-[#e6aa38] text-[#e6aa38]" />
+                  <span className="text-sm font-extrabold text-[#1a2e22]">{brandRating.toFixed(1)}</span>
+                  <span className="text-xs text-[#8fa098]">({brandTotalReviews})</span>
+                </div>
+              )}
+            </div>
+            {brandReviews.length === 0 ? (
+              <div className="mt-4 rounded-2xl border border-dashed border-[#cdd4cf] bg-white p-6 text-center">
+                <Star className="mx-auto size-8 text-[#d4c89a]" />
+                <p className="mt-2 text-sm font-bold text-[#526259]">No reviews yet</p>
+                <p className="mt-1 text-xs text-[#8fa098]">Creator reviews from completed orders appear here.</p>
+              </div>
+            ) : (
               <div className="mt-4 space-y-3">
                 {brandReviews.map((review) => (
                   <div key={review.id} className="rounded-2xl border border-[#d9e0d8] bg-white p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex gap-0.5">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <Star key={s} className={`h-3.5 w-3.5 ${s <= review.rating ? "fill-[#e6aa38] text-[#e6aa38]" : "text-[#cdd4cf]"}`} />
-                        ))}
+                    <div className="flex items-start gap-3">
+                      <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#e7f0ea] text-xs font-extrabold text-[#185c39]">
+                        {getInitials(review.creatorId.slice(0, 6))}
                       </div>
-                      <span className="text-xs text-[#87938b]">{formatRelativeTime(review.createdAt)}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex gap-0.5">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star key={s} className={`h-3.5 w-3.5 ${s <= review.rating ? 'fill-[#e6aa38] text-[#e6aa38]' : 'text-[#cdd4cf]'}`} />
+                            ))}
+                          </div>
+                          <span className="shrink-0 text-xs text-[#87938b]">{formatRelativeTime(review.createdAt)}</span>
+                        </div>
+                        {review.comment && (
+                          <p className="mt-2 text-sm leading-relaxed text-[#3a5244]">{review.comment}</p>
+                        )}
+                      </div>
                     </div>
-                    {review.comment && (
-                      <p className="mt-2 text-sm text-[#3a5244]">{review.comment}</p>
-                    )}
                   </div>
                 ))}
               </div>
-            </section>
-          )}
+            )}
+          </section>
 
           <div className="mt-6">
             <Button

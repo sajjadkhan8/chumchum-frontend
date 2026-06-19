@@ -399,6 +399,27 @@ export const adminService = {
     return mapAdminUser(response);
   },
 
+  async bulkModerateUsers(
+    userIds: string[],
+    action: 'enable' | 'disable' | 'suspend' | 'ban',
+    reason?: string,
+    suspendDays?: number,
+  ): Promise<{ succeeded: string[]; failed: string[] }> {
+    const response = await apiClient.post<{ succeeded?: string[]; failed?: string[] }>(
+      '/api/v1/admin/users/bulk-moderate',
+      {
+        userIds,
+        action,
+        reason: reason || undefined,
+        suspendDays: action === 'suspend' ? (suspendDays ?? 30) : undefined,
+      },
+    );
+    return {
+      succeeded: response.succeeded ?? userIds,
+      failed: response.failed ?? [],
+    };
+  },
+
   async getOrders(filters: AdminOrderFilters = {}): Promise<AdminOrdersResponse> {
     const response = await apiClient.get<{ orders: Partial<AdminOrder>[]; total: number; page: number; limit: number }>('/api/v1/admin/orders', {
       query: {

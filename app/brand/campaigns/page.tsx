@@ -333,10 +333,26 @@ export default function BrandCampaignsPage() {
                         <p className="mt-3 line-clamp-2 max-w-4xl text-sm leading-6 text-[#647168]">{campaign.brief}</p>
 
                         <div className="mt-4 grid gap-2 text-sm font-bold text-[#607168] sm:grid-cols-3">
-                          <span className="inline-flex items-center gap-2 rounded-2xl bg-[#fbfaf5] px-3 py-2">
-                            <Users className="size-4 text-[#185c39]" />
-                            {campaign.reactionCount} reactions
-                          </span>
+                          {campaign.reactionCount > 0 ? (
+                            <Link
+                              href={`/brand/campaigns/${campaign.id}?tab=reactions`}
+                              className="inline-flex items-center gap-2 rounded-2xl bg-[#fff1cd] px-3 py-2 text-sm font-bold text-[#8b5e12] transition hover:bg-[#fce8a8]"
+                            >
+                              {campaign.status === 'published' && (
+                                <span className="relative flex size-2">
+                                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#e6aa38] opacity-75" />
+                                  <span className="relative inline-flex size-2 rounded-full bg-[#e6aa38]" />
+                                </span>
+                              )}
+                              <Users className="size-4 text-[#b77a12]" />
+                              {campaign.reactionCount} {campaign.reactionCount === 1 ? 'creator interested' : 'creators interested'}
+                            </Link>
+                          ) : (
+                            <span className="inline-flex items-center gap-2 rounded-2xl bg-[#fbfaf5] px-3 py-2 text-sm font-bold text-[#607168]">
+                              <Users className="size-4 text-[#185c39]" />
+                              No reactions yet
+                            </span>
+                          )}
                           <span className="inline-flex items-center gap-2 rounded-2xl bg-[#fbfaf5] px-3 py-2">
                             <CalendarClock className="size-4 text-[#185c39]" />
                             Updated {formatRelativeTime(campaign.updatedAt)}
