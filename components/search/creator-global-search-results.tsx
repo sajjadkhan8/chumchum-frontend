@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   CheckCircle2,
   Clock3,
+  Info,
   Play,
   Search,
   Star,
@@ -501,8 +502,10 @@ export function CreatorGlobalSearchResults() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [creators, setCreators] = useState<Creator[]>([]);
+  const [totalCreators, setTotalCreators] = useState(0);
   const [isCreatorsLoading, setIsCreatorsLoading] = useState(true);
   const [creatorsError, setCreatorsError] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [creatorFilters, setCreatorFilters] = useState<CreatorSearchFilters>(DEFAULT_CREATOR_FILTERS);
   const [metadataCategories, setMetadataCategories] = useState<string[]>([]);
   const [filters, setFilters] = useState<SearchFilters>({
@@ -582,16 +585,60 @@ export function CreatorGlobalSearchResults() {
       maxRateCardVideo: creatorFilters.rateCardFormat === 'video' && creatorFilters.maxRateCard ? creatorFilters.maxRateCard : undefined,
       sortBy,
     })
-      .then(({ creators: fetched }) => {
+      .then(({ creators: fetched, total }) => {
         // When the user picks an explicit sort the backend already orders correctly;
         // skip rankCreators so text-match re-ranking doesn't scramble that order.
-        if (!cancelled) setCreators(sortBy ? fetched : rankCreators(fetched, searchTerm));
+        if (!cancelled) {
+          setCreators(sortBy ? fetched : rankCreators(fetched, searchTerm));
+          setTotalCreators(total);
+        }
       })
       .catch(() => { if (!cancelled) { setCreators([]); setCreatorsError(true); } })
       .finally(() => { if (!cancelled) setIsCreatorsLoading(false); });
 
     return () => { cancelled = true; };
   }, [searchTerm, creatorFilters, currentSort]);
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore) return;
+    setIsLoadingMore(true);
+
+    const sortBy =
+      currentSort === 'top-rated' ? 'top_rated' :
+      currentSort === 'budget-high' ? 'budget_high' :
+      undefined;
+
+    try {
+      const { creators: fetched } = await creatorsService.getAll({
+        search: searchTerm,
+        badgeLevel: creatorFilters.badgeLevel !== 'any' ? creatorFilters.badgeLevel as CreatorBadgeLevel : undefined,
+        availabilityStatus: creatorFilters.availableOnly ? 'available' : undefined,
+        acceptsBarter: creatorFilters.acceptsBarterOnly ? true : undefined,
+        languages: creatorFilters.languages.length > 0 ? creatorFilters.languages : undefined,
+        minRating: creatorFilters.minRating > 0 ? creatorFilters.minRating : undefined,
+        minFollowers: creatorFilters.minFollowers ?? undefined,
+        maxFollowers: creatorFilters.maxFollowers ?? undefined,
+        minPrice: creatorFilters.minPrice ?? undefined,
+        maxPrice: creatorFilters.maxPrice ?? undefined,
+        minEngagementRate: creatorFilters.minEngagementRate > 0 ? creatorFilters.minEngagementRate : undefined,
+        minReviews: creatorFilters.minReviews > 0 ? creatorFilters.minReviews : undefined,
+        minCompletionRate: creatorFilters.minCompletionRate > 0 ? creatorFilters.minCompletionRate : undefined,
+        maxRateCardReel: creatorFilters.rateCardFormat === 'reel' && creatorFilters.maxRateCard ? creatorFilters.maxRateCard : undefined,
+        maxRateCardStory: creatorFilters.rateCardFormat === 'story' && creatorFilters.maxRateCard ? creatorFilters.maxRateCard : undefined,
+        maxRateCardPost: creatorFilters.rateCardFormat === 'post' && creatorFilters.maxRateCard ? creatorFilters.maxRateCard : undefined,
+        maxRateCardVideo: creatorFilters.rateCardFormat === 'video' && creatorFilters.maxRateCard ? creatorFilters.maxRateCard : undefined,
+        sortBy,
+        page: Math.floor(creators.length / 100),
+      });
+      const ranked = sortBy ? fetched : rankCreators(fetched, searchTerm);
+      setCreators((prev) => [...prev, ...ranked]);
+      if (fetched.length < 100) setTotalCreators(creators.length + fetched.length);
+    } catch {
+      // silently swallow load-more errors
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   const brandMap = useMemo(
     () => new Map(results.brands.map((brand) => [brand.id, brand] as const)),
@@ -957,14 +1004,23 @@ export function CreatorGlobalSearchResults() {
 
       <section className="space-y-3">
         <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Min reviews</h2>
-        <input
-          type="number"
-          min={0}
-          placeholder="e.g. 5"
-          value={creatorFilters.minReviews > 0 ? creatorFilters.minReviews : ''}
-          onChange={(e) => setCreatorFilters((c) => ({ ...c, minReviews: e.target.value ? Math.max(0, Number(e.target.value)) : 0 }))}
-          className="h-8 w-full rounded-lg border border-[#d9e0d8] bg-[#f4f2e9] px-2 text-xs text-[#1e3d2e] placeholder:text-[#b0bfb8] focus:border-[#2d6b4e] focus:outline-none"
-        />
+        <div className="flex flex-wrap gap-1.5">
+          {([0, 1, 5, 10] as const).map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setCreatorFilters((c) => ({ ...c, minReviews: n }))}
+              className={cn(
+                'rounded-full border px-3 py-1 text-xs font-semibold transition',
+                creatorFilters.minReviews === n
+                  ? 'border-[#2d6b4e] bg-[#2d6b4e] text-white'
+                  : 'border-[#d1ddd6] text-[#87938b] hover:border-[#b0c5ba] hover:text-[#1e3d2e]',
+              )}
+            >
+              {n === 0 ? 'Any' : `${n}+`}
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="space-y-3">
@@ -1218,9 +1274,27 @@ export function CreatorGlobalSearchResults() {
               <EmptyState title="No creators match these filters" description="Try adjusting the badge level, availability, or follower range filters." onReset={clearCreatorFilters} />
             ) : (
               <div className="space-y-4">
+                {currentSort === 'budget-high' && (
+                  <p className="flex items-center gap-1.5 rounded-lg bg-[#f7e8c8] px-3 py-2 text-xs text-[#b77a12]">
+                    <Info className="size-3.5 shrink-0" />
+                    Sorted by max price. Creators without a set max are shown at their minimum price.
+                  </p>
+                )}
                 {filteredCreators.map((creator) => (
                   <CreatorResultCard key={creator.id} creator={creator} />
                 ))}
+                {creators.length < totalCreators && (
+                  <div className="flex justify-center pt-2">
+                    <button
+                      type="button"
+                      onClick={handleLoadMore}
+                      disabled={isLoadingMore}
+                      className="rounded-full border border-[#d1ddd6] bg-white px-6 py-2.5 text-sm font-semibold text-[#496159] shadow-sm transition hover:border-[#2d6b4e] hover:text-[#1e3d2e] disabled:opacity-50"
+                    >
+                      {isLoadingMore ? 'Loading…' : 'Load more'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

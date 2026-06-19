@@ -37,7 +37,7 @@ const sortOptions = [
   { value: 'trending', label: 'Trending', icon: TrendingUp },
   { value: 'budget_friendly', label: 'Budget Friendly', icon: Wallet },
   { value: 'top_rated', label: 'Top Rated', icon: Star },
-  { value: 'near_you', label: 'By City (A–Z)', icon: MapPin },
+  { value: 'by_city', label: 'By City (A–Z)', icon: MapPin },
 ];
 
 function HeroStat({ label, value, icon: Icon }: { label: string; value: string; icon: React.ElementType }) {

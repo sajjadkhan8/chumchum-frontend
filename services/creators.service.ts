@@ -132,9 +132,6 @@ export const creatorsService = {
   },
 
   async getAll(filters?: CreatorFilters): Promise<{ creators: Creator[]; total: number }> {
-    // Send a single city when exactly one is selected; otherwise rely on client-side city filter.
-    const backendCity = filters?.cities?.length === 1 ? filters.cities[0] : undefined;
-
     // acceptsBarter: explicit flag takes precedence, then derive from dealTypes
     const acceptsBarter =
       filters?.acceptsBarter === true
@@ -155,7 +152,7 @@ export const creatorsService = {
     const payload = await apiClient.get<SearchResponse | unknown[]>('/api/v1/creators', {
       query: {
         search: filters?.search,
-        city: backendCity,
+        cities: filters?.cities?.length ? filters.cities : undefined,
         categories: filters?.categories,
         languages: filters?.languages,
         platform: filters?.platforms?.[0]?.toLowerCase(),
@@ -175,6 +172,7 @@ export const creatorsService = {
         maxRateCardPost: filters?.maxRateCardPost,
         maxRateCardVideo: filters?.maxRateCardVideo,
         sortBy: filters?.sortBy,
+        page: filters?.page ?? 0,
         limit: 100,
       },
       auth: false,
@@ -184,18 +182,13 @@ export const creatorsService = {
     const backendTotal: number = typeof raw?.total === 'number' ? raw.total : 0;
     let results = unwrapCreators(payload).map((creator) => mapCreator(creator as never));
 
-    // Multi-city client-side filter (backend only handles single city)
-    if ((filters?.cities?.length ?? 0) > 1) {
-      results = results.filter((creator) => filters!.cities!.includes(creator.city));
-    }
-
     // barterTypes is still client-side (backend only filters acceptsBarter boolean)
     if (filters?.barterTypes?.length) {
       results = results.filter((creator) => creator.barterTypes?.some((type) => filters.barterTypes?.includes(type)));
     }
 
-    // near_you stays client-side
-    if (filters?.sortBy === 'near_you') {
+    // by_city sort stays client-side: sort alphabetically by city name
+    if (filters?.sortBy === 'by_city') {
       results.sort((a, b) => a.city.localeCompare(b.city));
     }
 

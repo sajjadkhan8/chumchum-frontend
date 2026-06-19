@@ -399,7 +399,8 @@ export interface CreatorFilters {
   maxRateCardStory?: number;
   maxRateCardPost?: number;
   maxRateCardVideo?: number;
-  sortBy?: 'trending' | 'budget_friendly' | 'budget_high' | 'top_rated' | 'near_you';
+  sortBy?: 'trending' | 'budget_friendly' | 'budget_high' | 'top_rated' | 'by_city';
+  page?: number;
 }
 
 // Earnings Types
