@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bell, Moon, Sun } from 'lucide-react';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { useTheme } from 'next-themes';
 import { apiClient } from '@/lib/api/client';
+import { adminService, type AdminApiLog } from '@/services/admin.service';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface NotificationPreferences {
   emailOnDisputeOpened: boolean;
@@ -19,6 +22,24 @@ export default function AdminSettingsPage() {
     emailOnWithdrawalPending: true,
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [logs, setLogs] = useState<AdminApiLog[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logServiceFilter, setLogServiceFilter] = useState('all');
+  const [logStatusFilter, setLogStatusFilter] = useState('all');
+
+  const loadLogs = async () => {
+    setLogsLoading(true);
+    const result = await adminService.getApiLogs({
+      service: logServiceFilter !== 'all' ? logServiceFilter : undefined,
+      status: logStatusFilter !== 'all' ? (logStatusFilter as 'success' | 'error') : undefined,
+      limit: 50,
+    });
+    setLogs(result.logs);
+    setLogsLoading(false);
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { void loadLogs(); }, [logServiceFilter, logStatusFilter]);
 
   const updatePref = (key: keyof NotificationPreferences, value: boolean) => {
     setPrefs((prev) => ({ ...prev, [key]: value }));
@@ -129,6 +150,67 @@ export default function AdminSettingsPage() {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Integration Logs */}
+      <div className="mt-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-extrabold text-[#173b2a]">Integration Logs</h2>
+            <p className="text-sm text-muted-foreground">Recent API calls, webhook deliveries, and integration errors.</p>
+          </div>
+          <div className="flex gap-2">
+            <Select value={logServiceFilter} onValueChange={setLogServiceFilter}>
+              <SelectTrigger className="h-8 w-32 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All services</SelectItem>
+                <SelectItem value="safepay">Safepay</SelectItem>
+                <SelectItem value="oauth">OAuth</SelectItem>
+                <SelectItem value="webhook">Webhooks</SelectItem>
+                <SelectItem value="api">API</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={logStatusFilter} onValueChange={setLogStatusFilter}>
+              <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="success">Success</SelectItem>
+                <SelectItem value="error">Error</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-[#d9e0d8] bg-white">
+          {logsLoading ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">Loading logs…</div>
+          ) : logs.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">No integration logs found.</div>
+          ) : (
+            <div className="divide-y">
+              {logs.map((log) => {
+                const isError = log.statusCode >= 400 || !!log.errorMessage;
+                return (
+                  <div key={log.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
+                    <Badge variant={isError ? 'destructive' : 'secondary'} className="shrink-0 font-mono text-xs">
+                      {log.statusCode}
+                    </Badge>
+                    <span className="font-mono text-xs font-bold text-[#173b2a]">{log.method}</span>
+                    <span className="min-w-0 flex-1 truncate font-mono text-xs text-[#647168]">{log.path}</span>
+                    <span className="shrink-0 text-xs text-[#9ba8a1]">{log.durationMs}ms</span>
+                    <Badge variant="outline" className="shrink-0 text-xs capitalize">{log.service}</Badge>
+                    <span className="shrink-0 text-xs text-[#9ba8a1]">
+                      {new Date(log.timestamp).toLocaleString('en-PK', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' })}
+                    </span>
+                    {log.errorMessage ? (
+                      <span className="w-full text-xs text-red-600">{log.errorMessage}</span>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Bell, Plus, Trash2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +11,13 @@ import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { campaignsService } from '@/services/campaigns.service';
+import {
+  campaignAlertsService,
+  type CampaignAlertRule,
+  type AlertRuleType,
+  ALERT_TYPE_LABELS,
+  ALERT_TYPE_UNITS,
+} from '@/services/campaign-alerts.service';
 import type { BrandCampaign, BrandCampaignReaction, BrandCampaignStatus } from '@/types';
 import { formatPrice, formatRelativeTime } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -56,6 +64,12 @@ export default function BrandCampaignDetailPage() {
   const [reactionNotes, setReactionNotes] = useState<Record<string, string>>({});
   const [isDuplicating, setIsDuplicating] = useState(false);
 
+  const [alertRules, setAlertRules] = useState<CampaignAlertRule[]>([]);
+  const [isAddingAlert, setIsAddingAlert] = useState(false);
+  const [newAlertType, setNewAlertType] = useState<AlertRuleType>('reaction_threshold');
+  const [newAlertThreshold, setNewAlertThreshold] = useState('');
+  const [isSavingAlert, setIsSavingAlert] = useState(false);
+
   const loadCampaign = useCallback(async () => {
     const result = await campaignsService.getBrandCampaign(campaignId).catch(() => null);
     setCampaign(result);
@@ -77,6 +91,7 @@ export default function BrandCampaignDetailPage() {
     const run = async () => {
       setIsLoading(true);
       await Promise.all([loadCampaign(), loadReactions(0)]);
+      campaignAlertsService.getAlertRules(campaignId).then(setAlertRules).catch(() => {});
       setIsLoading(false);
     };
     void run();
@@ -126,6 +141,45 @@ export default function BrandCampaignDetailPage() {
       toast.error(error instanceof Error ? error.message : 'Failed to duplicate campaign');
     } finally {
       setIsDuplicating(false);
+    }
+  };
+
+  const onAddAlert = async () => {
+    const n = Number(newAlertThreshold);
+    if (!newAlertThreshold || isNaN(n) || n <= 0) return;
+    setIsSavingAlert(true);
+    try {
+      const created = await campaignAlertsService.createAlertRule(campaignId, {
+        type: newAlertType,
+        threshold: n,
+      });
+      setAlertRules((prev) => [...prev, created]);
+      setIsAddingAlert(false);
+      setNewAlertThreshold('');
+      toast.success('Alert rule added');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to add alert');
+    } finally {
+      setIsSavingAlert(false);
+    }
+  };
+
+  const onToggleAlert = async (rule: CampaignAlertRule) => {
+    try {
+      const updated = await campaignAlertsService.toggleAlertRule(campaignId, rule.id, !rule.isActive);
+      setAlertRules((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+    } catch {
+      toast.error('Failed to update alert');
+    }
+  };
+
+  const onDeleteAlert = async (ruleId: string) => {
+    try {
+      await campaignAlertsService.deleteAlertRule(campaignId, ruleId);
+      setAlertRules((prev) => prev.filter((r) => r.id !== ruleId));
+      toast.success('Alert removed');
+    } catch {
+      toast.error('Failed to delete alert');
     }
   };
 
@@ -295,6 +349,103 @@ export default function BrandCampaignDetailPage() {
               )}
             </>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Alert Rules */}
+      <Card className="mt-4">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="size-5 text-[#b77a12]" /> Alert Rules
+            </CardTitle>
+            <Button size="sm" variant="outline" onClick={() => setIsAddingAlert((v) => !v)}>
+              <Plus className="mr-1.5 size-4" /> Add alert
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {isAddingAlert ? (
+            <div className="flex flex-wrap items-end gap-3 rounded-xl border border-[#e8f0ec] bg-[#f4f8f5] p-3">
+              <div className="min-w-[180px] flex-1 space-y-1">
+                <label className="text-xs font-bold text-[#526259]">Alert type</label>
+                <Select
+                  value={newAlertType}
+                  onValueChange={(v) => setNewAlertType(v as AlertRuleType)}
+                >
+                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(ALERT_TYPE_LABELS) as AlertRuleType[]).map((t) => (
+                      <SelectItem key={t} value={t}>{ALERT_TYPE_LABELS[t]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-28 space-y-1">
+                <label className="text-xs font-bold text-[#526259]">
+                  Threshold ({ALERT_TYPE_UNITS[newAlertType]})
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={newAlertThreshold}
+                  onChange={(e) => setNewAlertThreshold(e.target.value)}
+                  className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#185c39]"
+                  placeholder="e.g. 10"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" disabled={isSavingAlert || !newAlertThreshold} onClick={() => void onAddAlert()}>
+                  {isSavingAlert ? 'Saving…' : 'Save'}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => { setIsAddingAlert(false); setNewAlertThreshold(''); }}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {alertRules.length === 0 && !isAddingAlert ? (
+            <p className="text-sm text-muted-foreground">
+              No alert rules yet. Add one to get notified when this campaign hits key thresholds.
+            </p>
+          ) : null}
+
+          {alertRules.map((rule) => (
+            <div
+              key={rule.id}
+              className="flex items-center justify-between gap-3 rounded-xl border border-[#e1e6df] bg-[#fbfaf5] p-3"
+            >
+              <div className="flex items-center gap-3">
+                <Bell className={`size-4 shrink-0 ${rule.isActive ? 'text-[#b77a12]' : 'text-[#c5cdc8]'}`} />
+                <div>
+                  <p className="text-sm font-extrabold text-[#173b2a]">
+                    {ALERT_TYPE_LABELS[rule.type]} {rule.threshold} {ALERT_TYPE_UNITS[rule.type]}
+                  </p>
+                  <p className="text-xs text-[#9ba8a1]">
+                    {rule.lastTriggeredAt
+                      ? `Last triggered ${new Date(rule.lastTriggeredAt).toLocaleDateString('en-PK')}`
+                      : 'Not yet triggered'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => void onToggleAlert(rule)}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${rule.isActive ? 'bg-[#185c39]' : 'bg-[#d1ddd6]'}`}
+                  aria-label={rule.isActive ? 'Disable alert' : 'Enable alert'}
+                >
+                  <span className={`inline-block size-3.5 rounded-full bg-white shadow-sm transition-transform ${rule.isActive ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </button>
+                <button
+                  onClick={() => void onDeleteAlert(rule.id)}
+                  className="grid size-7 place-items-center rounded-lg text-[#9ba8a1] hover:bg-red-50 hover:text-red-500"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>

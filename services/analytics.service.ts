@@ -103,6 +103,36 @@ export interface BrandDashboardAnalytics {
   avgRating: number;
 }
 
+export interface BrandCreatorSpend {
+  creatorId: string;
+  creatorName: string;
+  creatorAvatar?: string;
+  totalSpend: number;
+  orderCount: number;
+  completedOrders: number;
+  avgRating?: number;
+}
+
+export interface BrandCampaignCompletionRate {
+  campaignId: string;
+  campaignTitle: string;
+  totalOrders: number;
+  completedOrders: number;
+  completionRate: number;
+}
+
+export interface BrandExtendedAnalytics {
+  onTimeDeliveryPct: number;
+  repeatCreatorRate: number;
+  topCreatorsBySpend: BrandCreatorSpend[];
+  campaignCompletionRates: BrandCampaignCompletionRate[];
+  dealTypeROI: {
+    paid: { count: number; totalSpend: number; avgEngagement: number };
+    barter: { count: number; totalSpend: number; avgEngagement: number };
+    hybrid: { count: number; totalSpend: number; avgEngagement: number };
+  };
+}
+
 export const analyticsService = {
   async getCreatorDashboard(): Promise<CreatorDashboardAnalytics> {
     return apiClient.get<CreatorDashboardAnalytics>('/api/v1/analytics/creator/dashboard');
@@ -122,5 +152,25 @@ export const analyticsService = {
 
   async getBrandDashboard(): Promise<BrandDashboardAnalytics> {
     return apiClient.get<BrandDashboardAnalytics>('/api/v1/analytics/brand/dashboard');
+  },
+
+  async getBrandExtended(period?: string): Promise<BrandExtendedAnalytics> {
+    const result = await apiClient
+      .get<BrandExtendedAnalytics>(
+        '/api/v1/analytics/brand/extended',
+        period ? { query: { period } } : undefined,
+      )
+      .catch(() => null);
+    return result ?? {
+      onTimeDeliveryPct: 0,
+      repeatCreatorRate: 0,
+      topCreatorsBySpend: [],
+      campaignCompletionRates: [],
+      dealTypeROI: {
+        paid: { count: 0, totalSpend: 0, avgEngagement: 0 },
+        barter: { count: 0, totalSpend: 0, avgEngagement: 0 },
+        hybrid: { count: 0, totalSpend: 0, avgEngagement: 0 },
+      },
+    };
   },
 };

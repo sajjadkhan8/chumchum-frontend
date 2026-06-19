@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Award, CheckCircle2, RefreshCw, Search, ShieldCheck, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import {
   adminService,
   type AdminVerificationBrand,
   type AdminVerificationCreator,
+  type AdminCreatorScoreDetails,
   type AmbassadorApplication,
 } from '@/services/admin.service';
 import type { CreatorBadgeLevel } from '@/types';
@@ -120,6 +121,9 @@ export default function AdminVerificationPage() {
   const [brandContact, setBrandContact] = useState<Record<string, string>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [creatorScores, setCreatorScores] = useState<Record<string, AdminCreatorScoreDetails | null>>({});
+  const [loadingScoreId, setLoadingScoreId] = useState<string | null>(null);
+  const [expandedCreatorId, setExpandedCreatorId] = useState<string | null>(null);
 
   const loadQueue = useCallback(
     async (tab: VerificationTab, nextPage = pages[tab]) => {
@@ -213,6 +217,16 @@ export default function AdminVerificationPage() {
     }
   };
 
+  const toggleCreatorScore = async (creatorId: string) => {
+    if (expandedCreatorId === creatorId) { setExpandedCreatorId(null); return; }
+    setExpandedCreatorId(creatorId);
+    if (Object.prototype.hasOwnProperty.call(creatorScores, creatorId)) return;
+    setLoadingScoreId(creatorId);
+    const details = await adminService.getCreatorScoreDetails(creatorId);
+    setCreatorScores((prev) => ({ ...prev, [creatorId]: details }));
+    setLoadingScoreId(null);
+  };
+
   const controls = (tab: VerificationTab, options: string[]) => (
     <QueueControls
       search={searches[tab]}
@@ -293,65 +307,144 @@ export default function AdminVerificationPage() {
                 </TableHeader>
                 <TableBody>
                   {creators.map((creator) => (
-                    <TableRow key={creator.id} className="border-[#f4f6f4] transition-colors hover:bg-[#fafcfa]">
-                      <TableCell>
-                        <p className="text-[13px] font-semibold text-[#1e3d2e]">{creator.name}</p>
-                        <p className="text-[11px] text-[#87938b]">{creator.email || creator.username}</p>
-                      </TableCell>
-                      <TableCell>
-                        {creator.is_verified ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">
-                            <CheckCircle2 className="size-3" /> Verified
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-[#e8f0ec] px-2.5 py-0.5 text-[11px] font-bold text-[#496159]">
-                            Unverified
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={creator.badge_level || 'none'}
-                          disabled={updatingId === creator.id || !creator.is_verified}
-                          onValueChange={(value) => updateCreatorBadge(creator, value as CreatorBadgeLevel)}
-                        >
-                          <SelectTrigger className="w-[10rem] capitalize border-[#d1ddd6]">
-                            <Award className="h-4 w-4 text-[#2d6b4e]" />
-                            <span>{(creator.badge_level || 'none').replace('_', ' ')}</span>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {creatorBadgeLevels
-                              .filter((level) => level !== 'none')
-                              .map((level) => (
-                                <SelectItem key={level} value={level} className="capitalize">
-                                  {level.replace('_', ' ')}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                    <React.Fragment key={creator.id}>
+                      <TableRow className="border-[#f4f6f4] transition-colors hover:bg-[#fafcfa]">
+                        <TableCell>
+                          <p className="text-[13px] font-semibold text-[#1e3d2e]">{creator.name}</p>
+                          <p className="text-[11px] text-[#87938b]">{creator.email || creator.username}</p>
+                        </TableCell>
+                        <TableCell>
                           {creator.is_verified ? (
-                            <button
-                              className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#d1ddd6] px-3 text-[11px] font-bold text-[#496159] transition hover:bg-[#e8f0ec] disabled:opacity-50"
-                              disabled={updatingId === creator.id}
-                              onClick={() => updateCreator(creator, false)}
-                            >
-                              <XCircle className="h-3.5 w-3.5" /> Remove
-                            </button>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">
+                              <CheckCircle2 className="size-3" /> Verified
+                            </span>
                           ) : (
-                            <button
-                              className="inline-flex h-8 items-center gap-1.5 rounded-xl bg-[#2d6b4e] px-3 text-[11px] font-bold text-white transition hover:bg-[#1f5239] disabled:opacity-50"
-                              disabled={updatingId === creator.id}
-                              onClick={() => updateCreator(creator, true)}
-                            >
-                              <CheckCircle2 className="h-3.5 w-3.5" /> Verify
-                            </button>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[#e8f0ec] px-2.5 py-0.5 text-[11px] font-bold text-[#496159]">
+                              Unverified
+                            </span>
                           )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={creator.badge_level || 'none'}
+                            disabled={updatingId === creator.id || !creator.is_verified}
+                            onValueChange={(value) => updateCreatorBadge(creator, value as CreatorBadgeLevel)}
+                          >
+                            <SelectTrigger className="w-[10rem] capitalize border-[#d1ddd6]">
+                              <Award className="h-4 w-4 text-[#2d6b4e]" />
+                              <span>{(creator.badge_level || 'none').replace('_', ' ')}</span>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {creatorBadgeLevels
+                                .filter((level) => level !== 'none')
+                                .map((level) => (
+                                  <SelectItem key={level} value={level} className="capitalize">
+                                    {level.replace('_', ' ')}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              className="ml-2 rounded-lg border border-[#d9e0d8] px-2.5 py-1 text-xs font-bold text-[#185c39] hover:bg-[#f4f2e9]"
+                              onClick={() => void toggleCreatorScore(creator.id)}
+                            >
+                              {expandedCreatorId === creator.id ? 'Hide' : 'Score'}
+                            </button>
+                            {creator.is_verified ? (
+                              <button
+                                className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#d1ddd6] px-3 text-[11px] font-bold text-[#496159] transition hover:bg-[#e8f0ec] disabled:opacity-50"
+                                disabled={updatingId === creator.id}
+                                onClick={() => updateCreator(creator, false)}
+                              >
+                                <XCircle className="h-3.5 w-3.5" /> Remove
+                              </button>
+                            ) : (
+                              <button
+                                className="inline-flex h-8 items-center gap-1.5 rounded-xl bg-[#2d6b4e] px-3 text-[11px] font-bold text-white transition hover:bg-[#1f5239] disabled:opacity-50"
+                                disabled={updatingId === creator.id}
+                                onClick={() => updateCreator(creator, true)}
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" /> Verify
+                              </button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {expandedCreatorId === creator.id ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="bg-[#f4f8f5] px-4 py-4">
+                            {loadingScoreId === creator.id ? (
+                              <p className="text-xs text-muted-foreground">Loading score…</p>
+                            ) : creatorScores[creator.id] ? (() => {
+                              const s = creatorScores[creator.id]!;
+                              const bars = [
+                                { label: 'Delivery', val: s.score.deliveryScore, max: 35 },
+                                { label: 'Rating', val: s.score.ratingScore, max: 25 },
+                                { label: 'Account age', val: s.score.accountAgeScore, max: 15 },
+                                { label: 'Cancellation', val: s.score.cancellationScore, max: 10 },
+                                { label: 'Profile', val: s.score.profileCompletenessScore, max: 10 },
+                                { label: 'Consistency', val: s.score.consistencyScore, max: 5 },
+                              ];
+                              return (
+                                <div className="space-y-4">
+                                  <div className="flex flex-wrap items-center gap-4">
+                                    <div className="flex items-baseline gap-1">
+                                      <span className="text-3xl font-extrabold text-[#173b2a]">{s.score.total}</span>
+                                      <span className="text-sm text-[#9ba8a1]">/ 100</span>
+                                    </div>
+                                    <span className="rounded-full bg-[#fff1cd] px-3 py-1 text-xs font-extrabold capitalize text-[#8b5e12]">
+                                      {s.tier.replace(/_/g, ' ')}
+                                    </span>
+                                    <span className="text-xs text-[#9ba8a1]">Top {s.percentileRank}% of creators</span>
+                                    {s.nextTierPoints ? (
+                                      <span className="text-xs font-bold text-[#185c39]">+{s.nextTierPoints} pts to next tier</span>
+                                    ) : null}
+                                  </div>
+                                  <div className="grid gap-2 sm:grid-cols-3">
+                                    {bars.map((b) => (
+                                      <div key={b.label} className="rounded-xl bg-white p-2.5">
+                                        <div className="flex justify-between text-xs font-bold">
+                                          <span className="text-[#526259]">{b.label}</span>
+                                          <span className="text-[#173b2a]">{b.val}/{b.max}</span>
+                                        </div>
+                                        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#e6eceb]">
+                                          <div className="h-full rounded-full bg-[#185c39]" style={{ width: `${Math.round((b.val / b.max) * 100)}%` }} />
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  {s.strengths.length > 0 && (
+                                    <div>
+                                      <p className="mb-1.5 text-xs font-bold text-[#185c39]">Strengths</p>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {s.strengths.map((str) => (
+                                          <span key={str} className="rounded-full bg-[#e7f0ea] px-2.5 py-1 text-xs font-bold text-[#185c39]">{str}</span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {s.improvements.length > 0 && (
+                                    <div>
+                                      <p className="mb-1.5 text-xs font-bold text-[#8b5e12]">To improve</p>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {s.improvements.map((imp) => (
+                                          <span key={imp} className="rounded-full bg-[#fff1cd] px-2.5 py-1 text-xs font-bold text-[#8b5e12]">{imp}</span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })() : (
+                              <p className="text-xs text-muted-foreground">Score data not available for this creator.</p>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ) : null}
+                    </React.Fragment>
                   ))}
                   {!isLoading && creators.length === 0 && (
                     <TableRow>

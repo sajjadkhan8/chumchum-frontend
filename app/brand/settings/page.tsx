@@ -18,6 +18,10 @@ import {
   History,
   CalendarClock,
   RefreshCw,
+  Upload,
+  FileCheck,
+  XCircle,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { brandsService } from "@/services/brands.service";
+import { brandsService, type VerificationDocument } from "@/services/brands.service";
 import { apiClient } from "@/lib/api/client";
 import { usersService } from "@/services/users.service";
 import { useAuthStore } from "@/store/auth-store";
@@ -170,6 +174,9 @@ function BrandSettingsPageContent() {
 
   const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
+  const [verificationDocs, setVerificationDocs] = useState<VerificationDocument[]>([]);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [uploadingDocType, setUploadingDocType] = useState<string | null>(null);
 
   const loadBrandProfile = useCallback(async () => {
     try {
@@ -324,9 +331,44 @@ function BrandSettingsPageContent() {
     }
   };
 
+  const handleDocUpload = async (type: VerificationDocument['type'], file: File) => {
+    setUploadingDocType(type);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const fileUrl = reader.result as string;
+          const uploaded = await brandsService.submitVerificationDocument({ type, fileUrl, fileName: file.name });
+          setVerificationDocs((prev) => [...prev.filter((d) => d.type !== type), uploaded]);
+          toast.success(`${file.name} uploaded successfully`);
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : 'Upload failed');
+        } finally {
+          setUploadingDocType(null);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      setUploadingDocType(null);
+    }
+  };
+
+  const handleSubmitForReview = async () => {
+    setIsSubmittingReview(true);
+    try {
+      await brandsService.submitForReview();
+      toast.success('Submitted for review. Our team will verify within 2–3 business days.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Submission failed');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
   useEffect(() => {
     void loadBrandProfile();
     void loadNotificationPreferences();
+    brandsService.getVerificationDocuments().then(setVerificationDocs).catch(() => {});
   }, [loadBrandProfile, loadNotificationPreferences]);
 
   useEffect(() => {
@@ -595,6 +637,79 @@ function BrandSettingsPageContent() {
               >
                 {isSaving ? "Saving…" : <><Save className="mr-1.5 size-3.5" />Save Verification</>}
               </Button>
+
+              {/* Verification Checklist */}
+              <div className="mt-6">
+                <p className="mb-1 text-base font-extrabold text-[#173b2a]">Verification Checklist</p>
+                <p className="mb-4 text-sm text-[#647168]">Upload the required documents to get verified. Our team reviews submissions within 2–3 business days.</p>
+                <div className="space-y-3">
+                  {([
+                    { type: 'tax_id' as const, label: 'Tax ID / NTN Certificate', description: 'National Tax Number certificate or proof of registration with FBR.' },
+                    { type: 'business_registration' as const, label: 'Business Registration', description: 'SECP certificate of incorporation or partnership deed.' },
+                    { type: 'bank_details' as const, label: 'Bank Account Details', description: 'Cancelled cheque or bank statement showing account holder name and IBAN.' },
+                  ] as const).map((item) => {
+                    const doc = verificationDocs.find((d) => d.type === item.type);
+                    return (
+                      <div key={item.type} className="flex flex-col gap-3 rounded-2xl border border-[#d9e0d8] bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-start gap-3">
+                          <div className={`mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl ${
+                            doc?.status === 'approved' ? 'bg-[#e7f0ea]' :
+                            doc?.status === 'rejected' ? 'bg-red-50' :
+                            doc?.status === 'pending' ? 'bg-[#fff1cd]' : 'bg-[#f4f2e9]'
+                          }`}>
+                            {doc?.status === 'approved' ? <FileCheck className="size-4 text-[#185c39]" /> :
+                             doc?.status === 'rejected' ? <XCircle className="size-4 text-red-500" /> :
+                             doc?.status === 'pending' ? <Clock className="size-4 text-[#8b5e12]" /> :
+                             <Upload className="size-4 text-[#b77a12]" />}
+                          </div>
+                          <div>
+                            <p className="font-extrabold text-[#173b2a]">{item.label}</p>
+                            <p className="text-sm text-[#647168]">{item.description}</p>
+                            {doc ? (
+                              <p className="mt-1 text-xs font-bold">
+                                {doc.status === 'approved' && <span className="text-[#185c39]">✓ Approved</span>}
+                                {doc.status === 'pending' && <span className="text-[#8b5e12]">Under review — {doc.fileName}</span>}
+                                {doc.status === 'rejected' && <span className="text-red-600">Rejected: {doc.rejectionReason ?? 'See email for details'}</span>}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                        <div className="shrink-0">
+                          <label className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold transition ${
+                            uploadingDocType === item.type ? 'opacity-60' : 'hover:bg-[#f4f2e9]'
+                          } ${doc?.status === 'approved' ? 'border-[#185c39] text-[#185c39]' : 'border-[#d9e0d8] text-[#173b2a]'}`}>
+                            <Upload className="size-4" />
+                            {uploadingDocType === item.type ? 'Uploading…' : doc ? 'Replace' : 'Upload'}
+                            <input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              className="sr-only"
+                              disabled={uploadingDocType !== null}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) void handleDocUpload(item.type, file);
+                                e.target.value = '';
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {verificationDocs.length > 0 ? (
+                  <div className="mt-4">
+                    <Button
+                      disabled={isSubmittingReview}
+                      onClick={() => void handleSubmitForReview()}
+                      className="rounded-full bg-[#185c39] text-white hover:bg-[#12462b]"
+                    >
+                      {isSubmittingReview ? 'Submitting…' : 'Submit for Review'}
+                    </Button>
+                    <p className="mt-2 text-xs text-[#9ba8a1]">Our team will review your documents within 2–3 business days.</p>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </SectionCard>
         )}

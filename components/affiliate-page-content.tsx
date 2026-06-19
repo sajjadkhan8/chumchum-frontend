@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BadgePercent, Check, Clipboard, Copy, Link2, Loader2, Share2, Sparkles, Users, WalletCards } from "lucide-react";
+import { ArrowRight, BadgePercent, Check, Clipboard, Copy, Download, Link2, Loader2, Share2, Sparkles, Users, WalletCards } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CreatorMetricCard } from "@/components/creator-metric-card";
@@ -67,6 +67,28 @@ export function AffiliatePageContent({ role }: { role: "creator" | "brand" }) {
     } finally {
       setCreating(false);
     }
+  };
+
+  const handleExportCSV = () => {
+    if (commissions.length === 0) return;
+    const headers = ['Date', 'Order', 'Creator', 'Commission (PKR)', 'Status'];
+    const rows = commissions.map((c) => [
+      new Date(c.createdAt).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi' }),
+      c.orderNumber ?? c.orderId,
+      c.earningCreatorName,
+      String(c.commissionAmount ?? 0),
+      c.status ?? '',
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `affiliate-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleCopy = async () => {
@@ -156,7 +178,19 @@ export function AffiliatePageContent({ role }: { role: "creator" | "brand" }) {
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#b77a12]">Commission history</p>
               <h2 className="mt-1 text-lg font-black tracking-[-0.025em] text-[#173b2a]">Completed referrals</h2>
             </div>
-            <Clipboard className="size-5 text-[#b77a12]" />
+            <div className="flex items-center gap-3">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={commissions.length === 0}
+                onClick={handleExportCSV}
+                className="flex items-center gap-2"
+              >
+                <Download className="size-4" />
+                Export CSV
+              </Button>
+              <Clipboard className="size-5 text-[#b77a12]" />
+            </div>
           </div>
           {commissions.length > 0 ? (
             <div className="divide-y divide-[#edf0eb]">

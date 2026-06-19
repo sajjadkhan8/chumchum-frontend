@@ -29,7 +29,9 @@ import { creatorsService } from '@/services/creators.service';
 import { savedCreatorsService } from '@/services/saved-creators.service';
 import { ambassadorService } from '@/services/ambassador.service';
 import { packagesService } from '@/services/packages.service';
+import { brandsService } from '@/services/brands.service';
 import type { Creator, DealType, Package, PlatformAmbassador } from '@/types';
+import { toast } from 'sonner';
 import { cn, formatFollowers, formatPrice } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -154,6 +156,47 @@ function AmbassadorRow({ ambassador }: { ambassador: PlatformAmbassador }) {
   );
 }
 
+interface BrandPrefs {
+  categories?: string;
+  cities?: string;
+  platforms?: string;
+}
+
+function computeMatchScore(creator: Creator, prefs: BrandPrefs | null): number {
+  if (!prefs) return 0;
+  if (!prefs.categories && !prefs.cities && !prefs.platforms) return 0;
+
+  let score = 0;
+
+  if (prefs.categories) {
+    const brandCats = prefs.categories.split(',').map((c) => c.trim().toLowerCase());
+    const creatorCats = (creator.categories ?? []).map((c) => c.toLowerCase());
+    const overlap = brandCats.filter((bc) =>
+      creatorCats.some((cc) => cc.includes(bc) || bc.includes(cc)),
+    ).length;
+    if (brandCats.length > 0) score += (overlap / brandCats.length) * 50;
+  }
+
+  if (prefs.cities && creator.city) {
+    const brandCities = prefs.cities.split(',').map((c) => c.trim().toLowerCase());
+    const creatorCity = creator.city.toLowerCase();
+    if (brandCities.some((bc) => creatorCity.includes(bc) || bc.includes(creatorCity))) {
+      score += 30;
+    }
+  }
+
+  if (prefs.platforms) {
+    const brandPlatforms = prefs.platforms.split(',').map((p) => p.trim().toLowerCase());
+    const creatorPlatforms = (creator.platforms ?? []).map((a) => a.platform.toLowerCase());
+    if (creatorPlatforms.length > 0 && brandPlatforms.length > 0) {
+      const overlap = brandPlatforms.filter((bp) => creatorPlatforms.includes(bp)).length;
+      score += (overlap / brandPlatforms.length) * 20;
+    }
+  }
+
+  return Math.min(Math.round(score), 100);
+}
+
 function ExplorePageContent() {
   const pathname = usePathname();
   const router = useRouter();
@@ -174,6 +217,7 @@ function ExplorePageContent() {
   const [isLoadingSaved, setIsLoadingSaved] = useState(true);
   const [ambassadors, setAmbassadors] = useState<PlatformAmbassador[]>([]);
   const [isLoadingAmbassadors, setIsLoadingAmbassadors] = useState(false);
+  const [brandPrefs, setBrandPrefs] = useState<BrandPrefs | null>(null);
 
   const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
   const [isQuickDealOpen, setIsQuickDealOpen] = useState(false);
@@ -273,6 +317,20 @@ function ExplorePageContent() {
       setIsLoadingFeatured(false);
     };
     void fetchFeatured();
+  }, []);
+
+  useEffect(() => {
+    brandsService.getMe()
+      .then((b) => {
+        if (b) {
+          setBrandPrefs({
+            categories: b.preferredCreatorCategories ?? undefined,
+            cities: b.targetCities ?? undefined,
+            platforms: b.targetPlatforms ?? undefined,
+          });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const handleQuickDeal = (creator: Creator) => {
@@ -437,6 +495,23 @@ function ExplorePageContent() {
                       })}
                     </SelectContent>
                   </Select>
+                  {brandPrefs && (brandPrefs.categories || brandPrefs.cities || brandPrefs.platforms) ? (
+                    <button
+                      onClick={() => {
+                        const cats = brandPrefs.categories?.split(',').map((c) => c.trim()).filter(Boolean) ?? [];
+                        const cities = brandPrefs.cities?.split(',').map((c) => c.trim()).filter(Boolean) ?? [];
+                        setFilters({
+                          ...filters,
+                          ...(cats.length > 0 ? { categories: cats as never } : {}),
+                          ...(cities.length > 0 ? { cities: cities as never } : {}),
+                        });
+                        toast.success('Filters updated from your brand preferences');
+                      }}
+                      className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#185c39] px-3 py-1.5 text-xs font-bold text-[#185c39] transition hover:bg-[#e7f0ea]"
+                    >
+                      <Sparkles className="size-3.5" /> Match preferences
+                    </button>
+                  ) : null}
                 </div>
               </div>
 
@@ -617,8 +692,25 @@ function ExplorePageContent() {
                 ) : (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {creators.map((creator, index) => (
-                      <motion.div key={creator.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }}>
+                      <motion.div key={creator.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }} className="relative">
                         <CreatorCard creator={creator} className="border-[#d9e0d8] shadow-[0_12px_38px_rgba(38,70,50,0.055)]" onQuickDeal={() => handleQuickDeal(creator)} />
+                        {(() => {
+                          const score = computeMatchScore(creator, brandPrefs);
+                          if (score < 20) return null;
+                          return (
+                            <span
+                              className={`absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold shadow-sm ${
+                                score >= 70
+                                  ? 'bg-[#e7f0ea] text-[#185c39]'
+                                  : score >= 40
+                                  ? 'bg-[#fff1cd] text-[#8b5e12]'
+                                  : 'bg-[#f4f2e9] text-[#526259]'
+                              }`}
+                            >
+                              {score}% match
+                            </span>
+                          );
+                        })()}
                       </motion.div>
                     ))}
                   </motion.div>
@@ -730,8 +822,25 @@ function ExplorePageContent() {
               ) : sortedSavedCreators.length > 0 ? (
                 <div className={savedViewMode === 'grid' ? 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'space-y-3'}>
                   {sortedSavedCreators.map((creator, index) => (
-                    <motion.div key={creator.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }}>
+                    <motion.div key={creator.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }} className="relative">
                       <CreatorCard creator={creator} className="border-[#d9e0d8] shadow-[0_12px_38px_rgba(38,70,50,0.055)]" variant={savedViewMode === 'list' ? 'horizontal' : 'default'} />
+                      {(() => {
+                        const score = computeMatchScore(creator, brandPrefs);
+                        if (score < 20) return null;
+                        return (
+                          <span
+                            className={`absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold shadow-sm ${
+                              score >= 70
+                                ? 'bg-[#e7f0ea] text-[#185c39]'
+                                : score >= 40
+                                ? 'bg-[#fff1cd] text-[#8b5e12]'
+                                : 'bg-[#f4f2e9] text-[#526259]'
+                            }`}
+                          >
+                            {score}% match
+                          </span>
+                        );
+                      })()}
                     </motion.div>
                   ))}
                 </div>

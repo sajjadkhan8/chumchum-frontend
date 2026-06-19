@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Building2, CalendarClock, CreditCard, Plus, ReceiptText, ShieldCheck, Wallet } from "lucide-react";
+import { Building2, CalendarClock, CreditCard, Download, Plus, ReceiptText, ShieldCheck, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,9 @@ import {
   type BrandInvoice,
   type BrandPaymentSummary,
 } from "@/services/payments.service";
+import { brandsService } from "@/services/brands.service";
+import { printInvoice, type InvoiceBrandDetails } from "@/lib/invoice-pdf";
+import type { Brand } from "@/types";
 
 const emptySummary: BrandPaymentSummary = {
   walletBalance: 0,
@@ -100,6 +103,8 @@ export default function BrandPaymentsPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingControls, setIsSavingControls] = useState(false);
+  const [brandDetails, setBrandDetails] = useState<InvoiceBrandDetails>({ companyName: 'My Brand' });
+  const [printingInvoiceId, setPrintingInvoiceId] = useState<string | null>(null);
 
   const [topupAmount, setTopupAmount] = useState("");
   const [isTopupOpen, setIsTopupOpen] = useState(false);
@@ -130,7 +135,18 @@ export default function BrandPaymentsPage() {
     }
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    void load();
+    brandsService.getMe().then((b: Brand | null) => {
+      if (b) {
+        setBrandDetails({
+          companyName: b.name ?? 'My Brand',
+          city: b.city ?? undefined,
+          contactEmail: b.contactEmail,
+        });
+      }
+    }).catch(() => {});
+  }, []);
 
   const defaultMethod = useMemo(() => methods.find((m) => m.isDefault), [methods]);
 
@@ -229,6 +245,16 @@ export default function BrandPaymentsPage() {
       toast.error(message);
     } finally {
       setPendingRemoveMethodId(null);
+    }
+  };
+
+  const handlePrintInvoice = async (inv: BrandInvoice) => {
+    setPrintingInvoiceId(inv.id);
+    try {
+      const detail = await paymentsService.getInvoiceDetail(inv.id).catch(() => inv);
+      printInvoice(detail, brandDetails);
+    } finally {
+      setPrintingInvoiceId(null);
     }
   };
 
@@ -479,9 +505,19 @@ export default function BrandPaymentsPage() {
                     <p className="text-xs font-semibold text-[#173b2a]">{inv.periodLabel}</p>
                     <p className="text-[11px] text-[#718077]">Due {formatDate(new Date(inv.dueAt))}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-[#173b2a]">{formatPrice(inv.amount)}</p>
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColor(inv.status)}`}>{inv.status}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-[#173b2a]">{formatPrice(inv.amount)}</p>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColor(inv.status)}`}>{inv.status}</span>
+                    </div>
+                    <button
+                      disabled={printingInvoiceId === inv.id}
+                      onClick={() => void handlePrintInvoice(inv)}
+                      className="ml-2 inline-flex size-7 items-center justify-center rounded-lg border border-[#d9e0d8] text-[#647168] transition hover:bg-[#f4f2e9] disabled:opacity-50"
+                      title="Print / Save as PDF"
+                    >
+                      <Download className="size-3.5" />
+                    </button>
                   </div>
                 </div>
               ))}

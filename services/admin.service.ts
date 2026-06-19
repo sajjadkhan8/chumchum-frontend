@@ -23,6 +23,35 @@ export interface AdminDashboard {
   ordersByCategory?: { category: string; count: number }[];
 }
 
+export interface AdminBrandMetrics {
+  brandId: string;
+  totalOrders: number;
+  completedOrders: number;
+  completionRate: number;
+  avgRating: number;
+  repeatCreatorRate: number;
+  flaggedForReview: boolean;
+  flagReason?: string;
+}
+
+export interface AdminCreatorScoreDetails {
+  creatorId: string;
+  score: {
+    total: number;
+    deliveryScore: number;
+    ratingScore: number;
+    accountAgeScore: number;
+    cancellationScore: number;
+    profileCompletenessScore: number;
+    consistencyScore: number;
+  };
+  tier: string;
+  percentileRank: number;
+  strengths: string[];
+  improvements: string[];
+  nextTierPoints?: number;
+}
+
 export interface AdminUser extends User {
   active: boolean;
   creator?: { id?: string; isVerified?: boolean; is_verified?: boolean };
@@ -306,6 +335,30 @@ export interface AdminPaymentAuditLogsResponse {
   limit: number;
 }
 
+export interface AdminSLAMetrics {
+  avgDisputeResolutionDays: number;
+  withdrawalsProcessedWithin24hPct: number;
+  ordersCompletedOnTimePct: number;
+  pendingCreatorVerifications: number;
+  pendingBrandVerifications: number;
+}
+
+export interface AdminApiLog {
+  id: string;
+  timestamp: string;
+  method: string;
+  path: string;
+  statusCode: number;
+  durationMs: number;
+  service: string;
+  errorMessage?: string;
+}
+
+export interface AdminApiLogsResponse {
+  logs: AdminApiLog[];
+  total: number;
+}
+
 const normalizeOrderStatus = (value?: string): OrderStatus => {
   const lowered = (value || '').toLowerCase();
   if (
@@ -418,6 +471,18 @@ export const adminService = {
       succeeded: response.succeeded ?? userIds,
       failed: response.failed ?? [],
     };
+  },
+
+  async getBrandMetrics(brandId: string): Promise<AdminBrandMetrics | null> {
+    return apiClient
+      .get<AdminBrandMetrics>(`/api/v1/admin/brands/${brandId}/metrics`)
+      .catch(() => null);
+  },
+
+  async getCreatorScoreDetails(creatorId: string): Promise<AdminCreatorScoreDetails | null> {
+    return apiClient
+      .get<AdminCreatorScoreDetails>(`/api/v1/admin/creators/${creatorId}/ambassador-score`)
+      .catch(() => null);
   },
 
   async getOrders(filters: AdminOrderFilters = {}): Promise<AdminOrdersResponse> {
@@ -587,5 +652,34 @@ export const adminService = {
 
   async processWithdrawal(id: string, status: string): Promise<AdminWithdrawal> {
     return apiClient.patch<AdminWithdrawal>(`/api/v1/admin/payments/withdrawals/${id}/status`, { status });
+  },
+
+  async getSLAMetrics(): Promise<AdminSLAMetrics> {
+    const result = await apiClient.get<AdminSLAMetrics>('/api/v1/admin/sla-metrics').catch(() => null);
+    return result ?? {
+      avgDisputeResolutionDays: 0,
+      withdrawalsProcessedWithin24hPct: 0,
+      ordersCompletedOnTimePct: 0,
+      pendingCreatorVerifications: 0,
+      pendingBrandVerifications: 0,
+    };
+  },
+
+  async getApiLogs(filters?: {
+    service?: string;
+    status?: 'success' | 'error';
+    page?: number;
+    limit?: number;
+  }): Promise<AdminApiLogsResponse> {
+    const params = new URLSearchParams();
+    if (filters?.service) params.set('service', filters.service);
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.page !== undefined) params.set('page', String(filters.page));
+    params.set('limit', String(filters?.limit ?? 50));
+    const qs = params.toString();
+    const result = await apiClient
+      .get<AdminApiLogsResponse>(`/api/v1/admin/api-logs${qs ? `?${qs}` : ''}`)
+      .catch(() => null);
+    return result ?? { logs: [], total: 0 };
   },
 };

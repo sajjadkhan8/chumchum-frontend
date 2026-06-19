@@ -2,6 +2,22 @@ import { apiClient } from '@/lib/api/client';
 import { mapBrand } from '@/lib/api/mappers';
 import type { Brand } from '@/types';
 
+export interface VerificationDocument {
+  id: string;
+  type: 'tax_id' | 'business_registration' | 'bank_details';
+  fileName: string;
+  fileUrl: string;
+  status: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
+  uploadedAt: string;
+}
+
+export interface VerificationDocumentUpload {
+  type: 'tax_id' | 'business_registration' | 'bank_details';
+  fileUrl: string;
+  fileName: string;
+}
+
 export interface BrandProfileUpdatePayload {
   companyName?: string;
   website?: string;
@@ -61,5 +77,18 @@ export const brandsService = {
     });
 
     return mapBrand(response as never);
+  },
+
+  async getVerificationDocuments(): Promise<VerificationDocument[]> {
+    const result = await apiClient.get<VerificationDocument[]>('/api/v1/brands/me/verification-documents').catch(() => null);
+    return result ?? [];
+  },
+
+  async submitVerificationDocument(doc: VerificationDocumentUpload): Promise<VerificationDocument> {
+    return apiClient.post<VerificationDocument>('/api/v1/brands/me/verification-documents', doc);
+  },
+
+  async submitForReview(): Promise<{ success: boolean }> {
+    return apiClient.post<{ success: boolean }>('/api/v1/brands/me/verification/submit', {});
   },
 };

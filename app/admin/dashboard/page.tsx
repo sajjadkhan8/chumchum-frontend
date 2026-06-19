@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { CreatorMetricCard } from '@/components/creator-metric-card';
-import { adminService, type AdminDashboard, type AdminOrder } from '@/services/admin.service';
+import { adminService, type AdminDashboard, type AdminOrder, type AdminSLAMetrics } from '@/services/admin.service';
 import { formatPrice, getInitials } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -102,17 +102,20 @@ export default function AdminDashboardPage() {
   const { user } = useAuthStore();
   const [dashboard, setDashboard] = useState<AdminDashboard>(emptyDashboard);
   const [recentOrders, setRecentOrders] = useState<AdminOrder[]>([]);
+  const [slaMetrics, setSlaMetrics] = useState<AdminSLAMetrics | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const [dash, ordersRes] = await Promise.all([
+      const [dash, ordersRes, sla] = await Promise.all([
         adminService.getDashboard().catch(() => emptyDashboard),
         adminService.getOrders({ limit: 5 }).catch(() => ({ orders: [], total: 0, page: 0, limit: 5 })),
+        adminService.getSLAMetrics().catch(() => null),
       ]);
       setDashboard(dash);
       setRecentOrders(ordersRes.orders.slice(0, 5));
+      setSlaMetrics(sla);
       setLoading(false);
     };
     void load();
@@ -305,6 +308,60 @@ export default function AdminDashboardPage() {
             <div className="grid gap-2.5 sm:grid-cols-2">
               {quickActions.map((a) => (
                 <QuickTile key={a.href} {...a} />
+              ))}
+            </div>
+          </section>
+
+          {/* SLA & Compliance */}
+          <section className="mt-6">
+            <h2 className="mb-4 text-lg font-extrabold text-[#173b2a]">SLA & Compliance</h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {[
+                {
+                  label: 'Avg dispute resolution',
+                  value: slaMetrics ? `${slaMetrics.avgDisputeResolutionDays.toFixed(1)}d` : '—',
+                  icon: Scale,
+                  color: 'text-[#8b5e12]',
+                  bg: 'bg-[#fff1cd]',
+                },
+                {
+                  label: 'Withdrawals < 24h',
+                  value: slaMetrics ? `${Math.round(slaMetrics.withdrawalsProcessedWithin24hPct)}%` : '—',
+                  icon: TrendingUp,
+                  color: slaMetrics && slaMetrics.withdrawalsProcessedWithin24hPct >= 80 ? 'text-[#185c39]' : 'text-[#c0392b]',
+                  bg: slaMetrics && slaMetrics.withdrawalsProcessedWithin24hPct >= 80 ? 'bg-[#e7f0ea]' : 'bg-[#fde8e8]',
+                },
+                {
+                  label: 'Orders on time',
+                  value: slaMetrics ? `${Math.round(slaMetrics.ordersCompletedOnTimePct)}%` : '—',
+                  icon: CheckCircle2,
+                  color: slaMetrics && slaMetrics.ordersCompletedOnTimePct >= 80 ? 'text-[#185c39]' : 'text-[#c0392b]',
+                  bg: slaMetrics && slaMetrics.ordersCompletedOnTimePct >= 80 ? 'bg-[#e7f0ea]' : 'bg-[#fde8e8]',
+                },
+                {
+                  label: 'Creator verifications pending',
+                  value: slaMetrics ? String(slaMetrics.pendingCreatorVerifications) : '—',
+                  icon: ShieldAlert,
+                  color: 'text-[#185c39]',
+                  bg: 'bg-[#e7f0ea]',
+                },
+                {
+                  label: 'Brand verifications pending',
+                  value: slaMetrics ? String(slaMetrics.pendingBrandVerifications) : '—',
+                  icon: FileCheck2,
+                  color: 'text-[#185c39]',
+                  bg: 'bg-[#e7f0ea]',
+                },
+              ].map((item) => (
+                <div key={item.label} className="rounded-[1.35rem] border border-[#d9e0d8] bg-white p-4 shadow-[0_8px_30px_rgba(38,70,50,0.06)]">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7b867f]">{item.label}</p>
+                    <span className={`grid size-8 shrink-0 place-items-center rounded-xl ${item.bg}`}>
+                      <item.icon className={`size-4 ${item.color}`} />
+                    </span>
+                  </div>
+                  <p className="mt-3 text-2xl font-extrabold tracking-[-0.04em] text-[#173b2a]">{item.value}</p>
+                </div>
               ))}
             </div>
           </section>

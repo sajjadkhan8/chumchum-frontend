@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { RefreshCw, Search, Users, ShieldBan, ShieldAlert, ShieldCheck, CheckSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { adminService, type AdminUser } from '@/services/admin.service';
+import { adminService, type AdminUser, type AdminBrandMetrics } from '@/services/admin.service';
 import { formatDate } from '@/lib/utils';
 
 export default function AdminUsersPage() {
@@ -33,6 +33,9 @@ export default function AdminUsersPage() {
   const [bulkReason, setBulkReason] = useState('');
   const [bulkSuspendDays, setBulkSuspendDays] = useState(30);
   const [isSubmittingBulk, setIsSubmittingBulk] = useState(false);
+  const [brandMetrics, setBrandMetrics] = useState<Record<string, AdminBrandMetrics | null>>({});
+  const [loadingMetricsId, setLoadingMetricsId] = useState<string | null>(null);
+  const [expandedBrandId, setExpandedBrandId] = useState<string | null>(null);
   const limit = 20;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
@@ -138,6 +141,18 @@ export default function AdminUsersPage() {
     } finally {
       setIsSubmittingBulk(false);
     }
+  };
+
+  const toggleBrandMetrics = async (user: AdminUser) => {
+    const brandId = user.brand?.id;
+    if (!brandId) return;
+    if (expandedBrandId === brandId) { setExpandedBrandId(null); return; }
+    setExpandedBrandId(brandId);
+    if (Object.prototype.hasOwnProperty.call(brandMetrics, brandId)) return;
+    setLoadingMetricsId(brandId);
+    const metrics = await adminService.getBrandMetrics(brandId);
+    setBrandMetrics((prev) => ({ ...prev, [brandId]: metrics }));
+    setLoadingMetricsId(null);
   };
 
   if (isLoading && users.length === 0) {
@@ -272,82 +287,119 @@ export default function AdminUsersPage() {
             </TableHeader>
             <TableBody>
               {users.map((user) => (
-                <TableRow key={user.id} className="border-[#f4f6f4] hover:bg-[#fafcfa]">
-                  <TableCell className="pr-0 w-10">
-                    {user.role !== 'platform_admin' && (
-                      <Checkbox
-                        checked={selectedIds.has(user.id)}
-                        onCheckedChange={() => toggleSelect(user.id)}
-                        aria-label={`Select ${user.name}`}
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell className="text-[13px] text-[#1e3d2e]">
-                    <div className="min-w-[14rem]">
-                      <p className="font-semibold">{user.name}</p>
-                      <p className="text-[11px] text-[#87938b]">{user.email}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-[13px] text-[#1e3d2e]">
-                    <span className="inline-flex items-center rounded-full bg-[#e8f0ec] px-2.5 py-0.5 text-[11px] font-bold capitalize text-[#2d6b4e]">
-                      {user.role.replace('_', ' ')}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-[13px] text-[#1e3d2e]">{formatDate(user.createdAt)}</TableCell>
-                  <TableCell className="text-[13px] text-[#1e3d2e]">
-                    {user.active ? (
-                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">Enabled</span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-[11px] font-bold text-red-600">Disabled</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right text-[13px] text-[#1e3d2e]">
-                    <div className="flex items-center justify-end gap-2">
+                <Fragment key={user.id}>
+                  <TableRow className="border-[#f4f6f4] hover:bg-[#fafcfa]">
+                    <TableCell className="pr-0 w-10">
                       {user.role !== 'platform_admin' && (
-                        <>
-                          {user.active ? (
-                            <>
-                              <button
-                                className="inline-flex h-7 items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 text-[11px] font-bold text-amber-700 transition hover:bg-amber-100 disabled:opacity-50"
-                                title="Suspend user"
-                                disabled={updatingId === user.id}
-                                onClick={() => openModerate(user, 'suspend')}
-                              >
-                                <ShieldAlert className="size-3" />
-                                Suspend
-                              </button>
-                              <button
-                                className="inline-flex h-7 items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 text-[11px] font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
-                                title="Ban user"
-                                disabled={updatingId === user.id}
-                                onClick={() => openModerate(user, 'ban')}
-                              >
-                                <ShieldBan className="size-3" />
-                                Ban
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              className="inline-flex h-7 items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 text-[11px] font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
-                              title="Remove ban/suspension"
-                              disabled={updatingId === user.id}
-                              onClick={() => openModerate(user, 'unban')}
-                            >
-                              <ShieldCheck className="size-3" />
-                              Unban
-                            </button>
-                          )}
-                        </>
+                        <Checkbox
+                          checked={selectedIds.has(user.id)}
+                          onCheckedChange={() => toggleSelect(user.id)}
+                          aria-label={`Select ${user.name}`}
+                        />
                       )}
-                      <Switch
-                        checked={user.active}
-                        disabled={updatingId === user.id || user.role === 'platform_admin'}
-                        onCheckedChange={(active) => updateStatus(user, active)}
-                        aria-label={`Set ${user.name} active status`}
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
+                    </TableCell>
+                    <TableCell className="text-[13px] text-[#1e3d2e]">
+                      <div className="min-w-[14rem]">
+                        <p className="font-semibold">{user.name}</p>
+                        <p className="text-[11px] text-[#87938b]">{user.email}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-[13px] text-[#1e3d2e]">
+                      <span className="inline-flex items-center rounded-full bg-[#e8f0ec] px-2.5 py-0.5 text-[11px] font-bold capitalize text-[#2d6b4e]">
+                        {user.role.replace('_', ' ')}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-[13px] text-[#1e3d2e]">{formatDate(user.createdAt)}</TableCell>
+                    <TableCell className="text-[13px] text-[#1e3d2e]">
+                      {user.active ? (
+                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">Enabled</span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-[11px] font-bold text-red-600">Disabled</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right text-[13px] text-[#1e3d2e]">
+                      <div className="flex items-center justify-end gap-2">
+                        {user.role === 'brand' && user.brand?.id ? (
+                          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => void toggleBrandMetrics(user)}>
+                            {expandedBrandId === user.brand?.id ? 'Hide' : 'Metrics'}
+                          </Button>
+                        ) : null}
+                        {user.role !== 'platform_admin' && (
+                          <>
+                            {user.active ? (
+                              <>
+                                <button
+                                  className="inline-flex h-7 items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 text-[11px] font-bold text-amber-700 transition hover:bg-amber-100 disabled:opacity-50"
+                                  title="Suspend user"
+                                  disabled={updatingId === user.id}
+                                  onClick={() => openModerate(user, 'suspend')}
+                                >
+                                  <ShieldAlert className="size-3" />
+                                  Suspend
+                                </button>
+                                <button
+                                  className="inline-flex h-7 items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 text-[11px] font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+                                  title="Ban user"
+                                  disabled={updatingId === user.id}
+                                  onClick={() => openModerate(user, 'ban')}
+                                >
+                                  <ShieldBan className="size-3" />
+                                  Ban
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                className="inline-flex h-7 items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 text-[11px] font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+                                title="Remove ban/suspension"
+                                disabled={updatingId === user.id}
+                                onClick={() => openModerate(user, 'unban')}
+                              >
+                                <ShieldCheck className="size-3" />
+                                Unban
+                              </button>
+                            )}
+                          </>
+                        )}
+                        <Switch
+                          checked={user.active}
+                          disabled={updatingId === user.id || user.role === 'platform_admin'}
+                          onCheckedChange={(active) => updateStatus(user, active)}
+                          aria-label={`Set ${user.name} active status`}
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  {user.role === 'brand' && user.brand?.id && expandedBrandId === user.brand.id ? (
+                    <TableRow className="bg-[#fbfaf5]">
+                      <TableCell colSpan={6} className="px-4 py-3">
+                        {loadingMetricsId === user.brand.id ? (
+                          <p className="text-xs text-muted-foreground">Loading…</p>
+                        ) : brandMetrics[user.brand.id] ? (
+                          <div className="flex flex-wrap gap-5 text-sm">
+                            {[
+                              { label: 'Completion', value: `${Math.round(brandMetrics[user.brand.id]!.completionRate)}%`, flag: brandMetrics[user.brand.id]!.completionRate < 70 },
+                              { label: 'Avg rating', value: `${brandMetrics[user.brand.id]!.avgRating.toFixed(1)} ★`, flag: brandMetrics[user.brand.id]!.avgRating < 3.5 },
+                              { label: 'Orders', value: `${brandMetrics[user.brand.id]!.completedOrders}/${brandMetrics[user.brand.id]!.totalOrders}`, flag: false },
+                              { label: 'Repeat creators', value: `${Math.round(brandMetrics[user.brand.id]!.repeatCreatorRate)}%`, flag: false },
+                            ].map((m) => (
+                              <div key={m.label}>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-[#7b867f]">{m.label}</p>
+                                <p className={`font-extrabold ${m.flag ? 'text-red-600' : 'text-[#173b2a]'}`}>{m.value}</p>
+                              </div>
+                            ))}
+                            {brandMetrics[user.brand.id]!.flaggedForReview ? (
+                              <div className="rounded-lg bg-red-50 px-3 py-1.5">
+                                <p className="text-xs font-bold text-red-700">⚠ {brandMetrics[user.brand.id]!.flagReason ?? 'Low quality metrics'}</p>
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">No metrics available.</p>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                </Fragment>
               ))}
               {!isLoading && users.length === 0 && (
                 <TableRow>
