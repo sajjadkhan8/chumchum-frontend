@@ -223,6 +223,7 @@ export interface Order {
   barterProductReceived?: boolean;
   conversationId?: string;
   hasReviewedByBrand?: boolean;
+  hasReviewedByCreator?: boolean;
 }
 
 // Brand Types

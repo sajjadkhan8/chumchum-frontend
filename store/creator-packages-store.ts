@@ -57,6 +57,14 @@ const toCreateRequest = (pkg: CreatorPackage): PackageUpsertRequest => ({
   media_urls: cleanList(pkg.mediaUrls),
   tags: cleanList(pkg.tags),
   is_active: pkg.status === 'active',
+  tiers: pkg.tiers?.map((tier) => ({
+    name: tier.name,
+    price: tier.price,
+    description: tier.description,
+    deliverables: tier.deliverables,
+    delivery_days: tier.deliveryDays,
+    revisions: tier.revisions,
+  })),
 });
 
 export const useCreatorPackagesStore = create<CreatorPackagesState>()(

@@ -18,6 +18,7 @@ import {
   Upload,
   Download,
   Star,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ import { formatPrice, formatDate, getInitials } from "@/lib/utils";
 import { toast } from "sonner";
 import { ordersService } from "@/services/orders.service";
 import { reviewsService } from "@/services/reviews.service";
+import { disputesService } from '@/services/disputes.service';
 import { uploadsService } from "@/services/uploads.service";
 import { messagesService } from "@/services/messages.service";
 import { downloadFile } from "@/lib/download-file";
@@ -147,6 +149,10 @@ function CreatorOrdersPageContent() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [disputeTarget, setDisputeTarget] = useState<Order | null>(null);
+  const [disputeTitle, setDisputeTitle] = useState('');
+  const [disputeDesc, setDisputeDesc] = useState('');
+  const [isSubmittingDispute, setIsSubmittingDispute] = useState(false);
 
   const loadOrders = async (status?: string, append = false, page = 0) => {
     if (append) setIsLoadingMore(true);
@@ -155,6 +161,11 @@ function CreatorOrdersPageContent() {
       const statusFilter = (!status || status === 'all') ? undefined : status as Order['status'];
       const result = await ordersService.getAll({ status: statusFilter, page, limit: 20 });
       setOrders((prev) => append ? [...prev, ...result.orders] : result.orders);
+      setReviewedOrderIds((prev) => {
+        const next = new Set(prev);
+        result.orders.forEach((o) => { if (o.hasReviewedByCreator) next.add(o.id); });
+        return next;
+      });
       setHasMoreOrders(result.hasMore);
       setOrdersPage(page);
     } catch (error) {
@@ -340,6 +351,26 @@ function CreatorOrdersPageContent() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not open conversation");
       router.push("/creator/messages");
+    }
+  };
+
+  const handleOpenDispute = async () => {
+    if (!disputeTarget || !disputeTitle.trim() || !disputeDesc.trim()) return;
+    setIsSubmittingDispute(true);
+    try {
+      await disputesService.openDispute({
+        orderId: disputeTarget.id,
+        title: disputeTitle.trim(),
+        description: disputeDesc.trim(),
+      });
+      toast.success('Dispute opened. Our team will review it shortly.');
+      setDisputeTarget(null);
+      setDisputeTitle('');
+      setDisputeDesc('');
+    } catch {
+      toast.error('Failed to open dispute. Please try again.');
+    } finally {
+      setIsSubmittingDispute(false);
     }
   };
 
@@ -615,6 +646,17 @@ function CreatorOrdersPageContent() {
                             <MessageCircle className="mr-2 h-4 w-4" />
                             Message Brand
                           </Button>
+                          {order.status !== 'pending' && order.status !== 'completed' && order.status !== 'cancelled' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 gap-1.5 rounded-xl border border-red-200 px-3 text-[11px] font-semibold text-red-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+                              onClick={(e) => { e.stopPropagation(); setDisputeTarget(order); }}
+                            >
+                              <AlertTriangle className="size-3" />
+                              Dispute
+                            </Button>
+                          )}
                           {order.status === "completed" && (
                             <Button
                               variant="outline"
@@ -751,6 +793,58 @@ function CreatorOrdersPageContent() {
                 {isSubmitting ? "Submitting..." : "Submit"}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dispute dialog */}
+      <Dialog open={!!disputeTarget} onOpenChange={(open) => { if (!open) { setDisputeTarget(null); setDisputeTitle(''); setDisputeDesc(''); } }}>
+        <DialogContent className="max-w-lg rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-[#173b2a]">Open a Dispute</DialogTitle>
+            <DialogDescription>
+              Describe the issue with order{' '}
+              <span className="font-semibold">{disputeTarget?.orderNumber ?? disputeTarget?.id?.slice(0, 8)}</span>.
+              Our team will review and respond within 48&nbsp;hours.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <Label htmlFor="dispute-title" className="text-sm font-semibold text-[#173b2a]">
+                Issue Title
+              </Label>
+              <Input
+                id="dispute-title"
+                className="mt-1.5"
+                placeholder="e.g. Deliverable not submitted after deadline"
+                value={disputeTitle}
+                onChange={(e) => setDisputeTitle(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="dispute-desc" className="text-sm font-semibold text-[#173b2a]">
+                Description
+              </Label>
+              <Textarea
+                id="dispute-desc"
+                className="mt-1.5 min-h-[100px] resize-none"
+                placeholder="Provide as much detail as possible about the issue..."
+                value={disputeDesc}
+                onChange={(e) => setDisputeDesc(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" className="rounded-xl" onClick={() => { setDisputeTarget(null); setDisputeTitle(''); setDisputeDesc(''); }}>
+              Cancel
+            </Button>
+            <Button
+              className="rounded-xl bg-red-600 text-white hover:bg-red-700"
+              disabled={!disputeTitle.trim() || !disputeDesc.trim() || isSubmittingDispute}
+              onClick={() => void handleOpenDispute()}
+            >
+              {isSubmittingDispute ? 'Submitting…' : 'Submit Dispute'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

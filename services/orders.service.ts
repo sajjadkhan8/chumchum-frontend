@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api/client';
-import { mapBrand, mapCreator, mapOrder, mapPackage } from '@/lib/api/mappers';
+import { mapOrder } from '@/lib/api/mappers';
 import type { DealType, Order, OrderDeliverable, OrderStatus } from '@/types';
 
 export interface CreateOrderRequest {
@@ -48,9 +48,12 @@ interface BackendOrderResponse {
   deadlineDate?: string;
   deliveryDate?: string;
   createdAt?: string;
+  updatedAt?: string;
   deliverables?: BackendDeliverableResponse[];
   barterProductReceived?: boolean;
   conversationId?: string;
+  hasReviewedByBrand?: boolean;
+  hasReviewedByCreator?: boolean;
 }
 
 interface BackendDeliverableResponse {
@@ -89,49 +92,11 @@ const mapDeliverable = (payload: BackendDeliverableResponse): OrderDeliverable =
   createdAt: toOptionalDate(payload.created_at),
 });
 
-const enrichOrders = async (orders: BackendOrderResponse[]): Promise<Order[]> => {
-  const uniqueCreatorIds = [...new Set(orders.map((order) => order.creatorId).filter(Boolean))];
-  const uniqueBrandIds = [...new Set(orders.map((order) => order.brandId).filter(Boolean))];
-  const uniquePackageIds = [...new Set(orders.map((order) => order.packageId).filter(Boolean))];
-
-  const [creators, brands, packages] = await Promise.all([
-    Promise.allSettled(uniqueCreatorIds.map((id) => apiClient.get<unknown>(`/api/v1/creators/${id}`))),
-    Promise.allSettled(uniqueBrandIds.map((id) => apiClient.get<unknown>(`/api/v1/brands/${id}`))),
-    Promise.allSettled(uniquePackageIds.map((id) => apiClient.get<unknown>(`/api/v1/packages/${id}`))),
-  ]);
-
-  const creatorMap = uniqueCreatorIds.reduce<Record<string, ReturnType<typeof mapCreator>>>((acc, id, index) => {
-    const result = creators[index];
-    if (result.status === 'fulfilled') {
-      acc[id] = mapCreator(result.value as never);
-    }
-    return acc;
-  }, {});
-
-  const brandMap = uniqueBrandIds.reduce<Record<string, ReturnType<typeof mapBrand>>>((acc, id, index) => {
-    const result = brands[index];
-    if (result.status === 'fulfilled') {
-      acc[id] = mapBrand(result.value as never);
-    }
-    return acc;
-  }, {});
-
-  const packageMap = uniquePackageIds.reduce<Record<string, ReturnType<typeof mapPackage>>>((acc, id, index) => {
-    const result = packages[index];
-    if (result.status === 'fulfilled') {
-      acc[id] = mapPackage(result.value as never);
-    }
-    return acc;
-  }, {});
-
-  return orders.map((order) => mapOrder(order, packageMap, creatorMap, brandMap));
-};
 
 export const ordersService = {
   async create(payload: CreateOrderRequest): Promise<Order | null> {
     const response = await apiClient.post<BackendOrderResponse>('/api/v1/orders', payload);
-    const enriched = await enrichOrders(response ? [response] : []);
-    return enriched[0] || null;
+    return response ? mapOrder(response as never, {}, {}, {}) : null;
   },
 
   async getAll(filters?: { status?: OrderStatus; search?: string; page?: number; limit?: number }): Promise<{ orders: Order[]; total: number; hasMore: boolean }> {
@@ -160,14 +125,13 @@ export const ordersService = {
       total = r.total ?? r.totalElements ?? raw.length;
     }
 
-    const orders = await enrichOrders(raw);
+    const orders = raw.map((o) => mapOrder(o as never, {}, {}, {}));
     return { orders, total, hasMore: (page + 1) * limit < total };
   },
 
   async getById(id: string): Promise<Order | null> {
     const response = await apiClient.get<BackendOrderResponse>(`/api/v1/orders/${id}`);
-    const orders = await enrichOrders(response ? [response] : []);
-    return orders[0] || null;
+    return response ? mapOrder(response as never, {}, {}, {}) : null;
   },
 
   async getByCreatorId(creatorId: string): Promise<Order[]> {
@@ -191,15 +155,13 @@ export const ordersService = {
       ...payload,
     });
 
-    const enriched = await enrichOrders(response ? [response] : []);
-    return enriched[0] || null;
+    return response ? mapOrder(response as never, {}, {}, {}) : null;
   },
 
   async updateProgress(orderId: string, progress: number): Promise<Order | null> {
     const payload: UpdateOrderProgressRequest = { progress };
     const response = await apiClient.patch<BackendOrderResponse>(`/api/v1/orders/${orderId}/progress`, payload);
-    const enriched = await enrichOrders(response ? [response] : []);
-    return enriched[0] || null;
+    return response ? mapOrder(response as never, {}, {}, {}) : null;
   },
 
   async submitDeliverable(orderId: string, deliverableId: string, payload: SubmitDeliverableRequest): Promise<OrderDeliverable> {
@@ -223,8 +185,7 @@ export const ordersService = {
 
   async confirmBarterReceipt(orderId: string): Promise<Order | null> {
     const response = await apiClient.patch<BackendOrderResponse>(`/api/v1/orders/${orderId}/barter-confirm`);
-    const enriched = await enrichOrders(response ? [response] : []);
-    return enriched[0] || null;
+    return response ? mapOrder(response as never, {}, {}, {}) : null;
   },
 
   async downloadReceipt(orderId: string): Promise<Blob> {

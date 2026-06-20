@@ -5,19 +5,13 @@ interface BackendReview {
   id: string;
   creatorId?: string;
   brandId?: string;
+  brandName?: string;
+  brandLogoUrl?: string;
   orderId?: string;
   reviewerType?: string;
   rating?: number;
   comment?: string;
   createdAt?: string;
-  brand?: {
-    id?: string;
-    name?: string;
-    logo?: string;
-    industry?: string;
-    city?: string;
-    description?: string;
-  };
 }
 
 export interface CreateReviewRequest {
@@ -46,17 +40,11 @@ const mapReview = (input: BackendReview, creatorId: string): Review => {
     id: input.id,
     creatorId: input.creatorId || creatorId,
     brandId,
-    brand: input.brand
-      ? {
-          ...fallbackBrand(brandId),
-          id: input.brand.id || brandId,
-          name: input.brand.name || 'Brand',
-          logo: input.brand.logo || '',
-          industry: input.brand.industry || 'General',
-          city: (input.brand.city as City) || 'Karachi',
-          description: input.brand.description || '',
-        }
-      : fallbackBrand(brandId),
+    brand: {
+      ...fallbackBrand(brandId),
+      name: input.brandName || 'Brand',
+      logo: input.brandLogoUrl || '',
+    },
     orderId: input.orderId || '',
     reviewerType: input.reviewerType === 'creator' ? 'creator' : 'brand',
     rating: input.rating || 0,

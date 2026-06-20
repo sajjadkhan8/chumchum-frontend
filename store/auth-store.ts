@@ -114,7 +114,12 @@ export const useAuthStore = create<AuthState>()(
           throw new Error('Please enter a valid Pakistani phone number.');
         }
         const normalizedPhone = normalizePakistaniPhone(phone);
-        await authService.sendOtp(normalizedPhone);
+        set({ isLoading: true });
+        try {
+          await authService.sendOtp(normalizedPhone);
+        } finally {
+          set({ isLoading: false });
+        }
       },
 
       loginWithPhone: async (phone: string, otp: string) => {

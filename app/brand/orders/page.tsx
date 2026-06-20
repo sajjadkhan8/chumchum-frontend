@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   AlertCircle,
+  AlertTriangle,
   ArrowRight,
   CalendarClock,
   CheckCircle,
@@ -54,6 +55,7 @@ import { formatPrice, formatDate, getInitials } from "@/lib/utils";
 import { toast } from "sonner";
 import { ordersService } from "@/services/orders.service";
 import { reviewsService } from "@/services/reviews.service";
+import { disputesService } from '@/services/disputes.service';
 import type { Order, OrderDeliverable, OrderStatus } from "@/types";
 import { downloadFile } from "@/lib/download-file";
 import { cn } from "@/lib/utils";
@@ -173,6 +175,10 @@ function BrandOrdersContent() {
   const [revisionNote, setRevisionNote] = useState("");
   const [isSubmittingRevision, setIsSubmittingRevision] = useState(false);
   const [downloadingReceiptIds, setDownloadingReceiptIds] = useState<Set<string>>(new Set());
+  const [disputeTarget, setDisputeTarget] = useState<Order | null>(null);
+  const [disputeTitle, setDisputeTitle] = useState('');
+  const [disputeDesc, setDisputeDesc] = useState('');
+  const [isSubmittingDispute, setIsSubmittingDispute] = useState(false);
 
   const loadOrders = async (nextPage = 0, append = false) => {
     if (append) {
@@ -334,6 +340,26 @@ function BrandOrdersContent() {
       toast.error(message);
     } finally {
       setIsSubmittingReview(false);
+    }
+  };
+
+  const handleOpenDispute = async () => {
+    if (!disputeTarget || !disputeTitle.trim() || !disputeDesc.trim()) return;
+    setIsSubmittingDispute(true);
+    try {
+      await disputesService.openDispute({
+        orderId: disputeTarget.id,
+        title: disputeTitle.trim(),
+        description: disputeDesc.trim(),
+      });
+      toast.success('Dispute opened. Our team will review it shortly.');
+      setDisputeTarget(null);
+      setDisputeTitle('');
+      setDisputeDesc('');
+    } catch {
+      toast.error('Failed to open dispute. Please try again.');
+    } finally {
+      setIsSubmittingDispute(false);
     }
   };
 
@@ -627,6 +653,17 @@ function BrandOrdersContent() {
                           Message
                         </Link>
                       </Button>
+                      {order.status !== 'pending' && order.status !== 'completed' && order.status !== 'cancelled' && order.status !== 'accepted' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 gap-1.5 rounded-xl border border-red-200 px-3 text-[11px] font-semibold text-red-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => setDisputeTarget(order)}
+                        >
+                          <AlertTriangle className="size-3" />
+                          Dispute
+                        </Button>
+                      )}
                       {order.status === "completed" && (
                         <Button
                           variant="outline"
@@ -690,6 +727,57 @@ function BrandOrdersContent() {
             </div>
           )}
         </section>
+
+        <Dialog open={!!disputeTarget} onOpenChange={(open) => { if (!open) { setDisputeTarget(null); setDisputeTitle(''); setDisputeDesc(''); } }}>
+          <DialogContent className="max-w-lg rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-[#173b2a]">Open a Dispute</DialogTitle>
+              <DialogDescription>
+                Describe the issue with order{' '}
+                <span className="font-semibold">{disputeTarget?.orderNumber ?? disputeTarget?.id?.slice(0, 8)}</span>.
+                Our team will review and respond within 48&nbsp;hours.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              <div>
+                <Label htmlFor="brand-dispute-title" className="text-sm font-semibold text-[#173b2a]">
+                  Issue Title
+                </Label>
+                <Input
+                  id="brand-dispute-title"
+                  className="mt-1.5"
+                  placeholder="e.g. Deliverable not submitted after deadline"
+                  value={disputeTitle}
+                  onChange={(e) => setDisputeTitle(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="brand-dispute-desc" className="text-sm font-semibold text-[#173b2a]">
+                  Description
+                </Label>
+                <Textarea
+                  id="brand-dispute-desc"
+                  className="mt-1.5 min-h-[100px] resize-none"
+                  placeholder="Provide as much detail as possible about the issue..."
+                  value={disputeDesc}
+                  onChange={(e) => setDisputeDesc(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" className="rounded-xl" onClick={() => { setDisputeTarget(null); setDisputeTitle(''); setDisputeDesc(''); }}>
+                Cancel
+              </Button>
+              <Button
+                className="rounded-xl bg-red-600 text-white hover:bg-red-700"
+                disabled={!disputeTitle.trim() || !disputeDesc.trim() || isSubmittingDispute}
+                onClick={() => void handleOpenDispute()}
+              >
+                {isSubmittingDispute ? 'Submitting…' : 'Submit Dispute'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={Boolean(reviewTarget)} onOpenChange={(open) => !open && setReviewTarget(null)}>
           <DialogContent className="max-w-[calc(100%-1rem)] rounded-[1.5rem] border-[#d9e0d8] bg-[#fbfaf5] sm:max-w-lg">

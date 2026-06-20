@@ -1,4 +1,5 @@
 import type {
+  BarterType,
   Brand,
   BrandVerificationStatus,
   City,
@@ -160,6 +161,8 @@ interface BackendCreatorResponse {
     email?: string;
     phone?: string;
   };
+  deal_types?: string[];
+  barter_types?: string[];
   created_at?: string;
 }
 
@@ -210,12 +213,20 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
     platforms: socialAccounts.length > 0 ? socialAccounts : [{ platform: 'instagram', followers, engagementRate, username }],
     totalFollowers: followers,
     avgEngagementRate: engagementRate,
-    dealTypes: [
-      'paid',
-      ...(input.accepts_barter === false ? [] : ['barter' as const]),
-      ...(input.accepts_hybrid_deals === false ? [] : ['hybrid' as const]),
-    ],
-    barterTypes: ['products'],
+    dealTypes: (
+      input.deal_types?.length
+        ? (input.deal_types.map((d) => d.toLowerCase()) as DealType[])
+        : ([
+            'paid' as DealType,
+            input.accepts_barter ? ('barter' as DealType) : null,
+            input.accepts_hybrid_deals ? ('hybrid' as DealType) : null,
+          ].filter(Boolean) as DealType[])
+    ),
+    barterTypes: (
+      input.barter_types?.length
+        ? (input.barter_types.map((b) => b.toLowerCase()) as BarterType[])
+        : undefined
+    ),
     minPrice: input.min_price,
     maxPrice: input.max_price,
     responseTime: input.response_time || 'Within 24 hours',
@@ -412,7 +423,9 @@ interface BackendOrderResponse {
   deliverables?: BackendOrderDeliverableResponse[];
   barterProductReceived?: boolean;
   conversationId?: string;
+  updatedAt?: string;
   hasReviewedByBrand?: boolean;
+  hasReviewedByCreator?: boolean;
 }
 
 interface BackendOrderDeliverableResponse {
@@ -516,12 +529,13 @@ export const mapOrder = (input: BackendOrderResponse, packageMap: Record<string,
     progress: input.progress,
     deliverables: input.deliverables?.map(mapOrderDeliverable) || [],
     createdAt: safeDate(input.createdAt),
-    updatedAt: safeDate(input.createdAt),
+    updatedAt: safeDate(input.updatedAt || input.createdAt),
     deadlineDate: input.deadlineDate ? safeDate(input.deadlineDate) : undefined,
     deliveryDate: input.deliveryDate ? safeDate(input.deliveryDate) : undefined,
     barterProductReceived: Boolean(input.barterProductReceived),
     conversationId: input.conversationId,
     hasReviewedByBrand: Boolean(input.hasReviewedByBrand),
+    hasReviewedByCreator: Boolean(input.hasReviewedByCreator),
   };
 };
 
