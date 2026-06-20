@@ -138,6 +138,43 @@ export interface AdminVerificationBrand {
   };
 }
 
+export interface AdminVerificationDocument {
+  id: string;
+  type: 'tax_id' | 'business_registration' | 'bank_details' | string;
+  fileName: string;
+  fileUrl: string;
+  status: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
+  uploadedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: {
+    id: string;
+    name?: string;
+    email?: string;
+  };
+}
+
+export interface AdminVerificationEvent {
+  id: string;
+  eventType: string;
+  details?: string;
+  documentId?: string;
+  createdAt: string;
+  actor?: {
+    id: string;
+    name?: string;
+    email?: string;
+  };
+}
+
+export interface AdminBrandVerificationEvidence {
+  brand: AdminVerificationBrand;
+  documents: AdminVerificationDocument[];
+  events: AdminVerificationEvent[];
+  requiredDocumentTypes: string[];
+  canApprove: boolean;
+}
+
 export interface AdminVerificationFilters {
   search?: string;
   status?: string;
@@ -537,6 +574,37 @@ export const adminService = {
   async updateBrandVerification(id: string, status: string, contactEmail?: string, phoneNumber?: string) {
     return apiClient.patch(`/api/v1/admin/brands/${id}/verification`, {
       status,
+      contactEmail,
+      phoneNumber,
+    });
+  },
+
+  async getBrandVerificationEvidence(id: string): Promise<AdminBrandVerificationEvidence> {
+    return apiClient.get<AdminBrandVerificationEvidence>(`/api/v1/admin/brands/${id}/verification-evidence`);
+  },
+
+  async reviewBrandVerificationDocument(
+    brandId: string,
+    documentId: string,
+    status: 'approved' | 'rejected' | 'pending',
+    reason?: string,
+  ): Promise<AdminVerificationDocument> {
+    return apiClient.patch<AdminVerificationDocument>(
+      `/api/v1/admin/brands/${brandId}/verification-documents/${documentId}`,
+      { status, reason },
+    );
+  },
+
+  async decideBrandVerification(
+    brandId: string,
+    decision: 'verified' | 'rejected' | 'under review',
+    reason?: string,
+    contactEmail?: string,
+    phoneNumber?: string,
+  ): Promise<AdminVerificationBrand> {
+    return apiClient.post<AdminVerificationBrand>(`/api/v1/admin/brands/${brandId}/verification-review`, {
+      decision,
+      reason,
       contactEmail,
       phoneNumber,
     });

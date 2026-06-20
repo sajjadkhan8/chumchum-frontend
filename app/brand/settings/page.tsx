@@ -352,6 +352,7 @@ function BrandSettingsPageContent() {
           const fileUrl = reader.result as string;
           const uploaded = await brandsService.submitVerificationDocument({ type, fileUrl, fileName: file.name });
           setVerificationDocs((prev) => [...prev.filter((d) => d.type !== type), uploaded]);
+          brandsService.getVerificationEvents().then(setVerificationEvents).catch(() => undefined);
           toast.success(`${file.name} uploaded successfully`);
         } catch (err) {
           toast.error(err instanceof Error ? err.message : 'Upload failed');
@@ -369,6 +370,7 @@ function BrandSettingsPageContent() {
     setIsSubmittingReview(true);
     try {
       await brandsService.submitForReview();
+      brandsService.getVerificationEvents().then(setVerificationEvents).catch(() => undefined);
       toast.success('Submitted for review. Our team will verify within 2–3 business days.');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Submission failed');
@@ -617,7 +619,7 @@ function BrandSettingsPageContent() {
                    verification.businessStatus === 'REJECTED' ? '✗ Verification rejected — contact support' :
                    'Unverified'}
                 </div>
-                <p className="text-[11px] text-[#8fa098]">Managed by the ZingZing team. Contact support to start verification.</p>
+                <p className="text-[11px] text-[#8fa098]">Upload documents below and submit them for team review.</p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">

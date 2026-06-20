@@ -186,6 +186,7 @@ export default function PublicCreatorProfilePage({
   const handleBook = (pkg: CreatorPackage) => {
     if (!user) { router.push("/login"); return; }
     if (user.role !== "brand") return;
+    void packagesService.trackEvent(pkg.id, "CLICK", "public_profile_order").catch(() => undefined);
     setSelectedPkg(pkg);
   };
 

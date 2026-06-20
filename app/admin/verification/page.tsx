@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Award, CheckCircle2, RefreshCw, Search, ShieldCheck, XCircle } from 'lucide-react';
+import { Award, CheckCircle2, Clock, ExternalLink, FileText, RefreshCw, Search, ShieldCheck, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   adminService,
   type AdminVerificationBrand,
+  type AdminBrandVerificationEvidence,
+  type AdminVerificationDocument,
   type AdminVerificationCreator,
   type AdminCreatorScoreDetails,
   type AmbassadorApplication,
@@ -124,6 +126,10 @@ export default function AdminVerificationPage() {
   const [creatorScores, setCreatorScores] = useState<Record<string, AdminCreatorScoreDetails | null>>({});
   const [loadingScoreId, setLoadingScoreId] = useState<string | null>(null);
   const [expandedCreatorId, setExpandedCreatorId] = useState<string | null>(null);
+  const [expandedBrandId, setExpandedBrandId] = useState<string | null>(null);
+  const [brandEvidence, setBrandEvidence] = useState<Record<string, AdminBrandVerificationEvidence | null>>({});
+  const [loadingEvidenceId, setLoadingEvidenceId] = useState<string | null>(null);
+  const [brandDecisionReason, setBrandDecisionReason] = useState<Record<string, string>>({});
 
   const loadQueue = useCallback(
     async (tab: VerificationTab, nextPage = pages[tab]) => {
@@ -199,6 +205,83 @@ export default function AdminVerificationPage() {
       toast.success('Brand verification updated');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to update brand');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const refreshBrandEvidence = async (brandId: string) => {
+    const evidence = await adminService.getBrandVerificationEvidence(brandId);
+    setBrandEvidence((current) => ({ ...current, [brandId]: evidence }));
+    return evidence;
+  };
+
+  const toggleBrandEvidence = async (brandId: string) => {
+    if (expandedBrandId === brandId) {
+      setExpandedBrandId(null);
+      return;
+    }
+    setExpandedBrandId(brandId);
+    if (Object.prototype.hasOwnProperty.call(brandEvidence, brandId)) return;
+    setLoadingEvidenceId(brandId);
+    try {
+      await refreshBrandEvidence(brandId);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to load verification evidence');
+    } finally {
+      setLoadingEvidenceId(null);
+    }
+  };
+
+  const reviewBrandDocument = async (
+    brand: AdminVerificationBrand,
+    document: AdminVerificationDocument,
+    status: 'approved' | 'rejected',
+  ) => {
+    const reason = brandDecisionReason[brand.id]?.trim();
+    if (status === 'rejected' && !reason) {
+      toast.error('A rejection reason is required');
+      return;
+    }
+    setUpdatingId(document.id);
+    try {
+      await adminService.reviewBrandVerificationDocument(brand.id, document.id, status, reason || undefined);
+      await refreshBrandEvidence(brand.id);
+      if (status === 'rejected') {
+        setBrands((current) => current.map((item) =>
+          item.id === brand.id ? { ...item, business_verification_status: 'rejected' } : item,
+        ));
+      }
+      toast.success(status === 'approved' ? 'Document approved' : 'Document rejected');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to review document');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const decideBrandVerification = async (brand: AdminVerificationBrand, decision: 'verified' | 'rejected' | 'under review') => {
+    const reason = brandDecisionReason[brand.id]?.trim();
+    if (decision === 'rejected' && !reason) {
+      toast.error('A rejection reason is required');
+      return;
+    }
+    setUpdatingId(brand.id);
+    try {
+      await adminService.decideBrandVerification(
+        brand.id,
+        decision,
+        reason || undefined,
+        brandContact[brand.id] || brand.verification_contact_email || brand.user?.email,
+        brand.verification_phone_number,
+      );
+      setBrands((current) => current.map((item) =>
+        item.id === brand.id ? { ...item, business_verification_status: decision } : item,
+      ));
+      await refreshBrandEvidence(brand.id);
+      toast.success(`Brand marked ${decision}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to finalize brand verification');
     } finally {
       setUpdatingId(null);
     }
@@ -480,51 +563,186 @@ export default function AdminVerificationPage() {
                   <TableRow className="border-[#f4f6f4]">
                     <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Brand</TableHead>
                     <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Contact</TableHead>
-                    <TableHead className="text-right text-[11px] font-bold uppercase tracking-wide text-[#496159]">Status</TableHead>
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[#496159]">Status</TableHead>
+                    <TableHead className="text-right text-[11px] font-bold uppercase tracking-wide text-[#496159]">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {brands.map((brand) => (
-                    <TableRow key={brand.id} className="border-[#f4f6f4] transition-colors hover:bg-[#fafcfa]">
-                      <TableCell>
-                        <p className="text-[13px] font-semibold text-[#1e3d2e]">{brand.name}</p>
-                        <p className="text-[11px] text-[#87938b]">{brand.user?.email}</p>
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={brandContact[brand.id] ?? ''}
-                          placeholder={brand.verification_contact_email || brand.user?.email}
-                          className="border-[#d1ddd6]"
-                          onChange={(event) =>
-                            setBrandContact((current) => ({ ...current, [brand.id]: event.target.value }))
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end">
-                          <Select
-                            value={(brand.business_verification_status || 'pending').toLowerCase()}
-                            disabled={updatingId === brand.id}
-                            onValueChange={(status) => updateBrand(brand, status)}
+                    <React.Fragment key={brand.id}>
+                      <TableRow className="border-[#f4f6f4] transition-colors hover:bg-[#fafcfa]">
+                        <TableCell>
+                          <p className="text-[13px] font-semibold text-[#1e3d2e]">{brand.name}</p>
+                          <p className="text-[11px] text-[#87938b]">{brand.user?.email}</p>
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={brandContact[brand.id] ?? ''}
+                            placeholder={brand.verification_contact_email || brand.user?.email}
+                            className="border-[#d1ddd6]"
+                            onChange={(event) =>
+                              setBrandContact((current) => ({ ...current, [brand.id]: event.target.value }))
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold capitalize ${
+                            (brand.business_verification_status || '').toLowerCase() === 'verified'
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : (brand.business_verification_status || '').toLowerCase() === 'rejected'
+                                ? 'bg-red-50 text-red-700'
+                                : 'bg-[#fff1cd] text-[#8b5e12]'
+                          }`}>
+                            {(brand.business_verification_status || 'pending').replace('_', ' ')}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <button
+                            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#d1ddd6] px-3 text-[11px] font-bold text-[#2d6b4e] transition hover:bg-[#e8f0ec] disabled:opacity-50"
+                            disabled={loadingEvidenceId === brand.id}
+                            onClick={() => void toggleBrandEvidence(brand.id)}
                           >
-                            <SelectTrigger className="w-[10rem] border-[#d1ddd6]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {brandStatuses.slice(1).map((status) => (
-                                <SelectItem key={status} value={status}>
-                                  <span className="capitalize">{status}</span>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                            <FileText className="h-3.5 w-3.5" />
+                            {expandedBrandId === brand.id ? 'Hide evidence' : 'Review evidence'}
+                          </button>
+                        </TableCell>
+                      </TableRow>
+                      {expandedBrandId === brand.id ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="bg-[#f4f8f5] px-4 py-4">
+                            {loadingEvidenceId === brand.id ? (
+                              <p className="text-xs text-muted-foreground">Loading evidence…</p>
+                            ) : brandEvidence[brand.id] ? (() => {
+                              const evidence = brandEvidence[brand.id]!;
+                              return (
+                                <div className="space-y-4">
+                                  <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                      <p className="text-sm font-extrabold text-[#173b2a]">Evidence review</p>
+                                      <p className="text-xs text-[#647168]">
+                                        Required: {evidence.requiredDocumentTypes.join(', ').replaceAll('_', ' ')}
+                                      </p>
+                                    </div>
+                                    <span className={`rounded-full px-3 py-1 text-xs font-extrabold ${
+                                      evidence.canApprove ? 'bg-emerald-50 text-emerald-700' : 'bg-[#fff1cd] text-[#8b5e12]'
+                                    }`}>
+                                      {evidence.canApprove ? 'Ready to verify' : 'Needs approved documents'}
+                                    </span>
+                                  </div>
+
+                                  <div className="grid gap-3 lg:grid-cols-3">
+                                    {evidence.documents.map((doc) => (
+                                      <div key={doc.id} className="rounded-2xl border border-[#d9e0d8] bg-white p-4">
+                                        <div className="flex items-start justify-between gap-3">
+                                          <div>
+                                            <p className="text-sm font-extrabold capitalize text-[#173b2a]">{doc.type.replaceAll('_', ' ')}</p>
+                                            <p className="mt-0.5 text-xs text-[#647168]">{doc.fileName}</p>
+                                          </div>
+                                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${
+                                            doc.status === 'approved' ? 'bg-emerald-50 text-emerald-700' :
+                                            doc.status === 'rejected' ? 'bg-red-50 text-red-700' :
+                                            'bg-[#fff1cd] text-[#8b5e12]'
+                                          }`}>{doc.status}</span>
+                                        </div>
+                                        {doc.rejectionReason ? <p className="mt-2 text-xs text-red-600">{doc.rejectionReason}</p> : null}
+                                        {doc.reviewedAt ? (
+                                          <p className="mt-2 text-[11px] text-[#9ba8a1]">
+                                            Reviewed {new Date(doc.reviewedAt).toLocaleDateString('en-PK')} by {doc.reviewedBy?.name || doc.reviewedBy?.email || 'admin'}
+                                          </p>
+                                        ) : null}
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                          <a
+                                            href={doc.fileUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#d1ddd6] px-3 text-[11px] font-bold text-[#2d6b4e] hover:bg-[#e8f0ec]"
+                                          >
+                                            <ExternalLink className="h-3.5 w-3.5" /> Open
+                                          </a>
+                                          <button
+                                            disabled={updatingId === doc.id}
+                                            onClick={() => void reviewBrandDocument(brand, doc, 'approved')}
+                                            className="inline-flex h-8 items-center gap-1.5 rounded-xl bg-[#2d6b4e] px-3 text-[11px] font-bold text-white hover:bg-[#1f5239] disabled:opacity-50"
+                                          >
+                                            <CheckCircle2 className="h-3.5 w-3.5" /> Approve
+                                          </button>
+                                          <button
+                                            disabled={updatingId === doc.id}
+                                            onClick={() => void reviewBrandDocument(brand, doc, 'rejected')}
+                                            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-red-200 px-3 text-[11px] font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                                          >
+                                            <XCircle className="h-3.5 w-3.5" /> Reject
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                    {evidence.documents.length === 0 ? (
+                                      <div className="rounded-2xl border border-dashed border-[#d9e0d8] bg-white p-6 text-center text-xs text-[#87938b] lg:col-span-3">
+                                        No verification documents uploaded yet.
+                                      </div>
+                                    ) : null}
+                                  </div>
+
+                                  <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
+                                    <textarea
+                                      value={brandDecisionReason[brand.id] ?? ''}
+                                      onChange={(event) => setBrandDecisionReason((current) => ({ ...current, [brand.id]: event.target.value }))}
+                                      placeholder="Decision note or rejection reason"
+                                      className="min-h-20 rounded-xl border border-[#d1ddd6] bg-white px-3 py-2 text-sm text-[#1e3d2e] outline-none focus:border-[#2d6b4e]"
+                                    />
+                                    <div className="flex flex-wrap items-start gap-2 lg:flex-col">
+                                      <button
+                                        disabled={updatingId === brand.id || !evidence.canApprove}
+                                        onClick={() => void decideBrandVerification(brand, 'verified')}
+                                        className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-[#2d6b4e] px-4 text-xs font-bold text-white hover:bg-[#1f5239] disabled:opacity-50"
+                                      >
+                                        <ShieldCheck className="h-3.5 w-3.5" /> Verify brand
+                                      </button>
+                                      <button
+                                        disabled={updatingId === brand.id}
+                                        onClick={() => void decideBrandVerification(brand, 'rejected')}
+                                        className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-red-200 px-4 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                                      >
+                                        <XCircle className="h-3.5 w-3.5" /> Reject brand
+                                      </button>
+                                      <button
+                                        disabled={updatingId === brand.id}
+                                        onClick={() => void decideBrandVerification(brand, 'under review')}
+                                        className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-[#d1ddd6] px-4 text-xs font-bold text-[#2d6b4e] hover:bg-[#e8f0ec] disabled:opacity-50"
+                                      >
+                                        <Clock className="h-3.5 w-3.5" /> Keep review
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div className="rounded-2xl border border-[#d9e0d8] bg-white p-4">
+                                    <p className="text-xs font-extrabold uppercase tracking-wide text-[#496159]">Audit trail</p>
+                                    <div className="mt-3 space-y-2">
+                                      {evidence.events.slice(0, 8).map((event) => (
+                                        <div key={event.id} className="flex items-start justify-between gap-3 text-xs">
+                                          <div>
+                                            <p className="font-bold text-[#173b2a]">{event.eventType.replaceAll('_', ' ').toLowerCase()}</p>
+                                            {event.details ? <p className="text-[#647168]">{event.details}</p> : null}
+                                          </div>
+                                          <span className="shrink-0 text-[#9ba8a1]">{new Date(event.createdAt).toLocaleString('en-PK')}</span>
+                                        </div>
+                                      ))}
+                                      {evidence.events.length === 0 ? <p className="text-xs text-[#87938b]">No audit events yet.</p> : null}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })() : (
+                              <p className="text-xs text-muted-foreground">Evidence data not available.</p>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ) : null}
+                    </React.Fragment>
                   ))}
                   {!isLoading && brands.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={3} className="py-12 text-center">
+                      <TableCell colSpan={4} className="py-12 text-center">
                         <div className="flex flex-col items-center gap-2">
                           <span className="grid size-10 place-items-center rounded-xl bg-[#e8f0ec]">
                             <ShieldCheck className="size-4 text-[#2d6b4e]" />

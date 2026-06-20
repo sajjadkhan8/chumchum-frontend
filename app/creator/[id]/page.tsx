@@ -175,6 +175,7 @@ export default function CreatorProfilePage({
       return;
     }
 
+    void packagesService.trackEvent(pkg.id, "CLICK", "creator_profile_order").catch(() => undefined);
     setSelectedPackage(pkg);
   };
 

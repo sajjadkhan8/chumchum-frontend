@@ -198,4 +198,8 @@ export const packagesService = {
       engagementPerformance: response.engagementPerformance || 0,
     };
   },
+
+  async trackEvent(id: string, eventType: 'VIEW' | 'CLICK' | 'INQUIRY', source = 'frontend'): Promise<void> {
+    await apiClient.post(`/api/v1/packages/${id}/track`, { eventType, source }, { auth: false });
+  },
 };
