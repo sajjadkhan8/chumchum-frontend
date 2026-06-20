@@ -34,6 +34,7 @@ import { brandsService, type VerificationDocument, type VerificationEvent } from
 import { apiClient } from "@/lib/api/client";
 import { usersService } from "@/services/users.service";
 import { useAuthStore } from "@/store/auth-store";
+import type { BrandVerificationStatus } from "@/types";
 import { isPasswordStrong, PASSWORD_REQUIREMENTS_MESSAGE } from "@/lib/password-validation";
 import { toast } from "sonner";
 
@@ -51,6 +52,14 @@ type TabId = typeof TABS[number]["id"];
 const inputCls =
   "h-9 rounded-xl border-[#d9e0d8] bg-[#f4f2e9] text-[#1a2e22] placeholder:text-[#8fa098] focus-visible:border-[#2d6b4e] focus-visible:ring-2 focus-visible:ring-[#2d6b4e]/15 focus-visible:bg-white";
 const labelCls = "text-xs font-bold text-[#526259]";
+
+const verificationStatusMeta: Record<BrandVerificationStatus, { label: string; className: string }> = {
+  verified: { label: "✓ Verified", className: "border-[#bcd3c5] bg-[#eef6f1] text-[#185c39]" },
+  pending: { label: "⏳ Pending review", className: "border-[#efcf83] bg-[#fffbf0] text-[#8b5e12]" },
+  under_review: { label: "⏳ Under review", className: "border-[#efcf83] bg-[#fffbf0] text-[#8b5e12]" },
+  rejected: { label: "✗ Verification rejected — contact support", className: "border-[#f5c2c2] bg-[#fff5f5] text-[#c13a3a]" },
+  unverified: { label: "Unverified", className: "border-[#d9e0d8] bg-[#f4f2e9] text-[#8fa098]" },
+};
 
 const cardStyle = {
   "--background": "oklch(1 0 0)",
@@ -151,7 +160,7 @@ function BrandSettingsPageContent() {
   });
 
   const [verification, setVerification] = useState({
-    businessStatus: "UNVERIFIED",
+    businessStatus: "unverified" as BrandVerificationStatus,
     contactEmail: "verification@karachigourmet.pk",
     phoneNumber: "+92 300 778 8899",
   });
@@ -196,7 +205,7 @@ function BrandSettingsPageContent() {
         campaignBudgetRange: brand.campaignBudgetRange || "",
       });
       setVerification({
-        businessStatus: brand.businessVerificationStatus || "UNVERIFIED",
+        businessStatus: brand.businessVerificationStatus || "unverified",
         contactEmail: brand.verificationContactEmail || "",
         phoneNumber: brand.verificationPhoneNumber || "",
       });
@@ -370,6 +379,7 @@ function BrandSettingsPageContent() {
     setIsSubmittingReview(true);
     try {
       await brandsService.submitForReview();
+      setVerification((prev) => ({ ...prev, businessStatus: "under_review" }));
       brandsService.getVerificationEvents().then(setVerificationEvents).catch(() => undefined);
       toast.success('Submitted for review. Our team will verify within 2–3 business days.');
     } catch (error) {
@@ -605,19 +615,8 @@ function BrandSettingsPageContent() {
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label className={labelCls}>Verification Status</Label>
-                <div className={`flex h-9 items-center gap-2 rounded-xl border-2 px-3.5 text-sm font-bold ${
-                  verification.businessStatus === 'VERIFIED'
-                    ? 'border-[#bcd3c5] bg-[#eef6f1] text-[#185c39]'
-                    : verification.businessStatus === 'PENDING'
-                    ? 'border-[#efcf83] bg-[#fffbf0] text-[#8b5e12]'
-                    : verification.businessStatus === 'REJECTED'
-                    ? 'border-[#f5c2c2] bg-[#fff5f5] text-[#c13a3a]'
-                    : 'border-[#d9e0d8] bg-[#f4f2e9] text-[#8fa098]'
-                }`}>
-                  {verification.businessStatus === 'VERIFIED' ? '✓ Verified' :
-                   verification.businessStatus === 'PENDING' ? '⏳ Pending review' :
-                   verification.businessStatus === 'REJECTED' ? '✗ Verification rejected — contact support' :
-                   'Unverified'}
+                <div className={`flex h-9 items-center gap-2 rounded-xl border-2 px-3.5 text-sm font-bold ${verificationStatusMeta[verification.businessStatus].className}`}>
+                  {verificationStatusMeta[verification.businessStatus].label}
                 </div>
                 <p className="text-[11px] text-[#8fa098]">Upload documents below and submit them for team review.</p>
               </div>
@@ -867,16 +866,16 @@ function BrandSettingsPageContent() {
               <SectionCard title="Two-Factor Authentication" icon={ShieldCheck}>
                 <div className="flex items-center justify-between gap-3 rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] px-3.5 py-3">
                   <div>
-                    <p className="text-xs font-semibold text-[#1a2e22]">Status: Disabled</p>
-                    <p className="text-[11px] text-[#8fa098]">Adds an extra layer of security</p>
+                    <p className="text-xs font-semibold text-[#1a2e22]">Status: Not available yet</p>
+                    <p className="text-[11px] text-[#8fa098]">Self-service 2FA is being prepared for brand accounts.</p>
                   </div>
                   <Button
                     size="sm"
                     variant="outline"
                     className="h-7 shrink-0 rounded-lg border-[#d9e0d8] px-3 text-xs font-semibold text-[#526259] hover:bg-[#f4f2e9]"
-                    onClick={() => toast.info("Two-factor authentication for brand accounts is coming soon.")}
+                    onClick={() => toast.info("Self-service two-factor authentication is not available yet.")}
                   >
-                    Coming soon
+                    Not available
                   </Button>
                 </div>
               </SectionCard>

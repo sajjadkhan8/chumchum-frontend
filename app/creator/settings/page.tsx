@@ -2176,14 +2176,14 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                 <PanelHeader eyebrow="Security" title="Two-Factor Authentication" />
                 <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#d1ddd6] bg-[#f4f7f5] p-3.5">
                   <div>
-                    <p className="text-sm font-extrabold text-[#1e3d2e]">Status: Disabled</p>
-                    <p className="mt-0.5 text-xs text-[#87938b]">Protect your account with 2FA</p>
+                    <p className="text-sm font-extrabold text-[#1e3d2e]">Status: Not available yet</p>
+                    <p className="mt-0.5 text-xs text-[#87938b]">Self-service 2FA is being prepared for creator accounts.</p>
                   </div>
                   <button
-                    onClick={() => toast.info("Two-factor authentication for creators is coming soon.")}
+                    onClick={() => toast.info("Self-service two-factor authentication is not available yet.")}
                     className="rounded-full border-2 border-[#d1ddd6] bg-white px-4 py-2 text-xs font-bold text-[#496159] hover:border-[#b0c5ba]"
                   >
-                    Coming soon
+                    Not available
                   </button>
                 </div>
               </div>

@@ -70,6 +70,7 @@ const statusTabs = [
 ];
 
 const statusTone: Record<string, string> = {
+  approved: "bg-[#e7f0ea] text-[#185c39] ring-[#bcd3c5]",
   completed: "bg-[#e7f0ea] text-[#185c39] ring-[#bcd3c5]",
   in_progress: "bg-[#e7f0ea] text-[#185c39] ring-[#bcd3c5]",
   accepted: "bg-[#e7f0ea] text-[#185c39] ring-[#bcd3c5]",
@@ -82,6 +83,7 @@ const statusTone: Record<string, string> = {
 
 const getStatusIcon = (status: string) => {
   switch (status) {
+    case "approved":
     case "completed":
       return CheckCircle;
     case "in_progress":
@@ -131,7 +133,7 @@ const getOrderDeliverables = (order: Order): OrderDeliverable[] => {
 
 const areAllDeliverablesApproved = (order: Order) => {
   const deliverables = getOrderDeliverables(order);
-  return deliverables.length > 0 && deliverables.every((deliverable) => deliverable.status === "completed");
+  return deliverables.length > 0 && deliverables.every((deliverable) => deliverable.status === "completed" || deliverable.status === "approved");
 };
 
 function HeroStat({ label, value, icon: Icon }: { label: string; value: string; icon: React.ElementType }) {

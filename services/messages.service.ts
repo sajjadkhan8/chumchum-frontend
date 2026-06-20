@@ -122,10 +122,14 @@ export const messagesService = {
     return (Array.isArray(response) ? response : []).map((message) => mapMessage(message));
   },
 
-  async createConversation(creatorId: string): Promise<Conversation> {
-    const response = await apiClient.post<BackendConversation>('/api/v1/conversations', { to: creatorId });
+  async createConversationWith(toUserId: string, role: 'creator' | 'brand'): Promise<Conversation> {
+    const response = await apiClient.post<BackendConversation>('/api/v1/conversations', { to: toUserId });
     const { creators, brands } = await buildParticipantMaps([response]);
-    return mapConversation(response, creators, brands, 'brand');
+    return mapConversation(response, creators, brands, role);
+  },
+
+  async createConversation(creatorId: string): Promise<Conversation> {
+    return this.createConversationWith(creatorId, 'brand');
   },
 
   async openCreatorConversation(
@@ -134,6 +138,14 @@ export const messagesService = {
   ): Promise<Conversation> {
     const existing = conversations.find((conversation) => conversation.creatorId === creatorId);
     return existing || this.createConversation(creatorId);
+  },
+
+  async openBrandConversation(
+    brandId: string,
+    conversations: Conversation[] = [],
+  ): Promise<Conversation> {
+    const existing = conversations.find((conversation) => conversation.brandId === brandId);
+    return existing || this.createConversationWith(brandId, 'creator');
   },
 
   async sendMessage(

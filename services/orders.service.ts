@@ -66,7 +66,7 @@ interface BackendDeliverableResponse {
 
 const normalizeDeliverableStatus = (value?: string): OrderDeliverable['status'] => {
   const lowered = (value || '').toLowerCase();
-  if (lowered === 'in_progress' || lowered === 'completed' || lowered === 'revision' || lowered === 'review') {
+  if (lowered === 'in_progress' || lowered === 'completed' || lowered === 'revision' || lowered === 'review' || lowered === 'approved') {
     return lowered;
   }
   return 'pending';

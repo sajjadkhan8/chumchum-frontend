@@ -132,20 +132,30 @@ export default function CreatorDashboardPage() {
   const [ambScore, setAmbScore] = useState<CreatorAmbassadorMetrics | null>(null);
   const [affiliateCopied, setAffiliateCopied] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadErrors, setLoadErrors] = useState<string[]>([]);
   const isAmbassador = user?.creatorProgramStatus === "active_ambassador";
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      const errors: string[] = [];
+      const capture = async <T,>(label: string, promise: Promise<T>, fallback: T): Promise<T> => {
+        try {
+          return await promise;
+        } catch {
+          errors.push(label);
+          return fallback;
+        }
+      };
       const [profile, anal, earn, ords, msgs, aff, insightsData, ambData] = await Promise.all([
-        creatorsService.getMe().catch(() => null),
-        analyticsService.getCreatorDashboard().catch(() => emptyAnalytics),
-        earningsService.getSummary().catch(() => emptyEarnings),
-        ordersService.getAll().then((r) => r.orders).catch(() => []),
-        messagesService.getConversations(user?.id || "", "creator").catch(() => []),
-        affiliateService.getOverview().catch(() => emptyAffiliate),
-        analyticsService.getCreatorInsights().catch(() => null),
-        ambassadorService.getScore().catch(() => null),
+        capture("profile", creatorsService.getMe(), null),
+        capture("analytics", analyticsService.getCreatorDashboard(), emptyAnalytics),
+        capture("earnings", earningsService.getSummary(), emptyEarnings),
+        capture("orders", ordersService.getAll().then((r) => r.orders), [] as Order[]),
+        capture("messages", messagesService.getConversations(user?.id || "", "creator"), { items: [], total: 0, page: 0, limit: 50 }),
+        capture("affiliate", affiliateService.getOverview(), emptyAffiliate),
+        capture("insights", analyticsService.getCreatorInsights(), null),
+        capture("ambassador score", ambassadorService.getScore(), null),
       ]);
       setCreatorProfile(profile);
       setAnalytics(anal);
@@ -155,6 +165,7 @@ export default function CreatorDashboardPage() {
       setAffiliate(aff);
       setInsights(insightsData);
       setAmbScore(ambData);
+      setLoadErrors(errors);
       setLoading(false);
     };
     void load();
@@ -225,6 +236,24 @@ export default function CreatorDashboardPage() {
   return (
     <div className="min-h-full bg-[#fbfaf5] px-4 pb-12 pt-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1300px] space-y-5">
+        {loadErrors.length > 0 && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-[#efcf83] bg-[#fff9e8] p-4 text-sm text-[#6f4a0f] sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" />
+              <p>
+                <span className="font-extrabold">Some dashboard data could not load.</span>{" "}
+                Showing available data; missing sections: {loadErrors.join(", ")}.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="self-start rounded-full border border-[#efcf83] bg-white px-3 py-1.5 text-xs font-extrabold text-[#6f4a0f] hover:bg-[#fff3c7] sm:self-auto"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         {/* ── metric cards ── */}
         <section className="grid grid-cols-2 gap-3 xl:grid-cols-4" aria-label="Key metrics">

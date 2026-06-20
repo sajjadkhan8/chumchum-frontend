@@ -1,5 +1,6 @@
 import type {
   Brand,
+  BrandVerificationStatus,
   City,
   Conversation,
   Creator,
@@ -46,6 +47,20 @@ const normalizeRole = (value?: string | null): UserRole => {
   if (lowered === 'finance_ops') return 'finance_ops';
   if (lowered === 'platform_admin' || lowered === 'admin') return 'platform_admin';
   return 'creator';
+};
+
+export const normalizeBrandVerificationStatus = (value?: string | null): BrandVerificationStatus => {
+  const normalized = (value || 'unverified').toLowerCase().replace(/[\s-]+/g, '_');
+  if (
+    normalized === 'pending'
+    || normalized === 'under_review'
+    || normalized === 'verified'
+    || normalized === 'rejected'
+    || normalized === 'unverified'
+  ) {
+    return normalized;
+  }
+  return 'unverified';
 };
 
 interface BackendUser {
@@ -277,7 +292,7 @@ export const mapBrand = (input: BackendBrandResponse): Brand => ({
   targetCities: input.target_cities,
   targetPlatforms: input.target_platforms,
   campaignBudgetRange: input.campaign_budget_range,
-  businessVerificationStatus: input.business_verification_status,
+  businessVerificationStatus: normalizeBrandVerificationStatus(input.business_verification_status),
   verificationContactEmail: input.verification_contact_email,
   verificationPhoneNumber: input.verification_phone_number,
   planTier: input.plan_tier,
@@ -411,7 +426,7 @@ interface BackendOrderDeliverableResponse {
 
 const normalizeDeliverableStatus = (value?: string | null): OrderDeliverable['status'] => {
   const lowered = (value || '').toLowerCase();
-  if (lowered === 'in_progress' || lowered === 'completed' || lowered === 'revision' || lowered === 'review') {
+  if (lowered === 'in_progress' || lowered === 'completed' || lowered === 'revision' || lowered === 'review' || lowered === 'approved') {
     return lowered;
   }
   return 'pending';

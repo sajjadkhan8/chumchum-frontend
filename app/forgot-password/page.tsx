@@ -1,16 +1,16 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { AuthShell } from '@/components/auth/auth-shell';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authService } from '@/services/auth.service';
 import { isPasswordStrong, PASSWORD_REQUIREMENTS_MESSAGE } from '@/lib/password-validation';
 
 function ForgotPasswordContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token') || '';
   const [email, setEmail] = useState('');
@@ -20,6 +20,10 @@ function ForgotPasswordContent() {
   const [resetComplete, setResetComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (token) router.replace(`/reset-password?token=${encodeURIComponent(token)}`);
+  }, [router, token]);
 
   const handleForgotPassword = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

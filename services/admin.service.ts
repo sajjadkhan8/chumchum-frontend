@@ -597,7 +597,7 @@ export const adminService = {
 
   async decideBrandVerification(
     brandId: string,
-    decision: 'verified' | 'rejected' | 'under review',
+    decision: 'verified' | 'rejected' | 'under_review',
     reason?: string,
     contactEmail?: string,
     phoneNumber?: string,

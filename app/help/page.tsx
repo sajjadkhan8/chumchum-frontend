@@ -89,12 +89,12 @@ const faqs = [
   {
     category: 'Security',
     q: 'Is two-factor authentication (2FA) available?',
-    a: 'Yes, ZingZing supports two-factor authentication for added account security. You can enable 2FA from your account security settings. We strongly recommend turning it on, especially if you have earnings or active campaigns.',
+    a: 'Two-factor authentication is currently enabled for protected internal workflows and is being prepared for creator and brand self-service settings. Until then, use a strong unique password and verify your email address.',
   },
   {
     category: 'Security',
     q: 'How can I keep my account secure?',
-    a: 'Use a strong, unique password and enable two-factor authentication. Never share your login credentials or OTP codes with anyone, including people claiming to be from ZingZing support. We will never ask for your password via chat or email. If you suspect your account has been compromised, change your password immediately and contact support.',
+    a: 'Use a strong, unique password and keep your email verified. Never share your login credentials or OTP codes with anyone, including people claiming to be from ZingZing support. We will never ask for your password via chat or email. If you suspect your account has been compromised, change your password immediately and contact support.',
   },
   {
     category: 'Accounts',

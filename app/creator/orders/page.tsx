@@ -69,6 +69,7 @@ const getStatusColor = (status: string) => {
 
 const getStatusIcon = (status: string) => {
   switch (status) {
+    case "approved":
     case "completed":
       return CheckCircle;
     case "in_progress":
@@ -175,7 +176,6 @@ function CreatorOrdersPageContent() {
     const next = status && allowed.has(status) ? status : 'all';
     setStatusFilter(next);
     void loadOrders(next, false, 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const filteredOrders = orders.filter((order) => {
@@ -335,16 +335,10 @@ function CreatorOrdersPageContent() {
     try {
       const convResult = await messagesService.getConversations(user.id, "creator");
       const convList = 'items' in convResult ? convResult.items : (convResult as unknown as import("@/types").Conversation[]);
-      const existing = convList.find((conversation) => conversation.brandId === order.brandId);
-
-      if (existing) {
-        router.push(`/creator/messages?conversation=${existing.id}`);
-        return;
-      }
-
-      router.push("/creator/messages");
-      toast.info(`Opened messages. Start a chat with ${order.brand.name}.`);
-    } catch {
+      const conversation = await messagesService.openBrandConversation(order.brandId, convList);
+      router.push(`/creator/messages?conversation=${conversation.id}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not open conversation");
       router.push("/creator/messages");
     }
   };
@@ -536,7 +530,7 @@ function CreatorOrdersPageContent() {
                                     <div className="flex items-center gap-2">
                                       <DeliverableIcon
                                         className={`h-4 w-4 shrink-0 ${
-                                          deliverableStatus === "completed"
+                                          deliverableStatus === "completed" || deliverableStatus === "approved"
                                             ? "text-[#1e5c3e]"
                                             : deliverableStatus === "in_progress"
                                               ? "text-[#1e4db7]"

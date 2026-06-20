@@ -21,7 +21,7 @@ import type { CreatorBadgeLevel } from '@/types';
 type VerificationTab = 'creators' | 'brands' | 'ambassadors';
 
 const limit = 20;
-const brandStatuses = ['all', 'pending', 'under review', 'verified', 'rejected'];
+const brandStatuses = ['all', 'pending', 'under_review', 'verified', 'rejected'];
 const applicationStatuses = ['all', 'draft', 'submitted', 'under_review', 'approved', 'rejected'];
 const creatorBadgeLevels: CreatorBadgeLevel[] = ['none', 'verified', 'rising_star', 'pro', 'elite'];
 
@@ -163,6 +163,7 @@ export default function AdminVerificationPage() {
 
   useEffect(() => {
     void loadQueue(activeTab);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const updateCreator = async (creator: AdminVerificationCreator, verified: boolean) => {
@@ -186,25 +187,6 @@ export default function AdminVerificationPage() {
       toast.success('Creator badge updated');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to update creator badge');
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  const updateBrand = async (brand: AdminVerificationBrand, status: string) => {
-    setUpdatingId(brand.id);
-    try {
-      await adminService.updateBrandVerification(
-        brand.id,
-        status,
-        brandContact[brand.id] || brand.verification_contact_email || brand.user?.email,
-      );
-      setBrands((current) =>
-        current.map((item) => (item.id === brand.id ? { ...item, business_verification_status: status } : item)),
-      );
-      toast.success('Brand verification updated');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Unable to update brand');
     } finally {
       setUpdatingId(null);
     }
@@ -260,7 +242,7 @@ export default function AdminVerificationPage() {
     }
   };
 
-  const decideBrandVerification = async (brand: AdminVerificationBrand, decision: 'verified' | 'rejected' | 'under review') => {
+  const decideBrandVerification = async (brand: AdminVerificationBrand, decision: 'verified' | 'rejected' | 'under_review') => {
     const reason = brandDecisionReason[brand.id]?.trim();
     if (decision === 'rejected' && !reason) {
       toast.error('A rejection reason is required');
@@ -707,7 +689,7 @@ export default function AdminVerificationPage() {
                                       </button>
                                       <button
                                         disabled={updatingId === brand.id}
-                                        onClick={() => void decideBrandVerification(brand, 'under review')}
+                                        onClick={() => void decideBrandVerification(brand, 'under_review')}
                                         className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-[#d1ddd6] px-4 text-xs font-bold text-[#2d6b4e] hover:bg-[#e8f0ec] disabled:opacity-50"
                                       >
                                         <Clock className="h-3.5 w-3.5" /> Keep review

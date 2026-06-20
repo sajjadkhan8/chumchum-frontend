@@ -14,6 +14,8 @@ export interface User {
   createdAt: Date;
 }
 
+export type BrandVerificationStatus = 'unverified' | 'pending' | 'under_review' | 'verified' | 'rejected';
+
 // Creator Types
 export type Platform = 'instagram' | 'tiktok' | 'youtube' | 'facebook' | 'snapchat';
 export type DealType = 'paid' | 'barter' | 'hybrid';
@@ -183,7 +185,7 @@ export interface CreatorPackage extends Package {
 
 // Order Types
 export type OrderStatus = 'pending' | 'accepted' | 'in_progress' | 'delivered' | 'review' | 'revision' | 'completed' | 'cancelled';
-export type DeliverableStatus = 'pending' | 'in_progress' | 'completed' | 'revision' | 'review';
+export type DeliverableStatus = 'pending' | 'in_progress' | 'completed' | 'revision' | 'review' | 'approved';
 
 export interface OrderDeliverable {
   id: string;
@@ -236,7 +238,7 @@ export interface Brand {
   targetCities?: string;
   targetPlatforms?: string;
   campaignBudgetRange?: string;
-  businessVerificationStatus?: string;
+  businessVerificationStatus?: BrandVerificationStatus;
   verificationContactEmail?: string;
   verificationPhoneNumber?: string;
   planTier?: 'STARTER' | 'GROWTH' | 'ENTERPRISE';

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
+  AlertCircle,
   BadgeCheck,
   CalendarClock,
   ChevronRight,
@@ -120,6 +121,7 @@ export default function BrandDashboardPage() {
   const [activeOrders, setActiveOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [loadErrors, setLoadErrors] = useState<string[]>([]);
   const [showHero, setShowHero] = useState(true);
 
   useEffect(() => {
@@ -134,11 +136,20 @@ export default function BrandDashboardPage() {
   const loadDashboard = async () => {
     setIsLoading(true);
     setHasError(false);
+    const errors: string[] = [];
+    const capture = async <T,>(label: string, promise: Promise<T>, fallback: T): Promise<T> => {
+      try {
+        return await promise;
+      } catch {
+        errors.push(label);
+        return fallback;
+      }
+    };
     try {
       const [analytics, orders, fetchedBrand] = await Promise.all([
-        analyticsService.getBrandDashboard().catch(() => emptyStats),
-        ordersService.getAll().then((r) => r.orders).catch(() => []),
-        brandsService.getMe().catch(() => null),
+        capture("analytics", analyticsService.getBrandDashboard(), emptyStats),
+        capture("orders", ordersService.getAll().then((r) => r.orders), [] as Order[]),
+        capture("brand profile", brandsService.getMe(), null),
       ]);
       setStats(analytics);
       setBrand(fetchedBrand);
@@ -154,19 +165,20 @@ export default function BrandDashboardPage() {
           ?.split(',').map((s) => s.trim()).filter(Boolean) as import('@/types').City[] | undefined;
         const platforms = fetchedBrand.targetPlatforms
           ?.split(',').map((s) => s.trim()).filter(Boolean) as import('@/types').Platform[] | undefined;
-        const result = await creatorsService.getAll({
+        const result = await capture("recommended creators", creatorsService.getAll({
           ...(categories?.length && { categories }),
           ...(cities?.length && { cities }),
           ...(platforms?.length && { platforms }),
           page: 0,
-        }).catch(() => ({ creators: [], total: 0 }));
+        }), { creators: [], total: 0 });
         recommended = result.creators.slice(0, 4);
       }
       if (recommended.length < 2) {
         // Fall back to trending if we got very few matches
-        recommended = await creatorsService.getTrending(4).catch(() => []);
+        recommended = await capture("trending creators", creatorsService.getTrending(4), [] as Creator[]);
       }
       setRecommendedCreators(recommended);
+      setLoadErrors(errors);
     } catch {
       setHasError(true);
     } finally {
@@ -176,7 +188,6 @@ export default function BrandDashboardPage() {
 
   useEffect(() => {
     void loadDashboard();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -213,6 +224,24 @@ export default function BrandDashboardPage() {
   return (
     <div className="min-h-screen bg-[#fbfaf5]">
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
+        {loadErrors.length > 0 && (
+          <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-[#efcf83] bg-[#fff9e8] p-4 text-sm text-[#6f4a0f] sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" />
+              <p>
+                <span className="font-extrabold">Some dashboard data could not load.</span>{" "}
+                Showing available data; missing sections: {loadErrors.join(", ")}.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadDashboard()}
+              className="self-start rounded-full border border-[#efcf83] bg-white px-3 py-1.5 text-xs font-extrabold text-[#6f4a0f] hover:bg-[#fff3c7] sm:self-auto"
+            >
+              Retry
+            </button>
+          </div>
+        )}
         {showHero && (
           <section className="relative overflow-hidden rounded-[2rem] border border-[#d9e0d8] bg-[#173b2a] text-white shadow-[0_28px_90px_rgba(23,59,42,0.16)]">
             <button

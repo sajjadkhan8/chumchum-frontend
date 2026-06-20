@@ -96,7 +96,7 @@ const categories: Category[] = [
       },
       {
         question: 'What is 2FA and should I enable it?',
-        answer: 'Two-factor authentication adds a second verification step (OTP sent to your phone) when logging in. It protects your account even if your password is compromised. You can enable it under Settings → Account Security. Strongly recommended.',
+        answer: 'Two-factor authentication adds a second verification step when logging in. Creator self-service 2FA is not available yet; keep your email verified and use a strong unique password until it is added to account security settings.',
       },
       {
         question: 'How is my personal data protected?',

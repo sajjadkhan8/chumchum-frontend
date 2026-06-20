@@ -59,14 +59,22 @@ export function NotificationsFeed({ role }: Props) {
 
   const markRead = async (notif: AppNotification) => {
     if (notif.read) return;
-    await notificationsService.markRead(notif.id).catch(() => null);
-    setNotifications((prev) => prev.map((n) => n.id === notif.id ? { ...n, read: true } : n));
+    try {
+      await notificationsService.markRead(notif.id);
+      setNotifications((prev) => prev.map((n) => n.id === notif.id ? { ...n, read: true } : n));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not mark notification as read');
+    }
   };
 
   const markAllRead = async () => {
-    await notificationsService.markAllRead().catch(() => null);
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    toast.success('All notifications marked as read');
+    try {
+      await notificationsService.markAllRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      toast.success('All notifications marked as read');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not mark notifications as read');
+    }
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;

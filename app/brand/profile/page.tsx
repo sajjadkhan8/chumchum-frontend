@@ -30,7 +30,7 @@ import { reviewsService } from "@/services/reviews.service";
 import { uploadsService } from "@/services/uploads.service";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
-import type { Review } from "@/types";
+import type { BrandVerificationStatus, Review } from "@/types";
 
 const industries = [
   "Fashion & Apparel",
@@ -45,6 +45,14 @@ const industries = [
   "E-commerce",
   "Other",
 ];
+
+const verificationStatusMeta: Record<BrandVerificationStatus, { label: string; className: string }> = {
+  verified: { label: "✓ Verified", className: "border-[#bcd3c5] bg-[#e7f0ea] text-[#185c39]" },
+  pending: { label: "⏳ Verification pending", className: "border-[#efcf83] bg-[#fff1cd] text-[#8b5e12]" },
+  under_review: { label: "⏳ Under review", className: "border-[#efcf83] bg-[#fff1cd] text-[#8b5e12]" },
+  rejected: { label: "✗ Verification rejected", className: "border-[#f5c2c2] bg-[#fce8e6] text-[#c0392b]" },
+  unverified: { label: "Unverified", className: "border-white/15 bg-white/10 text-[#8fb09a]" },
+};
 
 const companySizes = [
   "1-10 employees",
@@ -89,7 +97,7 @@ export default function BrandProfilePage() {
     contactName: "Ali Raza",
     contactEmail: "ali@karachigourmet.pk",
     contactPhone: "+92 300 987 6543",
-    verificationStatus: '' as string,
+    verificationStatus: 'unverified' as BrandVerificationStatus,
     monthlyBudget: '' as string,
     targetPlatforms: '' as string,
     targetCities: '' as string,
@@ -111,7 +119,7 @@ export default function BrandProfilePage() {
         contactName: brand.contactName || current.contactName,
         contactEmail: brand.contactEmail || current.contactEmail,
         contactPhone: brand.contactPhone || current.contactPhone,
-        verificationStatus: brand.businessVerificationStatus || '',
+        verificationStatus: brand.businessVerificationStatus || 'unverified',
         monthlyBudget: brand.monthlyBudget ? String(brand.monthlyBudget) : '',
         targetPlatforms: brand.targetPlatforms || '',
         targetCities: brand.targetCities || '',
@@ -220,19 +228,8 @@ export default function BrandProfilePage() {
                 </div>
               )}
               {profile.verificationStatus && (
-                <div className={`mt-1.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${
-                  profile.verificationStatus === 'VERIFIED'
-                    ? 'border-[#bcd3c5] bg-[#e7f0ea] text-[#185c39]'
-                    : profile.verificationStatus === 'PENDING'
-                    ? 'border-[#efcf83] bg-[#fff1cd] text-[#8b5e12]'
-                    : profile.verificationStatus === 'REJECTED'
-                    ? 'border-[#f5c2c2] bg-[#fce8e6] text-[#c0392b]'
-                    : 'border-white/15 bg-white/10 text-[#8fb09a]'
-                }`}>
-                  {profile.verificationStatus === 'VERIFIED' ? '✓ Verified' :
-                   profile.verificationStatus === 'PENDING' ? '⏳ Verification pending' :
-                   profile.verificationStatus === 'REJECTED' ? '✗ Verification rejected' :
-                   'Unverified'}
+                <div className={`mt-1.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${verificationStatusMeta[profile.verificationStatus].className}`}>
+                  {verificationStatusMeta[profile.verificationStatus].label}
                 </div>
               )}
               <Button
