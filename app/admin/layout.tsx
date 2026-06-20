@@ -6,6 +6,8 @@ import { Navbar } from '@/components/navbar';
 import { AdminSidebar, AdminSidebarDrawer } from '@/components/admin-sidebar';
 import { useAuthStore } from '@/store/auth-store';
 
+const isAdminRole = (role?: string) => role === 'platform_admin' || role === 'support' || role === 'finance_ops';
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { user, isAuthenticated, hasHydrated } = useAuthStore();
@@ -16,12 +18,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       router.replace('/login');
       return;
     }
-    if (user && user.role !== 'platform_admin') {
+    if (user && !isAdminRole(user.role)) {
       router.replace(user.role === 'creator' ? '/creator/dashboard' : '/brand/dashboard');
     }
   }, [hasHydrated, isAuthenticated, router, user]);
 
-  if (!hasHydrated || !isAuthenticated || user?.role !== 'platform_admin') {
+  if (!hasHydrated || !isAuthenticated || !isAdminRole(user?.role)) {
     return <div className="min-h-screen bg-background" />;
   }
 

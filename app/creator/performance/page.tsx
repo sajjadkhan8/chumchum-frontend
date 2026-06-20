@@ -327,6 +327,9 @@ export default function CreatorPerformancePage() {
   return (
     <div className="min-h-full bg-[#fbfaf5] px-4 pb-8 pt-2 text-[#1e3d2e] sm:px-6 lg:px-8 lg:pb-12">
       <div className="mx-auto max-w-[1320px] space-y-5">
+        <p className="text-[11px] font-semibold text-[#8a7a49]">
+          Data source: derived from package impressions, inquiries, orders, and delivery completion.
+        </p>
 
         {/* ── Summary cards ── */}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

@@ -37,10 +37,7 @@ export const ALERT_TYPE_UNITS: Record<AlertRuleType, string> = {
 
 export const campaignAlertsService = {
   async getAlertRules(campaignId: string): Promise<CampaignAlertRule[]> {
-    const result = await apiClient
-      .get<CampaignAlertRule[]>(`/api/v1/brand/campaigns/${campaignId}/alerts`)
-      .catch(() => null);
-    return result ?? [];
+    return apiClient.get<CampaignAlertRule[]>(`/api/v1/brand/campaigns/${campaignId}/alerts`);
   },
 
   async createAlertRule(campaignId: string, input: CreateAlertRuleInput): Promise<CampaignAlertRule> {

@@ -43,7 +43,7 @@ function OAuthCallbackContent() {
       .then(() => {
         setPhase('success');
         setTimeout(() => {
-          router.replace('/creator/social');
+          router.replace('/creator/profile/social');
         }, 2000);
       })
       .catch((err: unknown) => {
@@ -93,7 +93,7 @@ function OAuthCallbackContent() {
             </h1>
             <p className="mt-2 text-sm text-[#87938b]">{errorMessage}</p>
             <button
-              onClick={() => router.replace('/creator/social')}
+              onClick={() => router.replace('/creator/profile/social')}
               className="mt-6 w-full rounded-full bg-[#2d6b4e] py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#1f5239]"
             >
               Back to social accounts

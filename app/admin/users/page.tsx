@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { adminService, type AdminUser, type AdminBrandMetrics } from '@/services/admin.service';
+import { authService } from '@/services/auth.service';
 import { formatDate } from '@/lib/utils';
 
 export default function AdminUsersPage() {
@@ -83,11 +84,16 @@ export default function AdminUsersPage() {
     if (!moderateTarget) return;
     setIsSubmittingModerate(true);
     try {
+      const stepUpToken = moderateAction === 'ban' || moderateAction === 'suspend'
+        ? await requestStepUpToken()
+        : undefined;
+      if ((moderateAction === 'ban' || moderateAction === 'suspend') && !stepUpToken) return;
       const updated = await adminService.moderateUser(
         moderateTarget.id,
         moderateAction,
         moderateReason || undefined,
         moderateAction === 'suspend' ? suspendDays : undefined,
+        stepUpToken,
       );
       setUsers((current) => current.map((item) => (item.id === moderateTarget.id ? { ...item, active: updated.active } : item)));
       toast.success(
@@ -120,11 +126,16 @@ export default function AdminUsersPage() {
     if (selectedIds.size === 0) return;
     setIsSubmittingBulk(true);
     try {
+      const stepUpToken = bulkAction === 'ban' || bulkAction === 'suspend'
+        ? await requestStepUpToken()
+        : undefined;
+      if ((bulkAction === 'ban' || bulkAction === 'suspend') && !stepUpToken) return;
       const { succeeded, failed } = await adminService.bulkModerateUsers(
         [...selectedIds],
         bulkAction,
         bulkReason || undefined,
         bulkSuspendDays,
+        stepUpToken,
       );
       setUsers((current) =>
         current.map((u) => {
@@ -141,6 +152,13 @@ export default function AdminUsersPage() {
     } finally {
       setIsSubmittingBulk(false);
     }
+  };
+
+  const requestStepUpToken = async () => {
+    const password = window.prompt('Confirm your admin password to continue.');
+    if (!password) return undefined;
+    const { stepUpToken } = await authService.adminStepUp(password);
+    return stepUpToken;
   };
 
   const toggleBrandMetrics = async (user: AdminUser) => {

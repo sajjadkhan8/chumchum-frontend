@@ -251,8 +251,10 @@ export default function BrandPaymentsPage() {
   const handlePrintInvoice = async (inv: BrandInvoice) => {
     setPrintingInvoiceId(inv.id);
     try {
-      const detail = await paymentsService.getInvoiceDetail(inv.id).catch(() => inv);
+      const detail = await paymentsService.getInvoiceDetail(inv.id);
       printInvoice(detail, brandDetails);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not load invoice detail");
     } finally {
       setPrintingInvoiceId(null);
     }

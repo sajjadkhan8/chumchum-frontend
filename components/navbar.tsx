@@ -59,7 +59,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
   const isSignedIn = hasHydrated && isAuthenticated && !!user;
   const isCreator = isSignedIn && user.role === 'creator';
-  const isAdmin = isSignedIn && user.role === 'platform_admin';
+  const isAdmin = isSignedIn && ['platform_admin', 'support', 'finance_ops'].includes(user.role);
   const isBrand = isSignedIn && user.role === 'brand';
 
   useEffect(() => {

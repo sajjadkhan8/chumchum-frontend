@@ -16,6 +16,7 @@ import {
   type AdminWithdrawal,
   type WithdrawalStatus,
 } from '@/services/admin.service';
+import { authService } from '@/services/auth.service';
 
 const transactionTypes = ['order_payment', 'earning', 'affiliate_commission', 'withdrawal', 'refund', 'platform_fee'];
 const transactionStatuses = ['pending', 'completed', 'failed'];
@@ -135,7 +136,10 @@ export default function AdminPaymentsPage() {
   const processWithdrawal = async (withdrawal: AdminWithdrawal, status: string) => {
     setUpdatingId(withdrawal.id);
     try {
-      const updated = await adminService.processWithdrawal(withdrawal.id, status);
+      const password = window.prompt('Confirm your admin password to update this withdrawal.');
+      if (!password) return;
+      const { stepUpToken } = await authService.adminStepUp(password);
+      const updated = await adminService.processWithdrawal(withdrawal.id, status, stepUpToken);
       setWithdrawals((current) => current.map((item) => (item.id === updated.id ? updated : item)));
       void loadStats();
       toast.success(`Withdrawal marked as ${readable(status)}`);

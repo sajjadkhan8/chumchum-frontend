@@ -443,11 +443,13 @@ export const adminService = {
     return mapAdminUser(response);
   },
 
-  async moderateUser(id: string, action: 'suspend' | 'ban' | 'unban', reason?: string, suspendDays?: number): Promise<AdminUser> {
+  async moderateUser(id: string, action: 'suspend' | 'ban' | 'unban', reason?: string, suspendDays?: number, stepUpToken?: string): Promise<AdminUser> {
     const response = await apiClient.patch<BackendAdminUser>(`/api/v1/admin/users/${id}/moderate`, {
       action,
       reason,
       suspendDays,
+    }, {
+      headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
     });
     return mapAdminUser(response);
   },
@@ -457,6 +459,7 @@ export const adminService = {
     action: 'enable' | 'disable' | 'suspend' | 'ban',
     reason?: string,
     suspendDays?: number,
+    stepUpToken?: string,
   ): Promise<{ succeeded: string[]; failed: string[] }> {
     const response = await apiClient.post<{ succeeded?: string[]; failed?: string[] }>(
       '/api/v1/admin/users/bulk-moderate',
@@ -466,6 +469,7 @@ export const adminService = {
         reason: reason || undefined,
         suspendDays: action === 'suspend' ? (suspendDays ?? 30) : undefined,
       },
+      { headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined },
     );
     return {
       succeeded: response.succeeded ?? userIds,
@@ -474,15 +478,11 @@ export const adminService = {
   },
 
   async getBrandMetrics(brandId: string): Promise<AdminBrandMetrics | null> {
-    return apiClient
-      .get<AdminBrandMetrics>(`/api/v1/admin/brands/${brandId}/metrics`)
-      .catch(() => null);
+    return apiClient.get<AdminBrandMetrics>(`/api/v1/admin/brands/${brandId}/metrics`);
   },
 
   async getCreatorScoreDetails(creatorId: string): Promise<AdminCreatorScoreDetails | null> {
-    return apiClient
-      .get<AdminCreatorScoreDetails>(`/api/v1/admin/creators/${creatorId}/ambassador-score`)
-      .catch(() => null);
+    return apiClient.get<AdminCreatorScoreDetails>(`/api/v1/admin/creators/${creatorId}/ambassador-score`);
   },
 
   async getOrders(filters: AdminOrderFilters = {}): Promise<AdminOrdersResponse> {
@@ -650,19 +650,16 @@ export const adminService = {
     });
   },
 
-  async processWithdrawal(id: string, status: string): Promise<AdminWithdrawal> {
-    return apiClient.patch<AdminWithdrawal>(`/api/v1/admin/payments/withdrawals/${id}/status`, { status });
+  async processWithdrawal(id: string, status: string, stepUpToken?: string): Promise<AdminWithdrawal> {
+    return apiClient.patch<AdminWithdrawal>(
+      `/api/v1/admin/payments/withdrawals/${id}/status`,
+      { status },
+      { headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined },
+    );
   },
 
   async getSLAMetrics(): Promise<AdminSLAMetrics> {
-    const result = await apiClient.get<AdminSLAMetrics>('/api/v1/admin/sla-metrics').catch(() => null);
-    return result ?? {
-      avgDisputeResolutionDays: 0,
-      withdrawalsProcessedWithin24hPct: 0,
-      ordersCompletedOnTimePct: 0,
-      pendingCreatorVerifications: 0,
-      pendingBrandVerifications: 0,
-    };
+    return apiClient.get<AdminSLAMetrics>('/api/v1/admin/sla-metrics');
   },
 
   async getApiLogs(filters?: {
@@ -677,9 +674,6 @@ export const adminService = {
     if (filters?.page !== undefined) params.set('page', String(filters.page));
     params.set('limit', String(filters?.limit ?? 50));
     const qs = params.toString();
-    const result = await apiClient
-      .get<AdminApiLogsResponse>(`/api/v1/admin/api-logs${qs ? `?${qs}` : ''}`)
-      .catch(() => null);
-    return result ?? { logs: [], total: 0 };
+    return apiClient.get<AdminApiLogsResponse>(`/api/v1/admin/api-logs${qs ? `?${qs}` : ''}`);
   },
 };

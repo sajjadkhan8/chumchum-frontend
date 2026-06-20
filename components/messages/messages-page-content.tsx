@@ -113,7 +113,7 @@ export function MessagesPageContent() {
   );
 
   const loadConversations = useCallback(async () => {
-    if (!user || user.role === "platform_admin") return [];
+    if (!user || (user.role !== "creator" && user.role !== "brand")) return [];
     setIsLoadingConversations(true);
     try {
       const { items } = await messagesService.getConversations(user.id, user.role, 0, 50);
@@ -210,7 +210,7 @@ export function MessagesPageContent() {
     };
 
     const silentRefreshConversations = async () => {
-      if (!user || user.role === "platform_admin" || document.visibilityState !== "visible") return;
+      if (!user || (user.role !== "creator" && user.role !== "brand") || document.visibilityState !== "visible") return;
       try {
         const { items } = await messagesService.getConversations(user.id, user.role, 0, 50);
         setConversations(items);

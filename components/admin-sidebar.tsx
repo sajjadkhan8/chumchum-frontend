@@ -7,24 +7,27 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/store/auth-store';
 
 const adminNavItems = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/users', label: 'Users', icon: Users },
-  { href: '/admin/user-moderation', label: 'User Moderation', icon: ShieldAlert },
-  { href: '/admin/verification', label: 'Verification', icon: FileCheck2 },
-  { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
-  { href: '/admin/payments', label: 'Payments', icon: CreditCard },
-  { href: '/admin/disputes', label: 'Disputes', icon: Scale },
-  { href: '/admin/payments-audit', label: 'Payments Audit', icon: ShieldCheck },
+  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['platform_admin', 'support', 'finance_ops'] },
+  { href: '/admin/users', label: 'Users', icon: Users, roles: ['platform_admin', 'support'] },
+  { href: '/admin/user-moderation', label: 'User Moderation', icon: ShieldAlert, roles: ['platform_admin', 'support'] },
+  { href: '/admin/verification', label: 'Verification', icon: FileCheck2, roles: ['platform_admin', 'support'] },
+  { href: '/admin/orders', label: 'Orders', icon: ShoppingBag, roles: ['platform_admin', 'support'] },
+  { href: '/admin/payments', label: 'Payments', icon: CreditCard, roles: ['platform_admin', 'finance_ops'] },
+  { href: '/admin/disputes', label: 'Disputes', icon: Scale, roles: ['platform_admin', 'support', 'finance_ops'] },
+  { href: '/admin/payments-audit', label: 'Payments Audit', icon: ShieldCheck, roles: ['platform_admin', 'finance_ops'] },
 ];
 
 function AdminNav({ compact = false, closeOnNavigate = false }: { compact?: boolean; closeOnNavigate?: boolean }) {
   const pathname = usePathname();
+  const role = useAuthStore((state) => state.user?.role);
+  const visibleItems = adminNavItems.filter((item) => item.roles.includes(role || ''));
 
   return (
     <div className="space-y-1">
-      {adminNavItems.map((item) => {
+      {visibleItems.map((item) => {
         const Icon = item.icon;
         const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
         const link = (

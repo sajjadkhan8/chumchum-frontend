@@ -41,6 +41,14 @@ export function validatePassword(password: string): PasswordStrengthResult {
   };
 }
 
+export const PASSWORD_REQUIREMENTS_MESSAGE =
+  'Password must be at least 8 characters and include lowercase, uppercase, number, and special character.';
+
+export function isPasswordStrong(password: string): boolean {
+  const requirements = validatePassword(password).requirements;
+  return Object.values(requirements).every(Boolean);
+}
+
 export function getStrengthColor(strength: string): string {
   switch (strength) {
     case 'strong':
@@ -68,4 +76,3 @@ export function getProgressColor(strength: string): string {
       return 'bg-red-600 dark:bg-red-400';
   }
 }
-

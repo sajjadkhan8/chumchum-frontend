@@ -377,7 +377,10 @@ export default function CreatorInsightsPage() {
       <div className="mx-auto max-w-[1320px] space-y-5">
 
         {/* ── Period selector ── */}
-        <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[11px] font-semibold text-[#8a7a49]">
+            Data source: derived from package views, inquiries, repeat brand orders, and conversion rates.
+          </p>
           <div className="flex items-center gap-1 rounded-2xl border border-[#d1ddd6] bg-white p-1 shadow-sm">
             {PERIODS.map(({ label, value }) => (
               <button

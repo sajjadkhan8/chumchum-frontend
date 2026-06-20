@@ -29,10 +29,12 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { brandsService, type VerificationDocument } from "@/services/brands.service";
+import { authService } from "@/services/auth.service";
+import { brandsService, type VerificationDocument, type VerificationEvent } from "@/services/brands.service";
 import { apiClient } from "@/lib/api/client";
 import { usersService } from "@/services/users.service";
 import { useAuthStore } from "@/store/auth-store";
+import { isPasswordStrong, PASSWORD_REQUIREMENTS_MESSAGE } from "@/lib/password-validation";
 import { toast } from "sonner";
 
 const TABS = [
@@ -135,7 +137,7 @@ interface SubscriptionRecord {
 
 function BrandSettingsPageContent() {
   const searchParams = useSearchParams();
-  const { logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [activeTab, setActiveTab] = useState<TabId>("billing");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -175,6 +177,7 @@ function BrandSettingsPageContent() {
   const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
   const [verificationDocs, setVerificationDocs] = useState<VerificationDocument[]>([]);
+  const [verificationEvents, setVerificationEvents] = useState<VerificationEvent[]>([]);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null);
 
@@ -292,8 +295,8 @@ function BrandSettingsPageContent() {
       toast.error("All password fields are required");
       return;
     }
-    if (security.newPassword.length < 8) {
-      toast.error("New password must be at least 8 characters");
+    if (!isPasswordStrong(security.newPassword)) {
+      toast.error(PASSWORD_REQUIREMENTS_MESSAGE);
       return;
     }
     if (security.newPassword !== security.confirmPassword) {
@@ -309,6 +312,15 @@ function BrandSettingsPageContent() {
       toast.error(error instanceof Error ? error.message : "Could not update password");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSendEmailVerification = async () => {
+    try {
+      await authService.sendEmailVerification();
+      toast.success("Verification email sent");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not send verification email");
     }
   };
 
@@ -368,7 +380,12 @@ function BrandSettingsPageContent() {
   useEffect(() => {
     void loadBrandProfile();
     void loadNotificationPreferences();
-    brandsService.getVerificationDocuments().then(setVerificationDocs).catch(() => {});
+    brandsService.getVerificationDocuments().then(setVerificationDocs).catch((error) => {
+      toast.error(error instanceof Error ? error.message : "Could not load verification documents");
+    });
+    brandsService.getVerificationEvents().then(setVerificationEvents).catch((error) => {
+      toast.error(error instanceof Error ? error.message : "Could not load verification history");
+    });
   }, [loadBrandProfile, loadNotificationPreferences]);
 
   useEffect(() => {
@@ -709,6 +726,24 @@ function BrandSettingsPageContent() {
                     <p className="mt-2 text-xs text-[#9ba8a1]">Our team will review your documents within 2–3 business days.</p>
                   </div>
                 ) : null}
+                {verificationEvents.length > 0 ? (
+                  <div className="mt-5 rounded-2xl border border-[#d9e0d8] bg-[#fbfaf5] p-4">
+                    <p className="text-sm font-extrabold text-[#173b2a]">Verification History</p>
+                    <div className="mt-3 space-y-2">
+                      {verificationEvents.slice(0, 5).map((event) => (
+                        <div key={event.id} className="flex items-start justify-between gap-3 text-xs">
+                          <div>
+                            <p className="font-bold text-[#173b2a]">{event.eventType.replaceAll('_', ' ').toLowerCase()}</p>
+                            {event.details ? <p className="text-[#647168]">{event.details}</p> : null}
+                          </div>
+                          <span className="shrink-0 text-[#9ba8a1]">
+                            {new Date(event.createdAt).toLocaleDateString('en-PK')}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           </SectionCard>
@@ -769,6 +804,24 @@ function BrandSettingsPageContent() {
           <div className="space-y-3">
             <SectionCard title="Change Password" icon={Lock}>
               <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3 rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] px-3.5 py-3">
+                  <div>
+                    <p className="text-xs font-semibold text-[#1a2e22]">
+                      Email: {user?.emailVerified ? "Verified" : "Not verified"}
+                    </p>
+                    <p className="text-[11px] text-[#8fa098]">{user?.email ?? "Account email"}</p>
+                  </div>
+                  {!user?.emailVerified && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 shrink-0 rounded-lg border-[#d9e0d8] px-3 text-xs font-semibold text-[#2d6b4e] hover:bg-[#f4f2e9]"
+                      onClick={() => void handleSendEmailVerification()}
+                    >
+                      Send email
+                    </Button>
+                  )}
+                </div>
                 <div className="space-y-1.5">
                   <Label className={labelCls}>Current Password</Label>
                   <Input

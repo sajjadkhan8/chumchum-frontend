@@ -91,7 +91,9 @@ export default function BrandCampaignDetailPage() {
     const run = async () => {
       setIsLoading(true);
       await Promise.all([loadCampaign(), loadReactions(0)]);
-      campaignAlertsService.getAlertRules(campaignId).then(setAlertRules).catch(() => {});
+      campaignAlertsService.getAlertRules(campaignId).then(setAlertRules).catch((error) => {
+        toast.error(error instanceof Error ? error.message : 'Could not load campaign alerts');
+      });
       setIsLoading(false);
     };
     void run();

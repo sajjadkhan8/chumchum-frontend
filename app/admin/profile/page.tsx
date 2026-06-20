@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/store/auth-store';
 import { formatDate } from '@/lib/utils';
 import { apiClient } from '@/lib/api/client';
+import { authService } from '@/services/auth.service';
+import { isPasswordStrong, PASSWORD_REQUIREMENTS_MESSAGE } from '@/lib/password-validation';
 
 export default function AdminProfilePage() {
   const { user } = useAuthStore();
@@ -20,8 +22,8 @@ export default function AdminProfilePage() {
 
   const handleChangePassword = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (newPassword.length < 8) {
-      toast.error('New password must be at least 8 characters');
+    if (!isPasswordStrong(newPassword)) {
+      toast.error(PASSWORD_REQUIREMENTS_MESSAGE);
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -39,6 +41,15 @@ export default function AdminProfilePage() {
       toast.error(error instanceof Error ? error.message : 'Unable to update password');
     } finally {
       setIsChangingPassword(false);
+    }
+  };
+
+  const handleSendEmailVerification = async () => {
+    try {
+      await authService.sendEmailVerification();
+      toast.success('Verification email sent');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not send verification email');
     }
   };
 
@@ -85,6 +96,20 @@ export default function AdminProfilePage() {
                 <div className="mt-1 flex items-center gap-2">
                   <Mail className="h-4 w-4 shrink-0 text-[#2d6b4e]" />
                   <span className="text-[14px] text-[#1e3d2e]">{user.email}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-[#e2e7e1] bg-[#fbfaf5] px-3 py-2">
+                  <p className="text-[12px] font-semibold text-[#496159]">
+                    {user.emailVerified ? 'Email verified' : 'Email not verified'}
+                  </p>
+                  {!user.emailVerified && (
+                    <button
+                      type="button"
+                      onClick={() => void handleSendEmailVerification()}
+                      className="rounded-lg border border-[#d1ddd6] px-2.5 py-1 text-[11px] font-bold text-[#2d6b4e] hover:bg-[#e8f0ec]"
+                    >
+                      Send email
+                    </button>
+                  )}
                 </div>
               </div>
               {user.createdAt && (

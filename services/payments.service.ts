@@ -145,19 +145,9 @@ export const paymentsService = {
   },
 
   async getInvoiceDetail(invoiceId: string): Promise<BrandInvoice & { lineItems?: { description: string; amount: number }[] }> {
-    const result = await apiClient
-      .get<BrandInvoice & { lineItems?: { description: string; amount: number }[] }>(
-        `/api/v1/brand/payments/invoices/${invoiceId}`,
-      )
-      .catch(() => null);
-    return result ?? {
-      id: invoiceId,
-      periodLabel: '',
-      amount: 0,
-      status: 'paid' as const,
-      issuedAt: new Date().toISOString(),
-      dueAt: new Date().toISOString(),
-    };
+    return apiClient.get<BrandInvoice & { lineItems?: { description: string; amount: number }[] }>(
+      `/api/v1/brand/payments/invoices/${invoiceId}`,
+    );
   },
 };
 

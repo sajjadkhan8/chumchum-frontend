@@ -34,8 +34,8 @@ export default function BrandAnalyticsPage() {
     setHasError(false);
     try {
       const [a, e] = await Promise.all([
-        analyticsService.getBrandCampaigns(p).catch(() => null),
-        analyticsService.getBrandExtended(p).catch(() => null),
+        analyticsService.getBrandCampaigns(p),
+        analyticsService.getBrandExtended(p),
       ]);
       setAnalytics(a);
       setExtended(e);
@@ -71,6 +71,9 @@ export default function BrandAnalyticsPage() {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-[#173b2a]">Campaign Analytics</h1>
           <p className="text-sm text-[#647168]">Performance overview across all campaigns</p>
+          <p className="mt-1 text-[11px] font-semibold text-[#8a7a49]">
+            Data source: derived from campaign orders, creator reactions, reviews, and payment totals.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={period} onValueChange={setPeriod}>

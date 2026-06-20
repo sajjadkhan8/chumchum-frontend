@@ -1,5 +1,5 @@
 // User & Auth Types
-export type UserRole = 'creator' | 'brand' | 'platform_admin';
+export type UserRole = 'creator' | 'brand' | 'platform_admin' | 'support' | 'finance_ops';
 
 export interface User {
   id: string;
@@ -31,6 +31,9 @@ export interface SocialStats {
   profileUrl?: string;
   avgViews?: number;
   verified_by?: VerificationSource;
+  oauth_status?: string;
+  last_synced_at?: string;
+  sync_error?: string;
 }
 
 export type BarterCategory = BarterType | 'services' | 'travel' | 'education';

@@ -38,10 +38,12 @@ import { cn, getInitials } from "@/lib/utils";
 import { pakistanCities, pakistanLanguages } from "@/lib/localization";
 import { useAuthStore } from "@/store/auth-store";
 import { ambassadorService } from "@/services/ambassador.service";
+import { authService } from "@/services/auth.service";
 import { creatorsService, type CreatorSocialAccountPayload } from "@/services/creators.service";
 import { packagesService } from "@/services/packages.service";
 import { uploadsService } from "@/services/uploads.service";
 import { usersService } from "@/services/users.service";
+import { isPasswordStrong, PASSWORD_REQUIREMENTS_MESSAGE } from "@/lib/password-validation";
 import { calculateCreatorAmbassadorMetrics, AMBASSADOR_TIERS } from "@/lib/ambassador-scoring";
 import type { Creator, CreatorAmbassadorMetrics, DealType, BarterCategory, Platform, VerificationSource } from "@/types";
 import { toast } from "sonner";
@@ -93,6 +95,9 @@ type EditableSocialAccount = CreatorSocialAccountPayload & {
   platform: Platform;
   verified?: boolean;
   verifiedBy?: VerificationSource;
+  oauthStatus?: string;
+  lastSyncedAt?: string;
+  syncError?: string;
 };
 
 const defaultProfile = {
@@ -358,6 +363,9 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
           engagementRate: platform.engagementRate,
           verified: false,
           verifiedBy: platform.verified_by,
+          oauthStatus: platform.oauth_status,
+          lastSyncedAt: platform.last_synced_at,
+          syncError: platform.sync_error,
         })),
     );
     setPortfolioItems(creator.contentPreviews.map((p) => ({
@@ -545,8 +553,8 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       return;
     }
 
-    if (security.newPassword.length < 8) {
-      toast.error("New password must be at least 8 characters");
+    if (!isPasswordStrong(security.newPassword)) {
+      toast.error(PASSWORD_REQUIREMENTS_MESSAGE);
       return;
     }
 
@@ -573,6 +581,16 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       toast.error(message);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSendEmailVerification = async () => {
+    try {
+      await authService.sendEmailVerification();
+      toast.success("Verification email sent");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not send verification email";
+      toast.error(message);
     }
   };
 
@@ -1524,7 +1542,10 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                       setPortfolioItems(newOrder);
                       if (reorderTimer.current) clearTimeout(reorderTimer.current);
                       reorderTimer.current = setTimeout(() => {
-                        void creatorsService.reorderPortfolio(newOrder.map((i) => i.id)).catch(() => null);
+                        void creatorsService.reorderPortfolio(newOrder.map((i) => i.id)).catch((error) => {
+                          const message = error instanceof Error ? error.message : "Could not save portfolio order";
+                          toast.error(message);
+                        });
                       }, 600);
                     }}
                     className="mb-4 space-y-2"
@@ -2088,6 +2109,23 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
               <div className={panelClass}>
                 <PanelHeader eyebrow="Security" title="Change Password" />
                 <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#d1ddd6] bg-[#f4f7f5] p-3.5">
+                    <div>
+                      <p className="text-sm font-extrabold text-[#1e3d2e]">
+                        Email: {user?.emailVerified ? "Verified" : "Not verified"}
+                      </p>
+                      <p className="mt-0.5 text-xs text-[#87938b]">{user?.email ?? "Account email"}</p>
+                    </div>
+                    {!user?.emailVerified && (
+                      <button
+                        type="button"
+                        onClick={handleSendEmailVerification}
+                        className="rounded-full border border-[#b8c9bf] bg-white px-3 py-1.5 text-xs font-bold text-[#2d6b4e] transition-colors hover:bg-[#e8f0ec]"
+                      >
+                        Send email
+                      </button>
+                    )}
+                  </div>
                   <div className="space-y-1.5">
                     <p className={labelClass}>Current Password</p>
                     <input

@@ -8,6 +8,7 @@ import { AuthShell } from '@/components/auth/auth-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authService } from '@/services/auth.service';
+import { isPasswordStrong, PASSWORD_REQUIREMENTS_MESSAGE } from '@/lib/password-validation';
 
 function ForgotPasswordContent() {
   const searchParams = useSearchParams();
@@ -38,8 +39,8 @@ function ForgotPasswordContent() {
     event.preventDefault();
     setError('');
 
-    if (newPassword.length < 8) {
-      setError('New password must be at least 8 characters.');
+    if (!isPasswordStrong(newPassword)) {
+      setError(PASSWORD_REQUIREMENTS_MESSAGE);
       return;
     }
 
@@ -85,7 +86,7 @@ function ForgotPasswordContent() {
           </h2>
           <p className="mt-1 text-sm text-[#6b7870]">
             {token
-              ? 'Choose something secure — at least 8 characters.'
+              ? PASSWORD_REQUIREMENTS_MESSAGE
               : "No worries. We'll send a reset link to your email."}
           </p>
         </div>

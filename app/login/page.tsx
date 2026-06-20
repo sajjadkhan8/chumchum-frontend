@@ -13,12 +13,12 @@ import { useAuthStore } from '@/store/auth-store';
 import type { UserRole } from '@/types';
 
 const getDashboardPath = (role?: string) => {
-  if (role === 'platform_admin') return '/admin/dashboard';
+  if (role === 'platform_admin' || role === 'support' || role === 'finance_ops') return '/admin/dashboard';
   return role === 'creator' ? '/creator/dashboard' : '/brand/dashboard';
 };
 
 const getAllowedPathPrefixes = (role?: string): string[] => {
-  if (role === 'platform_admin') return ['/admin'];
+  if (role === 'platform_admin' || role === 'support' || role === 'finance_ops') return ['/admin'];
   if (role === 'creator') return ['/creator'];
   if (role === 'brand') return ['/brand'];
   return [];

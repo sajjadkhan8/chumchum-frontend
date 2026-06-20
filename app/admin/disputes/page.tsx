@@ -680,17 +680,19 @@ export default function AdminDisputesPage() {
                     >
                       Resolve
                     </button>
-                    {!selectedDispute.refundExecuted && selectedDispute.status === 'resolved' ? (
-                      <button
-                        className="inline-flex h-9 flex-1 items-center justify-center rounded-xl border border-[#d1ddd6] px-3 text-[12px] font-bold text-[#2d6b4e] transition hover:bg-[#e8f0ec]"
-                        onClick={() => {
-                          openRefund(selectedDispute);
-                          setSelectedDispute(null);
-                        }}
-                      >
-                        Submit Refund
-                      </button>
-                    ) : null}
+                  </div>
+                ) : null}
+                {!selectedDispute.refundExecuted && selectedDispute.status === 'resolved' ? (
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      className="inline-flex h-9 flex-1 items-center justify-center rounded-xl border border-[#d1ddd6] px-3 text-[12px] font-bold text-[#2d6b4e] transition hover:bg-[#e8f0ec]"
+                      onClick={() => {
+                        openRefund(selectedDispute);
+                        setSelectedDispute(null);
+                      }}
+                    >
+                      Submit Refund
+                    </button>
                   </div>
                 ) : null}
               </div>

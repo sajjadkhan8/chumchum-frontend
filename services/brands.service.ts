@@ -18,6 +18,14 @@ export interface VerificationDocumentUpload {
   fileName: string;
 }
 
+export interface VerificationEvent {
+  id: string;
+  eventType: string;
+  details?: string;
+  documentId?: string;
+  createdAt: string;
+}
+
 export interface BrandProfileUpdatePayload {
   companyName?: string;
   website?: string;
@@ -80,8 +88,11 @@ export const brandsService = {
   },
 
   async getVerificationDocuments(): Promise<VerificationDocument[]> {
-    const result = await apiClient.get<VerificationDocument[]>('/api/v1/brands/me/verification-documents').catch(() => null);
-    return result ?? [];
+    return apiClient.get<VerificationDocument[]>('/api/v1/brands/me/verification-documents');
+  },
+
+  async getVerificationEvents(): Promise<VerificationEvent[]> {
+    return apiClient.get<VerificationEvent[]>('/api/v1/brands/me/verification-events');
   },
 
   async submitVerificationDocument(doc: VerificationDocumentUpload): Promise<VerificationDocument> {

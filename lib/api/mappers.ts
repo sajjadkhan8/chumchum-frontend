@@ -42,6 +42,8 @@ const normalizeDealType = (value?: string | null): DealType => {
 const normalizeRole = (value?: string | null): UserRole => {
   const lowered = (value || '').toLowerCase();
   if (lowered === 'brand') return 'brand';
+  if (lowered === 'support') return 'support';
+  if (lowered === 'finance_ops') return 'finance_ops';
   if (lowered === 'platform_admin' || lowered === 'admin') return 'platform_admin';
   return 'creator';
 };
@@ -116,6 +118,9 @@ interface BackendCreatorResponse {
     engagement_rate?: number;
     is_verified?: boolean;
     verified_by?: string;
+    oauth_status?: string;
+    last_synced_at?: string;
+    sync_error?: string;
   }[];
   content_previews?: {
     id?: string;
@@ -162,6 +167,9 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
         profileUrl: account.profile_url,
         avgViews: account.avg_views || 0,
         verified_by: account.verified_by as VerificationSource | undefined,
+        oauth_status: account.oauth_status,
+        last_synced_at: account.last_synced_at,
+        sync_error: account.sync_error,
       }))
     : [{ platform: 'instagram' as const, followers, engagementRate, username, avgViews: 0 }];
 

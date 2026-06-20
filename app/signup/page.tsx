@@ -10,7 +10,7 @@ import { AuthShell } from '@/components/auth/auth-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { validatePassword, type PasswordStrengthResult } from '@/lib/password-validation';
+import { isPasswordStrong, PASSWORD_REQUIREMENTS_MESSAGE, validatePassword, type PasswordStrengthResult } from '@/lib/password-validation';
 import { useAuthStore } from '@/store/auth-store';
 import type { UserRole } from '@/types';
 
@@ -79,6 +79,10 @@ export default function SignupPage() {
     if (!role) return;
     if (!termsAccepted) {
       toast.error('Please accept the Terms of Service and Privacy Policy to continue.');
+      return;
+    }
+    if (!isPasswordStrong(password)) {
+      toast.error(PASSWORD_REQUIREMENTS_MESSAGE);
       return;
     }
     try {
