@@ -12,7 +12,9 @@ import {
   ChevronUp,
   Check,
   Camera,
+  Clock,
   ExternalLink,
+  FileText,
   GripVertical,
   Globe,
   Info,
@@ -26,7 +28,9 @@ import {
   Save,
   Share2,
   Trash2,
+  Upload,
   Video,
+  XCircle,
   Youtube,
 } from "lucide-react";
 import { Reorder } from "framer-motion";
@@ -39,7 +43,7 @@ import { pakistanCities, pakistanLanguages } from "@/lib/localization";
 import { useAuthStore } from "@/store/auth-store";
 import { ambassadorService } from "@/services/ambassador.service";
 import { authService } from "@/services/auth.service";
-import { creatorsService, type CreatorSocialAccountPayload } from "@/services/creators.service";
+import { creatorsService, type CreatorSocialAccountPayload, type CreatorVerificationDocument, type CreatorVerificationEvent } from "@/services/creators.service";
 import { packagesService } from "@/services/packages.service";
 import { uploadsService } from "@/services/uploads.service";
 import { usersService } from "@/services/users.service";
@@ -90,6 +94,12 @@ const responseTimes = [
 const languages = [...pakistanLanguages];
 
 const cities = [...pakistanCities];
+
+const creatorVerificationTypes = [
+  { type: "identity", label: "Identity" },
+  { type: "social_profile", label: "Social profile" },
+  { type: "portfolio_sample", label: "Portfolio sample" },
+] as const;
 
 type EditableSocialAccount = CreatorSocialAccountPayload & {
   platform: Platform;
@@ -279,7 +289,11 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
   const [contactChangedBanner, setContactChangedBanner] = useState<"email" | "phone" | "both" | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [activePackageCount, setActivePackageCount] = useState<number | null>(null);
-  const [creatorVerified, setCreatorVerified] = useState<{ isVerified: boolean; badgeLevel?: string } | null>(null);
+  const [creatorVerified, setCreatorVerified] = useState<{ isVerified: boolean; badgeLevel?: string; verificationStatus?: string } | null>(null);
+  const [verificationDocuments, setVerificationDocuments] = useState<CreatorVerificationDocument[]>([]);
+  const [verificationEvents, setVerificationEvents] = useState<CreatorVerificationEvent[]>([]);
+  const [uploadingVerificationType, setUploadingVerificationType] = useState<string | null>(null);
+  const [submittingVerification, setSubmittingVerification] = useState(false);
   const [showBadgeExplainer, setShowBadgeExplainer] = useState(false);
   const [showFilerInfo, setShowFilerInfo] = useState(false);
   const skipDirty = useRef(1);
@@ -304,16 +318,20 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
   });
 
   const loadCreatorProfile = useCallback(async () => {
-    const [creator, packages] = await Promise.all([
+    const [creator, packages, docs, events] = await Promise.all([
       creatorsService.getMe(),
       packagesService.getMine().catch(() => [] as Awaited<ReturnType<typeof packagesService.getMine>>),
+      creatorsService.getVerificationDocuments().catch(() => [] as CreatorVerificationDocument[]),
+      creatorsService.getVerificationEvents().catch(() => [] as CreatorVerificationEvent[]),
     ]);
     if (!creator) return;
 
     skipDirty.current += 1;
 
     setLoadedCreator(creator);
-    setCreatorVerified({ isVerified: Boolean(creator.isVerified), badgeLevel: creator.badgeLevel });
+    setCreatorVerified({ isVerified: Boolean(creator.isVerified), badgeLevel: creator.badgeLevel, verificationStatus: creator.verificationStatus });
+    setVerificationDocuments(docs);
+    setVerificationEvents(events);
     setActivePackageCount(packages.filter((p) => p.status === 'active').length);
 
     const email = creator.email || user?.email || "";
@@ -629,6 +647,53 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       toast.error(message);
     } finally {
       setIsUploadingAvatar(false);
+    }
+  };
+
+  const refreshVerificationEvidence = async () => {
+    const [docs, events, creator] = await Promise.all([
+      creatorsService.getVerificationDocuments(),
+      creatorsService.getVerificationEvents(),
+      creatorsService.getMe(),
+    ]);
+    setVerificationDocuments(docs);
+    setVerificationEvents(events);
+    if (creator) {
+      setCreatorVerified({ isVerified: Boolean(creator.isVerified), badgeLevel: creator.badgeLevel, verificationStatus: creator.verificationStatus });
+    }
+  };
+
+  const uploadVerificationDocument = async (type: string, file?: File | null) => {
+    if (!file) return;
+    setUploadingVerificationType(type);
+    try {
+      const uploaded = await uploadsService.verificationDocument(file);
+      await creatorsService.uploadVerificationDocument({ type, fileName: file.name, fileUrl: uploaded.url });
+      await refreshVerificationEvidence();
+      toast.success("Verification document uploaded");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not upload verification document";
+      toast.error(message);
+    } finally {
+      setUploadingVerificationType(null);
+    }
+  };
+
+  const submitVerificationReview = async () => {
+    if (verificationDocuments.length === 0) {
+      toast.error("Upload at least one verification document first");
+      return;
+    }
+    setSubmittingVerification(true);
+    try {
+      await creatorsService.submitVerificationForReview();
+      await refreshVerificationEvidence();
+      toast.success("Verification submitted for review");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not submit verification";
+      toast.error(message);
+    } finally {
+      setSubmittingVerification(false);
     }
   };
 
@@ -1125,7 +1190,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
               {creatorVerified && (
                 <div className={panelClass}>
                   <PanelHeader eyebrow="Account" title="Verification Status" />
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "grid size-10 shrink-0 place-items-center rounded-xl",
@@ -1140,19 +1205,72 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                         <p className="text-xs text-[#87938b]">
                           {creatorVerified.isVerified
                             ? `Badge level: ${(creatorVerified.badgeLevel ?? 'verified').replace(/_/g, ' ')}`
-                            : "Apply to get a verified badge on your public profile"}
+                            : `Status: ${(creatorVerified.verificationStatus ?? 'unverified').replace(/_/g, ' ')}`}
                         </p>
                       </div>
                     </div>
-                    {!creatorVerified.isVerified && (
-                      <a
-                        href="mailto:support@zingzing.pk?subject=Verification%20Request"
-                        className="shrink-0 rounded-full border-2 border-[#d1ddd6] bg-white px-3.5 py-1.5 text-xs font-bold text-[#496159] transition-colors hover:border-[#b0c5ba]"
-                      >
-                        Apply
-                      </a>
-                    )}
+                    <button
+                      disabled={creatorVerified.isVerified || submittingVerification || verificationDocuments.length === 0}
+                      onClick={() => void submitVerificationReview()}
+                      className="shrink-0 rounded-full border-2 border-[#d1ddd6] bg-white px-3.5 py-1.5 text-xs font-bold text-[#496159] transition-colors hover:border-[#b0c5ba] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {submittingVerification ? "Submitting..." : creatorVerified.isVerified ? "Verified" : "Submit"}
+                    </button>
                   </div>
+                  {!creatorVerified.isVerified ? (
+                    <div className="mt-4 grid gap-2.5">
+                      {creatorVerificationTypes.map((item) => {
+                        const doc = verificationDocuments.find((candidate) => candidate.type === item.type);
+                        return (
+                          <div key={item.type} className="flex items-center justify-between gap-3 rounded-2xl border border-[#e3e9e5] bg-[#fbfcfb] px-3.5 py-3">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div className={cn(
+                                "grid size-9 shrink-0 place-items-center rounded-xl",
+                                doc?.status === "approved" ? "bg-emerald-50 text-emerald-700" :
+                                doc?.status === "rejected" ? "bg-red-50 text-red-700" :
+                                doc ? "bg-[#fff1cd] text-[#8b5e12]" : "bg-white text-[#87938b]"
+                              )}>
+                                {doc?.status === "approved" ? <Check className="size-4" /> : doc?.status === "rejected" ? <XCircle className="size-4" /> : <FileText className="size-4" />}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-extrabold text-[#1e3d2e]">{item.label}</p>
+                                <p className="truncate text-[11px] text-[#87938b]">
+                                  {doc ? `${doc.fileName} · ${doc.status}` : "Upload a document for review"}
+                                </p>
+                                {doc?.rejectionReason ? <p className="mt-1 text-[11px] text-red-600">{doc.rejectionReason}</p> : null}
+                              </div>
+                            </div>
+                            <label className="inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-[#d1ddd6] bg-white px-3 text-[11px] font-bold text-[#2d6b4e] hover:bg-[#e8f0ec]">
+                              <Upload className="size-3.5" />
+                              {uploadingVerificationType === item.type ? "Uploading" : doc ? "Replace" : "Upload"}
+                              <input
+                                type="file"
+                                className="sr-only"
+                                accept="image/*,.pdf"
+                                disabled={uploadingVerificationType === item.type}
+                                onChange={(event) => void uploadVerificationDocument(item.type, event.target.files?.[0])}
+                              />
+                            </label>
+                          </div>
+                        );
+                      })}
+                      {verificationEvents.length > 0 ? (
+                        <div className="rounded-2xl border border-[#e3e9e5] bg-white px-3.5 py-3">
+                          <div className="mb-2 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wide text-[#7a8f82]">
+                            <Clock className="size-3.5" /> Recent activity
+                          </div>
+                          <div className="space-y-1.5">
+                            {verificationEvents.slice(0, 3).map((event) => (
+                              <div key={event.id} className="flex items-start justify-between gap-3 text-[11px]">
+                                <span className="font-semibold text-[#496159]">{event.eventType.replaceAll("_", " ").toLowerCase()}</span>
+                                <span className="shrink-0 text-[#9ba8a1]">{new Date(event.createdAt).toLocaleDateString("en-PK")}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
               )}
 

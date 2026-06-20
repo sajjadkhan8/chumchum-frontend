@@ -124,6 +124,7 @@ export interface AdminVerificationCreator {
   username?: string;
   email?: string;
   is_verified: boolean;
+  verification_status?: string;
   badge_level: CreatorBadgeLevel;
 }
 
@@ -169,6 +170,14 @@ export interface AdminVerificationEvent {
 
 export interface AdminBrandVerificationEvidence {
   brand: AdminVerificationBrand;
+  documents: AdminVerificationDocument[];
+  events: AdminVerificationEvent[];
+  requiredDocumentTypes: string[];
+  canApprove: boolean;
+}
+
+export interface AdminCreatorVerificationEvidence {
+  creator: AdminVerificationCreator;
   documents: AdminVerificationDocument[];
   events: AdminVerificationEvent[];
   requiredDocumentTypes: string[];
@@ -583,6 +592,10 @@ export const adminService = {
     return apiClient.get<AdminBrandVerificationEvidence>(`/api/v1/admin/brands/${id}/verification-evidence`);
   },
 
+  async getCreatorVerificationEvidence(id: string): Promise<AdminCreatorVerificationEvidence> {
+    return apiClient.get<AdminCreatorVerificationEvidence>(`/api/v1/admin/creators/${id}/verification-evidence`);
+  },
+
   async reviewBrandVerificationDocument(
     brandId: string,
     documentId: string,
@@ -607,6 +620,29 @@ export const adminService = {
       reason,
       contactEmail,
       phoneNumber,
+    });
+  },
+
+  async reviewCreatorVerificationDocument(
+    creatorId: string,
+    documentId: string,
+    status: 'approved' | 'rejected' | 'pending',
+    reason?: string,
+  ): Promise<AdminVerificationDocument> {
+    return apiClient.patch<AdminVerificationDocument>(
+      `/api/v1/admin/creators/${creatorId}/verification-documents/${documentId}`,
+      { status, reason },
+    );
+  },
+
+  async decideCreatorVerification(
+    creatorId: string,
+    decision: 'verified' | 'rejected' | 'under_review',
+    reason?: string,
+  ): Promise<AdminVerificationCreator> {
+    return apiClient.post<AdminVerificationCreator>(`/api/v1/admin/creators/${creatorId}/verification-review`, {
+      decision,
+      reason,
     });
   },
 

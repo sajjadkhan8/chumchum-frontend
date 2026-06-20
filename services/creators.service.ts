@@ -61,6 +61,25 @@ export interface CreatorPaymentSettingsPayload {
   bankTransferIban: string;
 }
 
+export interface CreatorVerificationDocument {
+  id: string;
+  type: 'identity' | 'social_profile' | 'portfolio_sample' | string;
+  fileName: string;
+  fileUrl: string;
+  status: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
+  uploadedAt: string;
+  reviewedAt?: string;
+}
+
+export interface CreatorVerificationEvent {
+  id: string;
+  eventType: string;
+  details?: string;
+  documentId?: string;
+  createdAt: string;
+}
+
 const unwrapCreators = (payload: SearchResponse | unknown[]): unknown[] => {
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload.creators)) return payload.creators;
@@ -131,6 +150,22 @@ rate_card_reel: payload.rateCardReel,
   async completeSocialOAuthConnect(platform: string, code: string, state?: string): Promise<Creator> {
     const response = await apiClient.post<unknown>(`/api/v1/oauth/${platform}/callback`, { code, state });
     return mapCreator(response as never);
+  },
+
+  async getVerificationDocuments(): Promise<CreatorVerificationDocument[]> {
+    return apiClient.get<CreatorVerificationDocument[]>('/api/v1/creators/me/verification-documents');
+  },
+
+  async getVerificationEvents(): Promise<CreatorVerificationEvent[]> {
+    return apiClient.get<CreatorVerificationEvent[]>('/api/v1/creators/me/verification-events');
+  },
+
+  async uploadVerificationDocument(input: { type: string; fileName: string; fileUrl: string }): Promise<CreatorVerificationDocument> {
+    return apiClient.post<CreatorVerificationDocument>('/api/v1/creators/me/verification-documents', input);
+  },
+
+  async submitVerificationForReview(): Promise<void> {
+    await apiClient.post('/api/v1/creators/me/verification/submit', {});
   },
 
   async updatePreferences(payload: CreatorPreferencesPayload): Promise<Creator> {

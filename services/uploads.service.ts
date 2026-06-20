@@ -6,7 +6,8 @@ export type UploadKind =
   | 'content-preview'
   | 'package-thumbnail'
   | 'deliverable'
-  | 'brand-logo';
+  | 'brand-logo'
+  | 'verification-document';
 
 export interface UploadResponse {
   url: string;
@@ -54,5 +55,9 @@ export const uploadsService = {
 
   brandLogo(file: File) {
     return upload('brand-logo', file);
+  },
+
+  verificationDocument(file: File) {
+    return upload('verification-document', file);
   },
 };

@@ -15,6 +15,7 @@ export interface User {
 }
 
 export type BrandVerificationStatus = 'unverified' | 'pending' | 'under_review' | 'verified' | 'rejected';
+export type CreatorVerificationStatus = 'unverified' | 'pending' | 'under_review' | 'verified' | 'rejected';
 
 // Creator Types
 export type Platform = 'instagram' | 'tiktok' | 'youtube' | 'facebook' | 'snapchat';
@@ -68,6 +69,7 @@ export interface Creator {
   maxPrice?: number;
   responseTime: string;
   isVerified: boolean;
+  verificationStatus?: CreatorVerificationStatus;
   badgeLevel?: CreatorBadgeLevel;
   isTrending: boolean;
   isFastResponder: boolean;

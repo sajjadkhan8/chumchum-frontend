@@ -123,6 +123,7 @@ interface BackendCreatorResponse {
   engagement_rate?: number;
   rating?: number;
   total_reviews?: number;
+  verification_status?: string;
   social_accounts?: {
     id?: string;
     platform?: string;
@@ -218,7 +219,8 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
     minPrice: input.min_price,
     maxPrice: input.max_price,
     responseTime: input.response_time || 'Within 24 hours',
-    isVerified: Boolean(input.is_verified) || (input.rating || 0) >= 4,
+    isVerified: Boolean(input.is_verified),
+    verificationStatus: (input.verification_status as Creator['verificationStatus']) || (input.is_verified ? 'verified' : 'unverified'),
     badgeLevel,
     isFiler: Boolean(input.is_filer),
     isTrending: Boolean(input.is_trending),

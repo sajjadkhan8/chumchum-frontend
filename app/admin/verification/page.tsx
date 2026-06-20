@@ -11,6 +11,7 @@ import {
   adminService,
   type AdminVerificationBrand,
   type AdminBrandVerificationEvidence,
+  type AdminCreatorVerificationEvidence,
   type AdminVerificationDocument,
   type AdminVerificationCreator,
   type AdminCreatorScoreDetails,
@@ -126,10 +127,13 @@ export default function AdminVerificationPage() {
   const [creatorScores, setCreatorScores] = useState<Record<string, AdminCreatorScoreDetails | null>>({});
   const [loadingScoreId, setLoadingScoreId] = useState<string | null>(null);
   const [expandedCreatorId, setExpandedCreatorId] = useState<string | null>(null);
+  const [expandedCreatorEvidenceId, setExpandedCreatorEvidenceId] = useState<string | null>(null);
   const [expandedBrandId, setExpandedBrandId] = useState<string | null>(null);
   const [brandEvidence, setBrandEvidence] = useState<Record<string, AdminBrandVerificationEvidence | null>>({});
+  const [creatorEvidence, setCreatorEvidence] = useState<Record<string, AdminCreatorVerificationEvidence | null>>({});
   const [loadingEvidenceId, setLoadingEvidenceId] = useState<string | null>(null);
   const [brandDecisionReason, setBrandDecisionReason] = useState<Record<string, string>>({});
+  const [creatorDecisionReason, setCreatorDecisionReason] = useState<Record<string, string>>({});
 
   const loadQueue = useCallback(
     async (tab: VerificationTab, nextPage = pages[tab]) => {
@@ -187,6 +191,75 @@ export default function AdminVerificationPage() {
       toast.success('Creator badge updated');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to update creator badge');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const refreshCreatorEvidence = async (creatorId: string) => {
+    const evidence = await adminService.getCreatorVerificationEvidence(creatorId);
+    setCreatorEvidence((current) => ({ ...current, [creatorId]: evidence }));
+    return evidence;
+  };
+
+  const toggleCreatorEvidence = async (creatorId: string) => {
+    if (expandedCreatorEvidenceId === creatorId) {
+      setExpandedCreatorEvidenceId(null);
+      return;
+    }
+    setExpandedCreatorEvidenceId(creatorId);
+    if (Object.prototype.hasOwnProperty.call(creatorEvidence, creatorId)) return;
+    setLoadingEvidenceId(creatorId);
+    try {
+      await refreshCreatorEvidence(creatorId);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to load creator evidence');
+    } finally {
+      setLoadingEvidenceId(null);
+    }
+  };
+
+  const reviewCreatorDocument = async (
+    creator: AdminVerificationCreator,
+    document: AdminVerificationDocument,
+    status: 'approved' | 'rejected',
+  ) => {
+    const reason = creatorDecisionReason[creator.id]?.trim();
+    if (status === 'rejected' && !reason) {
+      toast.error('A rejection reason is required');
+      return;
+    }
+    setUpdatingId(document.id);
+    try {
+      await adminService.reviewCreatorVerificationDocument(creator.id, document.id, status, reason || undefined);
+      await refreshCreatorEvidence(creator.id);
+      if (status === 'rejected') {
+        setCreators((current) => current.map((item) =>
+          item.id === creator.id ? { ...item, is_verified: false, verification_status: 'rejected', badge_level: 'none' } : item,
+        ));
+      }
+      toast.success(status === 'approved' ? 'Document approved' : 'Document rejected');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to review document');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const decideCreatorVerification = async (creator: AdminVerificationCreator, decision: 'verified' | 'rejected' | 'under_review') => {
+    const reason = creatorDecisionReason[creator.id]?.trim();
+    if (decision === 'rejected' && !reason) {
+      toast.error('A rejection reason is required');
+      return;
+    }
+    setUpdatingId(creator.id);
+    try {
+      const updated = await adminService.decideCreatorVerification(creator.id, decision, reason || undefined);
+      setCreators((current) => current.map((item) => (item.id === creator.id ? updated : item)));
+      await refreshCreatorEvidence(creator.id);
+      toast.success(`Creator marked ${decision}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to finalize creator verification');
     } finally {
       setUpdatingId(null);
     }
@@ -418,6 +491,13 @@ export default function AdminVerificationPage() {
                             >
                               {expandedCreatorId === creator.id ? 'Hide' : 'Score'}
                             </button>
+                            <button
+                              className="rounded-lg border border-[#d9e0d8] px-2.5 py-1 text-xs font-bold text-[#185c39] hover:bg-[#f4f2e9] disabled:opacity-50"
+                              disabled={loadingEvidenceId === creator.id}
+                              onClick={() => void toggleCreatorEvidence(creator.id)}
+                            >
+                              {expandedCreatorEvidenceId === creator.id ? 'Hide evidence' : 'Evidence'}
+                            </button>
                             {creator.is_verified ? (
                               <button
                                 className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#d1ddd6] px-3 text-[11px] font-bold text-[#496159] transition hover:bg-[#e8f0ec] disabled:opacity-50"
@@ -505,6 +585,114 @@ export default function AdminVerificationPage() {
                               );
                             })() : (
                               <p className="text-xs text-muted-foreground">Score data not available for this creator.</p>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ) : null}
+                      {expandedCreatorEvidenceId === creator.id ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="bg-[#f4f8f5] px-4 py-4">
+                            {loadingEvidenceId === creator.id ? (
+                              <p className="text-xs text-muted-foreground">Loading evidence…</p>
+                            ) : creatorEvidence[creator.id] ? (() => {
+                              const evidence = creatorEvidence[creator.id]!;
+                              return (
+                                <div className="space-y-4">
+                                  <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                      <p className="text-sm font-extrabold text-[#173b2a]">Creator evidence review</p>
+                                      <p className="text-xs text-[#647168]">
+                                        Required: {evidence.requiredDocumentTypes.join(', ').replaceAll('_', ' ')}
+                                      </p>
+                                    </div>
+                                    <span className={`rounded-full px-3 py-1 text-xs font-extrabold ${
+                                      evidence.canApprove ? 'bg-emerald-50 text-emerald-700' : 'bg-[#fff1cd] text-[#8b5e12]'
+                                    }`}>
+                                      {evidence.canApprove ? 'Ready to verify' : 'Needs approved documents'}
+                                    </span>
+                                  </div>
+                                  <div className="grid gap-3 lg:grid-cols-3">
+                                    {evidence.documents.map((doc) => (
+                                      <div key={doc.id} className="rounded-2xl border border-[#d9e0d8] bg-white p-4">
+                                        <div className="flex items-start justify-between gap-3">
+                                          <div>
+                                            <p className="text-sm font-extrabold capitalize text-[#173b2a]">{doc.type.replaceAll('_', ' ')}</p>
+                                            <p className="mt-0.5 text-xs text-[#647168]">{doc.fileName}</p>
+                                          </div>
+                                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${
+                                            doc.status === 'approved' ? 'bg-emerald-50 text-emerald-700' :
+                                            doc.status === 'rejected' ? 'bg-red-50 text-red-700' :
+                                            'bg-[#fff1cd] text-[#8b5e12]'
+                                          }`}>{doc.status}</span>
+                                        </div>
+                                        {doc.rejectionReason ? <p className="mt-2 text-xs text-red-600">{doc.rejectionReason}</p> : null}
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                          <a
+                                            href={doc.fileUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#d1ddd6] px-3 text-[11px] font-bold text-[#2d6b4e] hover:bg-[#e8f0ec]"
+                                          >
+                                            <ExternalLink className="h-3.5 w-3.5" /> Open
+                                          </a>
+                                          <button
+                                            disabled={updatingId === doc.id}
+                                            onClick={() => void reviewCreatorDocument(creator, doc, 'approved')}
+                                            className="inline-flex h-8 items-center gap-1.5 rounded-xl bg-[#2d6b4e] px-3 text-[11px] font-bold text-white hover:bg-[#1f5239] disabled:opacity-50"
+                                          >
+                                            <CheckCircle2 className="h-3.5 w-3.5" /> Approve
+                                          </button>
+                                          <button
+                                            disabled={updatingId === doc.id}
+                                            onClick={() => void reviewCreatorDocument(creator, doc, 'rejected')}
+                                            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-red-200 px-3 text-[11px] font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                                          >
+                                            <XCircle className="h-3.5 w-3.5" /> Reject
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                    {evidence.documents.length === 0 ? (
+                                      <div className="rounded-2xl border border-dashed border-[#d9e0d8] bg-white p-6 text-center text-xs text-[#87938b] lg:col-span-3">
+                                        No verification documents uploaded yet.
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                  <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
+                                    <textarea
+                                      value={creatorDecisionReason[creator.id] ?? ''}
+                                      onChange={(event) => setCreatorDecisionReason((current) => ({ ...current, [creator.id]: event.target.value }))}
+                                      placeholder="Decision note or rejection reason"
+                                      className="min-h-20 rounded-xl border border-[#d1ddd6] bg-white px-3 py-2 text-sm text-[#1e3d2e] outline-none focus:border-[#2d6b4e]"
+                                    />
+                                    <div className="flex flex-wrap items-start gap-2 lg:flex-col">
+                                      <button
+                                        disabled={updatingId === creator.id || !evidence.canApprove}
+                                        onClick={() => void decideCreatorVerification(creator, 'verified')}
+                                        className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-[#2d6b4e] px-4 text-xs font-bold text-white hover:bg-[#1f5239] disabled:opacity-50"
+                                      >
+                                        <ShieldCheck className="h-3.5 w-3.5" /> Verify creator
+                                      </button>
+                                      <button
+                                        disabled={updatingId === creator.id}
+                                        onClick={() => void decideCreatorVerification(creator, 'rejected')}
+                                        className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-red-200 px-4 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                                      >
+                                        <XCircle className="h-3.5 w-3.5" /> Reject creator
+                                      </button>
+                                      <button
+                                        disabled={updatingId === creator.id}
+                                        onClick={() => void decideCreatorVerification(creator, 'under_review')}
+                                        className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-[#d1ddd6] px-4 text-xs font-bold text-[#2d6b4e] hover:bg-[#e8f0ec] disabled:opacity-50"
+                                      >
+                                        <Clock className="h-3.5 w-3.5" /> Keep review
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })() : (
+                              <p className="text-xs text-muted-foreground">Evidence data not available.</p>
                             )}
                           </TableCell>
                         </TableRow>
