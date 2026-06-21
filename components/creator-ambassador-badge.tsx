@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Zap, TrendingUp } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Creator } from '@/types';
 import { calculateAmbassadorScore, getAmbassadorTier, AMBASSADOR_TIERS } from '@/lib/ambassador-scoring';
@@ -53,9 +53,10 @@ export function CreatorAmbassadorBadge({
       <Badge
         className="relative gap-1 px-2 py-0.5 text-xs"
         style={{
-          background: `${tierInfo.color}15`,
+          background: '#fff8e6',
           border: `1px solid ${tierInfo.color}`,
           color: tierInfo.color,
+          boxShadow: '0 1px 3px rgba(15, 23, 42, 0.12)',
         }}
       >
         <span>{tierInfo.icon}</span>
@@ -136,4 +137,3 @@ export function CreatorAmbassadorStats({
     </motion.div>
   );
 }
-

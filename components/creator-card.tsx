@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Star, Clock, Gift, TrendingUp, Zap, Instagram, Youtube, Heart } from 'lucide-react';
+import { MapPin, Star, Clock, Gift, TrendingUp, Zap, Instagram, Youtube, Heart, Camera } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,7 @@ const platformIcons: Record<string, React.ElementType> = {
   instagram: Instagram,
   tiktok: TikTokIcon,
   youtube: Youtube,
+  snapchat: Camera,
   facebook: () => (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -48,12 +49,20 @@ const platformIcons: Record<string, React.ElementType> = {
   ),
 };
 
+const CREATOR_CARD_FALLBACK_IMAGE = '/creator-card-fallback.svg';
+
 export function CreatorCard({ creator, onQuickDeal, className, variant = 'default' }: CreatorCardProps) {
   const { user, savedCreators, toggleSavedCreator } = useAuthStore();
   const [isSaving, setIsSaving] = useState(false);
+  const preferredImage = creator.contentPreviews[0]?.thumbnail || creator.coverImage || creator.avatar || CREATOR_CARD_FALLBACK_IMAGE;
+  const [imageSrc, setImageSrc] = useState(preferredImage);
   const canSendDeal = !user || user.role === 'brand';
   const canSaveCreator = user?.role === 'brand';
   const isSaved = savedCreators.includes(creator.id);
+
+  useEffect(() => {
+    setImageSrc(preferredImage);
+  }, [preferredImage]);
 
   const handleSaveToggle = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -89,10 +98,16 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
             )}
           >
             <Image
-              src={creator.contentPreviews[0]?.thumbnail || creator.avatar}
+              src={imageSrc}
               alt={creator.name}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
+              onError={() => {
+                setImageSrc((current) => {
+                  if (current !== creator.avatar && creator.avatar) return creator.avatar;
+                  return CREATOR_CARD_FALLBACK_IMAGE;
+                });
+              }}
             />
             
             {/* Gradient Overlay */}
@@ -114,15 +129,20 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
              
             {/* Badges */}
             <div className="absolute left-2.5 top-2.5 flex max-w-[calc(100%-3.5rem)] flex-wrap gap-1.5 sm:left-3 sm:top-3">
-              <CreatorTrustBadge level={creator.badgeLevel} isVerified={creator.isVerified} compact />
+              <CreatorTrustBadge
+                level={creator.badgeLevel}
+                isVerified={creator.isVerified}
+                compact
+                className="border-sky-300 bg-white/95 text-sky-800 shadow-sm backdrop-blur"
+              />
 
               {/* Ambassador Badge (Gamified) */}
               <div className="flex">
-                <CreatorAmbassadorBadge creator={creator} />
+                <CreatorAmbassadorBadge creator={creator} className="shadow-sm" />
               </div>
 
               {creator.isTrending && (
-                <Badge className="bg-primary/90 text-[11px] text-primary-foreground backdrop-blur-sm">
+                <Badge className="border border-green-500 bg-green-600 text-[11px] text-white shadow-sm backdrop-blur">
                   <TrendingUp className="mr-1 h-3 w-3" />
                   Trending
                 </Badge>
@@ -135,13 +155,13 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
                   </Badge>
                 )}
               {creator.dealTypes.includes('barter') && (
-                <Badge className="bg-accent/90 text-[11px] text-accent-foreground backdrop-blur-sm">
+                <Badge className="border border-amber-300 bg-amber-400 text-[11px] text-black shadow-sm backdrop-blur">
                   <Gift className="mr-1 h-3 w-3" />
                   Barter
                 </Badge>
               )}
               {creator.isFastResponder && (
-                <Badge variant="secondary" className="text-[11px] backdrop-blur-sm">
+                <Badge className="border border-black/10 bg-white/95 text-[11px] text-black shadow-sm backdrop-blur">
                   <Zap className="mr-1 h-3 w-3" />
                   Fast
                 </Badge>
@@ -176,7 +196,7 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
                 {/* Platforms */}
                 <div className="flex items-center gap-1">
                   {creator.platforms.slice(0, 3).map((platform) => {
-                    const Icon = platformIcons[platform.platform];
+                    const Icon = platformIcons[platform.platform.toLowerCase()] ?? Camera;
                     return (
                       <div
                         key={platform.platform}

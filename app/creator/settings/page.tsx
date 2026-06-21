@@ -22,6 +22,7 @@ import {
   Image as ImageIcon,
   Lock,
   Link as LinkIcon,
+  MessageCircle,
   Music2,
   Package,
   Plus,
@@ -132,6 +133,13 @@ const defaultProfile = {
 };
 
 const platformOrder: Platform[] = ["instagram", "youtube", "tiktok", "facebook", "snapchat"];
+const platformLabels: Record<Platform, string> = {
+  instagram: "Instagram",
+  youtube: "YouTube",
+  tiktok: "TikTok",
+  facebook: "Facebook",
+  snapchat: "Snapchat",
+};
 
 
 export type CreatorSettingsSection = "profile" | "social" | "settings";
@@ -142,15 +150,19 @@ function DesignSelect({
   value,
   onValueChange,
   options,
+  disabledOptions = [],
   capitalize,
   placeholder,
 }: {
   value: string;
   onValueChange: (v: string) => void;
   options: string[];
+  disabledOptions?: string[];
   capitalize?: boolean;
   placeholder?: string;
 }) {
+  const disabledSet = new Set(disabledOptions);
+
   return (
     <SelectPrimitive.Root value={value} onValueChange={onValueChange}>
       <SelectPrimitive.Trigger className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] outline-none transition-colors focus:border-[#2d6b4e] data-[placeholder]:text-[#b0bfb8]">
@@ -166,22 +178,27 @@ function DesignSelect({
           className="z-50 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-xl border border-[#d1ddd6] bg-white shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
         >
           <SelectPrimitive.Viewport className="p-1">
-            {options.map((option) => (
-              <SelectPrimitive.Item
-                key={option}
-                value={option}
-                className="relative flex cursor-default select-none items-center rounded-lg px-3 py-2 text-sm text-[#1e3d2e] outline-none data-[highlighted]:bg-[#f4f7f5]"
-              >
-                <SelectPrimitive.ItemText>
-                  {capitalize
-                    ? option.charAt(0).toUpperCase() + option.slice(1)
-                    : option}
-                </SelectPrimitive.ItemText>
-                <SelectPrimitive.ItemIndicator className="absolute right-2">
-                  <Check className="size-3.5 text-[#2d6b4e]" />
-                </SelectPrimitive.ItemIndicator>
-              </SelectPrimitive.Item>
-            ))}
+            {options.map((option) => {
+              const disabled = disabledSet.has(option);
+              return (
+                <SelectPrimitive.Item
+                  key={option}
+                  value={option}
+                  disabled={disabled}
+                  className="relative flex cursor-default select-none items-center rounded-lg px-3 py-2 text-sm text-[#1e3d2e] outline-none data-[disabled]:pointer-events-none data-[disabled]:text-[#a8b5ad] data-[highlighted]:bg-[#f4f7f5]"
+                >
+                  <SelectPrimitive.ItemText>
+                    {capitalize
+                      ? option.charAt(0).toUpperCase() + option.slice(1)
+                      : option}
+                    {disabled ? " (already added)" : ""}
+                  </SelectPrimitive.ItemText>
+                  <SelectPrimitive.ItemIndicator className="absolute right-2">
+                    <Check className="size-3.5 text-[#2d6b4e]" />
+                  </SelectPrimitive.ItemIndicator>
+                </SelectPrimitive.Item>
+              );
+            })}
           </SelectPrimitive.Viewport>
         </SelectPrimitive.Content>
       </SelectPrimitive.Portal>
@@ -296,9 +313,10 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
   const [submittingVerification, setSubmittingVerification] = useState(false);
   const [showBadgeExplainer, setShowBadgeExplainer] = useState(false);
   const [showFilerInfo, setShowFilerInfo] = useState(false);
-  const skipDirty = useRef(1);
   const reorderTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const profileSnapshotRef = useRef<typeof defaultProfile | null>(null);
+  const socialAccountsSnapshotRef = useRef<EditableSocialAccount[] | null>(null);
+  const creatorPreferencesSnapshotRef = useRef<typeof creatorPreferences | null>(null);
 
   const [notifications, setNotifications] = useState({
     newOrders: true,
@@ -325,8 +343,6 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       creatorsService.getVerificationEvents().catch(() => [] as CreatorVerificationEvent[]),
     ]);
     if (!creator) return;
-
-    skipDirty.current += 1;
 
     setLoadedCreator(creator);
     setCreatorVerified({ isVerified: Boolean(creator.isVerified), badgeLevel: creator.badgeLevel, verificationStatus: creator.verificationStatus });
@@ -361,31 +377,33 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     };
     profileSnapshotRef.current = nextProfile;
     setProfile(nextProfile);
-    setCreatorPreferences({
+    const nextCreatorPreferences = {
       acceptsBarter: Boolean(creator.acceptsBarter),
       acceptsHybridDeals: Boolean(creator.acceptsHybridDeals),
       minimumBudget: creator.minimumBudget ? String(creator.minimumBudget) : "",
       dealTypes: creator.dealTypes || [],
       barterTypes: (creator.barterTypes as string[]) || [],
-    });
+    };
+    creatorPreferencesSnapshotRef.current = nextCreatorPreferences;
+    setCreatorPreferences(nextCreatorPreferences);
 
-    setSocialAccounts(
-      creator.platforms
-        .filter((platform) => platform.profileUrl)
-        .map((platform) => ({
-          platform: platform.platform,
-          username: platform.username,
-          profileUrl: platform.profileUrl,
-          followers: platform.followers,
-          avgViews: platform.avgViews,
-          engagementRate: platform.engagementRate,
-          verified: false,
-          verifiedBy: platform.verified_by,
-          oauthStatus: platform.oauth_status,
-          lastSyncedAt: platform.last_synced_at,
-          syncError: platform.sync_error,
-        })),
-    );
+    const nextSocialAccounts = creator.platforms
+      .filter((platform) => platform.profileUrl)
+      .map((platform) => ({
+        platform: platform.platform,
+        username: platform.username,
+        profileUrl: platform.profileUrl,
+        followers: platform.followers,
+        avgViews: platform.avgViews,
+        engagementRate: platform.engagementRate,
+        verified: false,
+        verifiedBy: platform.verified_by,
+        oauthStatus: platform.oauth_status,
+        lastSyncedAt: platform.last_synced_at,
+        syncError: platform.sync_error,
+      }));
+    socialAccountsSnapshotRef.current = nextSocialAccounts;
+    setSocialAccounts(nextSocialAccounts);
     setPortfolioItems(creator.contentPreviews.map((p) => ({
       id: p.id,
       type: p.type,
@@ -395,6 +413,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       views: p.views,
       likes: p.likes,
     })));
+    setIsDirty(false);
   }, [user]);
 
   const handleSave = async () => {
@@ -492,7 +511,6 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
         setNewPortfolioItem({ type: 'image', thumbnailUrl: '', mediaUrl: '', platform: 'instagram', views: '', likes: '' });
       }
 
-      skipDirty.current += 1;
       setIsDirty(false);
       await loadCreatorProfile();
 
@@ -548,8 +566,14 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
           barterTypes: creatorPreferences.barterTypes as BarterCategory[],
         }),
       ]);
-      skipDirty.current += 1;
       setIsDirty(false);
+      const nextCreatorPreferences = {
+        ...creatorPreferences,
+        acceptsBarter: Boolean(saved.acceptsBarter),
+        acceptsHybridDeals: Boolean(saved.acceptsHybridDeals),
+        minimumBudget: saved.minimumBudget ? String(saved.minimumBudget) : "",
+      };
+      creatorPreferencesSnapshotRef.current = nextCreatorPreferences;
       setCreatorPreferences((p) => ({
         ...p,
         acceptsBarter: Boolean(saved.acceptsBarter),
@@ -796,6 +820,14 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       const filtered = socialAccounts.filter(
         (account) => account.platform && (account.username || account.profileUrl),
       );
+      const duplicatePlatform = filtered.find((account, accountIndex) =>
+        filtered.some((other, otherIndex) => otherIndex !== accountIndex && other.platform === account.platform),
+      )?.platform;
+
+      if (duplicatePlatform) {
+        toast.error(`${platformLabels[duplicatePlatform]} is already connected. Each platform can only be added once.`);
+        return;
+      }
 
       const patchResults = await Promise.allSettled(
         filtered.map((account) =>
@@ -824,7 +856,6 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
         await creatorsService.updateSocialAccounts(accounts);
       }
 
-      skipDirty.current += 1;
       setIsDirty(false);
       await loadCreatorProfile();
       toast.success("Social accounts saved");
@@ -927,8 +958,8 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     instagram: Instagram,
     youtube: Youtube,
     tiktok: Music2,
-    facebook: LinkIcon,
-    snapchat: LinkIcon,
+    facebook: MessageCircle,
+    snapchat: Camera,
   };
 
   const updateSocialAccount = (index: number, updates: Partial<EditableSocialAccount>) => {
@@ -940,18 +971,21 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
   };
 
   const addSocialAccount = () => {
-    const nextPlatform =
-      platformOrder.find((platform) => !socialAccounts.some((account) => account.platform === platform)) ||
-      "instagram";
+    const nextPlatform = platformOrder.find((platform) => !socialAccounts.some((account) => account.platform === platform));
+    if (!nextPlatform) {
+      toast.info("All supported platforms are already added");
+      return;
+    }
+
     setSocialAccounts((accounts) => [
       ...accounts,
       {
         platform: nextPlatform,
         username: "",
         profileUrl: "",
-        followers: 0,
-        avgViews: 0,
-        engagementRate: 0,
+        followers: undefined,
+        avgViews: undefined,
+        engagementRate: undefined,
         verified: false,
       },
     ]);
@@ -1001,13 +1035,21 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       .catch(() => setAmbassadorMetrics(calculateCreatorAmbassadorMetrics(loadedCreator)));
   }, [loadedCreator]);
 
-  // Dirty tracking — skips fires triggered by load/save (controlled via skipDirty ref)
+  // Dirty tracking compares against the last loaded/saved state so hydration is not treated as user input.
   useEffect(() => {
-    if (skipDirty.current > 0) {
-      skipDirty.current -= 1;
+    const profileSnapshot = profileSnapshotRef.current;
+    const socialAccountsSnapshot = socialAccountsSnapshotRef.current;
+    const creatorPreferencesSnapshot = creatorPreferencesSnapshotRef.current;
+
+    if (!profileSnapshot || !socialAccountsSnapshot || !creatorPreferencesSnapshot) {
       return;
     }
-    setIsDirty(true);
+
+    setIsDirty(
+      JSON.stringify(profile) !== JSON.stringify(profileSnapshot) ||
+      JSON.stringify(socialAccounts) !== JSON.stringify(socialAccountsSnapshot) ||
+      JSON.stringify(creatorPreferences) !== JSON.stringify(creatorPreferencesSnapshot),
+    );
   }, [profile, socialAccounts, creatorPreferences]);
 
   // Browser navigation guard when there are unsaved changes
@@ -1882,11 +1924,9 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                   Connect directly to verify follower counts and engagement automatically.
                 </p>
                 <div className="grid gap-3 sm:grid-cols-3">
-                  {([
-                    { platform: 'instagram', label: 'Instagram', Icon: Instagram },
-                    { platform: 'youtube',   label: 'YouTube',   Icon: Youtube },
-                    { platform: 'tiktok',    label: 'TikTok',    Icon: Music2 },
-                  ] as const).map(({ platform, label, Icon }) => {
+                  {platformOrder.map((platform) => {
+                    const label = platformLabels[platform];
+                    const Icon = platformIcons[platform] || LinkIcon;
                     const alreadyConnected = socialAccounts.some(
                       (a) => a.platform === platform && a.verifiedBy === 'API_CONNECTED',
                     );
@@ -1958,58 +1998,85 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                         </div>
 
                         <div className="grid gap-3 sm:grid-cols-2">
-                          <DesignSelect
-                            value={account.platform}
-                            onValueChange={(value) =>
-                              updateSocialAccount(index, { platform: value as Platform })
-                            }
-                            options={platformOrder}
-                            capitalize
-                          />
-                          <input
-                            className={inputClass}
-                            value={account.username}
-                            placeholder="Username"
-                            onChange={(event) =>
-                              updateSocialAccount(index, { username: event.target.value })
-                            }
-                          />
-                          <input
-                            className={inputClass}
-                            value={account.profileUrl || ""}
-                            placeholder="Profile URL"
-                            onChange={(event) =>
-                              updateSocialAccount(index, { profileUrl: event.target.value })
-                            }
-                          />
-                          <input
-                            type="number"
-                            className={inputClass}
-                            value={account.followers ?? 0}
-                            placeholder="Followers"
-                            onChange={(event) =>
-                              updateSocialAccount(index, { followers: Number(event.target.value) })
-                            }
-                          />
-                          <input
-                            type="number"
-                            className={inputClass}
-                            value={account.avgViews ?? 0}
-                            placeholder="Average views"
-                            onChange={(event) =>
-                              updateSocialAccount(index, { avgViews: Number(event.target.value) })
-                            }
-                          />
-                          <input
-                            type="number"
-                            step="0.1"
-                            className={inputClass}
-                            value={account.engagementRate ?? 0}
-                            placeholder="Engagement rate"
-                            onChange={(event) =>
-                              updateSocialAccount(index, { engagementRate: Number(event.target.value) })
-                            }
-                          />
+                          <div className="space-y-1.5">
+                            <p className={labelClass}>Platform</p>
+                            <DesignSelect
+                              value={account.platform}
+                              onValueChange={(value) =>
+                                updateSocialAccount(index, { platform: value as Platform })
+                              }
+                              options={platformOrder}
+                              disabledOptions={socialAccounts
+                                .filter((_, accountIndex) => accountIndex !== index)
+                                .map((socialAccount) => socialAccount.platform)}
+                              capitalize
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <p className={labelClass}>Username</p>
+                            <input
+                              className={inputClass}
+                              value={account.username}
+                              placeholder="e.g. aamna.eats"
+                              onChange={(event) =>
+                                updateSocialAccount(index, { username: event.target.value })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-1.5 sm:col-span-2">
+                            <p className={labelClass}>Profile URL</p>
+                            <input
+                              className={inputClass}
+                              value={account.profileUrl || ""}
+                              placeholder="https://..."
+                              onChange={(event) =>
+                                updateSocialAccount(index, { profileUrl: event.target.value })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <p className={labelClass}>Follower count</p>
+                            <input
+                              type="number"
+                              className={inputClass}
+                              value={account.followers ? String(account.followers) : ""}
+                              placeholder="e.g. 125000"
+                              onChange={(event) =>
+                                updateSocialAccount(index, {
+                                  followers: event.target.value === "" ? undefined : Number(event.target.value),
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <p className={labelClass}>Average views</p>
+                            <input
+                              type="number"
+                              className={inputClass}
+                              value={account.avgViews ? String(account.avgViews) : ""}
+                              placeholder="e.g. 18000"
+                              onChange={(event) =>
+                                updateSocialAccount(index, {
+                                  avgViews: event.target.value === "" ? undefined : Number(event.target.value),
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-1.5 sm:col-span-2">
+                            <p className={labelClass}>Engagement rate (%)</p>
+                            <input
+                              type="number"
+                              step="0.1"
+                              className={inputClass}
+                              value={account.engagementRate ? String(account.engagementRate) : ""}
+                              placeholder="e.g. 4.8"
+                              onChange={(event) =>
+                                updateSocialAccount(index, {
+                                  engagementRate: event.target.value === "" ? undefined : Number(event.target.value),
+                                })
+                              }
+                            />
+                          </div>
                         </div>
                       </div>
                     );
@@ -2017,10 +2084,11 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
 
                   <button
                     onClick={addSocialAccount}
-                    className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#cddad1] bg-white text-sm font-bold text-[#2d6b4e] transition-colors hover:border-[#2d6b4e] hover:bg-[#e4f1e8]"
+                    disabled={socialAccounts.length >= platformOrder.length}
+                    className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#cddad1] bg-white text-sm font-bold text-[#2d6b4e] transition-colors hover:border-[#2d6b4e] hover:bg-[#e4f1e8] disabled:cursor-not-allowed disabled:border-[#dce6df] disabled:text-[#87938b] disabled:hover:bg-white"
                   >
                     <Plus className="size-4" />
-                    Connect Account
+                    {socialAccounts.length >= platformOrder.length ? "All Platforms Added" : "Connect Account"}
                   </button>
                 </div>
               </div>
@@ -2364,7 +2432,6 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
             </button>
             <button
               onClick={() => {
-                skipDirty.current += 1;
                 setIsDirty(false);
                 void loadCreatorProfile();
               }}

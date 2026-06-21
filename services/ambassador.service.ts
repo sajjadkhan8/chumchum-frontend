@@ -1,12 +1,23 @@
 import { apiClient } from '@/lib/api/client';
 import { mapCreator } from '@/lib/api/mappers';
 import type {
+  AmbassadorScore,
   AmbassadorApplication,
   AmbassadorApplicationStatus,
   AmbassadorEligibilityRequirements,
+  AmbassadorTier,
   CreatorAmbassadorMetrics,
   PlatformAmbassador,
 } from '@/types';
+
+type AmbassadorScoreResponse = AmbassadorScore & {
+  creatorId?: string;
+  tier?: AmbassadorTier;
+  percentileRank?: number;
+  strengths?: string[];
+  improvements?: string[];
+  calculatedAt?: string;
+};
 
 export interface AmbassadorBenefit {
   title: string;
@@ -108,6 +119,49 @@ const mapPlatformAmbassador = (input: unknown): PlatformAmbassador => {
   };
 };
 
+const normalizeTier = (tier: unknown, total: number): AmbassadorTier => {
+  const value = typeof tier === 'string' ? tier.toLowerCase() : '';
+  if (
+    value === 'rising_creator' ||
+    value === 'emerging_ambassador' ||
+    value === 'verified_ambassador' ||
+    value === 'elite_ambassador'
+  ) {
+    return value;
+  }
+
+  if (total >= 91) return 'elite_ambassador';
+  if (total >= 71) return 'verified_ambassador';
+  if (total >= 41) return 'emerging_ambassador';
+  return 'rising_creator';
+};
+
+const mapScore = (input: AmbassadorScoreResponse): CreatorAmbassadorMetrics => {
+  const total = Number(input.total || 0);
+  const calculatedAt = input.calculatedAt ? new Date(input.calculatedAt) : new Date();
+
+  return {
+    creatorId: input.creatorId || '',
+    score: {
+      total,
+      deliveryScore: Number(input.deliveryScore || 0),
+      accountAgeScore: Number(input.accountAgeScore || 0),
+      ratingScore: Number(input.ratingScore || 0),
+      cancellationScore: Number(input.cancellationScore || 0),
+      profileCompletenessScore: Number(input.profileCompletenessScore || 0),
+      consistencyScore: Number(input.consistencyScore || 0),
+    },
+    tier: normalizeTier(input.tier, total),
+    percentileRank: Number(input.percentileRank || 0),
+    strengths: input.strengths || [],
+    improvements: input.improvements || [],
+    journeyMilestones: {
+      joinedPlatform: calculatedAt,
+      ambassadorEligible: total >= 70 ? calculatedAt : undefined,
+    },
+  };
+};
+
 export const ambassadorService = {
   async getMyApplication(): Promise<AmbassadorApplication | null> {
     const response = await apiClient.get<ApplicationResponse | null>('/api/v1/ambassador/application');
@@ -120,7 +174,8 @@ export const ambassadorService = {
   },
 
   async getScore(): Promise<CreatorAmbassadorMetrics> {
-    return apiClient.get<CreatorAmbassadorMetrics>('/api/v1/ambassador/score');
+    const response = await apiClient.get<AmbassadorScoreResponse>('/api/v1/ambassador/score');
+    return mapScore(response);
   },
 
   async listAmbassadors(limit = 20): Promise<PlatformAmbassador[]> {
@@ -168,4 +223,3 @@ export const ambassadorService = {
     return defaultEligibilityRequirements;
   },
 };
-

@@ -13,6 +13,25 @@ export interface CreatorPayoutPreferences {
   weeklyDigestEnabled: boolean;
 }
 
+type CreatorPayoutPreferencesResponse = Partial<CreatorPayoutPreferences> & {
+  accountHolderName?: string | null;
+  ntnNumber?: string | null;
+  cnicLast4?: string | null;
+};
+
+const normalizeCreatorPayoutPreferences = (
+  input: CreatorPayoutPreferencesResponse,
+): CreatorPayoutPreferences => ({
+  autoWithdrawEnabled: Boolean(input.autoWithdrawEnabled),
+  payoutSchedule: input.payoutSchedule || 'manual',
+  minimumPayoutAmount: Number(input.minimumPayoutAmount || 5000),
+  accountHolderName: input.accountHolderName ?? '',
+  ntnNumber: input.ntnNumber ?? '',
+  cnicLast4: input.cnicLast4 ?? '',
+  earningsNotificationsEnabled: input.earningsNotificationsEnabled ?? true,
+  weeklyDigestEnabled: Boolean(input.weeklyDigestEnabled),
+});
+
 export type BrandPaymentMethodType =
   | 'card'
   | 'bank_transfer'
@@ -82,11 +101,13 @@ export interface CreateBrandPaymentMethodInput {
 
 export const paymentsService = {
   async getCreatorPayoutPreferences(): Promise<CreatorPayoutPreferences> {
-    return apiClient.get<CreatorPayoutPreferences>('/api/v1/creators/me/payout-preferences');
+    const response = await apiClient.get<CreatorPayoutPreferencesResponse>('/api/v1/creators/me/payout-preferences');
+    return normalizeCreatorPayoutPreferences(response);
   },
 
   async updateCreatorPayoutPreferences(payload: CreatorPayoutPreferences): Promise<CreatorPayoutPreferences> {
-    return apiClient.patch<CreatorPayoutPreferences>('/api/v1/creators/me/payout-preferences', payload);
+    const response = await apiClient.patch<CreatorPayoutPreferencesResponse>('/api/v1/creators/me/payout-preferences', payload);
+    return normalizeCreatorPayoutPreferences(response);
   },
 
   async getBrandPaymentsHub(): Promise<BrandPaymentsHub> {

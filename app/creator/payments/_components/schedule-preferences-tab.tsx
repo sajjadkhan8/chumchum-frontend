@@ -123,7 +123,7 @@ export function SchedulePreferencesTab({
           <input
             className={inputClass}
             placeholder="Your full name"
-            value={payoutPreferences.accountHolderName}
+            value={payoutPreferences.accountHolderName ?? ""}
             onChange={(e) =>
               setPayoutPreferences((prev) => ({
                 ...prev,
@@ -144,7 +144,7 @@ export function SchedulePreferencesTab({
               className={inputClass}
               placeholder="1234"
               maxLength={4}
-              value={payoutPreferences.cnicLast4}
+              value={payoutPreferences.cnicLast4 ?? ""}
               onChange={(e) =>
                 setPayoutPreferences((prev) => ({
                   ...prev,
@@ -158,7 +158,7 @@ export function SchedulePreferencesTab({
             <input
               className={inputClass}
               placeholder="For filer status"
-              value={payoutPreferences.ntnNumber}
+              value={payoutPreferences.ntnNumber ?? ""}
               onChange={(e) =>
                 setPayoutPreferences((prev) => ({
                   ...prev,

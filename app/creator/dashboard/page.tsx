@@ -208,6 +208,7 @@ export default function CreatorDashboardPage() {
     { label: "Withdraw",       copy: "Access your earnings",  href: "/creator/payments",            Icon: Wallet },
     { label: "Affiliate",      copy: "Share your link",       href: "/creator/affiliate",           Icon: BadgePercent },
     { label: "Edit Profile",   copy: "Keep it fresh",         href: "/creator/profile/public",      Icon: Users },
+    { label: "Social Accounts", copy: "Connect platforms",     href: "/creator/profile/social",      Icon: MessageCircle },
     { label: "View Insights",  copy: "Know your audience",    href: "/creator/insights",            Icon: BarChart3 },
   ];
 

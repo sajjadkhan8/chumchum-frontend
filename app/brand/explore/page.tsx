@@ -818,7 +818,70 @@ function ExplorePageContent() {
                   <CardContent className="flex items-center justify-center py-10 text-sm font-bold text-[#647168]">Loading saved creators...</CardContent>
                 </Card>
               ) : savedCreatorsList.length === 0 ? (
-                <EmptyState icon={Heart} title="No saved creators yet" description="Save creators you're interested in to easily find them later." action={{ label: 'Discover creators', onClick: () => setCreatorView('all') }} />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="overflow-hidden rounded-[1.5rem] border border-[#d9e0d8] bg-white shadow-[0_16px_54px_rgba(38,70,50,0.06)]"
+                >
+                  <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
+                    <div className="p-5 sm:p-6">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="inline-flex items-center gap-2 rounded-full bg-[#fff1cd] px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-[#8b5e12]">
+                            <Heart className="size-3.5" />
+                            Saved shortlist
+                          </p>
+                          <h2 className="mt-4 text-2xl font-black tracking-[-0.05em] text-[#173b2a]">
+                            Build your creator bench.
+                          </h2>
+                          <p className="mt-2 max-w-2xl text-sm font-bold leading-6 text-[#647168]">
+                            Save creators while browsing, then compare ratings, reach, pricing, and fit from this focused workspace.
+                          </p>
+                        </div>
+                        <Button
+                          className="shrink-0 rounded-full bg-[#185c39] px-5 font-black text-white shadow-[0_10px_24px_rgba(24,92,57,0.18)] hover:bg-[#12462b]"
+                          onClick={() => setCreatorView('all')}
+                        >
+                          Discover creators
+                          <ArrowRight className="ml-2 size-4" />
+                        </Button>
+                      </div>
+
+                      <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                        {[
+                          { label: 'Compare later', value: 'Profiles stay organized' },
+                          { label: 'Shortlist faster', value: 'One tap from cards' },
+                          { label: 'Plan outreach', value: 'Sort by fit and reach' },
+                        ].map((item) => (
+                          <div key={item.label} className="rounded-[1.15rem] border border-[#edf0eb] bg-[#fbfaf5] px-3 py-3">
+                            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#b77a12]">{item.label}</p>
+                            <p className="mt-1 text-sm font-black text-[#173b2a]">{item.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-[#edf0eb] bg-[#173b2a] p-5 text-white lg:border-l lg:border-t-0">
+                      <div className="flex h-full flex-col justify-between gap-5">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#f0c56e]">Next best action</p>
+                          <p className="mt-2 text-xl font-black tracking-[-0.04em]">Start with creators that match your campaign category.</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFilters({ sortBy: 'trending' });
+                            setCreatorView('all');
+                          }}
+                          className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-black text-white transition hover:bg-white/15"
+                        >
+                          Show trending first
+                          <TrendingUp className="ml-2 size-4 text-[#f0c56e]" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
               ) : sortedSavedCreators.length > 0 ? (
                 <div className={savedViewMode === 'grid' ? 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'space-y-3'}>
                   {sortedSavedCreators.map((creator, index) => (
