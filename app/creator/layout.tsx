@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { BottomNav } from "@/components/bottom-nav";
@@ -12,6 +12,7 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { user, isAuthenticated, hasHydrated } = useAuthStore();
   const [hideCreatorWorkspacePanel, setHideCreatorWorkspacePanel] = useState(false);
+  const previousPathnameRef = useRef(pathname);
 
   const isProtectedCreatorRoute =
     pathname.startsWith('/creator/dashboard') ||
@@ -63,6 +64,16 @@ export default function CreatorLayout({ children }: { children: ReactNode }) {
     if (!pathname.startsWith('/creator/campaigns') && !pathname.startsWith('/creator/search')) {
       setHideCreatorWorkspacePanel(false);
     }
+  }, [pathname]);
+
+  useEffect(() => {
+    if (previousPathnameRef.current === pathname) return;
+
+    previousPathnameRef.current = pathname;
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.scrollingElement?.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    });
   }, [pathname]);
 
   if (

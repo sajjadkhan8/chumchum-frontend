@@ -9,8 +9,6 @@ import {
   Send,
   Paperclip,
   MoreVertical,
-  Phone,
-  Video,
   ArrowLeft,
   Check,
   CheckCheck,
@@ -20,6 +18,11 @@ import {
   FileText,
   Package,
   X,
+  Eye,
+  Trash2,
+  Ban,
+  ShieldAlert,
+  Download,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -27,16 +30,95 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { QuickDealModal } from "@/components/quick-deal-modal";
 import { creatorsService } from "@/services/creators.service";
 import { messagesService } from "@/services/messages.service";
+import { apiClient } from "@/lib/api/client";
 import { formatRelativeTime, formatPrice, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import type { Message, Conversation } from "@/types";
 import { toast } from "sonner";
 import { downloadFile } from "@/lib/download-file";
+
+function ProtectedImagePreview({ url, name }: { url: string; name: string }) {
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let revoked = false;
+    let nextObjectUrl: string | null = null;
+
+    setObjectUrl(null);
+    setFailed(false);
+
+    if (!url.startsWith('/api/v1/files/')) {
+      setObjectUrl(url);
+      return;
+    }
+
+    void apiClient.download(url)
+      .then(({ blob }) => {
+        if (!blob.type.startsWith('image/')) {
+          setFailed(true);
+          return;
+        }
+        nextObjectUrl = URL.createObjectURL(blob);
+        if (revoked) {
+          URL.revokeObjectURL(nextObjectUrl);
+          return;
+        }
+        setObjectUrl(nextObjectUrl);
+      })
+      .catch(() => setFailed(true));
+
+    return () => {
+      revoked = true;
+      if (nextObjectUrl) URL.revokeObjectURL(nextObjectUrl);
+    };
+  }, [url]);
+
+  if (failed) {
+    return (
+      <div className="flex h-36 w-64 max-w-full flex-col items-center justify-center gap-2 bg-[#f4f7f5] px-4 text-center">
+        <div className="grid size-10 place-items-center rounded-2xl bg-[#e8f0ec]">
+          <ImageIcon className="size-5 text-[#2d6b4e]" />
+        </div>
+        <p className="max-w-full truncate text-xs font-bold text-[#647168]">{name}</p>
+        <p className="text-[11px] font-medium text-[#87938b]">Preview unavailable</p>
+      </div>
+    );
+  }
+
+  if (!objectUrl) {
+    return (
+      <div className="h-36 w-64 max-w-full animate-pulse bg-gradient-to-br from-[#edf3ef] to-[#f8faf8]" />
+    );
+  }
+
+  return (
+    <img
+      src={objectUrl}
+      alt={name}
+      className="max-h-64 max-w-full object-cover"
+      loading="lazy"
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 export function MessagesPageContent() {
   const router = useRouter();
@@ -59,6 +141,8 @@ export function MessagesPageContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showMobileChat, setShowMobileChat] = useState(false);
   const [isQuickDealOpen, setIsQuickDealOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<"clear" | "block" | null>(null);
+  const [isConversationActionPending, setIsConversationActionPending] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -101,6 +185,7 @@ export function MessagesPageContent() {
   );
 
   const selectedParticipant = selectedConversation ? getConversationParticipant(selectedConversation) : null;
+  const conversationIsBlocked = Boolean(selectedConversation?.blockedByMe || selectedConversation?.blockedByThem);
   const currentSenderId = selectedConversation
     ? isCreatorView ? selectedConversation.creatorId : selectedConversation.brandId
     : isCreatorView ? user?.id || "creator" : user?.id || "brand";
@@ -229,6 +314,10 @@ export function MessagesPageContent() {
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
+    if (conversationIsBlocked) {
+      toast.error(selectedConversation.blockedByMe ? "You blocked this user." : "This conversation is blocked.");
+      return;
+    }
     setIsSending(true);
     const text = newMessage.trim();
     setNewMessage("");
@@ -261,6 +350,10 @@ export function MessagesPageContent() {
 
   const handleSendAttachment = async (file?: File | null) => {
     if (!file || !selectedConversation) return;
+    if (conversationIsBlocked) {
+      toast.error(selectedConversation.blockedByMe ? "You blocked this user." : "This conversation is blocked.");
+      return;
+    }
     setIsSendingAttachment(true);
     try {
       const msg = await messagesService.sendAttachment(selectedConversation.id, file);
@@ -294,6 +387,50 @@ export function MessagesPageContent() {
     setConversations((curr) => curr.map((c) => c.id === conversation.id ? read : c));
     setShowMobileChat(true);
     router.replace(buildMessagesHref({ conversation: conversation.id }));
+  };
+
+  const handleViewProfile = () => {
+    if (!selectedParticipant?.href) return;
+    router.push(selectedParticipant.href);
+  };
+
+  const handleClearChat = async () => {
+    if (!selectedConversation) return;
+    setIsConversationActionPending(true);
+    try {
+      await messagesService.clearChat(selectedConversation.id);
+      setMessages([]);
+      setConversations((prev) => prev.map((conversation) =>
+        conversation.id === selectedConversation.id
+          ? { ...conversation, lastMessage: undefined, unreadCount: 0, updatedAt: new Date() }
+          : conversation
+      ));
+      toast.success("Chat cleared for you");
+      setConfirmAction(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to clear chat");
+    } finally {
+      setIsConversationActionPending(false);
+    }
+  };
+
+  const handleBlockUser = async () => {
+    if (!selectedConversation) return;
+    setIsConversationActionPending(true);
+    try {
+      await messagesService.blockUser(selectedConversation.id);
+      const blocked = { ...selectedConversation, blockedByMe: true, unreadCount: 0 };
+      setSelectedConversation(blocked);
+      setConversations((prev) => prev.map((conversation) =>
+        conversation.id === selectedConversation.id ? { ...conversation, blockedByMe: true, unreadCount: 0 } : conversation
+      ));
+      toast.success("User blocked");
+      setConfirmAction(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to block user");
+    } finally {
+      setIsConversationActionPending(false);
+    }
   };
 
   const respondToOffer = async (message: Message, action: "accepted" | "rejected") => {
@@ -468,15 +605,6 @@ export function MessagesPageContent() {
                 </div>
 
                 <div className="flex items-center gap-1">
-                  {[{ icon: Phone }, { icon: Video }].map(({ icon: Icon }, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      className="grid size-9 place-items-center rounded-xl text-[#87938b] transition-colors hover:bg-[#f4f7f5] hover:text-[#1e3d2e]"
-                    >
-                      <Icon className="size-4.5" />
-                    </button>
-                  ))}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button
@@ -488,25 +616,52 @@ export function MessagesPageContent() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="end"
-                      className="rounded-2xl border border-[#d1ddd6] bg-white p-1 shadow-[0_8px_32px_rgba(38,70,50,0.12)]"
+                      sideOffset={8}
+                      className="w-64 rounded-2xl border border-[#d8e4dd] bg-white/95 p-2 shadow-[0_18px_48px_rgba(30,61,46,0.16)] backdrop-blur-md"
                     >
-                      <DropdownMenuItem className="rounded-xl px-3 py-2 text-sm font-medium text-[#1e3d2e] focus:bg-[#f4f7f5] focus:text-[#1e3d2e]">
-                        View Profile
-                      </DropdownMenuItem>
+                      <DropdownMenuLabel className="px-2 pb-2 pt-1">
+                        <span className="block truncate text-[12px] font-extrabold text-[#1e3d2e]">{selectedParticipant?.name}</span>
+                        <span className="block truncate text-[11px] font-semibold text-[#87938b]">
+                          {conversationIsBlocked ? "Messaging paused" : selectedParticipant?.subtitle}
+                        </span>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator className="mx-0 bg-[#edf1ed]" />
+                      {selectedParticipant?.href && (
+                        <DropdownMenuItem
+                          onClick={handleViewProfile}
+                          className="rounded-xl px-3 py-2.5 text-sm font-semibold text-[#1e3d2e] focus:bg-[#f4f7f5] focus:text-[#1e3d2e]"
+                        >
+                          <Eye className="size-4 text-[#2d6b4e]" />
+                          View Profile
+                        </DropdownMenuItem>
+                      )}
                       {!isCreatorView && (
                         <DropdownMenuItem
                           onClick={() => setIsQuickDealOpen(true)}
-                          className="rounded-xl px-3 py-2 text-sm font-medium text-[#1e3d2e] focus:bg-[#f4f7f5] focus:text-[#1e3d2e]"
+                          disabled={conversationIsBlocked}
+                          className="rounded-xl px-3 py-2.5 text-sm font-semibold text-[#1e3d2e] focus:bg-[#f4f7f5] focus:text-[#1e3d2e]"
                         >
+                          <DollarSign className="size-4 text-[#b77a12]" />
                           Send Quick Deal
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem className="rounded-xl px-3 py-2 text-sm font-medium text-[#1e3d2e] focus:bg-[#f4f7f5] focus:text-[#1e3d2e]">
+                      <DropdownMenuSeparator className="mx-0 bg-[#edf1ed]" />
+                      <DropdownMenuItem
+                        onClick={() => setConfirmAction("clear")}
+                        className="rounded-xl px-3 py-2.5 text-sm font-semibold text-[#1e3d2e] focus:bg-[#f4f7f5] focus:text-[#1e3d2e]"
+                      >
+                        <Trash2 className="size-4 text-[#7a8f82]" />
                         Clear Chat
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="rounded-xl px-3 py-2 text-sm font-medium text-[#c0392b] focus:bg-[#fce8e6] focus:text-[#c0392b]">
-                        Block User
-                      </DropdownMenuItem>
+                      {!selectedConversation.blockedByMe && (
+                        <DropdownMenuItem
+                          onClick={() => setConfirmAction("block")}
+                          className="rounded-xl px-3 py-2.5 text-sm font-semibold text-[#b42318] focus:bg-[#fff0ed] focus:text-[#b42318]"
+                        >
+                          <Ban className="size-4 text-[#b42318]" />
+                          Block User
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -515,6 +670,19 @@ export function MessagesPageContent() {
               {/* Messages area */}
               <div className="min-h-0 flex-1 overflow-y-auto bg-[#fbfaf5] px-4 py-5 sm:px-6">
                 <div className="space-y-5">
+                  {conversationIsBlocked && (
+                    <div className="mx-auto flex max-w-lg items-start gap-3 rounded-2xl border border-[#f4c7bf] bg-[#fff4f1] px-4 py-3 text-left">
+                      <ShieldAlert className="mt-0.5 size-4 shrink-0 text-[#b42318]" />
+                      <div>
+                        <p className="text-sm font-extrabold text-[#7f1d1d]">
+                          {selectedConversation.blockedByMe ? "You blocked this user" : "This conversation is blocked"}
+                        </p>
+                        <p className="mt-0.5 text-xs font-medium leading-5 text-[#9f6b61]">
+                          Messages, files, and quick deals are paused for this conversation.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   {isLoadingMessages && (
                     <div className="space-y-3">
                       {Array.from({ length: 4 }).map((_, i) => (
@@ -575,26 +743,29 @@ export function MessagesPageContent() {
 
                           {/* Attachment */}
                           {message.type === "attachment" && (() => {
-                            const name = getAttachmentName(message.attachmentUrl);
+                            const name = message.attachmentOriginalName || getAttachmentName(message.attachmentUrl);
                             const ext = name.split(".").pop()?.toLowerCase() ?? "";
                             const isImage = ["jpg", "jpeg", "png", "webp", "gif"].includes(ext)
                               || (message.attachmentUrl && /\/(jpeg|jpg|png|webp|gif)($|\?)/i.test(message.attachmentUrl));
                             if (isImage && message.attachmentUrl) {
                               return (
-                                <button
-                                  type="button"
-                                  onClick={() => void downloadFile(message.attachmentUrl!, name).catch((e) => toast.error(e instanceof Error ? e.message : "Could not download"))}
-                                  className={`overflow-hidden rounded-2xl ${isOwn ? "rounded-br-md" : "rounded-bl-md"} border border-[#d1ddd6] bg-white shadow-sm transition-opacity hover:opacity-90`}
+                                <div
+                                  className={`overflow-hidden rounded-2xl ${isOwn ? "rounded-br-md" : "rounded-bl-md"} border border-[#d1ddd6] bg-white shadow-sm`}
                                 >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={message.attachmentUrl}
-                                    alt={name}
-                                    className="max-h-64 max-w-full object-cover"
-                                    loading="lazy"
-                                  />
-                                  <p className="truncate border-t border-[#d1ddd6] px-3 py-1.5 text-xs text-[#87938b]">{name}</p>
-                                </button>
+                                  <ProtectedImagePreview url={message.attachmentUrl} name={name} />
+                                  <div className="flex items-center gap-2 border-t border-[#d1ddd6] px-3 py-2">
+                                    <p className="min-w-0 flex-1 truncate text-xs font-semibold text-[#647168]">{name}</p>
+                                    <button
+                                      type="button"
+                                      onClick={() => void downloadFile(message.attachmentUrl!, name).catch((e) => toast.error(e instanceof Error ? e.message : "Could not download"))}
+                                      aria-label={`Download ${name}`}
+                                      title="Download"
+                                      className="grid size-8 shrink-0 place-items-center rounded-xl bg-[#e8f0ec] text-[#2d6b4e] transition-colors hover:bg-[#dbe9e1] hover:text-[#1f5239]"
+                                    >
+                                      <Download className="size-4" />
+                                    </button>
+                                  </div>
+                                </div>
                               );
                             }
                             return (
@@ -730,7 +901,7 @@ export function MessagesPageContent() {
 
                   <button
                     type="button"
-                    disabled={isSendingAttachment}
+                    disabled={isSendingAttachment || conversationIsBlocked}
                     onClick={() => imageInputRef.current?.click()}
                     className="grid size-9 place-items-center rounded-xl text-[#b0bfb8] transition-colors hover:bg-[#f4f7f5] hover:text-[#2d6b4e] disabled:opacity-50"
                   >
@@ -738,7 +909,7 @@ export function MessagesPageContent() {
                   </button>
                   <button
                     type="button"
-                    disabled={isSendingAttachment}
+                    disabled={isSendingAttachment || conversationIsBlocked}
                     onClick={() => fileInputRef.current?.click()}
                     className="grid size-9 place-items-center rounded-xl text-[#b0bfb8] transition-colors hover:bg-[#f4f7f5] hover:text-[#2d6b4e] disabled:opacity-50"
                   >
@@ -747,17 +918,18 @@ export function MessagesPageContent() {
 
                   <input
                     type="text"
-                    placeholder="Type a message…"
+                    placeholder={conversationIsBlocked ? "Conversation blocked" : "Type a message…"}
                     className="h-10 flex-1 rounded-full border border-[#d1ddd6] bg-[#f4f7f5] px-4 text-sm text-[#1e3d2e] outline-none placeholder:text-[#b0bfb8] focus:border-[#2d6b4e] transition-colors"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
+                    disabled={conversationIsBlocked}
                   />
 
                   <button
                     type="button"
                     onClick={() => void handleSendMessage()}
-                    disabled={!newMessage.trim() || isSending}
+                    disabled={!newMessage.trim() || isSending || conversationIsBlocked}
                     className="grid size-10 place-items-center rounded-full bg-[#2d6b4e] text-white transition-colors hover:bg-[#1f5239] disabled:opacity-50"
                   >
                     <Send className="size-4" />
@@ -797,6 +969,54 @@ export function MessagesPageContent() {
           onCreated={(result) => void handleQuickDealCreated(result)}
         />
       )}
+
+      <AlertDialog open={confirmAction === "clear"} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent className="rounded-2xl border-[#d8e4dd] bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[#1e3d2e]">Clear this chat?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#647168]">
+              This will hide the current message history from your inbox. It will not delete records needed for orders, offers, or dispute review.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isConversationActionPending} className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isConversationActionPending}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleClearChat();
+              }}
+              className="rounded-xl bg-[#2d6b4e] text-white hover:bg-[#1f5239]"
+            >
+              Clear Chat
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmAction === "block"} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent className="rounded-2xl border-[#f4c7bf] bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[#7f1d1d]">Block this user?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#7f5b55]">
+              This will stop messages, file attachments, and quick deals in this conversation. Existing records stay available for safety and support review.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isConversationActionPending} className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isConversationActionPending}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleBlockUser();
+              }}
+              className="rounded-xl bg-[#b42318] text-white hover:bg-[#8f1c14]"
+            >
+              Block User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 

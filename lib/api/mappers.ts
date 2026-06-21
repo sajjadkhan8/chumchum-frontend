@@ -547,6 +547,7 @@ interface BackendMessageResponse {
   type: string;
   content?: string;
   attachmentUrl?: string;
+  attachmentOriginalName?: string;
   isRead?: boolean;
   offerDealType?: string;
   offerAmount?: number;
@@ -581,6 +582,7 @@ export const mapMessage = (input: BackendMessageResponse): Message => ({
   content: input.content || '',
   type: (input.type || 'text').toLowerCase() as Message['type'],
   attachmentUrl: input.attachmentUrl,
+  attachmentOriginalName: input.attachmentOriginalName,
   offer: mapOfferFromMessage(input),
   isRead: Boolean(input.isRead),
   createdAt: safeDate(input.createdAt),
@@ -594,6 +596,8 @@ interface BackendConversationResponse {
   unreadCountBrand?: number;
   lastMessage?: string;
   updatedAt?: string;
+  blockedByMe?: boolean;
+  blockedByThem?: boolean;
 }
 
 export const mapConversation = (
@@ -662,6 +666,8 @@ export const mapConversation = (
         }
       : undefined,
     unreadCount,
+    blockedByMe: Boolean(input.blockedByMe),
+    blockedByThem: Boolean(input.blockedByThem),
     updatedAt: safeDate(input.updatedAt),
   };
 };

@@ -16,6 +16,8 @@ interface BackendConversation {
   creatorAvatarUrl?: string;
   brandName?: string;
   brandLogoUrl?: string;
+  blockedByMe?: boolean;
+  blockedByThem?: boolean;
 }
 
 interface BackendMessage {
@@ -26,6 +28,7 @@ interface BackendMessage {
   type: string;
   content?: string;
   attachmentUrl?: string;
+  attachmentOriginalName?: string;
   isRead?: boolean;
   offerDealType?: string;
   offerAmount?: number;
@@ -191,6 +194,14 @@ export const messagesService = {
 
   async markAsRead(conversationId: string): Promise<void> {
     await apiClient.patch(`/api/v1/conversations/${conversationId}/read`);
+  },
+
+  async clearChat(conversationId: string): Promise<void> {
+    await apiClient.post(`/api/v1/conversations/${conversationId}/clear`, {});
+  },
+
+  async blockUser(conversationId: string): Promise<void> {
+    await apiClient.post(`/api/v1/conversations/${conversationId}/block`, {});
   },
 
   async createQuickDeal(payload: {

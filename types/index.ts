@@ -348,6 +348,7 @@ export interface Message {
   content: string;
   type: 'text' | 'offer' | 'attachment' | 'system';
   attachmentUrl?: string;
+  attachmentOriginalName?: string;
   offer?: QuickDealOffer;
   isRead: boolean;
   createdAt: Date;
@@ -361,6 +362,8 @@ export interface Conversation {
   brand: Brand;
   lastMessage?: Message;
   unreadCount: number;
+  blockedByMe?: boolean;
+  blockedByThem?: boolean;
   updatedAt: Date;
 }
 
