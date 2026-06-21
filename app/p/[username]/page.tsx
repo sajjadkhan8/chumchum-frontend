@@ -217,14 +217,12 @@ export default function PublicCreatorProfilePage({
       {/* ── HERO ── */}
       <section className="relative">
         {/* Cover */}
-        <div className="relative h-52 overflow-hidden bg-gradient-to-br from-[#1e3d2e] via-[#2d6b4e] to-[#1a4a32] md:h-72">
+        <div className="relative h-48 overflow-hidden bg-gradient-to-br from-[#1e3d2e] via-[#2d6b4e] to-[#1a4a32] md:h-64">
           {creator.coverImage && (
-            <Image src={creator.coverImage} alt="" fill className="object-cover opacity-60" />
+            <Image src={creator.coverImage} alt="" fill className="object-cover opacity-70" />
           )}
-          {/* Ambient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0d2419]/80 via-transparent to-transparent" />
-          <div className="pointer-events-none absolute -right-20 -top-20 size-72 rounded-full bg-[#e3a52f]/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-10 -left-10 size-56 rounded-full bg-[#2d6b4e]/30 blur-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0d2419]/70 via-[#0d2419]/20 to-[#0d2419]/10" />
+          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#fbfaf5] to-transparent" />
 
           {/* Availability badge — top right of cover */}
           <div className="absolute right-4 top-4">
@@ -235,15 +233,16 @@ export default function PublicCreatorProfilePage({
           </div>
         </div>
 
-        {/* Profile card floating over cover */}
+        {/* Profile identity dock */}
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="relative -mt-16 md:-mt-20">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="relative -mt-9 overflow-visible rounded-[28px] border border-[#dce8e2] bg-white shadow-[0_18px_55px_rgba(30,61,46,0.13)]">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-1.5 rounded-t-[28px] bg-gradient-to-r from-[#2d6b4e] via-[#e6aa38] to-[#fbfaf5]" />
+            <div className="flex flex-col gap-4 px-4 pb-4 pt-20 sm:flex-row sm:items-end sm:justify-between sm:px-5 sm:py-5 sm:pl-44">
 
               {/* Avatar + name */}
-              <div className="flex min-w-0 items-end gap-3 sm:gap-4">
-                <div className="relative shrink-0">
-                  <div className="rounded-full border-4 border-[#fbfaf5] bg-[#fbfaf5] shadow-xl">
+              <div className="min-w-0">
+                <div className="absolute -top-14 left-5 shrink-0 md:-top-16">
+                  <div className="rounded-full border-[6px] border-white bg-white shadow-[0_18px_36px_rgba(30,61,46,0.20)]">
                     <Avatar className="size-28 md:size-36">
                       <AvatarImage src={creator.avatar} alt={creator.name} />
                       <AvatarFallback className="bg-[#1e3d2e] text-2xl font-extrabold text-white">
@@ -258,56 +257,54 @@ export default function PublicCreatorProfilePage({
                   )}
                 </div>
 
-                <div className="relative mb-1 min-w-0 flex-1 overflow-hidden rounded-2xl border border-white/80 bg-[#fbfaf5]/95 px-4 py-3 shadow-[0_18px_42px_rgba(30,61,46,0.16)] backdrop-blur-md sm:px-5">
-                  <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#2d6b4e] via-[#e6aa38] to-transparent" />
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="break-words text-2xl font-extrabold tracking-tight text-[#123021] md:text-3xl">
-                      {creator.name}
-                    </h1>
-                    {creator.isTrending && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#e3a52f]/15 px-2.5 py-0.5 text-[11px] font-bold text-[#b77a12]">
-                        <TrendingUp className="size-3" /> Trending
-                      </span>
-                    )}
-                    {creator.isFastResponder && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-0.5 text-[11px] font-bold text-sky-600 border border-sky-100">
-                        <Zap className="size-3" /> Fast
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-0.5 text-[13px] font-semibold text-[#557063]">@{creator.username}</p>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[13px] text-[#496159]">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="size-3.5" /> {creator.city}
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="break-words text-3xl font-black tracking-tight text-[#123021] md:text-4xl">
+                    {creator.name}
+                  </h1>
+                  {creator.isTrending && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1cd] px-2.5 py-1 text-[11px] font-extrabold text-[#8b5e12] ring-1 ring-[#efcf83]">
+                      <TrendingUp className="size-3" /> Trending
                     </span>
-                    {creator.rating > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Star className="size-3.5 fill-[#e3a52f] text-[#e3a52f]" />
-                        <span className="font-bold text-[#1e3d2e]">{creator.rating.toFixed(1)}</span>
-                        <span className="text-[#7a8f82]">({creator.totalReviews})</span>
-                      </span>
-                    )}
-                    {creator.website && (
-                      <a href={creator.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[#2d6b4e] hover:underline">
-                        <Globe className="size-3.5" /> Website
-                      </a>
-                    )}
-                  </div>
-                  {/* Deal type chips */}
-                  {(creator.dealTypes.length > 0 || creator.acceptsBarter || creator.acceptsHybridDeals) && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {creator.dealTypes.includes("paid") && (
-                        <span className="rounded-full bg-[#e4f1e8] px-2.5 py-0.5 text-[10px] font-bold text-[#1e5c3e]">Paid</span>
-                      )}
-                      {(creator.dealTypes.includes("barter") || creator.acceptsBarter) && (
-                        <span className="rounded-full bg-[#fdf4e1] px-2.5 py-0.5 text-[10px] font-bold text-[#9a6b00]">Barter</span>
-                      )}
-                      {(creator.dealTypes.includes("hybrid") || creator.acceptsHybridDeals) && (
-                        <span className="rounded-full border border-sky-100 bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold text-sky-600">Hybrid</span>
-                      )}
-                    </div>
+                  )}
+                  {creator.isFastResponder && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-sky-100 bg-sky-50 px-2.5 py-1 text-[11px] font-extrabold text-sky-600">
+                      <Zap className="size-3" /> Fast
+                    </span>
                   )}
                 </div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[13px] font-semibold text-[#557063]">
+                  <span>@{creator.username}</span>
+                  <span className="hidden h-1 w-1 rounded-full bg-[#bdd0c4] sm:inline-block" />
+                  <span className="flex items-center gap-1">
+                    <MapPin className="size-3.5" /> {creator.city}
+                  </span>
+                  {creator.rating > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Star className="size-3.5 fill-[#e3a52f] text-[#e3a52f]" />
+                      <span className="font-extrabold text-[#1e3d2e]">{creator.rating.toFixed(1)}</span>
+                      <span className="text-[#7a8f82]">({creator.totalReviews})</span>
+                    </span>
+                  )}
+                  {creator.website && (
+                    <a href={creator.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[#2d6b4e] hover:underline">
+                      <Globe className="size-3.5" /> Website
+                    </a>
+                  )}
+                </div>
+                {/* Deal type chips */}
+                {(creator.dealTypes.length > 0 || creator.acceptsBarter || creator.acceptsHybridDeals) && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {creator.dealTypes.includes("paid") && (
+                      <span className="rounded-full bg-[#e4f1e8] px-3 py-1 text-[11px] font-extrabold text-[#1e5c3e]">Paid</span>
+                    )}
+                    {(creator.dealTypes.includes("barter") || creator.acceptsBarter) && (
+                      <span className="rounded-full bg-[#fdf4e1] px-3 py-1 text-[11px] font-extrabold text-[#9a6b00]">Barter</span>
+                    )}
+                    {(creator.dealTypes.includes("hybrid") || creator.acceptsHybridDeals) && (
+                      <span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-[11px] font-extrabold text-sky-600">Hybrid</span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Action buttons */}
