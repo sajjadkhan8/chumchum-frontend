@@ -6,20 +6,15 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  Camera,
   Check,
   DollarSign,
   Gift,
-  Instagram,
   Lock,
-  MessageCircle,
-  Music2,
   Plus,
   Sparkles,
   Trash2,
   Upload,
   X,
-  Youtube,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -40,6 +35,7 @@ import { creatorsService } from "@/services/creators.service";
 import { useCreatorPackagesStore } from "@/store/creator-packages-store";
 import { useAuthStore } from "@/store/auth-store";
 import { uploadsService } from "@/services/uploads.service";
+import { platformMeta } from "@/components/platform-icons";
 
 const DRAFT_KEY = "creator-package-draft-v3";
 
@@ -52,11 +48,11 @@ const steps = [
 ];
 
 const platforms = [
-  { id: "instagram", label: "Instagram", icon: Instagram },
-  { id: "youtube", label: "YouTube", icon: Youtube },
-  { id: "tiktok", label: "TikTok", icon: Music2 },
-  { id: "facebook", label: "Facebook", icon: MessageCircle },
-  { id: "snapchat", label: "Snapchat", icon: Camera },
+  { id: "instagram", label: platformMeta.instagram.label, icon: platformMeta.instagram.icon },
+  { id: "youtube", label: platformMeta.youtube.label, icon: platformMeta.youtube.icon },
+  { id: "tiktok", label: platformMeta.tiktok.label, icon: platformMeta.tiktok.icon },
+  { id: "facebook", label: platformMeta.facebook.label, icon: platformMeta.facebook.icon },
+  { id: "snapchat", label: platformMeta.snapchat.label, icon: platformMeta.snapchat.icon },
 ];
 
 const platformOrder: Platform[] = ["instagram", "youtube", "tiktok", "facebook", "snapchat"];
@@ -1962,7 +1958,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                 </div>
                 {formData.thumbnailUrl && (
                   <div className="mt-2 overflow-hidden rounded-xl border border-[#d1ddd6]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={formData.thumbnailUrl}
                       alt="Thumbnail preview"

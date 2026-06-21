@@ -18,12 +18,9 @@ import {
   GripVertical,
   Globe,
   Info,
-  Instagram,
   Image as ImageIcon,
   Lock,
   Link as LinkIcon,
-  MessageCircle,
-  Music2,
   Package,
   Plus,
   Save,
@@ -32,7 +29,6 @@ import {
   Upload,
   Video,
   XCircle,
-  Youtube,
 } from "lucide-react";
 import { Reorder } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
@@ -53,6 +49,7 @@ import { calculateCreatorAmbassadorMetrics, AMBASSADOR_TIERS } from "@/lib/ambas
 import type { Creator, CreatorAmbassadorMetrics, DealType, BarterCategory, Platform, VerificationSource } from "@/types";
 import { toast } from "sonner";
 import { ShareProfileModal } from "@/components/share-profile-modal";
+import { getPlatformIcon } from "@/components/platform-icons";
 
 // ─── Design-system constants ─────────────────────────────────────────────────
 
@@ -952,14 +949,6 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       const message = error instanceof Error ? error.message : "Could not remove portfolio item";
       toast.error(message);
     }
-  };
-
-  const platformIcons: Record<string, React.ElementType> = {
-    instagram: Instagram,
-    youtube: Youtube,
-    tiktok: Music2,
-    facebook: MessageCircle,
-    snapchat: Camera,
   };
 
   const updateSocialAccount = (index: number, updates: Partial<EditableSocialAccount>) => {
@@ -1926,7 +1915,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                 <div className="grid gap-3 sm:grid-cols-3">
                   {platformOrder.map((platform) => {
                     const label = platformLabels[platform];
-                    const Icon = platformIcons[platform] || LinkIcon;
+                    const Icon = getPlatformIcon(platform) || LinkIcon;
                     const alreadyConnected = socialAccounts.some(
                       (a) => a.platform === platform && a.verifiedBy === 'API_CONNECTED',
                     );
@@ -1955,7 +1944,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                 <PanelHeader eyebrow="Social" title="Connected Accounts" />
                 <div className="space-y-4">
                   {socialAccounts.map((account, index) => {
-                    const Icon = platformIcons[account.platform] || LinkIcon;
+                    const Icon = getPlatformIcon(account.platform) || LinkIcon;
                     return (
                       <div
                         key={`${account.platform}-${index}`}

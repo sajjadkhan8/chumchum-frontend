@@ -20,10 +20,6 @@ import {
   Package,
   Sparkles,
   TrendingUp,
-  Instagram,
-  Youtube,
-  Music2,
-  Camera,
   ShieldCheck,
   Wallet,
 } from "lucide-react";
@@ -43,15 +39,8 @@ import { useAuthStore } from "@/store/auth-store";
 import { creatorsService } from "@/services/creators.service";
 import { packagesService } from "@/services/packages.service";
 import { reviewsService } from "@/services/reviews.service";
+import { getPlatformIcon } from "@/components/platform-icons";
 import type { Creator, CreatorPackage, Review } from "@/types";
-
-const platformIcons: Record<string, React.ElementType> = {
-  instagram: Instagram,
-  youtube: Youtube,
-  tiktok: Music2,
-  facebook: MessageCircle,
-  snapchat: Camera,
-};
 
 const PROFILE_FALLBACK_IMAGE = "/creator-card-fallback.svg";
 
@@ -423,7 +412,7 @@ export default function CreatorProfilePage({
               <h2 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">Platforms</h2>
               <div className="mt-4 space-y-2.5">
                 {creator.platforms.map((platform) => {
-                  const Icon = platformIcons[platform.platform] || Users;
+                  const Icon = getPlatformIcon(platform.platform);
                   return (
                     <div key={platform.platform} className="rounded-xl border border-[#edf1ed] bg-[#fbfaf5] p-3">
                       <div className="flex items-start justify-between gap-3">

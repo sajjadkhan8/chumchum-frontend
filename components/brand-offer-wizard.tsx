@@ -1,10 +1,10 @@
 'use client';
 
-import { type ComponentType, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, ArrowLeft, ArrowRight, Camera, Check, Instagram, Lock, MessageCircle, Music2, Plus, Sparkles, Trash2, Upload, X, Youtube } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, Check, Lock, Plus, Sparkles, Trash2, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import { uploadsService } from '@/services/uploads.service';
 import type { BrandCampaign } from '@/types';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { platformMeta as sharedPlatformMeta } from '@/components/platform-icons';
 
 const DRAFT_KEY = 'brand-offer-wizard-draft-v1';
 const steps = ['Basics', 'Deliverables', 'Budget & Payment', 'Control', 'References & Legal', 'Publish'];
@@ -47,13 +48,7 @@ const LOCATION_SCOPE_OPTIONS = [
 ] as const;
 
 const platformOptions = ['instagram', 'youtube', 'tiktok', 'facebook', 'snapchat'] as const;
-const platformMeta: Record<(typeof platformOptions)[number], { label: string; icon: ComponentType<{ className?: string }> }> = {
-  instagram: { label: 'Instagram', icon: Instagram },
-  youtube: { label: 'YouTube', icon: Youtube },
-  tiktok: { label: 'TikTok', icon: Music2 },
-  facebook: { label: 'Facebook', icon: MessageCircle },
-  snapchat: { label: 'Snapchat', icon: Camera },
-};
+const platformMeta = sharedPlatformMeta;
 
 interface ServiceOption {
   key: string;
@@ -723,8 +718,6 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
      }
      return [];
    };
-
-  const canContinue = getMissingFields(step).length === 0;
 
   const maxUnlockedStep = (() => {
     let unlocked = 1;

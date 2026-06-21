@@ -16,10 +16,6 @@ import {
   Play,
   ExternalLink,
   TrendingUp,
-  Instagram,
-  Youtube,
-  Music2,
-  Facebook,
   Zap,
   ArrowRight,
   Users,
@@ -37,17 +33,11 @@ import { useAuthStore } from "@/store/auth-store";
 import { creatorsService } from "@/services/creators.service";
 import { packagesService } from "@/services/packages.service";
 import { reviewsService } from "@/services/reviews.service";
+import { getPlatformMeta } from "@/components/platform-icons";
 import type { Creator, CreatorPackage, Review } from "@/types";
 import { cn } from "@/lib/utils";
 
 /* ─── helpers ─── */
-const platformMeta: Record<string, { icon: React.ElementType; color: string; label: string }> = {
-  instagram: { icon: Instagram, color: "#e1306c", label: "Instagram" },
-  youtube:   { icon: Youtube,   color: "#ff0000", label: "YouTube"   },
-  tiktok:    { icon: Music2,    color: "#010101", label: "TikTok"    },
-  facebook:  { icon: Facebook,  color: "#1877f2", label: "Facebook"  },
-};
-
 const tabs = ["packages", "portfolio", "reviews"] as const;
 type Tab = typeof tabs[number];
 
@@ -398,7 +388,7 @@ export default function PublicCreatorProfilePage({
                 <SectionHeader eyebrow="Social" title="Platforms" />
                 <div className="divide-y divide-[#f4f6f4]">
                   {creator.platforms.map((p) => {
-                    const meta = platformMeta[p.platform];
+                    const meta = getPlatformMeta(p.platform);
                     const Icon = meta?.icon ?? Users;
                     const trustInfo = p.verified_by ? verifiedByLabel[p.verified_by] : verifiedByLabel.SELF;
                   return (
