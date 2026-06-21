@@ -699,7 +699,7 @@ function ExplorePageContent() {
                           if (score < 20) return null;
                           return (
                             <span
-                              className={`absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold shadow-sm ${
+                              className={`absolute -right-1 -top-2 z-10 inline-flex items-center gap-1 rounded-full border border-white px-2 py-0.5 text-[10px] font-extrabold shadow-sm ${
                                 score >= 70
                                   ? 'bg-[#e7f0ea] text-[#185c39]'
                                   : score >= 40
@@ -892,7 +892,7 @@ function ExplorePageContent() {
                         if (score < 20) return null;
                         return (
                           <span
-                            className={`absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold shadow-sm ${
+                            className={`absolute -right-1 -top-2 z-10 inline-flex items-center gap-1 rounded-full border border-white px-2 py-0.5 text-[10px] font-extrabold shadow-sm ${
                               score >= 70
                                 ? 'bg-[#e7f0ea] text-[#185c39]'
                                 : score >= 40

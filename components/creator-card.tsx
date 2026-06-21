@@ -77,182 +77,171 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -4 }}
       transition={{ duration: 0.2 }}
     >
       <Card
         className={cn(
-          'group overflow-hidden rounded-2xl border-border/50 shadow-sm transition-shadow hover:shadow-lg',
-          variant === 'horizontal' && 'md:flex',
+          'group relative overflow-hidden rounded-2xl border-2 border-[#dce8e2] bg-white transition-colors duration-200 hover:border-[#2d6b4e]/45',
+          variant === 'horizontal' && 'md:max-w-none',
           className
         )}
+        style={{ boxShadow: '0 2px 8px rgba(30,61,46,0.07), 0 1px 2px rgba(30,61,46,0.04)' }}
       >
+        <div className="absolute left-0 top-0 h-[3px] w-full rounded-t-2xl bg-gradient-to-r from-[#2d6b4e]/55 via-[#e6aa38]/50 to-transparent" />
         <CardContent className="p-0">
-          {/* Image Section */}
-          <div
-            className={cn(
-              'relative aspect-[16/11] overflow-hidden sm:aspect-[4/3]',
-              variant === 'horizontal' && 'md:h-full md:w-56 md:shrink-0'
-            )}
-          >
+          <div className="relative h-20 overflow-hidden bg-[#e8f0ec] sm:h-24">
             <Image
               src={imageSrc}
-              alt={creator.name}
+              alt=""
               fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              className="object-cover"
+              sizes="(min-width: 1280px) 320px, (min-width: 640px) 50vw, 100vw"
               onError={() => {
                 setImageSrc((current) => {
+                  if (current !== creator.coverImage && creator.coverImage) return creator.coverImage;
                   if (current !== creator.avatar && creator.avatar) return creator.avatar;
                   return CREATOR_CARD_FALLBACK_IMAGE;
                 });
               }}
             />
-            
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
+            <div className="absolute inset-0 bg-gradient-to-r from-[#1e3d2e]/72 via-[#1e3d2e]/18 to-transparent" />
             {canSaveCreator && (
               <Button
                 type="button"
                 size="icon"
-                variant="secondary"
-                className="absolute right-2.5 top-2.5 z-10 h-9 w-9 rounded-full bg-background/90 shadow-sm backdrop-blur-sm hover:bg-background sm:right-3 sm:top-3"
+                variant="ghost"
+                className="absolute right-3 top-3 size-9 rounded-xl border border-white/50 bg-white/92 text-[#496159] shadow-sm hover:bg-white hover:text-[#1e3d2e]"
                 disabled={isSaving}
                 onClick={handleSaveToggle}
                 aria-label={isSaved ? 'Remove saved creator' : 'Save creator'}
               >
-                <Heart className={cn('h-4 w-4', isSaved && 'fill-destructive text-destructive')} />
+                <Heart className={cn('size-4', isSaved && 'fill-[#e6aa38] text-[#b77a12]')} />
               </Button>
             )}
-             
-            {/* Badges */}
-            <div className="absolute left-2.5 top-2.5 flex max-w-[calc(100%-3.5rem)] flex-wrap gap-1.5 sm:left-3 sm:top-3">
+          </div>
+          <div className={cn('p-4 sm:p-5', variant === 'compact' && 'p-4')}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <Avatar className="-mt-9 size-14 shrink-0 border-4 border-white bg-[#e8f0ec] shadow-sm">
+                  <AvatarImage src={creator.avatar || undefined} alt={creator.name} />
+                  <AvatarFallback className="bg-[#e8f0ec] text-sm font-extrabold text-[#2d6b4e]">
+                    {creator.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <h3 className="line-clamp-1 text-[15px] font-extrabold tracking-tight text-[#1e3d2e]">{creator.name}</h3>
+                  <div className="mt-1 flex min-w-0 items-center gap-1 text-[11px] font-semibold text-[#87938b]">
+                    <MapPin className="size-3.5 shrink-0 text-[#b77a12]" />
+                    <span className="truncate">{creator.city ?? 'Pakistan'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-start gap-2">
+                <span className="rounded-full bg-[#fdf8ec] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#b77a12]">
+                  Creator
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-1.5">
               <CreatorTrustBadge
                 level={creator.badgeLevel}
                 isVerified={creator.isVerified}
                 compact
-                className="border-sky-300 bg-white/95 text-sky-800 shadow-sm backdrop-blur"
+                className="border-sky-300 bg-white text-sky-800 shadow-sm"
               />
-
-              {/* Ambassador Badge (Gamified) */}
-              <div className="flex">
-                <CreatorAmbassadorBadge creator={creator} className="shadow-sm" />
-              </div>
-
+              <CreatorAmbassadorBadge creator={creator} className="shadow-sm" />
               {creator.isTrending && (
-                <Badge className="border border-green-500 bg-green-600 text-[11px] text-white shadow-sm backdrop-blur">
-                  <TrendingUp className="mr-1 h-3 w-3" />
+                <Badge className="rounded-full border border-[#d6eadf] bg-[#e8f0ec] px-2 py-0.5 text-[10px] font-extrabold text-[#2d6b4e] shadow-none">
+                  <TrendingUp className="mr-1 size-3" />
                   Trending
                 </Badge>
               )}
               {(creator.activeOrderCount ?? 0) >= 3 &&
                 creator.availabilityStatus !== 'UNAVAILABLE' &&
                 creator.availabilityStatus !== 'ON_VACATION' && (
-                  <Badge className="bg-amber-500/90 text-[11px] text-white backdrop-blur-sm">
-                    Limited availability
+                  <Badge className="rounded-full border border-[#efcf83] bg-[#fff1cd] px-2 py-0.5 text-[10px] font-extrabold text-[#8b5e12] shadow-none">
+                    Limited
                   </Badge>
                 )}
               {creator.dealTypes.includes('barter') && (
-                <Badge className="border border-amber-300 bg-amber-400 text-[11px] text-black shadow-sm backdrop-blur">
-                  <Gift className="mr-1 h-3 w-3" />
+                <Badge className="rounded-full border border-[#efcf83] bg-[#fff1cd] px-2 py-0.5 text-[10px] font-extrabold text-[#8b5e12] shadow-none">
+                  <Gift className="mr-1 size-3" />
                   Barter
                 </Badge>
               )}
               {creator.isFastResponder && (
-                <Badge className="border border-black/10 bg-white/95 text-[11px] text-black shadow-sm backdrop-blur">
-                  <Zap className="mr-1 h-3 w-3" />
+                <Badge className="rounded-full border border-[#dce8e2] bg-[#fbfaf5] px-2 py-0.5 text-[10px] font-extrabold text-[#496159] shadow-none">
+                  <Zap className="mr-1 size-3" />
                   Fast
                 </Badge>
               )}
             </div>
 
-            {/* Creator Info Overlay */}
-            <div className="absolute bottom-2.5 left-2.5 right-2.5 sm:bottom-3 sm:left-3 sm:right-3">
-              <div className="flex items-end justify-between">
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-9 w-9 border-2 border-white sm:h-10 sm:w-10">
-                    <AvatarImage src={creator.avatar} alt={creator.name} />
-                    <AvatarFallback>{creator.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                      <h3 className="line-clamp-1 text-sm font-semibold text-white sm:text-base">{creator.name}</h3>
-                    <div className="flex items-center gap-1 text-xs text-white/80">
-                      <MapPin className="h-3 w-3" />
-                      {creator.city ?? '—'}
-                    </div>
-                  </div>
-                </div>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <div className="rounded-xl border border-[#edf1ed] bg-[#fbfaf5] px-2.5 py-2">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-[#7a9a87]">Reach</p>
+                <p className="mt-1 truncate text-[13px] font-extrabold text-[#1e3d2e]">{formatFollowers(creator.totalFollowers)}</p>
               </div>
-            </div>
-          </div>
-
-          {/* Details Section */}
-          <div className={cn('space-y-3 p-3.5 sm:p-4', variant === 'compact' && 'space-y-2')}>
-            {/* Stats Row */}
-            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-              <div className="flex items-center gap-2.5">
-                {/* Platforms */}
-                <div className="flex items-center gap-1">
-                  {creator.platforms.slice(0, 3).map((platform) => {
-                    const Icon = platformIcons[platform.platform.toLowerCase()] ?? Camera;
-                    return (
-                      <div
-                        key={platform.platform}
-                        className="flex h-6 w-6 items-center justify-center rounded-full bg-muted"
-                        title={`${platform.platform}: ${formatFollowers(platform.followers)}`}
-                      >
-                        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                    );
-                  })}
-                </div>
-                <span className="text-xs font-medium sm:text-sm">{formatFollowers(creator.totalFollowers)}</span>
+              <div className="rounded-xl border border-[#edf1ed] bg-[#fbfaf5] px-2.5 py-2">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-[#7a9a87]">Rating</p>
+                <p className="mt-1 flex items-center gap-1 text-[13px] font-extrabold text-[#1e3d2e]">
+                  <Star className="size-3 fill-[#e6aa38] text-[#e6aa38]" />
+                  {creator.rating}
+                </p>
               </div>
-              
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-accent text-accent" />
-                <span className="font-medium">{creator.rating}</span>
-                <span className="text-xs text-muted-foreground sm:text-sm">({creator.totalReviews})</span>
+              <div className="rounded-xl border border-[#edf1ed] bg-[#fbfaf5] px-2.5 py-2">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-[#7a9a87]">Eng.</p>
+                <p className="mt-1 truncate text-[13px] font-extrabold text-[#1e3d2e]">{creator.avgEngagementRate}%</p>
               </div>
             </div>
 
-            {/* Categories */}
-            <div className="flex flex-wrap gap-1">
+            <div className="mt-3 flex flex-wrap gap-1.5">
               {creator.categories.slice(0, 3).map((category) => (
-                <Badge key={category} variant="secondary" className="rounded-full text-xs">
+                <span key={category} className="rounded-full bg-[#e8f0ec] px-2.5 py-1 text-[10px] font-bold text-[#2d6b4e]">
                   {category}
-                </Badge>
+                </span>
               ))}
             </div>
 
-            {/* Engagement & Response */}
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{creator.avgEngagementRate}% engagement</span>
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {creator.responseTime}
+            <div className="mt-3 flex items-center justify-between gap-3 text-[11px] font-semibold text-[#87938b]">
+              <div className="flex min-w-0 items-center gap-1.5">
+                <Clock className="size-3.5 shrink-0 text-[#b77a12]" />
+                <span className="truncate">{creator.responseTime}</span>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                {creator.platforms.slice(0, 4).map((platform) => {
+                  const Icon = platformIcons[platform.platform.toLowerCase()] ?? Camera;
+                  return (
+                    <span
+                      key={platform.platform}
+                      className="grid size-6 place-items-center rounded-lg bg-[#e8f0ec] text-[#2d6b4e]"
+                      title={`${platform.platform}: ${formatFollowers(platform.followers)}`}
+                    >
+                      <Icon className="size-3.5" />
+                    </span>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Pricing */}
-            <div className="flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
+            <div className="mt-4 flex flex-col gap-3 border-t border-[#edf1ed] pt-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 {creator.dealTypes.includes('paid') && creator.minPrice && (
-                  <p className="font-semibold text-foreground">
+                  <p className="truncate text-[14px] font-extrabold text-[#1e3d2e]">
                     From {formatPrice(creator.minPrice)}
                   </p>
                 )}
                 {creator.dealTypes.includes('barter') && !creator.minPrice && (
-                  <p className="font-semibold text-primary">
-                    <Gift className="mr-1 inline h-4 w-4" />
+                  <p className="truncate text-[14px] font-extrabold text-[#2d6b4e]">
                     Barter Available
                   </p>
                 )}
                 {creator.dealTypes.includes('barter') && creator.minPrice && (
-                  <p className="text-xs text-muted-foreground">
-                    <Gift className="mr-1 inline h-3 w-3" />
+                  <p className="mt-0.5 text-[10px] font-semibold text-[#87938b]">
                     Barter also available
                   </p>
                 )}
@@ -263,7 +252,7 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
                   <Button
                     size="sm"
                     variant="outline"
-                    className="min-h-10 rounded-full"
+                    className="min-h-9 rounded-xl border-[#d1ddd6] bg-white px-3 text-[12px] font-extrabold text-[#2d6b4e] hover:bg-[#e8f0ec]"
                     onClick={(e) => {
                       e.preventDefault();
                       onQuickDeal?.();
@@ -273,7 +262,7 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
                   </Button>
                 )}
                 <Link href={`/creator/${creator.username}`}>
-                  <Button size="sm" className="min-h-10 w-full rounded-full">
+                  <Button size="sm" className="min-h-9 w-full rounded-xl bg-[#2d6b4e] px-3 text-[12px] font-extrabold text-white hover:bg-[#1f5239]">
                     View
                   </Button>
                 </Link>

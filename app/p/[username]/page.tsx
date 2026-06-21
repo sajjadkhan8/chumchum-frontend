@@ -241,7 +241,7 @@ export default function PublicCreatorProfilePage({
             <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
 
               {/* Avatar + name */}
-              <div className="flex items-end gap-4">
+              <div className="flex min-w-0 items-end gap-3 sm:gap-4">
                 <div className="relative shrink-0">
                   <div className="rounded-full border-4 border-[#fbfaf5] bg-[#fbfaf5] shadow-xl">
                     <Avatar className="size-28 md:size-36">
@@ -258,9 +258,10 @@ export default function PublicCreatorProfilePage({
                   )}
                 </div>
 
-                <div className="mb-2 min-w-0">
+                <div className="relative mb-1 min-w-0 flex-1 overflow-hidden rounded-2xl border border-white/80 bg-[#fbfaf5]/95 px-4 py-3 shadow-[0_18px_42px_rgba(30,61,46,0.16)] backdrop-blur-md sm:px-5">
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#2d6b4e] via-[#e6aa38] to-transparent" />
                   <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="text-2xl font-extrabold tracking-tight text-[#1e3d2e] md:text-3xl">
+                    <h1 className="break-words text-2xl font-extrabold tracking-tight text-[#123021] md:text-3xl">
                       {creator.name}
                     </h1>
                     {creator.isTrending && (
@@ -274,7 +275,7 @@ export default function PublicCreatorProfilePage({
                       </span>
                     )}
                   </div>
-                  <p className="mt-0.5 text-[13px] text-[#7a8f82]">@{creator.username}</p>
+                  <p className="mt-0.5 text-[13px] font-semibold text-[#557063]">@{creator.username}</p>
                   <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[13px] text-[#496159]">
                     <span className="flex items-center gap-1">
                       <MapPin className="size-3.5" /> {creator.city}
