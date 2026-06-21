@@ -51,20 +51,6 @@ const platformMeta: Record<string, { icon: React.ElementType; color: string; lab
 const tabs = ["packages", "portfolio", "reviews"] as const;
 type Tab = typeof tabs[number];
 
-function StatPill({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className={cn(
-      "flex flex-col items-center gap-0.5 rounded-2xl px-4 py-3 text-center",
-      highlight
-        ? "bg-[#1e3d2e] text-white"
-        : "bg-white border border-[#e0e8e3] text-[#1e3d2e]"
-    )}>
-      <span className={cn("text-xl font-extrabold tracking-tight leading-none", highlight ? "text-white" : "text-[#1e3d2e]")}>{value}</span>
-      <span className={cn("text-[11px] font-medium mt-0.5", highlight ? "text-white/60" : "text-[#7a8f82]")}>{label}</span>
-    </div>
-  );
-}
-
 function SectionCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={cn("rounded-2xl border border-[#e0e8e3] bg-white shadow-sm", className)}>
@@ -347,19 +333,33 @@ export default function PublicCreatorProfilePage({
                 )}
               </div>
             </div>
+
+            <div className="border-t border-[#edf1ed]/65 bg-white/25 px-3 py-1.5 backdrop-blur-md sm:pl-44 sm:pr-4">
+              <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/60 bg-[#dce8e2]/45 md:grid-cols-4">
+                {[
+                  { label: "Followers", value: formatFollowers(totalFollowers), Icon: Users },
+                  { label: "Engagement", value: `${avgEng.toFixed(1)}%`, Icon: TrendingUp },
+                  { label: "Orders done", value: String(creator.completedDeals), Icon: Package },
+                  { label: "Completion", value: `${completionRate}%`, Icon: BadgeCheck },
+                ].map(({ label, value, Icon }) => (
+                  <div
+                    key={label}
+                    className="flex min-h-8 items-center justify-center gap-1.5 bg-white/45 px-2 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]"
+                  >
+                    <span className="grid size-5 shrink-0 place-items-center rounded-md bg-[#e8f0ec]/55 text-[#2d6b4e]/80">
+                      <Icon className="size-3" />
+                    </span>
+                    <span className="min-w-0 truncate text-[11px] font-bold leading-none text-[#6e8276]/80">
+                      <span className="mr-1 text-[13px] font-black text-[#123021]/85">{value}</span>
+                      {label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
-
-      {/* ── STATS STRIP ── */}
-      <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6">
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-          <StatPill label="Followers" value={formatFollowers(totalFollowers)} highlight />
-          <StatPill label="Engagement" value={`${avgEng.toFixed(1)}%`} />
-          <StatPill label="Orders done" value={String(creator.completedDeals)} />
-          <StatPill label="Completion" value={`${completionRate}%`} />
-        </div>
-      </div>
 
       {/* ── MAIN GRID ── */}
       <div className="mx-auto mt-6 max-w-5xl px-4 pb-16 sm:px-6">
