@@ -4,39 +4,41 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
+  ArrowRight,
   Heart,
   Share2,
   MessageCircle,
   Star,
   MapPin,
-  Calendar,
   Users,
   Play,
   ExternalLink,
-  Check,
   Clock,
   Package,
+  Sparkles,
   TrendingUp,
   Instagram,
   Youtube,
   Music2,
+  Camera,
+  ShieldCheck,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { PackageCard } from "@/components/package-card";
 import { ReviewCard } from "@/components/review-card";
 import { QuickDealModal } from "@/components/quick-deal-modal";
 import { PackageOrderModal } from "@/components/package-order-modal";
 import { CreatorTrustBadge, getCreatorTrustLabel } from "@/components/creator-trust-badge";
 import { ShareProfileModal } from "@/components/share-profile-modal";
-import { formatFollowers, formatPrice, getInitials } from "@/lib/utils";
+import { cn, formatFollowers, formatPrice, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { creatorsService } from "@/services/creators.service";
 import { packagesService } from "@/services/packages.service";
@@ -47,7 +49,32 @@ const platformIcons: Record<string, React.ElementType> = {
   instagram: Instagram,
   youtube: Youtube,
   tiktok: Music2,
+  facebook: MessageCircle,
+  snapchat: Camera,
 };
+
+const PROFILE_FALLBACK_IMAGE = "/creator-card-fallback.svg";
+
+function ProfileStat({ label, value, icon: Icon, dark = false }: { label: string; value: string; icon: React.ElementType; dark?: boolean }) {
+  return (
+    <div className={cn(
+      "rounded-2xl border p-4 shadow-sm",
+      dark
+        ? "border-white/10 bg-white/8 text-white"
+        : "border-[#e2e7e1] bg-white text-[#1e3d2e]"
+    )}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className={cn("text-[10px] font-bold uppercase tracking-widest", dark ? "text-white/40" : "text-[#87938b]")}>{label}</p>
+          <p className="mt-1 truncate text-lg font-extrabold tracking-tight">{value}</p>
+        </div>
+        <span className={cn("grid size-9 shrink-0 place-items-center rounded-xl", dark ? "bg-[#e6aa38] text-[#1e3d2e]" : "bg-[#e8f0ec] text-[#2d6b4e]")}>
+          <Icon className="size-4" />
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export default function CreatorProfilePage({
   params,
@@ -66,6 +93,7 @@ export default function CreatorProfilePage({
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingCreator, setIsSavingCreator] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [heroImageSrc, setHeroImageSrc] = useState(PROFILE_FALLBACK_IMAGE);
 
   useEffect(() => {
     const loadCreatorProfile = async () => {
@@ -96,6 +124,11 @@ export default function CreatorProfilePage({
 
     void loadCreatorProfile();
   }, [id]);
+
+  useEffect(() => {
+    if (!creator) return;
+    setHeroImageSrc(creator.coverImage || creator.contentPreviews[0]?.thumbnail || creator.avatar || PROFILE_FALLBACK_IMAGE);
+  }, [creator]);
 
   if (isLoading) {
     return (
@@ -189,333 +222,250 @@ export default function CreatorProfilePage({
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
-
-      {/* Hero Section */}
-      <section className="relative">
-        {/* Cover Image */}
-        <div className="relative h-48 bg-gradient-to-br from-primary/20 to-accent/20 md:h-64">
-          {creator.coverImage && (
-            <Image
-              src={creator.coverImage}
-              alt={`${creator.name} cover`}
-              fill
-              className="object-cover"
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+    <div className="min-h-screen bg-[#fbfaf5] pb-16">
+      <div className="mx-auto max-w-[1300px] px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <Button
+            variant="ghost"
+            className="h-9 rounded-xl px-2.5 text-[12px] font-extrabold text-[#496159] hover:bg-[#e8f0ec] hover:text-[#1e3d2e]"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="mr-1.5 size-4" />
+            Back
+          </Button>
+          <Link href="/brand/explore" className="hidden items-center gap-1 text-[12px] font-extrabold text-[#2d6b4e] hover:underline sm:inline-flex">
+            Explore creators <ArrowRight className="size-3.5" />
+          </Link>
         </div>
 
-        {/* Profile Info Overlay */}
-        <div className="container mx-auto px-4">
-          <div className="relative -mt-16 md:-mt-20">
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              {/* Avatar & Basic Info */}
-              <div className="flex items-end gap-4">
-                <div className="relative">
-                  <Avatar className="h-28 w-28 border-4 border-background md:h-36 md:w-36">
-                    <AvatarImage src={creator.avatar} alt={creator.name} />
-                    <AvatarFallback className="text-2xl">
-                      {getInitials(creator.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-                <div className="mb-2">
+        <section className="relative overflow-hidden rounded-2xl bg-[#1e3d2e] text-white shadow-[0_24px_80px_rgba(23,59,42,0.14)]">
+          <div className="pointer-events-none absolute inset-0" aria-hidden>
+            <Image
+              src={heroImageSrc}
+              alt=""
+              fill
+              className="object-cover opacity-22"
+              priority
+              onError={() => setHeroImageSrc(PROFILE_FALLBACK_IMAGE)}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#1e3d2e] via-[#1e3d2e]/92 to-[#1e3d2e]/54" />
+            <div className="absolute -right-20 -top-24 size-72 rounded-full bg-[#2d6b4e] opacity-45 blur-3xl" />
+            <div className="absolute -bottom-16 left-1/3 size-56 rounded-full bg-[#e6aa38] opacity-10 blur-3xl" />
+          </div>
+
+          <div className="relative grid gap-5 p-5 sm:p-6 lg:grid-cols-[1fr_320px] lg:p-7">
+            <div className="min-w-0">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                <Avatar className="size-24 shrink-0 border-4 border-white/12 bg-[#e8f0ec] sm:size-28">
+                  <AvatarImage src={creator.avatar} alt={creator.name} />
+                  <AvatarFallback className="bg-[#e8f0ec] text-2xl font-black text-[#2d6b4e]">
+                    {getInitials(creator.name)}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="text-2xl font-bold text-foreground md:text-3xl">
-                      {creator.name}
-                    </h1>
-                    <CreatorTrustBadge level={creator.badgeLevel} isVerified={creator.isVerified} />
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-[#f0c56e]">
+                      <Sparkles className="size-3" />
+                      Creator profile
+                    </span>
+                    <CreatorTrustBadge level={creator.badgeLevel} isVerified={creator.isVerified} compact className="border-sky-300 bg-white/95 text-sky-800" />
                     {creator.isTrending && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-accent text-accent-foreground"
-                      >
-                        <TrendingUp className="mr-1 h-3 w-3" />
+                      <Badge className="rounded-full border border-[#e6aa38]/50 bg-[#e6aa38] text-[10px] font-black text-[#1e3d2e]">
+                        <TrendingUp className="mr-1 size-3" />
                         Trending
                       </Badge>
                     )}
                     {(creator.activeOrderCount ?? 0) >= 3 &&
-                      creator.availabilityStatus !== 'UNAVAILABLE' &&
-                      creator.availabilityStatus !== 'ON_VACATION' && (
-                        <Badge className="bg-amber-500 text-white">
+                      creator.availabilityStatus !== "UNAVAILABLE" &&
+                      creator.availabilityStatus !== "ON_VACATION" && (
+                        <Badge className="rounded-full bg-white/12 text-[10px] font-black text-white">
                           Limited availability
                         </Badge>
                       )}
                   </div>
-                  <p className="text-muted-foreground">@{creator.username}</p>
-                  <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    {creator.city}
-                  </div>
-                </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-2">
-                {canHireCreator && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    disabled={isSavingCreator}
-                    onClick={handleSavedCreatorToggle}
-                  >
-                    <Heart
-                      className={`h-5 w-5 ${isSaved ? "fill-destructive text-destructive" : ""}`}
-                    />
-                  </Button>
-                )}
-                <Button variant="outline" size="icon" onClick={() => setShareOpen(true)}>
-                  <Share2 className="h-5 w-5" />
-                </Button>
-                {canHireCreator && (
-                  <>
-                    <Button variant="outline" asChild>
-                      <Link href={creatorMessageHref}>
-                        <MessageCircle className="mr-2 h-4 w-4" />
-                        Message
-                      </Link>
-                    </Button>
-                    <Button onClick={() => setQuickDealOpen(true)}>
-                      Quick Deal
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="container mx-auto mt-4 px-4">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Response Time</p>
-              <p className="font-semibold">{creator.responseTime}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Completion Rate</p>
-              <p className="font-semibold">{completionRate}%</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Repeat Clients</p>
-              <p className="font-semibold">{repeatClients}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Verification</p>
-              <p className="font-semibold">{getCreatorTrustLabel(creator.badgeLevel, creator.isVerified)}</p>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Main Content */}
-      <div className="container mx-auto mt-8 px-4">
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* Left Column - Bio & Stats */}
-          <div className="space-y-6 lg:col-span-1">
-            {/* Bio Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">About</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{creator.bio}</p>
-
-                {/* Categories */}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {creator.categories.map((category) => (
-                    <Badge key={category} variant="secondary">
-                      {category}
-                    </Badge>
-                  ))}
-                </div>
-
-                {/* Languages */}
-                <div className="mt-4">
-                  <p className="mb-2 text-sm font-medium text-foreground">
-                    Languages
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {creatorLanguages.map((lang) => (
-                      <Badge key={lang} variant="outline">
-                        {lang}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Stats Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Stats</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Total Followers</span>
-                  <span className="font-semibold">
-                    {formatFollowers(totalFollowers)}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Avg. Engagement</span>
-                  <span className="font-semibold">
-                    {avgEngagement.toFixed(1)}%
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Rating</span>
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-accent text-accent" />
-                    <span className="font-semibold">
-                      {creator.rating.toFixed(1)}
+                  <h1 className="mt-3 text-3xl font-black tracking-[-0.05em] text-white sm:text-4xl">
+                    {creator.name}
+                  </h1>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-semibold text-white/58">
+                    <span>@{creator.username}</span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <MapPin className="size-4 text-[#f0c56e]" />
+                      {creator.city || "Pakistan"}
                     </span>
-                    <span className="text-muted-foreground">
-                      ({creator.totalReviews})
-                    </span>
-                  </div>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">
-                    Completed Orders
-                  </span>
-                  <span className="font-semibold">
-                    {creator.completedDeals}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Response Time</span>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4 text-primary" />
-                    <span className="font-semibold">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock className="size-4 text-[#f0c56e]" />
                       {creator.responseTime}
                     </span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Rate Card */}
-            {(creator.rateCardReel || creator.rateCardStory || creator.rateCardPost || creator.rateCardVideo) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Starting Rates</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {creator.rateCardReel && (
-                    <>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Reel / Short Video</span>
-                        <span className="font-semibold">{formatPrice(creator.rateCardReel)}</span>
-                      </div>
-                      <Separator />
-                    </>
-                  )}
-                  {creator.rateCardStory && (
-                    <>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Story / Highlight</span>
-                        <span className="font-semibold">{formatPrice(creator.rateCardStory)}</span>
-                      </div>
-                      <Separator />
-                    </>
-                  )}
-                  {creator.rateCardPost && (
-                    <>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Static Post</span>
-                        <span className="font-semibold">{formatPrice(creator.rateCardPost)}</span>
-                      </div>
-                      <Separator />
-                    </>
-                  )}
-                  {creator.rateCardVideo && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">YouTube / Long Video</span>
-                      <span className="font-semibold">{formatPrice(creator.rateCardVideo)}</span>
+              <p className="mt-5 max-w-3xl text-sm font-medium leading-6 text-white/62">
+                {creator.bio || "Creator profile ready for brand collaborations, campaign packages, and custom quick deals."}
+              </p>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                {creator.categories.slice(0, 5).map((category) => (
+                  <span key={category} className="rounded-full border border-white/12 bg-white/8 px-3 py-1.5 text-[11px] font-bold text-white/78">
+                    {category}
+                  </span>
+                ))}
+                {creatorLanguages.slice(0, 3).map((lang) => (
+                  <span key={lang} className="rounded-full border border-[#e6aa38]/25 bg-[#e6aa38]/12 px-3 py-1.5 text-[11px] font-bold text-[#f0c56e]">
+                    {lang}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-white/8 p-4 backdrop-blur">
+              <div className="grid grid-cols-2 gap-3">
+                <ProfileStat dark label="Followers" value={formatFollowers(totalFollowers)} icon={Users} />
+                <ProfileStat dark label="Rating" value={creator.rating.toFixed(1)} icon={Star} />
+                <ProfileStat dark label="Completion" value={`${completionRate}%`} icon={ShieldCheck} />
+                <ProfileStat dark label="Repeat" value={`${repeatClients}`} icon={TrendingUp} />
+              </div>
+
+              <div className="grid grid-cols-[auto_auto_1fr] gap-2">
+                {canHireCreator && (
+                  <Button
+                    size="icon"
+                    disabled={isSavingCreator}
+                    className="rounded-xl border border-white/15 bg-white/10 text-white hover:bg-white/15"
+                    onClick={handleSavedCreatorToggle}
+                    aria-label={isSaved ? "Remove saved creator" : "Save creator"}
+                  >
+                    <Heart className={cn("size-4", isSaved && "fill-[#e6aa38] text-[#e6aa38]")} />
+                  </Button>
+                )}
+                <Button size="icon" className="rounded-xl border border-white/15 bg-white/10 text-white hover:bg-white/15" onClick={() => setShareOpen(true)} aria-label="Share profile">
+                  <Share2 className="size-4" />
+                </Button>
+                {canHireCreator && (
+                  <Button className="rounded-xl bg-[#e6aa38] font-extrabold text-[#1e3d2e] hover:bg-[#f0bd58]" onClick={() => setQuickDealOpen(true)}>
+                    Quick Deal
+                  </Button>
+                )}
+              </div>
+              {canHireCreator && (
+                <Button asChild variant="outline" className="rounded-xl border-white/15 bg-white/8 font-extrabold text-white hover:bg-white/12 hover:text-white">
+                  <Link href={creatorMessageHref}>
+                    <MessageCircle className="mr-2 size-4" />
+                    Message first
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-4 grid grid-cols-2 gap-3 xl:grid-cols-4" aria-label="Creator metrics">
+          <ProfileStat label="Response Time" value={creator.responseTime} icon={Clock} />
+          <ProfileStat label="Engagement" value={`${avgEngagement.toFixed(1)}%`} icon={TrendingUp} />
+          <ProfileStat label="Completed Deals" value={String(creator.completedDeals)} icon={Package} />
+          <ProfileStat label="Verification" value={getCreatorTrustLabel(creator.badgeLevel, creator.isVerified)} icon={ShieldCheck} />
+        </section>
+
+        <div className="mt-5 grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
+          <aside className="space-y-4">
+            <section className="rounded-2xl border border-[#e2e7e1] bg-white p-5 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Creator fit</p>
+              <h2 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">Profile Snapshot</h2>
+              <div className="mt-4 space-y-3">
+                {[
+                  { label: "Total followers", value: formatFollowers(totalFollowers), Icon: Users },
+                  { label: "Avg engagement", value: `${avgEngagement.toFixed(1)}%`, Icon: TrendingUp },
+                  { label: "Reviews", value: `${creator.totalReviews}`, Icon: Star },
+                  { label: "Response time", value: creator.responseTime, Icon: Clock },
+                ].map(({ label, value, Icon }) => (
+                  <div key={label} className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#e8f0ec] text-[#2d6b4e]">
+                        <Icon className="size-4" />
+                      </span>
+                      <span className="text-[12px] font-semibold text-[#496159]">{label}</span>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                    <span className="truncate text-[13px] font-extrabold text-[#1e3d2e]">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {(creator.rateCardReel || creator.rateCardStory || creator.rateCardPost || creator.rateCardVideo) && (
+              <section className="rounded-2xl border border-[#e2e7e1] bg-white p-5 shadow-sm">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Rates</p>
+                    <h2 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">Starting Rates</h2>
+                  </div>
+                  <Wallet className="size-4 text-[#b77a12]" />
+                </div>
+                <div className="space-y-2">
+                  {[
+                    ["Reel / Short Video", creator.rateCardReel],
+                    ["Story / Highlight", creator.rateCardStory],
+                    ["Static Post", creator.rateCardPost],
+                    ["YouTube / Long Video", creator.rateCardVideo],
+                  ].filter(([, value]) => Boolean(value)).map(([label, value]) => (
+                    <div key={String(label)} className="flex items-center justify-between gap-3 rounded-xl border border-[#edf1ed] bg-[#fbfaf5] px-3 py-2">
+                      <span className="text-[12px] font-semibold text-[#496159]">{label}</span>
+                      <span className="text-[13px] font-extrabold text-[#1e3d2e]">{formatPrice(Number(value))}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
             )}
 
-            {/* Platforms Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Platforms</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
+            <section className="rounded-2xl border border-[#e2e7e1] bg-white p-5 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Channels</p>
+              <h2 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">Platforms</h2>
+              <div className="mt-4 space-y-2.5">
                 {creator.platforms.map((platform) => {
                   const Icon = platformIcons[platform.platform] || Users;
                   return (
-                    <div
-                      key={platform.platform}
-                      className="flex items-center justify-between rounded-lg border border-border/50 p-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                          <Icon className="h-5 w-5" />
+                    <div key={platform.platform} className="rounded-xl border border-[#edf1ed] bg-[#fbfaf5] p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#e8f0ec] text-[#2d6b4e]">
+                            <Icon className="size-4" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-extrabold capitalize text-[#1e3d2e]">{platform.platform}</p>
+                            <p className="truncate text-[11px] font-medium text-[#87938b]">@{platform.username}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium capitalize">
-                            {platform.platform}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            @{platform.username}
-                          </p>
+                        <div className="text-right">
+                          <p className="text-[13px] font-extrabold text-[#1e3d2e]">{formatFollowers(platform.followers)}</p>
+                          <p className="text-[11px] font-bold text-[#2d6b4e]">{platform.engagementRate}% eng.</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          {formatFollowers(platform.followers)}
+                      {platform.verified_by && (
+                        <p className="mt-2 text-[10px] font-bold text-[#87938b]">
+                          {platform.verified_by === "SELF" ? "Self-reported" : platform.verified_by === "PLATFORM_REVIEWED" ? "Platform reviewed" : "API verified"}
                         </p>
-                        <p className="text-sm text-primary">
-                          {platform.engagementRate}% eng.
-                        </p>
-                        {platform.verified_by === 'SELF' && (
-                          <span className="text-xs text-muted-foreground">(self-reported)</span>
-                        )}
-                        {platform.verified_by === 'PLATFORM_REVIEWED' && (
-                          <span className="text-xs text-green-600">✓ verified</span>
-                        )}
-                        {platform.verified_by === 'API_CONNECTED' && (
-                          <span className="text-xs text-blue-600">✓ API verified</span>
-                        )}
-                      </div>
+                      )}
                     </div>
                   );
                 })}
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </section>
+          </aside>
 
-          {/* Right Column - Tabs Content */}
-          <div className="lg:col-span-2">
+          <main className="min-w-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="mb-6 w-full justify-start">
-                <TabsTrigger value="packages" className="flex-1 md:flex-none">
-                  <Package className="mr-2 h-4 w-4" />
+              <TabsList className="mb-4 h-auto w-full justify-start rounded-2xl border border-[#e2e7e1] bg-white p-1 shadow-sm">
+                <TabsTrigger value="packages" className="flex-1 rounded-xl data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white md:flex-none">
+                  <Package className="mr-2 size-4" />
                   Packages
                 </TabsTrigger>
-                <TabsTrigger value="portfolio" className="flex-1 md:flex-none">
-                  <Play className="mr-2 h-4 w-4" />
+                <TabsTrigger value="portfolio" className="flex-1 rounded-xl data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white md:flex-none">
+                  <Play className="mr-2 size-4" />
                   Portfolio
                 </TabsTrigger>
-                <TabsTrigger value="reviews" className="flex-1 md:flex-none">
-                  <Star className="mr-2 h-4 w-4" />
+                <TabsTrigger value="reviews" className="flex-1 rounded-xl data-[state=active]:bg-[#2d6b4e] data-[state=active]:text-white md:flex-none">
+                  <Star className="mr-2 size-4" />
                   Reviews
                 </TabsTrigger>
               </TabsList>
@@ -524,8 +474,9 @@ export default function CreatorProfilePage({
               <TabsContent value="packages" className="space-y-4">
                 {creatorPackages.length > 0 ? (
                   <>
-                    <div className="space-y-3">
-                      <h3 className="text-lg font-semibold">Featured Packages</h3>
+                    <div className="space-y-3 rounded-2xl border border-[#e2e7e1] bg-white p-4 shadow-sm">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Priority offer</p>
+                      <h3 className="text-[15px] font-extrabold text-[#1e3d2e]">Featured Packages</h3>
                       {(featuredPackages.length > 0 ? featuredPackages : creatorPackages.slice(0, 2)).map((pkg) => (
                         <PackageCard
                           key={`featured-${pkg.id}`}
@@ -535,8 +486,9 @@ export default function CreatorProfilePage({
                       ))}
                     </div>
 
-                    <div className="space-y-3">
-                      <h3 className="text-lg font-semibold">Trending Packages</h3>
+                    <div className="space-y-3 rounded-2xl border border-[#e2e7e1] bg-white p-4 shadow-sm">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Most active</p>
+                      <h3 className="text-[15px] font-extrabold text-[#1e3d2e]">Trending Packages</h3>
                       {(trendingPackages.length > 0 ? trendingPackages : creatorPackages.slice(0, 2)).map((pkg) => (
                         <PackageCard
                           key={`trending-${pkg.id}`}
@@ -546,8 +498,9 @@ export default function CreatorProfilePage({
                       ))}
                     </div>
 
-                    <div className="space-y-3">
-                      <h3 className="text-lg font-semibold">Barter Friendly Packages</h3>
+                    <div className="space-y-3 rounded-2xl border border-[#e2e7e1] bg-white p-4 shadow-sm">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Flexible deal type</p>
+                      <h3 className="text-[15px] font-extrabold text-[#1e3d2e]">Barter Friendly Packages</h3>
                       {barterFriendlyPackages.length > 0 ? (
                         barterFriendlyPackages.map((pkg) => (
                           <PackageCard
@@ -557,16 +510,17 @@ export default function CreatorProfilePage({
                           />
                         ))
                       ) : (
-                        <Card>
-                          <CardContent className="py-6 text-sm text-muted-foreground">
+                        <Card className="rounded-2xl border-[#edf1ed] bg-[#fbfaf5]">
+                          <CardContent className="py-6 text-sm font-semibold text-[#647168]">
                             No barter-focused campaigns yet.
                           </CardContent>
                         </Card>
                       )}
                     </div>
 
-                    <div className="space-y-3">
-                      <h3 className="text-lg font-semibold">Best Performing Packages</h3>
+                    <div className="space-y-3 rounded-2xl border border-[#e2e7e1] bg-white p-4 shadow-sm">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Proven delivery</p>
+                      <h3 className="text-[15px] font-extrabold text-[#1e3d2e]">Best Performing Packages</h3>
                       {bestPerformingPackages.map((pkg) => (
                         <PackageCard
                           key={`best-${pkg.id}`}
@@ -577,19 +531,21 @@ export default function CreatorProfilePage({
                     </div>
                   </>
                 ) : (
-                  <Card>
+                  <Card className="rounded-2xl border-[#e2e7e1] bg-white shadow-sm">
                     <CardContent className="flex flex-col items-center justify-center py-12">
-                      <Package className="mb-4 h-12 w-12 text-muted-foreground" />
-                      <h3 className="mb-2 text-lg font-semibold">
+                      <span className="mb-4 grid size-12 place-items-center rounded-2xl bg-[#e8f0ec]">
+                        <Package className="size-5 text-[#2d6b4e]" />
+                      </span>
+                      <h3 className="mb-2 text-lg font-extrabold text-[#1e3d2e]">
                         No packages available
                       </h3>
-                      <p className="text-center text-muted-foreground">
+                      <p className="text-center text-sm font-medium text-[#647168]">
                         This creator hasn&apos;t set up any packages yet.
                         <br />
                         Use Quick Deal to send a custom offer.
                       </p>
                       <Button
-                        className="mt-4"
+                        className="mt-4 rounded-xl bg-[#2d6b4e] font-extrabold text-white hover:bg-[#1f5239]"
                         onClick={() => setQuickDealOpen(true)}
                       >
                         Send Quick Deal
@@ -610,7 +566,7 @@ export default function CreatorProfilePage({
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
                       <a href={item.url} target="_blank" rel="noreferrer" className="block">
-                        <Card className="group overflow-hidden transition-shadow hover:shadow-md">
+                        <Card className="group overflow-hidden rounded-2xl border-[#e2e7e1] bg-white shadow-sm transition-shadow hover:shadow-md">
                           <div className="relative aspect-[4/3]">
                             <Image
                               src={item.thumbnail}
@@ -642,13 +598,15 @@ export default function CreatorProfilePage({
                     </motion.div>
                   )) : (
                     <div className="col-span-full">
-                      <Card>
+                      <Card className="rounded-2xl border-[#e2e7e1] bg-white shadow-sm">
                         <CardContent className="flex flex-col items-center justify-center py-12">
-                          <Play className="mb-4 h-12 w-12 text-muted-foreground" />
-                          <h3 className="mb-2 text-lg font-semibold">
+                          <span className="mb-4 grid size-12 place-items-center rounded-2xl bg-[#e8f0ec]">
+                            <Play className="size-5 text-[#2d6b4e]" />
+                          </span>
+                          <h3 className="mb-2 text-lg font-extrabold text-[#1e3d2e]">
                             No portfolio items
                           </h3>
-                          <p className="text-center text-muted-foreground">
+                          <p className="text-center text-sm font-medium text-[#647168]">
                             This creator hasn&apos;t added any portfolio items
                             yet.
                           </p>
@@ -662,16 +620,16 @@ export default function CreatorProfilePage({
               {/* Reviews Tab */}
               <TabsContent value="reviews" className="space-y-4">
                 {/* Rating Summary */}
-                <Card>
+                <Card className="rounded-2xl border-[#e2e7e1] bg-white shadow-sm">
                   <CardContent className="flex flex-col items-center gap-6 py-6 md:flex-row md:justify-between">
                     <div className="text-center md:text-left">
                       <div className="flex items-center justify-center gap-2 md:justify-start">
-                        <span className="text-4xl font-bold">
+                        <span className="text-4xl font-black text-[#1e3d2e]">
                           {creator.rating.toFixed(1)}
                         </span>
-                        <Star className="h-8 w-8 fill-accent text-accent" />
+                        <Star className="h-8 w-8 fill-[#e6aa38] text-[#e6aa38]" />
                       </div>
-                      <p className="text-muted-foreground">
+                      <p className="text-sm font-medium text-[#647168]">
                         Based on {creator.totalReviews} reviews
                       </p>
                     </div>
@@ -679,7 +637,7 @@ export default function CreatorProfilePage({
                       {[5, 4, 3, 2, 1].map((star) => (
                         <Star
                           key={star}
-                          className={`h-6 w-6 ${star <= Math.round(creator.rating) ? "fill-accent text-accent" : "text-muted"}`}
+                          className={`h-6 w-6 ${star <= Math.round(creator.rating) ? "fill-[#e6aa38] text-[#e6aa38]" : "text-[#d7ded8]"}`}
                         />
                       ))}
                     </div>
@@ -692,13 +650,15 @@ export default function CreatorProfilePage({
                     <ReviewCard key={review.id} review={review} />
                   ))
                 ) : (
-                  <Card>
+                  <Card className="rounded-2xl border-[#e2e7e1] bg-white shadow-sm">
                     <CardContent className="flex flex-col items-center justify-center py-12">
-                      <Star className="mb-4 h-12 w-12 text-muted-foreground" />
-                      <h3 className="mb-2 text-lg font-semibold">
+                      <span className="mb-4 grid size-12 place-items-center rounded-2xl bg-[#fff1cd]">
+                        <Star className="size-5 text-[#b77a12]" />
+                      </span>
+                      <h3 className="mb-2 text-lg font-extrabold text-[#1e3d2e]">
                         No reviews yet
                       </h3>
-                      <p className="text-center text-muted-foreground">
+                      <p className="text-center text-sm font-medium text-[#647168]">
                         Be the first to work with this creator and leave a
                         review.
                       </p>
@@ -707,7 +667,7 @@ export default function CreatorProfilePage({
                 )}
               </TabsContent>
             </Tabs>
-          </div>
+          </main>
         </div>
       </div>
 

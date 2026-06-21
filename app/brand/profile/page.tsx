@@ -113,7 +113,7 @@ export default function BrandProfilePage() {
         website: brand.website || "",
         industry: brand.industry || current.industry,
         description: brand.description || "",
-        logo: brand.logo || "",
+        logo: brand.logo || current.logo,
         city: brand.city || current.city,
         companySize: brand.companySize || current.companySize,
         contactName: brand.contactName || current.contactName,
@@ -139,7 +139,7 @@ export default function BrandProfilePage() {
         website: profile.website,
         industry: profile.industry,
         description: profile.description,
-        logoUrl: profile.logo,
+        logoUrl: profile.logo || undefined,
         city: profile.city,
         companySize: profile.companySize,
         contactName: profile.contactName,
@@ -192,7 +192,7 @@ export default function BrandProfilePage() {
             {/* Logo with upload trigger */}
             <div className="relative shrink-0">
               <Avatar className="size-16 ring-2 ring-white/20">
-                <AvatarImage src={profile.logo} alt={profile.companyName} />
+                <AvatarImage src={profile.logo || undefined} alt={profile.companyName} />
                 <AvatarFallback className="bg-[#2d6b4e] text-lg font-extrabold text-white">
                   {getInitials(profile.companyName)}
                 </AvatarFallback>
