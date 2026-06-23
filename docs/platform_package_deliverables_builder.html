@@ -1,0 +1,352 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.wrap { padding: 1.5rem 0; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.tab-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 999px;
+  border: 0.5px solid var(--color-border-secondary);
+  background: var(--color-background-primary);
+  color: var(--color-text-secondary);
+  cursor: pointer; font-size: 13px; font-weight: 500;
+  transition: all 0.15s;
+}
+.tab-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+.tab-btn.active { background: var(--active-color); color: #fff; border-color: transparent; }
+.tab-btn i { font-size: 15px; }
+
+.platform-section { display: none; }
+.platform-section.active { display: block; }
+
+.section-label {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--color-text-tertiary);
+  margin: 1.5rem 0 0.75rem;
+}
+.section-label:first-child { margin-top: 0; }
+
+.deliverables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.item {
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  padding: 12px 14px;
+  background: var(--color-background-primary);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.item:hover { border-color: var(--color-border-secondary); background: var(--color-background-secondary); }
+.item.selected { border-color: var(--active-color); background: var(--active-bg); }
+
+.item-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.item-icon { font-size: 18px; color: var(--color-text-secondary); }
+.item.selected .item-icon { color: var(--active-color); }
+.item-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+.item-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+.check { margin-left: auto; width: 18px; height: 18px; border-radius: 50%;
+  border: 0.5px solid var(--color-border-secondary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: transparent; flex-shrink: 0; }
+.item.selected .check { background: var(--active-color); border-color: var(--active-color); color: #fff; }
+
+.footer {
+  margin-top: 1.5rem; padding-top: 1.25rem;
+  border-top: 0.5px solid var(--color-border-tertiary);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.selected-summary { font-size: 13px; color: var(--color-text-secondary); }
+.selected-summary strong { color: var(--color-text-primary); font-weight: 500; }
+.add-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 9px 20px; border-radius: 999px;
+  background: var(--active-color); color: #fff;
+  border: none; cursor: pointer; font-size: 13px; font-weight: 500;
+}
+.add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.add-btn i { font-size: 14px; }
+
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 500;
+  background: var(--active-bg); color: var(--active-color);
+  margin-left: 6px;
+}
+</style>
+
+<div class="wrap" id="app">
+  <div class="tabs" id="tabs"></div>
+  <div id="platform-panels"></div>
+  <div class="footer">
+    <div class="selected-summary" id="summary">Select deliverables to add to your package</div>
+    <button class="add-btn" id="add-btn" disabled onclick="addToPackage()">
+      <i class="ti ti-plus" aria-hidden="true"></i> Add to package
+    </button>
+  </div>
+</div>
+
+<script>
+const platforms = [
+  {
+    id: 'instagram',
+    name: 'Instagram',
+    icon: 'ti-brand-instagram',
+    color: '#E1306C',
+    bg: '#fde8f0',
+    sections: [
+      { label: 'Short-form video', items: [
+        { icon: 'ti-video', name: 'Reel (15s)', desc: 'Short punchy reel, trending audio' },
+        { icon: 'ti-video', name: 'Reel (30s)', desc: 'Standard reel with product showcase' },
+        { icon: 'ti-video', name: 'Reel (60s)', desc: 'Long-form storytelling reel' },
+        { icon: 'ti-bolt', name: 'Reel + Hook', desc: 'Reel with a scripted hook variant' },
+      ]},
+      { label: 'Stories', items: [
+        { icon: 'ti-rectangle', name: 'Story Frame (1)', desc: 'Single swipe-up story slide' },
+        { icon: 'ti-layout-list', name: 'Story Sequence (3)', desc: '3-frame narrative story pack' },
+        { icon: 'ti-layout-list', name: 'Story Sequence (5)', desc: '5-frame campaign story pack' },
+        { icon: 'ti-external-link', name: 'Story + Link', desc: 'Story with swipe-up/link sticker' },
+        { icon: 'ti-poll', name: 'Story + Poll', desc: 'Engagement-driving interactive story' },
+        { icon: 'ti-countdown', name: 'Story + Countdown', desc: 'Launch/event countdown sticker' },
+      ]},
+      { label: 'Feed posts', items: [
+        { icon: 'ti-photo', name: 'Single Photo Post', desc: 'High-quality static image post' },
+        { icon: 'ti-slideshow', name: 'Carousel (3–5 slides)', desc: 'Multi-slide product or how-to' },
+        { icon: 'ti-slideshow', name: 'Carousel (6–10 slides)', desc: 'Deep-dive educational carousel' },
+      ]},
+      { label: 'Live & collab', items: [
+        { icon: 'ti-live-photo', name: 'Instagram Live', desc: 'Live brand mention or walkthrough' },
+        { icon: 'ti-users', name: 'Collab Post', desc: 'Joint feed post with brand account' },
+        { icon: 'ti-at', name: 'Feed Tag + Mention', desc: 'Brand tag + mention in caption' },
+      ]},
+    ]
+  },
+  {
+    id: 'youtube',
+    name: 'YouTube',
+    icon: 'ti-brand-youtube',
+    color: '#FF0000',
+    bg: '#ffe8e8',
+    sections: [
+      { label: 'Long-form video', items: [
+        { icon: 'ti-video', name: 'Dedicated Video', desc: 'Full video made exclusively for brand' },
+        { icon: 'ti-microphone', name: 'Sponsored Segment (30s)', desc: 'Mid-roll or pre-roll ad read' },
+        { icon: 'ti-microphone', name: 'Sponsored Segment (60s)', desc: 'Extended integration segment' },
+        { icon: 'ti-brand-youtube', name: 'Product Integration', desc: 'Natural in-video product feature' },
+        { icon: 'ti-arrow-right', name: 'End Screen CTA', desc: 'End screen with brand link card' },
+        { icon: 'ti-pin', name: 'Pinned Comment', desc: 'Brand link pinned in comments' },
+      ]},
+      { label: 'Shorts', items: [
+        { icon: 'ti-bolt', name: 'YouTube Short (15s)', desc: 'Fast vertical short for feed' },
+        { icon: 'ti-bolt', name: 'YouTube Short (60s)', desc: 'Full-length short with CTA' },
+      ]},
+      { label: 'Live', items: [
+        { icon: 'ti-live-photo', name: 'Live Stream Mention', desc: 'Brand shoutout during live stream' },
+        { icon: 'ti-gift', name: 'Live Unboxing', desc: 'Real-time unboxing on live stream' },
+        { icon: 'ti-discount', name: 'Live Promo Code Drop', desc: 'Exclusive code shared during live' },
+      ]},
+      { label: 'Community & extras', items: [
+        { icon: 'ti-news', name: 'Community Post', desc: 'Text/image post in Community tab' },
+        { icon: 'ti-thumb-up', name: 'Pinned Post Endorsement', desc: 'Endorsed pinned community post' },
+        { icon: 'ti-hash', name: 'Description Link', desc: 'Brand link in video description' },
+      ]},
+    ]
+  },
+  {
+    id: 'tiktok',
+    name: 'TikTok',
+    icon: 'ti-brand-tiktok',
+    color: '#010101',
+    bg: '#e8e8e8',
+    sections: [
+      { label: 'Video content', items: [
+        { icon: 'ti-video', name: 'TikTok Video (15s)', desc: 'Quick trend-riding short video' },
+        { icon: 'ti-video', name: 'TikTok Video (30s)', desc: 'Standard branded TikTok' },
+        { icon: 'ti-video', name: 'TikTok Video (60s)', desc: 'Storytelling or tutorial format' },
+        { icon: 'ti-video', name: 'TikTok Video (3min)', desc: 'In-depth review or vlog format' },
+        { icon: 'ti-bolt', name: 'Trending Sound Reel', desc: 'Video set to trending audio' },
+        { icon: 'ti-ad', name: 'Spark Ad Ready', desc: 'Video formatted for TikTok Spark Ads' },
+      ]},
+      { label: 'Live & interactive', items: [
+        { icon: 'ti-live-photo', name: 'TikTok Live', desc: 'Live brand mention / demo' },
+        { icon: 'ti-gift', name: 'Live LIVE Shopping', desc: 'TikTok Shop live product showcase' },
+        { icon: 'ti-discount', name: 'Promo Code Drop', desc: 'Exclusive code announced on live' },
+      ]},
+      { label: 'Duet & stitch', items: [
+        { icon: 'ti-versions', name: 'Duet Video', desc: 'Side-by-side reaction or response' },
+        { icon: 'ti-scissors', name: 'Stitch Video', desc: 'Clips from brand video + commentary' },
+      ]},
+      { label: 'Shop & links', items: [
+        { icon: 'ti-shopping-bag', name: 'TikTok Shop Tag', desc: 'Product tagged in video for purchase' },
+        { icon: 'ti-link', name: 'Bio Link Feature', desc: 'Brand link added to profile bio' },
+      ]},
+    ]
+  },
+  {
+    id: 'facebook',
+    name: 'Facebook',
+    icon: 'ti-brand-facebook',
+    color: '#1877F2',
+    bg: '#e8f0fe',
+    sections: [
+      { label: 'Video', items: [
+        { icon: 'ti-video', name: 'Facebook Reel', desc: 'Short vertical video for Reels tab' },
+        { icon: 'ti-video', name: 'In-Feed Video', desc: 'Standard video in news feed' },
+        { icon: 'ti-video', name: 'Long-Form Video', desc: 'Video over 3 min with monetization' },
+        { icon: 'ti-stars', name: 'Facebook Stars Drop', desc: 'Fan engagement during live stream' },
+      ]},
+      { label: 'Feed posts', items: [
+        { icon: 'ti-photo', name: 'Photo Post', desc: 'Static image with caption & tag' },
+        { icon: 'ti-slideshow', name: 'Album Post', desc: 'Multi-photo brand campaign post' },
+        { icon: 'ti-article', name: 'Text + Link Post', desc: 'Link post with brand URL preview' },
+      ]},
+      { label: 'Stories', items: [
+        { icon: 'ti-rectangle', name: 'Facebook Story', desc: '24hr vertical story with CTA' },
+        { icon: 'ti-layout-list', name: 'Story Sequence (3)', desc: '3-frame story with brand narrative' },
+      ]},
+      { label: 'Live & groups', items: [
+        { icon: 'ti-live-photo', name: 'Facebook Live', desc: 'Scheduled brand live segment' },
+        { icon: 'ti-users', name: 'Group Post', desc: 'Brand post inside niche FB group' },
+        { icon: 'ti-calendar-event', name: 'Event Promotion', desc: 'Co-hosted or sponsored event post' },
+      ]},
+    ]
+  },
+  {
+    id: 'snapchat',
+    name: 'Snapchat',
+    icon: 'ti-brand-snapchat',
+    color: '#FFFC00',
+    bg: '#fffde6',
+    sections: [
+      { label: 'Snaps & stories', items: [
+        { icon: 'ti-bolt', name: 'Snap (Photo)', desc: 'Direct photo snap to followers' },
+        { icon: 'ti-video', name: 'Snap (Video, 10s)', desc: 'Short video snap to followers' },
+        { icon: 'ti-rectangle', name: 'Story Frame (1)', desc: 'Single story frame with brand tag' },
+        { icon: 'ti-layout-list', name: 'Story Sequence (3–5)', desc: 'Multi-snap brand story arc' },
+        { icon: 'ti-layout-list', name: 'Story Takeover', desc: 'Full 10+ snap brand story day' },
+      ]},
+      { label: 'Spotlight', items: [
+        { icon: 'ti-sparkles', name: 'Spotlight Video (15s)', desc: 'Short viral video for Spotlight tab' },
+        { icon: 'ti-sparkles', name: 'Spotlight Video (60s)', desc: 'Extended Spotlight submission' },
+      ]},
+      { label: 'Lens & AR', items: [
+        { icon: 'ti-face-id', name: 'Custom Lens Feature', desc: 'Use & promote brand AR lens' },
+        { icon: 'ti-filter', name: 'Geofilter Promo', desc: 'Location-based branded filter' },
+      ]},
+      { label: 'Map & links', items: [
+        { icon: 'ti-map-pin', name: 'Snap Map Check-in', desc: 'Location story pinned to Snap Map' },
+        { icon: 'ti-external-link', name: 'Swipe-Up Link', desc: 'Brand URL in story swipe-up' },
+      ]},
+    ]
+  },
+];
+
+const selected = {};
+let activePlatform = 'instagram';
+
+function getColor(p) { return p.color; }
+function getBg(p) { return p.bg; }
+
+function setActive(id) {
+  activePlatform = id;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.id === id));
+  document.querySelectorAll('.platform-section').forEach(s => s.classList.toggle('active', s.dataset.id === id));
+  const p = platforms.find(x => x.id === id);
+  document.documentElement.style.setProperty('--active-color', p.color);
+  document.documentElement.style.setProperty('--active-bg', p.bg);
+  updateSummary();
+}
+
+function toggleItem(pid, itemName) {
+  if (!selected[pid]) selected[pid] = new Set();
+  if (selected[pid].has(itemName)) selected[pid].delete(itemName);
+  else selected[pid].add(itemName);
+  document.querySelectorAll(`[data-pid="${pid}"][data-item="${CSS.escape(itemName)}"]`)
+    .forEach(el => el.classList.toggle('selected', selected[pid].has(itemName)));
+  updateSummary();
+}
+
+function updateSummary() {
+  const total = Object.values(selected).reduce((a, s) => a + s.size, 0);
+  const p = platforms.find(x => x.id === activePlatform);
+  const pCount = (selected[activePlatform] || new Set()).size;
+  const sumEl = document.getElementById('summary');
+  const btn = document.getElementById('add-btn');
+  if (total === 0) {
+    sumEl.innerHTML = 'Select deliverables to add to your package';
+    btn.disabled = true;
+  } else {
+    const parts = platforms.filter(p => selected[p.id]?.size > 0)
+      .map(p => `<strong>${selected[p.id].size} ${p.name}</strong>`).join(', ');
+    sumEl.innerHTML = `${parts} selected`;
+    btn.disabled = false;
+  }
+}
+
+function addToPackage() {
+  const lines = [];
+  platforms.forEach(p => {
+    if (selected[p.id]?.size) {
+      lines.push(`${p.name}: ${[...selected[p.id]].join(', ')}`);
+    }
+  });
+  sendPrompt(`Add these deliverables to my ZingZing package:\n${lines.join('\n')}`);
+}
+
+function build() {
+  const tabsEl = document.getElementById('tabs');
+  const panelsEl = document.getElementById('platform-panels');
+
+  platforms.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (p.id === activePlatform ? ' active' : '');
+    btn.dataset.id = p.id;
+    btn.innerHTML = `<i class="ti ${p.icon}" aria-hidden="true"></i>${p.name}`;
+    btn.onclick = () => setActive(p.id);
+    tabsEl.appendChild(btn);
+
+    const sec = document.createElement('div');
+    sec.className = 'platform-section' + (p.id === activePlatform ? ' active' : '');
+    sec.dataset.id = p.id;
+
+    p.sections.forEach(s => {
+      const label = document.createElement('div');
+      label.className = 'section-label';
+      label.textContent = s.label;
+      sec.appendChild(label);
+
+      const grid = document.createElement('div');
+      grid.className = 'deliverables-grid';
+
+      s.items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'item';
+        card.dataset.pid = p.id;
+        card.dataset.item = item.name;
+        card.innerHTML = `
+          <div class="item-head">
+            <i class="ti ${item.icon} item-icon" aria-hidden="true"></i>
+            <span class="item-name">${item.name}</span>
+            <span class="check"><i class="ti ti-check" aria-hidden="true"></i></span>
+          </div>
+          <div class="item-desc">${item.desc}</div>`;
+        card.onclick = () => toggleItem(p.id, item.name);
+        grid.appendChild(card);
+      });
+      sec.appendChild(grid);
+    });
+    panelsEl.appendChild(sec);
+  });
+
+  const p = platforms.find(x => x.id === activePlatform);
+  document.documentElement.style.setProperty('--active-color', p.color);
+  document.documentElement.style.setProperty('--active-bg', p.bg);
+}
+
+build();
+</script>
