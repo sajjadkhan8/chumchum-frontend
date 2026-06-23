@@ -73,22 +73,15 @@ export const reviewsService = {
 
   async getByCreatorId(creatorId: string): Promise<Review[]> {
     if (!creatorId) return [];
-
-    const endpoints = [`/api/v1/creators/${creatorId}/reviews`, '/api/v1/reviews'];
-
-    for (const endpoint of endpoints) {
-      try {
-        const response = await apiClient.get<unknown>(endpoint, {
-          auth: false,
-          query: endpoint.endsWith('/reviews') ? undefined : { creatorId, page: 0, size: 50 },
-        });
-        return unwrapReviews(response).map((review) => mapReview(review, creatorId));
-      } catch {
-        // Try the next endpoint.
-      }
+    try {
+      const response = await apiClient.get<unknown>(`/api/v1/creators/${creatorId}/reviews`, {
+        auth: false,
+        query: { creatorId, page: 0, size: 50 },
+      });
+      return unwrapReviews(response).map((review) => mapReview(review, creatorId));
+    } catch {
+      return [];
     }
-
-    return [];
   },
 
   async getByBrandId(brandId: string): Promise<Review[]> {

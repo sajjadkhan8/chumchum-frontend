@@ -3,33 +3,45 @@
 import { motion } from 'framer-motion';
 import { Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { Creator } from '@/types';
-import { calculateAmbassadorScore, getAmbassadorTier, AMBASSADOR_TIERS } from '@/lib/ambassador-scoring';
+import type { AmbassadorTier, Creator } from '@/types';
+import { AMBASSADOR_TIERS, getAmbassadorTier } from '@/lib/ambassador-scoring';
 import { cn } from '@/lib/utils';
 
 interface CreatorAmbassadorBadgeProps {
   creator: Creator;
+  /**
+   * Backend-supplied ambassador total/tier. When omitted (e.g. in list views where a
+   * per-creator score fetch is impractical), the badge falls back to the creator's
+   * verified-ambassador flag and shows no divergent numeric score.
+   */
+  score?: number;
+  tier?: AmbassadorTier;
   showScore?: boolean;
   className?: string;
   showNewIndicator?: boolean;
 }
 
 /**
- * Small, elegant ambassador badge for creator cards
- * Shows tier and optionally the score
+ * Small, elegant ambassador badge for creator cards.
+ * Shows tier and optionally the score. Numeric scoring is owned by the backend; this
+ * component never computes a score from raw creator data.
  */
 export function CreatorAmbassadorBadge({
   creator,
+  score,
+  tier,
   showScore = false,
   className,
   showNewIndicator = true,
 }: CreatorAmbassadorBadgeProps) {
-  const score = calculateAmbassadorScore(creator);
-  const tier = getAmbassadorTier(score.total);
-  const tierInfo = AMBASSADOR_TIERS[tier];
+  const resolvedTier: AmbassadorTier | null =
+    tier ?? (score !== undefined ? getAmbassadorTier(score) : creator.isVerified ? 'verified_ambassador' : null);
 
-  // Only show if score is above 40 (at least Emerging)
-  if (score.total < 40) return null;
+  // Only render for ambassadors (emerging+) or verified creators.
+  if (!resolvedTier || resolvedTier === 'rising_creator') return null;
+
+  const tierInfo = AMBASSADOR_TIERS[resolvedTier];
+  const isHighTier = resolvedTier === 'verified_ambassador' || resolvedTier === 'elite_ambassador';
 
   return (
     <motion.div
@@ -39,7 +51,7 @@ export function CreatorAmbassadorBadge({
       className={cn('inline-flex items-center gap-1.5', className)}
     >
       {/* Glow effect for high tiers */}
-      {score.total >= 70 && (
+      {isHighTier && (
         <motion.div
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 2, repeat: Infinity }}
@@ -61,15 +73,15 @@ export function CreatorAmbassadorBadge({
       >
         <span>{tierInfo.icon}</span>
         <span className="font-semibold">{tierInfo.tier.split('_')[0]}</span>
-        {showNewIndicator && score.total >= 70 && (
+        {showNewIndicator && isHighTier && (
           <span className="rounded-full bg-foreground/10 px-1 py-[1px] text-[9px] font-semibold uppercase tracking-wide">
             New
           </span>
         )}
-        {showScore && (
-          <span className="ml-1 opacity-70">({score.total})</span>
+        {showScore && score !== undefined && (
+          <span className="ml-1 opacity-70">({score})</span>
         )}
-        {score.total >= 70 && (
+        {isHighTier && (
           <motion.div
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
@@ -84,23 +96,25 @@ export function CreatorAmbassadorBadge({
 }
 
 interface CreatorAmbassadorStatsProps {
-  creator: Creator;
+  /** Backend-supplied ambassador total. Required to show a numeric score. */
+  score: number;
+  tier?: AmbassadorTier;
   variant?: 'compact' | 'full';
 }
 
 /**
- * Mini stats showing ambassador score and tier
- * Used in creator profiles or detailed views
+ * Mini stats showing ambassador score and tier.
+ * Used in creator profiles or detailed views. Consumes backend-supplied numbers.
  */
 export function CreatorAmbassadorStats({
-  creator,
+  score,
+  tier,
   variant = 'compact',
 }: CreatorAmbassadorStatsProps) {
-  const score = calculateAmbassadorScore(creator);
-  const tier = getAmbassadorTier(score.total);
-  const tierInfo = AMBASSADOR_TIERS[tier];
+  const resolvedTier = tier ?? getAmbassadorTier(score);
+  const tierInfo = AMBASSADOR_TIERS[resolvedTier];
 
-  if (score.total < 40) return null;
+  if (score < 40) return null;
 
   return (
     <motion.div
@@ -112,25 +126,25 @@ export function CreatorAmbassadorStats({
         <div className="flex items-center gap-2">
           <div className="text-sm">
             <div className="font-semibold text-foreground">{tierInfo.name}</div>
-            <div className="text-xs text-muted-foreground">Score: {score.total}/100</div>
+            <div className="text-xs text-muted-foreground">Score: {score}/100</div>
           </div>
         </div>
       ) : (
         <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-sm">{tierInfo.name}</span>
-            <span className="text-lg font-bold text-primary">{score.total}</span>
+            <span className="text-lg font-bold text-primary">{score}</span>
           </div>
           <div className="h-1.5 rounded-full bg-muted overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${Math.min((score.total / 100) * 100, 100)}%` }}
+              animate={{ width: `${Math.min((score / 100) * 100, 100)}%` }}
               transition={{ duration: 1 }}
               className="h-full bg-gradient-to-r from-primary to-accent"
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            {score.total >= 70 ? '✨ Eligible for ambassador perks' : `${70 - score.total} points to unlock`}
+            {score >= 60 ? '✨ Eligible for ambassador perks' : `${60 - score} points to unlock`}
           </p>
         </div>
       )}

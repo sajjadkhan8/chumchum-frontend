@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { Input } from '@/components/ui/input';
 import { authService } from '@/services/auth.service';
@@ -14,6 +14,8 @@ function ResetPasswordContent() {
   const token = searchParams.get('token') || '';
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [resetComplete, setResetComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -44,7 +46,13 @@ function ResetPasswordContent() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not reset password');
+      const msg = err instanceof Error ? err.message : '';
+      const isExpiredOrInvalid = /expir|invalid|not found/i.test(msg);
+      setError(
+        isExpiredOrInvalid
+          ? `${msg} — use the link below to request a new reset email.`
+          : msg || 'Could not reset password. The link may have expired.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -91,29 +99,49 @@ function ResetPasswordContent() {
           <form className="space-y-4" onSubmit={handleResetPassword}>
             <div className="space-y-1.5">
               <p className={labelClass}>New password</p>
-              <Input
-                id="newPassword"
-                type="password"
-                required
-                minLength={8}
-                className={inputClass}
-                placeholder="Minimum 8 characters"
-                value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  minLength={8}
+                  className={inputClass + ' pr-10'}
+                  placeholder="Minimum 8 characters"
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#87938b] hover:text-[#2d6b4e] transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <p className={labelClass}>Confirm new password</p>
-              <Input
-                id="confirmPassword"
-                type="password"
-                required
-                minLength={8}
-                className={inputClass}
-                placeholder="Repeat the new password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirm ? 'text' : 'password'}
+                  required
+                  minLength={8}
+                  className={inputClass + ' pr-10'}
+                  placeholder="Repeat the new password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#87938b] hover:text-[#2d6b4e] transition-colors"
+                  tabIndex={-1}
+                >
+                  {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <button
               type="submit"

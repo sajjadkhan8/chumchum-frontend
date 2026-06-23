@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BadgePercent, Check, Clipboard, Copy, Download, Link2, Loader2, Share2, Sparkles, Users, WalletCards } from "lucide-react";
+import { ArrowRight, BadgePercent, Check, Clipboard, Copy, Download, Info, Link2, Loader2, Share2, Sparkles, Users, WalletCards } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CreatorMetricCard } from "@/components/creator-metric-card";
@@ -20,6 +20,29 @@ const emptyOverview: AffiliateOverview = {
 
 function rateLabel(rateBasisPoints: number) {
   return `${(rateBasisPoints / 100).toFixed(rateBasisPoints % 100 === 0 ? 0 : 2)}%`;
+}
+
+const STATUS_META: Record<AffiliateCommission["status"], { label: string; className: string }> = {
+  credited: {
+    label: "Credited",
+    className: "border-[#cce0d3] bg-[#e4f1e8] text-[#185c39]",
+  },
+  pending_payout_unsupported: {
+    label: "Accrued · payout soon",
+    className: "border-[#f0dfb4] bg-[#fdf3dc] text-[#8a6010]",
+  },
+};
+
+function CommissionStatusBadge({ status }: { status: AffiliateCommission["status"] }) {
+  const meta = STATUS_META[status] ?? {
+    label: status.replaceAll("_", " "),
+    className: "border-[#d9e0d8] bg-[#fbfaf5] text-[#647168]",
+  };
+  return (
+    <span className={`whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-black ${meta.className}`}>
+      {meta.label}
+    </span>
+  );
 }
 
 export function AffiliatePageContent({ role }: { role: "creator" | "brand" }) {
@@ -55,6 +78,19 @@ export function AffiliatePageContent({ role }: { role: "creator" | "brand" }) {
   }, []);
 
   const shareUrl = useMemo(() => overview.shareUrl || (overview.code ? `${window.location.origin}/signup?affiliate=${overview.code}` : ""), [overview]);
+
+  const pendingAccrued = useMemo(() => {
+    return commissions.reduce(
+      (acc, commission) => {
+        if (commission.status === "pending_payout_unsupported") {
+          acc.count += 1;
+          acc.amount += commission.commissionAmount ?? 0;
+        }
+        return acc;
+      },
+      { count: 0, amount: 0 },
+    );
+  }, [commissions]);
 
   const handleCreateLink = async () => {
     setCreating(true);
@@ -172,6 +208,29 @@ export function AffiliatePageContent({ role }: { role: "creator" | "brand" }) {
           ))}
         </section>
 
+        {role === "brand" && (
+          <section className="flex items-start gap-3 rounded-[1.4rem] border border-[#f0dfb4] bg-[#fdf3dc] px-5 py-4">
+            <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl bg-[#f7e8c8] text-[#b77a12]">
+              <Info className="size-4" />
+            </span>
+            <div className="min-w-0 text-[13px] leading-6 text-[#8a6010]">
+              <p className="font-black text-[#173b2a]">Brand commissions are accruing</p>
+              <p className="mt-0.5">
+                Your affiliate commissions are tracked and accrue now.
+                {pendingAccrued.amount > 0 && (
+                  <>
+                    {" "}So far <span className="font-black">{formatPrice(pendingAccrued.amount)}</span>
+                    {pendingAccrued.count > 0 && (
+                      <> across {pendingAccrued.count} {pendingAccrued.count === 1 ? "referral" : "referrals"}</>
+                    )} is waiting.
+                  </>
+                )}{" "}
+                Payout to brands will be enabled in a future update — no action is needed from you.
+              </p>
+            </div>
+          </section>
+        )}
+
         <section className="overflow-hidden rounded-[1.6rem] border border-[#d9e0d8] bg-white shadow-[0_14px_45px_rgba(38,70,50,0.055)]">
           <div className="flex items-center justify-between border-b border-[#edf0eb] bg-[#fbfaf5] px-5 py-4">
             <div>
@@ -203,9 +262,7 @@ export function AffiliatePageContent({ role }: { role: "creator" | "brand" }) {
                     </p>
                   </div>
                   <div className="flex items-center justify-between gap-4 sm:justify-end">
-                    <span className="rounded-full border border-[#d9e0d8] bg-[#fbfaf5] px-3 py-1 text-[11px] font-black capitalize text-[#647168]">
-                      {commission.status.replaceAll("_", " ")}
-                    </span>
+                    <CommissionStatusBadge status={commission.status} />
                     <span className="text-sm font-black text-[#185c39]">{formatPrice(commission.commissionAmount)}</span>
                   </div>
                 </div>

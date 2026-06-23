@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api/client';
-import { mapOrder } from '@/lib/api/mappers';
+import { mapOrder, mapOrderDeliverable, type BackendOrderDeliverableResponse } from '@/lib/api/mappers';
 import type { DealType, Order, OrderDeliverable, OrderStatus } from '@/types';
 
 export interface CreateOrderRequest {
@@ -49,48 +49,13 @@ interface BackendOrderResponse {
   deliveryDate?: string;
   createdAt?: string;
   updatedAt?: string;
-  deliverables?: BackendDeliverableResponse[];
+  deliverables?: BackendOrderDeliverableResponse[];
   barterProductReceived?: boolean;
   conversationId?: string;
   hasReviewedByBrand?: boolean;
   hasReviewedByCreator?: boolean;
 }
 
-interface BackendDeliverableResponse {
-  id: string;
-  order_id: string;
-  name: string;
-  status: string;
-  file_url?: string;
-  submitted_at?: string;
-  revision_note?: string;
-  created_at?: string;
-}
-
-const normalizeDeliverableStatus = (value?: string): OrderDeliverable['status'] => {
-  const lowered = (value || '').toLowerCase();
-  if (lowered === 'in_progress' || lowered === 'completed' || lowered === 'revision' || lowered === 'review' || lowered === 'approved') {
-    return lowered;
-  }
-  return 'pending';
-};
-
-const toOptionalDate = (value?: string): Date | undefined => {
-  if (!value) return undefined;
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-};
-
-const mapDeliverable = (payload: BackendDeliverableResponse): OrderDeliverable => ({
-  id: payload.id,
-  orderId: payload.order_id,
-  name: payload.name || 'Deliverable',
-  status: normalizeDeliverableStatus(payload.status),
-  fileUrl: payload.file_url,
-  submittedAt: toOptionalDate(payload.submitted_at),
-  revisionNote: payload.revision_note,
-  createdAt: toOptionalDate(payload.created_at),
-});
 
 
 export const ordersService = {
@@ -165,22 +130,22 @@ export const ordersService = {
   },
 
   async submitDeliverable(orderId: string, deliverableId: string, payload: SubmitDeliverableRequest): Promise<OrderDeliverable> {
-    const response = await apiClient.post<BackendDeliverableResponse>(
+    const response = await apiClient.post<BackendOrderDeliverableResponse>(
       `/api/v1/orders/${orderId}/deliverables/${deliverableId}/submit`,
       payload,
     );
 
-    return mapDeliverable(response);
+    return mapOrderDeliverable(response);
   },
 
   async updateDeliverableStatus(orderId: string, deliverableId: string, status: OrderDeliverable['status'], comment?: string): Promise<OrderDeliverable> {
     const payload: UpdateDeliverableStatusRequest = { status, ...(comment ? { comment } : {}) };
-    const response = await apiClient.patch<BackendDeliverableResponse>(
+    const response = await apiClient.patch<BackendOrderDeliverableResponse>(
       `/api/v1/orders/${orderId}/deliverables/${deliverableId}/status`,
       payload,
     );
 
-    return mapDeliverable(response);
+    return mapOrderDeliverable(response);
   },
 
   async confirmBarterReceipt(orderId: string): Promise<Order | null> {

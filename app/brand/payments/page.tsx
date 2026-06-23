@@ -284,15 +284,27 @@ export default function BrandPaymentsPage() {
                     Add Funds
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add funds via Safepay</DialogTitle>
-                    <DialogDescription>
-                      You&apos;ll be redirected to Safepay&apos;s secure checkout to complete payment.
-                      Funds are credited to your wallet automatically once payment is confirmed.
+                <DialogContent className="max-w-[calc(100%-1rem)] rounded-[1.75rem] border-[#d9e0d8] bg-[#fbfaf5] p-0 sm:max-w-md"
+                  style={{
+                    '--background': 'oklch(0.98 0.004 120)',
+                    '--foreground': 'oklch(0.1 0 0)',
+                    '--border': 'oklch(0.88 0.01 145)',
+                    '--input': 'oklch(0.88 0.01 145)',
+                    '--ring': 'oklch(0.55 0.17 145)',
+                  } as React.CSSProperties}
+                >
+                  <div className="rounded-t-[1.75rem] bg-[#173b2a] px-5 py-4">
+                    <div className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/8 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-[#f0c56e]">
+                      <Wallet className="size-3" />
+                      Wallet Top-up
+                    </div>
+                    <DialogTitle className="mt-2 text-sm font-extrabold text-white">Add funds via Safepay</DialogTitle>
+                    <DialogDescription className="mt-1 text-xs leading-5 text-[#8fb09a]">
+                      You&apos;ll be redirected to Safepay&apos;s secure checkout to complete payment. Funds are credited to your wallet automatically once payment is confirmed.
                     </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-3 py-3">
+                  </div>
+
+                  <div className="space-y-4 p-5">
                     <div className="space-y-1.5">
                       <Label htmlFor="topup-amount" className={labelCls}>Amount (PKR)</Label>
                       <Input
@@ -306,18 +318,44 @@ export default function BrandPaymentsPage() {
                         placeholder="e.g. 50000"
                       />
                     </div>
-                    <p className="text-xs text-[#718077]">
-                      Minimum PKR 1,000 · Maximum PKR 10,000,000 · Secured by Safepay
-                    </p>
+
+                    <div className="flex flex-wrap gap-2">
+                      {[25000, 50000, 100000].map((amount) => (
+                        <button
+                          key={amount}
+                          type="button"
+                          onClick={() => setTopupAmount(String(amount))}
+                          disabled={isTopupSubmitting}
+                          className="rounded-full border border-[#d1ddd6] bg-white px-3 py-1 text-[11px] font-bold text-[#526259] transition hover:border-[#2d6b4e] hover:text-[#1e3d2e] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {formatPrice(amount)}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-start gap-2 rounded-xl border border-[#c8e0d0] bg-[#eef6f1] px-3.5 py-3 text-xs text-[#185c39]">
+                      <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
+                      <p>Minimum PKR 1,000 · Maximum PKR 10,000,000 · Secured by Safepay</p>
+                    </div>
+
+                    <DialogFooter className="gap-2 pt-1 sm:gap-2">
+                      <Button
+                        variant="outline"
+                        className="h-9 flex-1 rounded-xl border-[#d9e0d8] text-xs font-semibold text-[#526259] hover:bg-[#f4f2e9]"
+                        onClick={() => setIsTopupOpen(false)}
+                        disabled={isTopupSubmitting}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        className="h-9 flex-1 rounded-xl bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#185c39] disabled:opacity-50"
+                        onClick={() => void handleTopup()}
+                        disabled={isTopupSubmitting}
+                      >
+                        {isTopupSubmitting ? "Redirecting..." : "Continue to Safepay"}
+                      </Button>
+                    </DialogFooter>
                   </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsTopupOpen(false)} disabled={isTopupSubmitting}>
-                      Cancel
-                    </Button>
-                    <Button onClick={() => void handleTopup()} disabled={isTopupSubmitting}>
-                      {isTopupSubmitting ? "Redirecting…" : "Pay with Safepay →"}
-                    </Button>
-                  </DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>

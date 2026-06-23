@@ -70,9 +70,9 @@ export function AmbassadorScoreGauge({
   const offset = config.circumference - (score / 100) * config.circumference;
 
   let strokeColor = '#84cc16';
-  if (score >= 41 && score < 71) strokeColor = '#3b82f6';
-  if (score >= 71 && score < 91) strokeColor = '#f59e0b';
-  if (score >= 91) strokeColor = '#8b5cf6';
+  if (score >= 40 && score < 60) strokeColor = '#3b82f6';
+  if (score >= 60 && score < 80) strokeColor = '#f59e0b';
+  if (score >= 80) strokeColor = '#8b5cf6';
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -160,7 +160,7 @@ interface ScoreBreakdownProps {
 
 export function AmbassadorScoreBreakdown({ score }: ScoreBreakdownProps) {
   const componentScores = [
-    { label: 'Delivery Track Record', value: score.deliveryScore, max: 35 },
+    { label: 'Delivery Track Record', value: score.deliveryScore, max: 25 },
     { label: 'Account Stability', value: score.accountAgeScore, max: 15 },
     { label: 'Quality & Rating', value: score.ratingScore, max: 25 },
     { label: 'Cancellation Rate', value: score.cancellationScore, max: 10 },

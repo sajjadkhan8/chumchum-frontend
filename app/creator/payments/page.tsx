@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowDownToLine, Clock3, CreditCard, TrendingUp, Wallet } from "lucide-react";
@@ -51,7 +51,6 @@ function CreatorPaymentsContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const bankNameByMethodIdRef = useRef<Record<string, string>>({});
 
   const [earnings, setEarnings] = useState<EarningsSummary | null>(null);
   const [payoutMethods, setPayoutMethods] = useState<PaymentMethodUI[]>([]);
@@ -95,7 +94,6 @@ function CreatorPaymentsContent() {
       setPayoutMethods(
         methods.map((method) => ({
           ...method,
-          bankName: method.bankName ?? bankNameByMethodIdRef.current[method.id],
           displayName: getPayoutMethodDisplayName(method),
         }))
       );
@@ -145,17 +143,10 @@ function CreatorPaymentsContent() {
       toast.success("Payout method added successfully");
       setShowAddMethodDialog(false);
 
-      if (methodData.bankName) {
-        bankNameByMethodIdRef.current[createdMethod.id] = methodData.bankName;
-      }
-
-      // Optimistically retain bankName for immediate logo display even if the API
-      // response/backend has not started returning the optional field yet.
       setPayoutMethods((current) => [
         ...current,
         {
           ...createdMethod,
-          bankName: createdMethod.bankName ?? methodData.bankName,
           displayName: getPayoutMethodDisplayName(createdMethod),
         },
       ]);

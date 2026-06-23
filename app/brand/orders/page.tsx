@@ -180,14 +180,15 @@ function BrandOrdersContent() {
   const [disputeDesc, setDisputeDesc] = useState('');
   const [isSubmittingDispute, setIsSubmittingDispute] = useState(false);
 
-  const loadOrders = async (nextPage = 0, append = false) => {
+  const loadOrders = async (nextPage = 0, append = false, status?: string) => {
     if (append) {
       setIsLoadingMore(true);
     } else {
       setIsLoading(true);
     }
     try {
-      const result = await ordersService.getAll({ page: nextPage, limit: 20 });
+      const statusParam = (!status || status === 'all') ? undefined : status as import('@/types').OrderStatus;
+      const result = await ordersService.getAll({ page: nextPage, limit: 20, status: statusParam });
       setOrders(append ? (prev) => [...prev, ...result.orders] : result.orders);
       setPage(nextPage);
       setHasMore(result.hasMore);
@@ -201,8 +202,9 @@ function BrandOrdersContent() {
   };
 
   useEffect(() => {
-    void loadOrders(0);
-  }, []);
+    void loadOrders(0, false, statusFilter);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter]);
 
   useEffect(() => {
     if (deepLinkOrderId && orders.length > 0 && !deepLinkScrolledRef.current) {
@@ -258,7 +260,7 @@ function BrandOrdersContent() {
   const updateDeliverableStatus = async (orderId: string, deliverableId: string, status: OrderDeliverable["status"], comment?: string) => {
     try {
       await ordersService.updateDeliverableStatus(orderId, deliverableId, status, comment);
-      await loadOrders();
+      await loadOrders(0, false, statusFilter);
       toast.success(`Deliverable marked ${status.replace("_", " ")}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update deliverable";
@@ -283,7 +285,7 @@ function BrandOrdersContent() {
     setIsSubmittingRevision(true);
     try {
       await ordersService.updateDeliverableStatus(revisionTarget.orderId, revisionTarget.deliverableId, "revision", revisionNote.trim() || undefined);
-      await loadOrders();
+      await loadOrders(0, false, statusFilter);
       setRevisionTarget(null);
       setRevisionNote("");
       toast.success("Revision requested");
@@ -302,7 +304,7 @@ function BrandOrdersContent() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `receipt-${order.id}.pdf`;
+      a.download = `receipt-${order.orderNumber || order.id}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -543,10 +545,6 @@ function BrandOrdersContent() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onSelect={() => toast.info(`Order ${order.id} details are shown in this card view.`)}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Details
-                              </DropdownMenuItem>
                               <DropdownMenuItem onSelect={() => router.push(order.conversationId ? `/brand/messages?conversation=${order.conversationId}` : `/brand/messages?creator=${order.creatorId}`)}>
                                 <MessageCircle className="mr-2 h-4 w-4" />
                                 Message Creator
@@ -653,7 +651,7 @@ function BrandOrdersContent() {
                           Message
                         </Link>
                       </Button>
-                      {order.status !== 'pending' && order.status !== 'completed' && order.status !== 'cancelled' && order.status !== 'accepted' && (
+                      {order.status !== 'pending' && order.status !== 'completed' && order.status !== 'cancelled' && (
                         <Button
                           size="sm"
                           variant="ghost"
@@ -718,7 +716,7 @@ function BrandOrdersContent() {
             <div className="mt-4 text-center">
               <Button
                 variant="outline"
-                onClick={() => void loadOrders(page + 1, true)}
+                onClick={() => void loadOrders(page + 1, true, statusFilter)}
                 disabled={isLoadingMore}
                 className="rounded-full border-[#d9e0d8] bg-white px-6 font-black text-[#185c39] hover:bg-[#e7f0ea]"
               >

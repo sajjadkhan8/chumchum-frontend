@@ -54,6 +54,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
   const [mounted, setMounted] = useState(false);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [notifications, setNotifications] = useState<NavNotification[]>([]);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [creatorGlobalSearch, setCreatorGlobalSearch] = useState('');
   const { resolvedTheme, setTheme } = useTheme();
   const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
@@ -105,9 +106,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
 
     const loadNavSignals = async () => {
       try {
-        const [conversationResult, notificationResult] = await Promise.allSettled([
+        const [conversationResult, notificationResult, unreadCountResult] = await Promise.allSettled([
           messagesService.getConversations(user.id, user.role as 'creator' | 'brand'),
           notificationsService.list(0, 8),
+          notificationsService.getUnreadCount(),
         ]);
 
         if (cancelled) return;
@@ -130,6 +132,10 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
           })));
         } else {
           setNotifications([]);
+        }
+
+        if (unreadCountResult.status === 'fulfilled') {
+          setUnreadNotificationCount(unreadCountResult.value);
         }
       } catch {
         if (!cancelled) {
@@ -199,7 +205,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
       ];
 
   const messagesLink = isSignedIn && !isAdmin ? `/${user.role}/messages` : '/messages';
-  const notificationCount = notifications.length;
+  const notificationCount = unreadNotificationCount;
   const creatorRoleLabel = user?.role === 'creator' ? 'Creator' : user?.role;
 
   const markAllNotificationsSeen = () => {

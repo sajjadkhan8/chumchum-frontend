@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, CheckCircle, Clock, MessageSquare, Star, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CreatorMetricCard } from '@/components/creator-metric-card';
@@ -39,6 +40,7 @@ const canWithdraw = (status: string) =>
   ['submitted', 'shortlisted', 'in_review'].includes(status?.toLowerCase());
 
 export default function CreatorCampaignReactionsPage() {
+  const router = useRouter();
   const [reactions, setReactions] = useState<BrandCampaignReaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -306,14 +308,32 @@ export default function CreatorCampaignReactionsPage() {
                       Updated {formatRelativeTime(reaction.updatedAt)}
                     </p>
 
-                    {canWithdraw(reaction.status) ? (
-                      <button
-                        onClick={() => void withdraw(reaction)}
-                        className="rounded-full border border-[#d1ddd6] px-4 py-1.5 text-xs font-bold text-[#6b7870] transition-colors hover:border-[#c0392b] hover:text-[#c0392b]"
-                      >
-                        Withdraw
-                      </button>
-                    ) : null}
+                    <div className="flex flex-wrap gap-2">
+                      {canWithdraw(reaction.status) && (
+                        <button
+                          onClick={() => void withdraw(reaction)}
+                          className="rounded-full border border-[#d1ddd6] px-4 py-1.5 text-xs font-bold text-[#6b7870] transition-colors hover:border-[#c0392b] hover:text-[#c0392b]"
+                        >
+                          Withdraw
+                        </button>
+                      )}
+                      {canWithdraw(reaction.status) && (
+                        <button
+                          onClick={() => router.push(`/creator/campaigns?react=${reaction.campaignId}`)}
+                          className="rounded-full border border-[#dce6df] px-4 py-1.5 text-xs font-bold text-[#2d6b4e] transition-colors hover:border-[#2d6b4e] hover:bg-[#f0f8f4]"
+                        >
+                          Edit reaction
+                        </button>
+                      )}
+                      {reaction.orderId && (
+                        <Link
+                          href={`/creator/orders?order=${reaction.orderId}`}
+                          className="rounded-full bg-[#2d6b4e] px-4 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#1f5239]"
+                        >
+                          View Order
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ))}

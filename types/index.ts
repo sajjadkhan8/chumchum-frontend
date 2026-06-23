@@ -11,6 +11,7 @@ export interface User {
   avatar?: string;
   creatorProgramStatus?: 'none' | 'in_path' | 'active_ambassador';
   active?: boolean;
+  mfaEnabled?: boolean;
   createdAt: Date;
 }
 
@@ -99,21 +100,6 @@ export interface ContentPreview {
 }
 
 // Package Types
-export interface PackageTier {
-  id?: string;
-  name: string;
-  price: number;  // PKR amount
-  currency?: string;  // V1: Always PKR
-  description?: string;
-  deliverables: string[];
-  deliveryDays?: number;
-  revisions?: number;
-  position?: number;  // Order of display
-  isPrimary?: boolean;  // V1: One primary + add-ons
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
 export interface Package {
   id: string;
   creatorId: string;
@@ -137,7 +123,6 @@ export interface Package {
   isPopular: boolean;
   isFeatured?: boolean;
   ordersCompleted: number;
-  tiers?: PackageTier[];  // V1: Package tiers support
 }
 
 export type PackageStatus = 'active' | 'draft' | 'paused' | 'archived' | 'under_review';
@@ -152,23 +137,6 @@ export interface PackageAnalytics {
   engagementPerformance: number;
 }
 
-export type SubscriptionInterval = 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
-export type SubscriptionStatus = 'ACTIVE' | 'CANCELLED' | 'EXPIRED';
-
-export interface Subscription {
-  id: string;
-  brandId: string;
-  packageId: string;
-  packageTitle: string;
-  status: SubscriptionStatus;
-  interval: SubscriptionInterval;
-  duration: number;
-  cyclesCompleted: number;
-  nextRenewalAt: string;
-  cancelledAt?: string;
-  createdAt: string;
-}
-
 export interface CreatorPackage extends Package {
   shortDescription: string;
   fullDescription: string;
@@ -180,9 +148,6 @@ export interface CreatorPackage extends Package {
   visibility: 'public' | 'private';
   tags: string[];
   analytics: PackageAnalytics;
-  packageType?: 'ONE_TIME' | 'SUBSCRIPTION';
-  subscriptionInterval?: SubscriptionInterval;
-  subscriptionDuration?: number;
 }
 
 // Order Types
@@ -409,6 +374,9 @@ export interface CreatorFilters {
   badgeLevel?: CreatorBadgeLevel;
   availabilityStatus?: 'available' | 'busy';
   acceptsBarter?: boolean;
+  ambassadorOnly?: boolean;
+  isTrending?: boolean;
+  isFastResponder?: boolean;
   minEngagementRate?: number;
   minCompletionRate?: number;
   maxRateCardReel?: number;

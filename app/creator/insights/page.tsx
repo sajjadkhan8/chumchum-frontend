@@ -315,7 +315,7 @@ function PackageRow({
       <div className="mt-3 flex gap-4 text-[11px] text-[#87938b]">
         <span><span className="font-bold text-[#1e3d2e]">{fmt(views)}</span> views</span>
         <span><span className="font-bold text-[#1e3d2e]">{fmt(inquiries)}</span> inquiries</span>
-        <span><span className="font-bold text-[#1e3d2e]">{repeatBrands}</span> repeat brands</span>
+        {repeatBrands > 0 && <span><span className="font-bold text-[#1e3d2e]">{repeatBrands}</span> repeat brands</span>}
       </div>
     </motion.div>
   );

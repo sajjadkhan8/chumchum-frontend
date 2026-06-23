@@ -10,7 +10,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { useAmbassadorStore } from '@/store/ambassador-store';
 import { ambassadorService, type AmbassadorBenefit } from '@/services/ambassador.service';
 import { creatorsService } from '@/services/creators.service';
-import type { Creator } from '@/types';
+import type { Creator, CreatorAmbassadorMetrics } from '@/types';
 import Link from 'next/link';
 
 const panelClass =
@@ -25,15 +25,18 @@ export default function AmbassadorProgramPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentCreator, setCurrentCreator] = useState<Creator | null>(null);
+  const [ambassadorMetrics, setAmbassadorMetrics] = useState<CreatorAmbassadorMetrics | null>(null);
   const [benefits, setBenefits] = useState<AmbassadorBenefit[]>([]);
 
   useEffect(() => {
     const loadPageData = async () => {
-      const [creator, benefitList] = await Promise.all([
+      const [creator, metrics, benefitList] = await Promise.all([
         creatorsService.getMe().catch(() => null),
+        ambassadorService.getScore().catch(() => null),
         ambassadorService.getBenefits(),
       ]);
       setCurrentCreator(creator);
+      setAmbassadorMetrics(metrics);
       setBenefits(benefitList);
     };
 
@@ -203,7 +206,9 @@ export default function AmbassadorProgramPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <AmbassadorDetailedCard creator={currentCreator} className="mb-6" />
+              {ambassadorMetrics && (
+                <AmbassadorDetailedCard metrics={ambassadorMetrics} className="mb-6" />
+              )}
               {!applicationStatus && (
                 <AmbassadorEligibilityChecker creator={currentCreator} />
               )}

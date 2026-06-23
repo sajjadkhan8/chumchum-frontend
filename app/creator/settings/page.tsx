@@ -45,7 +45,7 @@ import { packagesService } from "@/services/packages.service";
 import { uploadsService } from "@/services/uploads.service";
 import { usersService } from "@/services/users.service";
 import { isPasswordStrong, PASSWORD_REQUIREMENTS_MESSAGE } from "@/lib/password-validation";
-import { calculateCreatorAmbassadorMetrics, AMBASSADOR_TIERS } from "@/lib/ambassador-scoring";
+import { AMBASSADOR_TIERS } from "@/lib/ambassador-scoring";
 import type { Creator, CreatorAmbassadorMetrics, DealType, BarterCategory, Platform, VerificationSource } from "@/types";
 import { toast } from "sonner";
 import { ShareProfileModal } from "@/components/share-profile-modal";
@@ -1021,7 +1021,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     ambassadorService
       .getScore()
       .then(setAmbassadorMetrics)
-      .catch(() => setAmbassadorMetrics(calculateCreatorAmbassadorMetrics(loadedCreator)));
+      .catch(() => setAmbassadorMetrics(null));
   }, [loadedCreator]);
 
   // Dirty tracking compares against the last loaded/saved state so hydration is not treated as user input.
@@ -1863,7 +1863,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                   </div>
                   <div className="mb-4 space-y-2">
                     {[
-                      { label: "Delivery",    val: ambassadorMetrics.score.deliveryScore,            max: 35 },
+                      { label: "Delivery",    val: ambassadorMetrics.score.deliveryScore,            max: 25 },
                       { label: "Rating",      val: ambassadorMetrics.score.ratingScore,              max: 25 },
                       { label: "Profile",     val: ambassadorMetrics.score.profileCompletenessScore, max: 10 },
                       { label: "Consistency", val: ambassadorMetrics.score.consistencyScore,         max: 5  },

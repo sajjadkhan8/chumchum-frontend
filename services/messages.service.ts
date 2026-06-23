@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api/client';
 import { mapBrand, mapConversation, mapCreator, mapMessage } from '@/lib/api/mappers';
-import type { Conversation, Message, QuickDealOffer } from '@/types';
+import type { Conversation, Message } from '@/types';
 
 interface BackendConversation {
   id: string;
@@ -164,22 +164,6 @@ export const messagesService = {
     return mapMessage(response);
   },
 
-  async sendOffer(
-    conversationId: string,
-    _senderId: string,
-    _senderType: 'creator' | 'brand',
-    offer: QuickDealOffer,
-  ): Promise<Message> {
-    const response = await apiClient.post<BackendMessage>(`/api/v1/conversations/${conversationId}/messages/offer`, {
-      content: offer.message,
-      offerDealType: offer.dealType.toUpperCase(),
-      offerAmount: offer.amount,
-      offerBarterDetails: offer.barterDetails,
-    });
-
-    return mapMessage(response);
-  },
-
   async sendAttachment(conversationId: string, file: File): Promise<Message> {
     const formData = new FormData();
     formData.append('file', file);
@@ -202,6 +186,10 @@ export const messagesService = {
 
   async blockUser(conversationId: string): Promise<void> {
     await apiClient.post(`/api/v1/conversations/${conversationId}/block`, {});
+  },
+
+  async unblockUser(conversationId: string): Promise<void> {
+    await apiClient.post(`/api/v1/conversations/${conversationId}/unblock`, {});
   },
 
   async createQuickDeal(payload: {

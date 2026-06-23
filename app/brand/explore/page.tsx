@@ -563,6 +563,7 @@ function ExplorePageContent() {
                         dealTypes: [],
                         platforms: [],
                         barterTypes: [],
+                        languages: [],
                         minFollowers: undefined,
                         maxFollowers: undefined,
                         minRating: undefined,
@@ -570,6 +571,12 @@ function ExplorePageContent() {
                         maxPrice: undefined,
                         badgeLevel: undefined,
                         availabilityStatus: undefined,
+                        minReviews: undefined,
+                        minEngagementRate: undefined,
+                        minCompletionRate: undefined,
+                        ambassadorOnly: undefined,
+                        isTrending: undefined,
+                        isFastResponder: undefined,
                       })
                     }
                   >
@@ -679,6 +686,7 @@ function ExplorePageContent() {
                           dealTypes: [],
                           platforms: [],
                           barterTypes: [],
+                          languages: [],
                           minFollowers: undefined,
                           maxFollowers: undefined,
                           minRating: undefined,
@@ -686,6 +694,12 @@ function ExplorePageContent() {
                           maxPrice: undefined,
                           badgeLevel: undefined,
                           availabilityStatus: undefined,
+                          minReviews: undefined,
+                          minEngagementRate: undefined,
+                          minCompletionRate: undefined,
+                          ambassadorOnly: undefined,
+                          isTrending: undefined,
+                          isFastResponder: undefined,
                         }),
                     }}
                   />

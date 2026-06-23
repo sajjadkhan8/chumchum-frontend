@@ -4,9 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
+  Briefcase,
   CheckCircle2,
   Clock3,
   Info,
+  Megaphone,
   Play,
   Search,
   Star,
@@ -30,7 +32,6 @@ type SearchFilters = {
   contentTypes: string[];
   verifiedOnly: boolean;
   fourStarPlus: boolean;
-  paysOnTime: boolean;
   budgetRange: [number, number];
 };
 
@@ -283,10 +284,22 @@ function BrandResultCard({
                   <CheckCircle2 className="size-3" /> Verified
                 </span>
               )}
-              <span className="inline-flex items-center gap-1 rounded-full border border-[#e8c98a] bg-[#fdf3dc] px-2.5 py-0.5 text-[10px] font-bold text-[#9b6712]">
-                <Star className="size-3 fill-current" /> {brand.rating.toFixed(1)}
-                {brand.paysOnTime && <span className="ml-1">· Pays on time</span>}
-              </span>
+              {brand.rating !== null ? (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full border border-[#e8c98a] bg-[#fdf3dc] px-2.5 py-0.5 text-[10px] font-bold text-[#9b6712]"
+                  title={`Average of ${brand.reviewCount} verified review${brand.reviewCount === 1 ? '' : 's'}`}
+                >
+                  <Star className="size-3 fill-current" /> {brand.rating.toFixed(1)}
+                  <span className="font-semibold text-[#b77a12]/80">({brand.reviewCount})</span>
+                </span>
+              ) : (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full border border-[#d1ddd6] bg-[#f4f7f5] px-2.5 py-0.5 text-[10px] font-bold text-[#87938b]"
+                  title="This brand has no reviews on ZingZing yet"
+                >
+                  <Star className="size-3" /> No reviews yet
+                </span>
+              )}
             </div>
 
             <p className="text-xs text-[#87938b]">
@@ -294,7 +307,7 @@ function BrandResultCard({
               <span className="px-1.5 text-[#d1ddd6]">·</span>
               {brand.city}
               <span className="px-1.5 text-[#d1ddd6]">·</span>
-              {brand.campaignCount} campaigns run
+              {brand.campaignCount} campaign{brand.campaignCount === 1 ? '' : 's'} run
             </p>
 
             {brand.tags.length > 0 && (
@@ -308,20 +321,24 @@ function BrandResultCard({
             )}
 
             <div className="grid gap-3 text-sm sm:grid-cols-3 lg:min-w-[32rem]">
+              {brand.avgBudget > 0 && (
+                <div className="flex items-center gap-2">
+                  <Wallet className="size-4 text-[#b0bfb8]" />
+                  <span className="text-xs text-[#87938b]">Avg budget</span>
+                  <span className="text-sm font-bold text-[#1e3d2e]">{formatShortRs(brand.avgBudget)}</span>
+                </div>
+              )}
+              {brand.activeCampaignCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <Megaphone className="size-4 text-[#b0bfb8]" />
+                  <span className="text-sm font-bold text-[#1e3d2e]">{brand.activeCampaignCount}</span>
+                  <span className="text-xs text-[#87938b]">open campaign{brand.activeCampaignCount === 1 ? '' : 's'}</span>
+                </div>
+              )}
               <div className="flex items-center gap-2">
-                <Wallet className="size-4 text-[#b0bfb8]" />
-                <span className="text-xs text-[#87938b]">Avg budget</span>
-                <span className="text-sm font-bold text-[#1e3d2e]">{formatShortRs(brand.avgBudget)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="size-4 text-[#b0bfb8]" />
-                <span className="text-sm font-bold text-[#1e3d2e]">{brand.creatorsHired}</span>
-                <span className="text-xs text-[#87938b]">hired</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock3 className="size-4 text-[#b0bfb8]" />
-                <span className="text-xs text-[#87938b]">Replies in</span>
-                <span className="text-sm font-bold text-[#1e3d2e]">{brand.replyTimeLabel}</span>
+                <Briefcase className="size-4 text-[#b0bfb8]" />
+                <span className="text-sm font-bold text-[#1e3d2e]">{brand.campaignCount}</span>
+                <span className="text-xs text-[#87938b]">total run</span>
               </div>
             </div>
           </div>
@@ -526,7 +543,6 @@ export function CreatorGlobalSearchResults() {
     contentTypes: [],
     verifiedOnly: false,
     fourStarPlus: false,
-    paysOnTime: false,
     budgetRange: DEFAULT_BUDGET_RANGE,
   });
 
@@ -674,7 +690,7 @@ export function CreatorGlobalSearchResults() {
   }, [results]);
 
   useEffect(() => {
-    setFilters({ industries: [], contentTypes: [], verifiedOnly: false, fourStarPlus: false, paysOnTime: false, budgetRange: budgetBounds });
+    setFilters({ industries: [], contentTypes: [], verifiedOnly: false, fourStarPlus: false, budgetRange: budgetBounds });
   }, [budgetBounds, searchTerm]);
 
   const industryOptions = useMemo(() => {
@@ -708,7 +724,7 @@ export function CreatorGlobalSearchResults() {
   };
 
   const clearAllFilters = () => {
-    setFilters((current) => ({ ...current, industries: [], contentTypes: [], verifiedOnly: false, fourStarPlus: false, paysOnTime: false, budgetRange: budgetBounds }));
+    setFilters((current) => ({ ...current, industries: [], contentTypes: [], verifiedOnly: false, fourStarPlus: false, budgetRange: budgetBounds }));
   };
 
   const clearCreatorFilters = () => setCreatorFilters(DEFAULT_CREATOR_FILTERS);
@@ -727,14 +743,14 @@ export function CreatorGlobalSearchResults() {
         if (!brandMatchesIndustry(brand, filters.industries)) return false;
         if (!brandMatchesContentType(brand, filters.contentTypes)) return false;
         if (filters.verifiedOnly && !brand.isVerified) return false;
-        if (filters.fourStarPlus && brand.rating < 4) return false;
-        return !filters.paysOnTime || brand.paysOnTime;
+        if (filters.fourStarPlus && (brand.rating === null || brand.rating < 4)) return false;
+        return true;
       })
       .sort((l, r) => {
-        if (currentSort === 'top-rated') return r.rating - l.rating;
+        if (currentSort === 'top-rated') return (r.rating ?? 0) - (l.rating ?? 0);
         if (currentSort === 'budget-high') return r.avgBudget - l.avgBudget;
         if (r.matchScore !== l.matchScore) return r.matchScore - l.matchScore;
-        return r.rating - l.rating;
+        return (r.rating ?? 0) - (l.rating ?? 0);
       });
   }, [currentSort, filters, results.brands]);
 
@@ -756,8 +772,7 @@ export function CreatorGlobalSearchResults() {
         }
         if (filters.contentTypes.length > 0 && !filters.contentTypes.some((ct) => contentTypeTokens(offer).includes(ct))) return false;
         if (filters.verifiedOnly && assoc && !assoc.isVerified) return false;
-        if (filters.fourStarPlus && assoc && assoc.rating < 4) return false;
-        if (filters.paysOnTime && assoc?.paysOnTime === false) return false;
+        if (filters.fourStarPlus && assoc && (assoc.rating === null || assoc.rating < 4)) return false;
         return true;
       })
       .sort((l, r) => {
@@ -810,17 +825,16 @@ export function CreatorGlobalSearchResults() {
           {[
             { key: 'verifiedOnly', label: 'Verified only' },
             { key: 'fourStarPlus', label: '4+ star rating' },
-            { key: 'paysOnTime', label: 'Pays on time' },
           ].map((item) => (
             <label key={item.key} className="flex cursor-pointer items-center gap-3 text-sm text-[#496159]">
               <Checkbox
-                checked={filters[item.key as 'verifiedOnly' | 'fourStarPlus' | 'paysOnTime']}
+                checked={filters[item.key as 'verifiedOnly' | 'fourStarPlus']}
                 onCheckedChange={() =>
-                  setFilters((c) => ({ ...c, [item.key]: !c[item.key as 'verifiedOnly' | 'fourStarPlus' | 'paysOnTime'] }))
+                  setFilters((c) => ({ ...c, [item.key]: !c[item.key as 'verifiedOnly' | 'fourStarPlus'] }))
                 }
                 className="size-4 rounded-[3px] border-[#d1ddd6] data-[state=checked]:border-[#2d6b4e] data-[state=checked]:bg-[#2d6b4e]"
               />
-              <span className={cn((filters[item.key as 'verifiedOnly' | 'fourStarPlus' | 'paysOnTime'] as boolean) && 'font-bold text-[#2d6b4e]')}>
+              <span className={cn((filters[item.key as 'verifiedOnly' | 'fourStarPlus'] as boolean) && 'font-bold text-[#2d6b4e]')}>
                 {item.label}
               </span>
             </label>

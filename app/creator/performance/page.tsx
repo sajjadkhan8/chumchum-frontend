@@ -182,15 +182,17 @@ function PackageCard({
         </div>
 
         {/* loyalty */}
-        <div className="space-y-2 bg-white p-4 sm:p-5">
-          <p className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-[#87938b]">
-            <RefreshCw className="size-3" /> Loyalty
-          </p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-1 sm:gap-2">
-            <StatPill label="Completion" value={fmtPct(pkg.completionRate)} />
-            <StatPill label="Repeat Brands" value={pkg.repeatBrands.toString()} />
+        {(pkg.completionRate > 0 || pkg.repeatBrands > 0) && (
+          <div className="space-y-2 bg-white p-4 sm:p-5">
+            <p className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-[#87938b]">
+              <RefreshCw className="size-3" /> Loyalty
+            </p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-1 sm:gap-2">
+              {pkg.completionRate > 0 && <StatPill label="Completion" value={fmtPct(pkg.completionRate)} />}
+              {pkg.repeatBrands > 0 && <StatPill label="Repeat Brands" value={pkg.repeatBrands.toString()} />}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* efficiency bar */}

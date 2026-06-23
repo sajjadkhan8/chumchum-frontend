@@ -19,18 +19,8 @@ export interface FeaturedPackagesResult {
 }
 
 export type PackagePlatformRequest = 'INSTAGRAM' | 'TIKTOK' | 'YOUTUBE' | 'FACEBOOK' | 'SNAPCHAT';
-export type PackageTypeRequest = 'ONE_TIME' | 'SUBSCRIPTION';
 export type PackageDealTypeRequest = 'PAID' | 'BARTER' | 'HYBRID';
 export type PackageStatusRequest = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'ARCHIVED';
-
-export interface PackageTierRequest {
-  name: string;
-  price: number;
-  description?: string;
-  deliverables?: string[];
-  delivery_days?: number;
-  revisions?: number;
-}
 
 export interface PackageUpsertRequest {
   name: string;
@@ -40,7 +30,6 @@ export interface PackageUpsertRequest {
   full_description?: string;
   platform: PackagePlatformRequest;
   category?: string;
-  type: PackageTypeRequest;
   deal_type?: PackageDealTypeRequest;
   barter_details?: string;
   barter_description?: string;
@@ -62,9 +51,6 @@ export interface PackageUpsertRequest {
   media_urls?: string[];
   tags?: string[];
   is_active?: boolean;
-  tiers?: PackageTierRequest[];
-  subscription_interval?: string;
-  subscription_duration?: number;
 }
 
 const normalizePackages = (payload: unknown): CreatorPackage[] => {

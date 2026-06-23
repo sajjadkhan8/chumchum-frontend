@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreatorMetricCard } from "@/components/creator-metric-card";
-import { calculateCreatorAmbassadorMetrics } from "@/lib/ambassador-scoring";
+import { getAmbassadorTier } from "@/lib/ambassador-scoring";
 import { formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
 import { analyticsService, type CreatorDashboardAnalytics, type CreatorInsightsAnalytics } from "@/services/analytics.service";
 import { affiliateService, type AffiliateOverview } from "@/services/affiliate.service";
@@ -184,7 +184,26 @@ export default function CreatorDashboardPage() {
     contentPreviews: [], createdAt: new Date(),
   }, [creatorProfile, user]);
 
-  const amb = ambScore ?? calculateCreatorAmbassadorMetrics(creator);
+  // Backend is the single source of truth for ambassador scoring. If the score has not
+  // loaded yet, fall back to a neutral zeroed state (tier derived with BE-aligned
+  // thresholds) rather than computing divergent mock numbers.
+  const amb: CreatorAmbassadorMetrics = ambScore ?? {
+    creatorId: creator.id,
+    score: {
+      total: 0,
+      deliveryScore: 0,
+      accountAgeScore: 0,
+      ratingScore: 0,
+      cancellationScore: 0,
+      profileCompletenessScore: 0,
+      consistencyScore: 0,
+    },
+    tier: getAmbassadorTier(0),
+    percentileRank: 0,
+    strengths: [],
+    improvements: [],
+    journeyMilestones: { joinedPlatform: creator.createdAt },
+  };
   const totalEarned = earnings.totalEarned || analytics.totalEarnings;
   const earningsTarget = Math.max(600000, totalEarned || 1);
   const ordersTarget = Math.max(10, analytics.totalOrders || 1);

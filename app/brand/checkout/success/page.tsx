@@ -146,11 +146,11 @@ function CompletedState({
 
       <div>
         <h1 className="text-xl font-black tracking-[-0.03em] text-[#173b2a]">Payment confirmed!</h1>
-        {status && (
+        {status?.amountPkr ? (
           <p className="mt-1 text-2xl font-black text-[#185c39]">
             {formatPrice(status.amountPkr)}
           </p>
-        )}
+        ) : null}
         <p className="mt-2 text-sm text-[#647168]">
           Your campaign wallet has been credited. You can now use these funds to place orders with creators.
         </p>

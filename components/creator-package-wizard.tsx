@@ -15,8 +15,6 @@ import {
   Trash2,
   Upload,
   X,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import type { CreatorPackage, PackageTier, Platform } from "@/types";
+import type { CreatorPackage, Platform } from "@/types";
 import { creatorsService } from "@/services/creators.service";
 import { useCreatorPackagesStore } from "@/store/creator-packages-store";
 import { useAuthStore } from "@/store/auth-store";
@@ -274,9 +272,6 @@ interface WizardFormData {
   previousWorkUrls: string[];
   visibility: "public" | "private";
   status: "active" | "draft" | "under_review";
-  packageType: "ONE_TIME" | "SUBSCRIPTION";
-  subscriptionInterval: "WEEKLY" | "MONTHLY" | "QUARTERLY";
-  subscriptionDuration: string;
 }
 
 const defaultForm: WizardFormData = {
@@ -304,9 +299,6 @@ const defaultForm: WizardFormData = {
   previousWorkUrls: [""],
   visibility: "public",
   status: "active",
-  packageType: "ONE_TIME",
-  subscriptionInterval: "MONTHLY",
-  subscriptionDuration: "3",
 };
 
 const buildDeliverableItemsFromLegacy = (deliverables: string[] = []): DeliverableItem[] =>
@@ -345,18 +337,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   const [currentStep, setCurrentStep] = useState(1);
   const [hasSavedDraft, setHasSavedDraft] = useState(false);
   const [showDraftModal, setShowDraftModal] = useState(false);
-  const [showTierForm, setShowTierForm] = useState(false);
-  const [expandedTiers, setExpandedTiers] = useState<Set<number>>(new Set());
-
-  const [tiers, setTiers] = useState<PackageTier[]>(initialPackage?.tiers || []);
-  const [tierForm, setTierForm] = useState<Partial<PackageTier>>({
-    name: "",
-    price: undefined,
-    deliverables: [""],
-    description: "",
-    position: 0,
-    isPrimary: tiers.length === 0,
-  });
 
   const initialForm = useMemo<WizardFormData>(() => {
     if (!initialPackage) return defaultForm;
@@ -386,9 +366,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       previousWorkUrls: initialPackage.mediaUrls?.length ? initialPackage.mediaUrls : [""],
       visibility: initialPackage.visibility,
       status: initialPackage.status === "draft" ? "draft" : initialPackage.status === "under_review" ? "under_review" : "active",
-      packageType: initialPackage.packageType ?? "ONE_TIME",
-      subscriptionInterval: initialPackage.subscriptionInterval ?? "MONTHLY",
-      subscriptionDuration: String(initialPackage.subscriptionDuration ?? 3),
     };
   }, [initialPackage]);
 
@@ -523,11 +500,10 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     const payload = {
       currentStep,
       formData,
-      tiers,
     };
 
     localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
-  }, [mode, currentStep, formData, tiers]);
+  }, [mode, currentStep, formData]);
 
   const restoreDraft = () => {
     const raw = localStorage.getItem(DRAFT_KEY);
@@ -537,7 +513,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       const draft = JSON.parse(raw) as {
         currentStep: number;
         formData: Partial<WizardFormData>;
-        tiers?: PackageTier[];
       };
 
       setCurrentStep(draft.currentStep || 1);
@@ -560,7 +535,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
               .filter((item) => item.serviceKey && item.label)
           : [],
       });
-      if (draft.tiers?.length) setTiers(draft.tiers);
       toast.success("Draft restored");
     } catch {
       toast.error("Could not restore draft");
@@ -806,55 +780,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     }));
   };
 
-  const addTier = () => {
-    if (!tierForm.name || tierForm.price === undefined || !tierForm.deliverables?.length) {
-      toast.error("Fill tier name, price, and at least one deliverable");
-      return;
-    }
-
-    const newTier: PackageTier = {
-      id: `tier-${Date.now()}`,
-      name: tierForm.name,
-      price: tierForm.price,
-      deliverables: tierForm.deliverables.filter((d) => d.trim().length > 0),
-      description: tierForm.description,
-      position: tierForm.position ?? tiers.length,
-      isPrimary: tierForm.isPrimary ?? (tiers.length === 0),
-      currency: "PKR",
-    };
-
-    setTiers((prev) => [...prev, newTier]);
-    setTierForm({
-      name: "",
-      price: undefined,
-      deliverables: [""],
-      description: "",
-      position: tiers.length + 1,
-      isPrimary: false,
-    });
-    setShowTierForm(false);
-    toast.success("Tier added");
-  };
-
-  const removeTier = (index: number) => {
-    setTiers((prev) => prev.filter((_, i) => i !== index));
-    setExpandedTiers((prev) => {
-      const next = new Set(prev);
-      next.delete(index);
-      return next;
-    });
-    toast.success("Tier removed");
-  };
-
-  const toggleTierExpand = (index: number) => {
-    setExpandedTiers((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) next.delete(index);
-      else next.add(index);
-      return next;
-    });
-  };
-
   const uploadThumbnail = async (file?: File | null) => {
     if (!file) return;
 
@@ -946,10 +871,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800",
       mediaUrls: formData.previousWorkUrls.map((url) => url.trim()).filter(Boolean),
       visibility: formData.visibility,
-      tiers: tiers.length > 0 ? tiers : undefined,
-      packageType: formData.packageType,
-      subscriptionInterval: formData.packageType === "SUBSCRIPTION" ? formData.subscriptionInterval : undefined,
-      subscriptionDuration: formData.packageType === "SUBSCRIPTION" ? Number(formData.subscriptionDuration || 3) : undefined,
       analytics: initialPackage?.analytics || {
         views: 0,
         clicks: 0,
@@ -1523,72 +1444,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
             <h2 className={`mb-6 ${sectionTitle}`}>Pricing &amp; Deal Type</h2>
             <div className="space-y-6">
 
-              {/* Package type: One-time vs Subscription */}
-              <div>
-                <p className={labelClass + " mb-2"}>Package type</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {([
-                    { key: "ONE_TIME" as const, label: "One-time", desc: "Single purchase per order" },
-                    { key: "SUBSCRIPTION" as const, label: "Recurring", desc: "Auto-renews each period" },
-                  ]).map((opt) => (
-                    <button
-                      key={opt.key}
-                      type="button"
-                      onClick={() => updateField("packageType", opt.key)}
-                      className={`rounded-xl border-2 p-4 text-left transition-all duration-200 ${
-                        formData.packageType === opt.key
-                          ? "border-[#2d6b4e] bg-[#2d6b4e] text-white shadow-sm"
-                          : "border-[#dce6df] text-[#496159] hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
-                      }`}
-                    >
-                      <p className="text-sm font-bold">{opt.label}</p>
-                      <p className={`mt-0.5 text-[10px] ${formData.packageType === opt.key ? "text-white/70" : "text-[#a0b4aa]"}`}>
-                        {opt.desc}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Subscription configuration */}
-              {formData.packageType === "SUBSCRIPTION" && (
-                <div className="space-y-4 rounded-2xl border border-[#b7d4c6] bg-[#f0f8f4] p-5">
-                  <p className={labelClass}>Subscription settings</p>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label className={labelClass}>Billing interval</Label>
-                      <Select
-                        value={formData.subscriptionInterval}
-                        onValueChange={(v) => updateField("subscriptionInterval", v)}
-                      >
-                        <SelectTrigger className="h-10 rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] focus:border-[#2d6b4e] focus:ring-4 focus:ring-[#2d6b4e]/8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="WEEKLY">Weekly</SelectItem>
-                          <SelectItem value="MONTHLY">Monthly</SelectItem>
-                          <SelectItem value="QUARTERLY">Quarterly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="sub-duration" className={labelClass}>
-                        Duration (cycles, 0 = unlimited)
-                      </Label>
-                      <Input
-                        id="sub-duration"
-                        type="number"
-                        min={0}
-                        value={formData.subscriptionDuration}
-                        onChange={(e) => updateField("subscriptionDuration", e.target.value)}
-                        placeholder="3"
-                        className={inputClass}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Deal type */}
               <div className="grid grid-cols-3 gap-2">
                 {[
@@ -1732,193 +1587,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                 </div>
               </div>
 
-              {/* Package tiers */}
-              <div className="rounded-2xl border border-[#d1ddd6] bg-[#f4f7f5] p-5">
-                <div className="mb-4 flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-bold text-[#1e3d2e]">Package Tiers</p>
-                    <p className="mt-0.5 text-xs text-[#6b7870]">Optional — add Lite / Standard / Premium options</p>
-                  </div>
-                  {!showTierForm && (
-                    <button
-                      type="button"
-                      onClick={() => setShowTierForm(true)}
-                      className="inline-flex items-center gap-1.5 rounded-full border-2 border-[#dce6df] bg-white px-3.5 py-1.5 text-xs font-bold text-[#2d6b4e] transition-colors hover:border-[#2d6b4e]"
-                    >
-                      <Plus className="size-3.5" /> Add Tier
-                    </button>
-                  )}
-                </div>
-
-                {/* Add tier form */}
-                {showTierForm && (
-                  <div className="mb-4 space-y-4 rounded-2xl border border-[#d1ddd6] bg-white p-4">
-                    <p className="text-xs font-bold uppercase tracking-widest text-[#7a8f82]">New Tier</p>
-
-                    <div className="space-y-1.5">
-                      <Label className={labelClass}>Tier Name</Label>
-                      <Input
-                        value={tierForm.name || ""}
-                        onChange={(e) => setTierForm((prev) => ({ ...prev, name: e.target.value }))}
-                        placeholder="e.g. Lite, Standard, Premium"
-                        className={inputClass}
-                      />
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-1.5">
-                        <Label className={labelClass}>Price (PKR)</Label>
-                        <Input
-                          type="number"
-                          value={tierForm.price || ""}
-                          onChange={(e) => setTierForm((prev) => ({ ...prev, price: Number(e.target.value) || undefined }))}
-                          placeholder="15000"
-                          className={inputClass}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className={labelClass}>Position</Label>
-                        <Input
-                          type="number"
-                          value={tierForm.position ?? tiers.length}
-                          onChange={(e) => setTierForm((prev) => ({ ...prev, position: Number(e.target.value) }))}
-                          placeholder="0"
-                          className={inputClass}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className={labelClass}>Description</Label>
-                      <Textarea
-                        rows={2}
-                        value={tierForm.description || ""}
-                        onChange={(e) => setTierForm((prev) => ({ ...prev, description: e.target.value }))}
-                        placeholder="Best for small campaigns…"
-                        className={textareaClass}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className={labelClass}>Deliverables for this Tier</Label>
-                      {(tierForm.deliverables || []).map((del, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <Check className="size-4 shrink-0 text-[#2d6b4e]" />
-                          <Input
-                            value={del}
-                            onChange={(e) =>
-                              setTierForm((prev) => ({
-                                ...prev,
-                                deliverables: (prev.deliverables || []).map((d, i) => (i === idx ? e.target.value : d)),
-                              }))
-                            }
-                            placeholder="1 Instagram Reel"
-                            className={inputClass}
-                          />
-                          {(tierForm.deliverables?.length || 0) > 1 && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setTierForm((prev) => ({
-                                  ...prev,
-                                  deliverables: (prev.deliverables || []).filter((_, i) => i !== idx),
-                                }))
-                              }
-                              className="flex size-8 shrink-0 items-center justify-center rounded-full text-[#b0bfb8] transition-colors hover:bg-[#ffe8e8] hover:text-[#c0392b]"
-                            >
-                              <Trash2 className="size-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setTierForm((prev) => ({
-                            ...prev,
-                            deliverables: [...(prev.deliverables || []), ""],
-                          }))
-                        }
-                        className="inline-flex items-center gap-1.5 rounded-full border border-[#dce6df] px-3 py-1.5 text-xs font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#2d6b4e]"
-                      >
-                        <Plus className="size-3" /> Add Deliverable
-                      </button>
-                    </div>
-
-                    <div className="flex gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={addTier}
-                        className="flex-1 rounded-full bg-[#2d6b4e] py-2 text-sm font-bold text-white transition-colors hover:bg-[#1f5239]"
-                      >
-                        Add Tier
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowTierForm(false)}
-                        className="flex-1 rounded-full border-2 border-[#dce6df] py-2 text-sm font-bold text-[#496159] transition-colors hover:border-[#2d6b4e]"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Tiers list */}
-                {tiers.length > 0 && (
-                  <div className="space-y-2">
-                    {tiers.map((tier, idx) => (
-                      <div key={idx} className="overflow-hidden rounded-xl border border-[#d1ddd6] bg-white">
-                        <button
-                          type="button"
-                          onClick={() => toggleTierExpand(idx)}
-                          className="flex w-full items-center justify-between gap-2 px-4 py-3 transition-colors hover:bg-[#f4f7f5]"
-                        >
-                          <div className="text-left">
-                            <p className="text-sm font-bold text-[#1e3d2e]">{tier.name}</p>
-                            <p className="text-xs text-[#6b7870]">
-                              PKR {Number(tier.price).toLocaleString()} · {tier.deliverables.length} deliverables
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {tier.isPrimary && (
-                              <span className="rounded-full bg-[#e4f1e8] px-2 py-0.5 text-[10px] font-bold text-[#1e5c3e]">
-                                Primary
-                              </span>
-                            )}
-                            {expandedTiers.has(idx) ? (
-                              <ChevronUp className="size-4 text-[#6b7870]" />
-                            ) : (
-                              <ChevronDown className="size-4 text-[#6b7870]" />
-                            )}
-                          </div>
-                        </button>
-
-                        {expandedTiers.has(idx) && (
-                          <div className="space-y-2 border-t border-[#d1ddd6] px-4 py-3">
-                            {tier.deliverables.map((del, delIdx) => (
-                              <div key={delIdx} className="flex items-center gap-2 text-sm text-[#496159]">
-                                <Check className="size-3.5 shrink-0 text-[#2d6b4e]" />
-                                {del}
-                              </div>
-                            ))}
-                            {tier.description && (
-                              <p className="mt-1 text-xs text-[#6b7870]">{tier.description}</p>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => removeTier(idx)}
-                              className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#ffe8e8] px-3 py-1.5 text-xs font-bold text-[#c0392b] transition-colors hover:bg-[#ffd0d0]"
-                            >
-                              <Trash2 className="size-3" /> Remove
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
 
             </div>
           </div>

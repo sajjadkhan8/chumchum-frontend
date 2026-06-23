@@ -2,11 +2,10 @@
 
 import { motion } from 'framer-motion';
 import { Zap } from 'lucide-react';
-import type { Creator } from '@/types';
+import type { CreatorAmbassadorMetrics } from '@/types';
 import {
-  calculateCreatorAmbassadorMetrics,
   AMBASSADOR_TIERS,
-  getAmbasadorSuggestions,
+  getAmbassadorSuggestions,
 } from '@/lib/ambassador-scoring';
 import { AmbassadorTierBadge, AmbassadorScoreGauge, AmbassadorScoreBreakdown } from '@/components/ambassador-score-display';
 import {
@@ -20,21 +19,18 @@ const panelClass =
   'rounded-[1.6rem] border border-[#d1ddd6] bg-white shadow-[0_18px_55px_rgba(38,70,50,0.07)] p-5 sm:p-6';
 
 interface AmbassadorDetailedCardProps {
-  creator: Creator;
+  metrics: CreatorAmbassadorMetrics;
   className?: string;
-  expandedByDefault?: boolean;
 }
 
 export function AmbassadorDetailedCard({
-  creator,
+  metrics,
   className,
-  expandedByDefault = false,
 }: AmbassadorDetailedCardProps) {
-  const metrics = calculateCreatorAmbassadorMetrics(creator);
   const tierInfo = AMBASSADOR_TIERS[metrics.tier];
-  const suggestions = getAmbasadorSuggestions(metrics, metrics.tier);
+  const suggestions = getAmbassadorSuggestions(metrics.score.total, metrics.tier, metrics.improvements);
 
-  const isEligibleForAmb = metrics.score.total >= 70;
+  const isEligibleForAmb = metrics.score.total >= 60;
 
   return (
     <motion.div

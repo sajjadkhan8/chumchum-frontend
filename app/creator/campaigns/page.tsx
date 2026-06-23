@@ -177,6 +177,16 @@ function CreatorCampaignsFeedPage() {
 
   const submitReaction = async () => {
     if (!selectedOffer) return;
+
+    if (reactionType === 'proposal' && (!proposedPrice.trim() || !proposedDays.trim())) {
+      toast.error('A proposal requires a price and delivery timeline');
+      return;
+    }
+    if ((reactionType === 'question' || reactionType === 'decline') && !message.trim()) {
+      toast.error(reactionType === 'question' ? 'Please include your question' : 'Please provide a reason for declining');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await campaignsService.reactToCampaign(selectedOffer.id, {

@@ -74,6 +74,7 @@ interface BackendUser {
   avatarUrl?: string;
   creatorProgramStatus?: User['creatorProgramStatus'];
   active?: boolean;
+  mfaEnabled?: boolean;
   createdAt?: string;
 }
 
@@ -87,6 +88,7 @@ export const mapUser = (input: BackendUser): User => ({
   avatar: input.avatarUrl,
   creatorProgramStatus: input.creatorProgramStatus || 'none',
   active: input.active,
+  mfaEnabled: input.mfaEnabled,
   createdAt: safeDate(input.createdAt),
 });
 
@@ -428,7 +430,7 @@ interface BackendOrderResponse {
   hasReviewedByCreator?: boolean;
 }
 
-interface BackendOrderDeliverableResponse {
+export interface BackendOrderDeliverableResponse {
   id: string;
   order_id: string;
   name?: string;
@@ -439,7 +441,7 @@ interface BackendOrderDeliverableResponse {
   created_at?: string;
 }
 
-const normalizeDeliverableStatus = (value?: string | null): OrderDeliverable['status'] => {
+export const normalizeDeliverableStatus = (value?: string | null): OrderDeliverable['status'] => {
   const lowered = (value || '').toLowerCase();
   if (lowered === 'in_progress' || lowered === 'completed' || lowered === 'revision' || lowered === 'review' || lowered === 'approved') {
     return lowered;
@@ -447,7 +449,7 @@ const normalizeDeliverableStatus = (value?: string | null): OrderDeliverable['st
   return 'pending';
 };
 
-const mapOrderDeliverable = (input: BackendOrderDeliverableResponse): OrderDeliverable => ({
+export const mapOrderDeliverable = (input: BackendOrderDeliverableResponse): OrderDeliverable => ({
   id: input.id,
   orderId: input.order_id,
   name: input.name || 'Deliverable',

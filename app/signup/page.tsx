@@ -247,6 +247,7 @@ export default function SignupPage() {
                 autoCapitalize="characters"
                 spellCheck={false}
               />
+              <p className="text-[10px] text-[#87938b]">Applied at signup. Unrecognised codes are silently skipped.</p>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-xs font-bold text-[#496159]">Password</Label>

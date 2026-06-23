@@ -34,9 +34,6 @@ const toCreateRequest = (pkg: CreatorPackage): PackageUpsertRequest => ({
   full_description: pkg.fullDescription,
   platform: toPackagePlatform(pkg.platform),
   category: pkg.category,
-  type: pkg.packageType ?? 'ONE_TIME',
-  subscription_interval: pkg.subscriptionInterval,
-  subscription_duration: pkg.subscriptionDuration,
   deal_type: toPackageDealType(pkg.dealType),
   barter_details: pkg.barterDescription || pkg.barterValue,
   barter_description: pkg.barterDescription,
@@ -57,14 +54,6 @@ const toCreateRequest = (pkg: CreatorPackage): PackageUpsertRequest => ({
   media_urls: cleanList(pkg.mediaUrls),
   tags: cleanList(pkg.tags),
   is_active: pkg.status === 'active',
-  tiers: pkg.tiers?.map((tier) => ({
-    name: tier.name,
-    price: tier.price,
-    description: tier.description,
-    deliverables: tier.deliverables,
-    delivery_days: tier.deliveryDays,
-    revisions: tier.revisions,
-  })),
 });
 
 export const useCreatorPackagesStore = create<CreatorPackagesState>()(

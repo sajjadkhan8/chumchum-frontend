@@ -13,11 +13,13 @@ export interface CreatorSearchBrandResult {
   city: string | null;
   description: string;
   isVerified: boolean;
-  rating: number;
-  paysOnTime: boolean;
+  /** Real platform rating. Null when the brand has no reviews yet — never inferred. */
+  rating: number | null;
+  /** Number of reviews backing `rating`. */
+  reviewCount: number;
   avgBudget: number;
-  creatorsHired: number;
-  replyTimeLabel: string;
+  /** Number of distinct open campaigns surfaced for this brand in the current search. */
+  activeCampaignCount: number;
   campaignCount: number;
   tags: string[];
   activeOffers: BrandCampaign[];
@@ -172,23 +174,14 @@ const inferBrandVerification = (brand: Brand | undefined, offers: BrandCampaign[
   return Boolean(brand ?? offers.find((offer) => (offer.reactionCount ?? 0) > 0));
 };
 
-const inferBrandRating = (brand: Brand | undefined, offers: BrandCampaign[]) => {
-  const baseline = brand ? 4.1 : 3.9;
-  const activityBonus = Math.min(0.7, offers.length * 0.14);
-  const reactionBonus = Math.min(0.25, average(offers.map((offer) => offer.reactionCount || 0)) / 40);
-  return Number(Math.min(4.9, baseline + activityBonus + reactionBonus).toFixed(1));
-};
-
-const inferPaysOnTime = (brand: Brand | undefined, offers: BrandCampaign[]) => {
-  if (brand?.monthlyBudget && brand.monthlyBudget > 0) return true;
-  return average(offers.map((offer) => (offer.budgetMin + offer.budgetMax) / 2)) >= 50000 || offers.length >= 2;
-};
-
-const inferReplyTimeLabel = (brand: Brand | undefined, offers: BrandCampaign[]) => {
-  if (brand?.activeOrders && brand.activeOrders >= 6) return '~2 hrs';
-  if (offers.length >= 3) return '~3 hrs';
-  if (offers.length === 2) return '~8 hrs';
-  return '~1 day';
+// Real rating, only when the brand actually has reviews. We never infer a rating
+// from activity/reactions — an unrated brand returns null so the UI can omit the badge.
+const realBrandRating = (brand: Brand | undefined): { rating: number | null; reviewCount: number } => {
+  const reviewCount = brand?.brandTotalReviews ?? 0;
+  if (brand && reviewCount > 0 && brand.brandRating > 0) {
+    return { rating: brand.brandRating, reviewCount };
+  }
+  return { rating: null, reviewCount };
 };
 
 const mergeBrandCampaigns = (offers: BrandCampaign[], brand: Brand | undefined, searchTerm: string): CreatorSearchBrandResult | null => {
@@ -197,10 +190,7 @@ const mergeBrandCampaigns = (offers: BrandCampaign[], brand: Brand | undefined, 
   if (!name) return null;
 
   const avgBudget = Math.round(average(offers.map((offer) => (offer.budgetMin + offer.budgetMax) / 2)));
-  const creatorsHired = Math.max(
-    offers.length,
-    offers.reduce((sum, offer) => sum + Math.max(1, Math.round((offer.reactionCount || 0) / 3)), 0),
-  );
+  const { rating, reviewCount } = realBrandRating(brand);
   const matchScore = calculateMatchScore(searchTerm, [
     brand?.name,
     brand?.industry,
@@ -221,11 +211,10 @@ const mergeBrandCampaigns = (offers: BrandCampaign[], brand: Brand | undefined, 
     city: inferBrandCity(brand, offers),
     description: inferBrandDescription(brand, offers),
     isVerified: inferBrandVerification(brand, offers),
-    rating: inferBrandRating(brand, offers),
-    paysOnTime: inferPaysOnTime(brand, offers),
+    rating,
+    reviewCount,
     avgBudget,
-    creatorsHired,
-    replyTimeLabel: inferReplyTimeLabel(brand, offers),
+    activeCampaignCount: offers.length,
     campaignCount: brand?.totalCampaigns ?? offers.length,
     tags: deriveBrandTags(offers),
     activeOffers: offers.slice(0, 3),
@@ -275,12 +264,10 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
         industry: brand.industry,
         city: brand.city,
         description: brand.description,
-        isVerified: true,
-        rating: 4.4,
-        paysOnTime: true,
+        isVerified: inferBrandVerification(brand, []),
+        ...realBrandRating(brand),
         avgBudget: brand.monthlyBudget ?? 0,
-        creatorsHired: Math.max(brand.activeOrders, 1),
-        replyTimeLabel: brand.activeOrders > 4 ? '~3 hrs' : '~1 day',
+        activeCampaignCount: 0,
         campaignCount: brand.totalCampaigns,
         tags: splitValues(brand.targetPlatforms).slice(0, 4),
         activeOffers: [],
@@ -307,11 +294,10 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
         city: inferBrandCity(undefined, brandOffers),
         description: inferBrandDescription(undefined, brandOffers),
         isVerified: inferBrandVerification(undefined, brandOffers),
-        rating: inferBrandRating(undefined, brandOffers),
-        paysOnTime: inferPaysOnTime(undefined, brandOffers),
+        rating: null,
+        reviewCount: 0,
         avgBudget: Math.round(average(brandOffers.map((offer) => (offer.budgetMin + offer.budgetMax) / 2))),
-        creatorsHired: Math.max(brandOffers.length, brandOffers.reduce((sum, offer) => sum + Math.max(1, Math.round((offer.reactionCount || 0) / 3)), 0)),
-        replyTimeLabel: inferReplyTimeLabel(undefined, brandOffers),
+        activeCampaignCount: brandOffers.length,
         campaignCount: brandOffers.length,
         tags: deriveBrandTags(brandOffers),
         activeOffers: brandOffers.slice(0, 3),
@@ -322,7 +308,7 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
 
   const brands = Array.from(brandResults.values()).sort((left, right) => {
     if (right.matchScore !== left.matchScore) return right.matchScore - left.matchScore;
-    if (right.rating !== left.rating) return right.rating - left.rating;
+    if ((right.rating ?? 0) !== (left.rating ?? 0)) return (right.rating ?? 0) - (left.rating ?? 0);
     return right.activeOffers.length - left.activeOffers.length;
   });
 

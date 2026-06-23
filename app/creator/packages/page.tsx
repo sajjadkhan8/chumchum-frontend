@@ -607,12 +607,16 @@ function CreatorPackagesPageContent() {
                       <span className="rounded-full bg-[#e6eceb] px-2.5 py-0.5 text-[10px] font-bold text-[#2d6b4e]">
                         {pkg.ordersCompleted} orders
                       </span>
-                      <span className="rounded-full bg-[#e6eceb] px-2.5 py-0.5 text-[10px] font-bold text-[#2d6b4e]">
-                        {pkg.analytics.completionRate}% completion
-                      </span>
-                      <span className="rounded-full bg-[#e6eceb] px-2.5 py-0.5 text-[10px] font-bold text-[#2d6b4e]">
-                        {pkg.analytics.repeatBrands} repeat
-                      </span>
+                      {pkg.analytics.completionRate > 0 && (
+                        <span className="rounded-full bg-[#e6eceb] px-2.5 py-0.5 text-[10px] font-bold text-[#2d6b4e]">
+                          {pkg.analytics.completionRate}% completion
+                        </span>
+                      )}
+                      {pkg.analytics.repeatBrands > 0 && (
+                        <span className="rounded-full bg-[#e6eceb] px-2.5 py-0.5 text-[10px] font-bold text-[#2d6b4e]">
+                          {pkg.analytics.repeatBrands} repeat
+                        </span>
+                      )}
                     </div>
 
                     {/* Footer */}

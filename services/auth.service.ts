@@ -104,6 +104,18 @@ export const authService = {
     return apiClient.post<{ stepUpToken: string }>('/api/v1/auth/admin/step-up', { password });
   },
 
+  async setupMfa(): Promise<{ secret: string; otpAuthUri: string }> {
+    return apiClient.post<{ secret: string; otpAuthUri: string }>('/api/v1/auth/admin/mfa/setup', {});
+  },
+
+  async enableMfa(totpCode: string): Promise<void> {
+    await apiClient.post('/api/v1/auth/admin/mfa/enable', { totpCode });
+  },
+
+  async disableMfa(totpCode: string): Promise<void> {
+    await apiClient.post('/api/v1/auth/admin/mfa/disable', { totpCode });
+  },
+
   async me(): Promise<User> {
     const response = await apiClient.get<{ id: string; email?: string; emailVerified?: boolean; phone?: string; role?: string; name?: string; avatarUrl?: string; creatorProgramStatus?: User['creatorProgramStatus']; active?: boolean; createdAt?: string }>('/api/v1/users/me', { noGlobalRedirect: true });
     return mapUser(response);

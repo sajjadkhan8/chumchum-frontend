@@ -304,7 +304,7 @@ function CreatorOrdersPageContent() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `receipt-${order.id}.pdf`;
+      a.download = `receipt-${order.orderNumber || order.id}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {

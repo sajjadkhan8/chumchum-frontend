@@ -1,12 +1,13 @@
 import { apiClient } from '@/lib/api/client';
 
-export type DisputeStatus = 'open' | 'under_review' | 'resolved' | 'closed';
+export type DisputeStatus = 'open' | 'under_review' | 'resolved' | 'closed' | 'waiting_for_parties';
 export type DisputeResolution =
   | 'none'
-  | 'refund_issued'
-  | 'resolved_for_brand'
-  | 'resolved_for_creator'
-  | 'withdrawn';
+  | 'creator_favored'
+  | 'brand_favored'
+  | 'mutual_agreement'
+  | 'cancel_order'
+  | 'no_action';
 
 export interface Dispute {
   id: string;

@@ -20,6 +20,7 @@ const panelClass =
 const statusConfig: Record<string, { label: string; color: string; Icon: React.ElementType }> = {
   open: { label: "Open", color: "bg-amber-50 text-amber-700 ring-1 ring-amber-200", Icon: AlertTriangle },
   under_review: { label: "Under Review", color: "bg-blue-50 text-blue-700 ring-1 ring-blue-200", Icon: Clock },
+  waiting_for_parties: { label: "Waiting for Parties", color: "bg-amber-50 text-amber-700 ring-1 ring-amber-200", Icon: Clock },
   resolved: { label: "Resolved", color: "bg-green-50 text-green-700 ring-1 ring-green-200", Icon: CheckCircle },
   closed: { label: "Closed", color: "bg-gray-100 text-gray-600 ring-1 ring-gray-200", Icon: Shield },
 };
@@ -31,7 +32,10 @@ function DisputeCard({ dispute }: { dispute: Dispute }) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`${panelClass} flex flex-col gap-3 p-5 sm:flex-row sm:items-start sm:justify-between`}
+    >
+    <Link
+      href={`/creator/disputes/${dispute.id}`}
+      className={`${panelClass} flex flex-col gap-3 p-5 transition hover:border-[#b9cdc1] hover:shadow-[0_22px_60px_rgba(38,70,50,0.12)] sm:flex-row sm:items-start sm:justify-between`}
     >
       <div className="flex items-start gap-4">
         <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#e8f0eb]">
@@ -61,6 +65,7 @@ function DisputeCard({ dispute }: { dispute: Dispute }) {
           </p>
         </div>
       )}
+    </Link>
     </motion.div>
   );
 }

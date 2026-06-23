@@ -130,9 +130,9 @@ const normalizeTier = (tier: unknown, total: number): AmbassadorTier => {
     return value;
   }
 
-  if (total >= 91) return 'elite_ambassador';
-  if (total >= 71) return 'verified_ambassador';
-  if (total >= 41) return 'emerging_ambassador';
+  if (total >= 80) return 'elite_ambassador';
+  if (total >= 60) return 'verified_ambassador';
+  if (total >= 40) return 'emerging_ambassador';
   return 'rising_creator';
 };
 
@@ -157,7 +157,7 @@ const mapScore = (input: AmbassadorScoreResponse): CreatorAmbassadorMetrics => {
     improvements: input.improvements || [],
     journeyMilestones: {
       joinedPlatform: calculatedAt,
-      ambassadorEligible: total >= 70 ? calculatedAt : undefined,
+      ambassadorEligible: total >= 60 ? calculatedAt : undefined,
     },
   };
 };

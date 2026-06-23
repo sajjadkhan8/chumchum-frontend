@@ -22,6 +22,7 @@ import {
   Trash2,
   Ban,
   ShieldAlert,
+  ShieldCheck,
   Download,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -433,6 +434,24 @@ export function MessagesPageContent() {
     }
   };
 
+  const handleUnblockUser = async () => {
+    if (!selectedConversation) return;
+    setIsConversationActionPending(true);
+    try {
+      await messagesService.unblockUser(selectedConversation.id);
+      const unblocked = { ...selectedConversation, blockedByMe: false };
+      setSelectedConversation(unblocked);
+      setConversations((prev) => prev.map((conversation) =>
+        conversation.id === selectedConversation.id ? { ...conversation, blockedByMe: false } : conversation
+      ));
+      toast.success("User unblocked");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to unblock user");
+    } finally {
+      setIsConversationActionPending(false);
+    }
+  };
+
   const respondToOffer = async (message: Message, action: "accepted" | "rejected") => {
     const offerId = message.offer?.id;
     if (!offerId) { toast.error("This offer cannot be updated yet."); return; }
@@ -653,7 +672,16 @@ export function MessagesPageContent() {
                         <Trash2 className="size-4 text-[#7a8f82]" />
                         Clear Chat
                       </DropdownMenuItem>
-                      {!selectedConversation.blockedByMe && (
+                      {selectedConversation.blockedByMe ? (
+                        <DropdownMenuItem
+                          onClick={() => void handleUnblockUser()}
+                          disabled={isConversationActionPending}
+                          className="rounded-xl px-3 py-2.5 text-sm font-semibold text-[#1f5239] focus:bg-[#e8f0ec] focus:text-[#1f5239]"
+                        >
+                          <ShieldCheck className="size-4 text-[#2d6b4e]" />
+                          Unblock User
+                        </DropdownMenuItem>
+                      ) : (
                         <DropdownMenuItem
                           onClick={() => setConfirmAction("block")}
                           className="rounded-xl px-3 py-2.5 text-sm font-semibold text-[#b42318] focus:bg-[#fff0ed] focus:text-[#b42318]"
