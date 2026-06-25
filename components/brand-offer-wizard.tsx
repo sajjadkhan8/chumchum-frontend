@@ -862,7 +862,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
     if (!file) return;
     setIsUploading(true);
     try {
-      const uploaded = await uploadsService.packageThumbnail(file);
+      const uploaded = await uploadsService.campaignCover(file, offerId);
       updateForm({ coverImageUrl: uploaded.url });
       toast.success('Cover uploaded');
     } catch (error) {

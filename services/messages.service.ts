@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api/client';
 import { mapBrand, mapConversation, mapCreator, mapMessage } from '@/lib/api/mappers';
+import { uploadsService } from '@/services/uploads.service';
 import type { Conversation, Message } from '@/types';
 
 interface BackendConversation {
@@ -165,6 +166,8 @@ export const messagesService = {
   },
 
   async sendAttachment(conversationId: string, file: File): Promise<Message> {
+    await uploadsService.validateFile('message-attachment', file);
+
     const formData = new FormData();
     formData.append('file', file);
 

@@ -785,7 +785,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
     setIsUploadingThumbnail(true);
     try {
-      const uploaded = await uploadsService.packageThumbnail(file);
+      const uploaded = await uploadsService.packageThumbnail(file, mode === "edit" ? initialPackage?.id : undefined);
       updateField("thumbnailUrl", uploaded.url);
       toast.success("Package thumbnail uploaded");
     } catch (error) {
@@ -801,7 +801,11 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
     setUploadingSampleIndex(index);
     try {
-      const uploaded = await uploadsService.contentPreview(file, formData.platform || undefined);
+      const uploaded = await uploadsService.contentPreview(
+        file,
+        formData.platform || undefined,
+        mode === "edit" ? initialPackage?.id : undefined,
+      );
       updateWorkSample(index, uploaded.url);
       toast.success("Preview media uploaded");
     } catch (error) {
