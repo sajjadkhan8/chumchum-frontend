@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Banknote, Sparkles, Send, Loader2, ChevronDown } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import type { BarterType, Creator, DealType } from '@/types';
@@ -144,6 +144,7 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-hidden rounded-[1.75rem] p-0 sm:max-h-[90dvh] sm:max-w-lg [&>button]:text-white/70 [&>button]:hover:text-white">
+        <DialogTitle className="sr-only">Send quick deal offer</DialogTitle>
 
         {/* Dark green header */}
         <div className="bg-[#1e3d2e] px-5 pb-5 pt-5 sm:px-6">

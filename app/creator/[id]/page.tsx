@@ -99,13 +99,13 @@ export default function CreatorProfilePage({
 
         setCreator(foundCreator);
 
-        const [packagesResponse, reviewsResponse] = await Promise.all([
+        const [packagesResponse, reviewsResponse] = await Promise.allSettled([
           packagesService.getByCreatorId(foundCreator.id),
           reviewsService.getByCreatorId(foundCreator.id),
         ]);
 
-        setCreatorPackages(packagesResponse);
-        setCreatorReviews(reviewsResponse);
+        setCreatorPackages(packagesResponse.status === "fulfilled" ? packagesResponse.value : []);
+        setCreatorReviews(reviewsResponse.status === "fulfilled" ? reviewsResponse.value : []);
       } finally {
         setIsLoading(false);
       }

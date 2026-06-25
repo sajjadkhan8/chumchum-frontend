@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CreatorMetricCard } from "@/components/creator-metric-card";
 import { affiliateService, type AffiliateCommission, type AffiliateOverview } from "@/services/affiliate.service";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import { formatPrice, formatRelativeTime } from "@/lib/utils";
 
 const emptyOverview: AffiliateOverview = {
@@ -130,7 +131,7 @@ export function AffiliatePageContent({ role }: { role: "creator" | "brand" }) {
   const handleCopy = async () => {
     if (!shareUrl) return;
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await copyTextToClipboard(shareUrl);
       setCopied(true);
       toast.success("Affiliate link copied");
       window.setTimeout(() => setCopied(false), 1600);

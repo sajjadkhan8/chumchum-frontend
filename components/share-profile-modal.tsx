@@ -6,6 +6,7 @@ import { Check, Copy, Download, Link2, Share2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import type { Creator } from "@/types";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import { formatFollowers } from "@/lib/utils";
 
 // ── WhatsApp SVG icon ─────────────────────────────────────────────────────────
@@ -317,7 +318,7 @@ export function ShareProfileModal({ isOpen, onClose, creator }: ShareProfileModa
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(profileUrl);
+      await copyTextToClipboard(profileUrl);
       setCopied(true);
       toast.success("Link copied to clipboard");
       setTimeout(() => setCopied(false), 2000);

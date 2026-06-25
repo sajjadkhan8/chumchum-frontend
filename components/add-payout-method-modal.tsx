@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import * as SelectPrimitive from "@radix-ui/react-select";
@@ -201,9 +202,9 @@ export function AddPayoutMethodModal({
           <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-white/60">
             Earnings
           </p>
-          <h2 className="mt-0.5 text-lg font-extrabold tracking-[-0.03em] text-white">
+          <DialogTitle className="mt-0.5 text-lg font-extrabold tracking-[-0.03em] text-white">
             Add Payout Method
-          </h2>
+          </DialogTitle>
           <p className="mt-0.5 text-xs text-white/60">
             Add a bank account or wallet to receive your earnings
           </p>

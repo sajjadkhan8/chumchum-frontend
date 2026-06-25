@@ -84,12 +84,12 @@ export default function PublicCreatorProfilePage({
         const found = await creatorsService.getByUsername(username);
         if (!found) { setCreator(null); return; }
         setCreator(found);
-        const [pkgs, revs] = await Promise.all([
+        const [pkgs, revs] = await Promise.allSettled([
           packagesService.getByCreatorId(found.id),
           reviewsService.getByCreatorId(found.id),
         ]);
-        setPackages(pkgs);
-        setReviews(revs);
+        setPackages(pkgs.status === "fulfilled" ? pkgs.value : []);
+        setReviews(revs.status === "fulfilled" ? revs.value : []);
       } catch {
         setCreator(null);
       } finally {

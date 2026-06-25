@@ -18,7 +18,7 @@ import {
   BadgePercent,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetClose, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import { ordersService } from '@/services/orders.service';
@@ -179,6 +179,7 @@ export function CreatorSidebarDrawer() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-[90vw] max-w-sm overflow-y-auto border-[#d1ddd6] bg-[#f4f2e9] p-0">
+        <SheetTitle className="sr-only">Creator navigation menu</SheetTitle>
         <div className="p-4 pb-safe pt-5">
           <CreatorSidebarNav compact closeOnNavigate />
         </div>

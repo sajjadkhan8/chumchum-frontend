@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetClose, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useAuthStore } from '@/store/auth-store';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import { useTheme } from 'next-themes';
@@ -582,7 +582,7 @@ export function Navbar({ showSearch = false, onSearchChange, searchValue }: Navb
             </SheetTrigger>
             <SheetContent side="right" className={cn("w-[88vw] max-w-sm p-0", (isBrand || !isSignedIn) && "border-[#d9e0d8] bg-[#fbfaf5]")}>
               <div className={cn("border-b p-4", (isBrand || !isSignedIn) && "border-[#d9e0d8]")}>
-                <p className={cn("text-base font-semibold", (isBrand || !isSignedIn) && "text-[#173b2a]")}>Menu</p>
+                <SheetTitle className={cn("text-base font-semibold", (isBrand || !isSignedIn) && "text-[#173b2a]")}>Menu</SheetTitle>
               </div>
               <nav className="flex flex-col gap-1 p-4 pb-safe">
                 {navLinks.map((link) => (

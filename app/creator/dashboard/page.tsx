@@ -30,6 +30,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreatorMetricCard } from "@/components/creator-metric-card";
 import { getAmbassadorTier } from "@/lib/ambassador-scoring";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import { formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
 import { analyticsService, type CreatorDashboardAnalytics, type CreatorInsightsAnalytics } from "@/services/analytics.service";
 import { affiliateService, type AffiliateOverview } from "@/services/affiliate.service";
@@ -234,7 +235,7 @@ export default function CreatorDashboardPage() {
   const copyAffiliateLink = async () => {
     if (!affiliate.shareUrl) return;
     try {
-      await navigator.clipboard.writeText(affiliate.shareUrl);
+      await copyTextToClipboard(affiliate.shareUrl);
       setAffiliateCopied(true);
       window.setTimeout(() => setAffiliateCopied(false), 1600);
     } catch {
