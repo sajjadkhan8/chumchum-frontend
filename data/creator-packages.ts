@@ -50,8 +50,6 @@ export const creatorPackages: CreatorPackage[] = [
     dealType: 'barter',
     barterValue: 'Minimum barter PKR 500,000+',
     barterDescription: 'Dining for two with featured menu items and ambience setup.',
-    barterCategory: 'food',
-    estimatedBarterValue: 650000,
     creatorExpectations: 'Reserved table, menu flexibility, and filming permission.',
     platform: 'instagram',
     tags: ['Barter', 'Cafe', 'Lahore'],
@@ -87,10 +85,7 @@ export const creatorPackages: CreatorPackage[] = [
     dealType: 'hybrid',
     barterValue: 'Weekend stay worth PKR 1,125,000+',
     barterDescription: '2-night stay with breakfast and activity access.',
-    barterCategory: 'hotel',
-    estimatedBarterValue: 1125000,
     hybridCashAmount: 450000,
-    hybridBarterValue: 1125000,
     creatorExpectations: 'Ocean-view or premium room and content rights for 30 days.',
     platform: 'instagram',
     tags: ['Hybrid', 'Hotel', 'Travel'],
@@ -206,4 +201,3 @@ export const creatorPackages: CreatorPackage[] = [
     },
   },
 ];
-

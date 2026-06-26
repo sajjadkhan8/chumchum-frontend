@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ElementType } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
   Check,
+  Clock,
   DollarSign,
   Gift,
   Lock,
   Plus,
+  RotateCcw,
   Sparkles,
   Trash2,
   Upload,
@@ -37,6 +39,12 @@ import { PlatformIconBadge, platformMeta } from "@/components/platform-icons";
 import { categoryOptions, getCategoryLabel, normalizeCategories, normalizeCategory } from "@/lib/categories";
 
 const DRAFT_KEY = "creator-package-draft-v3";
+const PRICE_LIMITS = { min: 100, max: 1_000_000 };
+const DELIVERY_LIMITS = { min: 1, max: 60 };
+const REVISION_LIMITS = { min: 0, max: 10 };
+
+const formatPkr = (value: number | string): string =>
+  `PKR ${Number(value || 0).toLocaleString()}`;
 
 const steps = [
   { id: 1, label: "Basic Info" },
@@ -262,9 +270,6 @@ interface WizardFormData {
   dealType: "paid" | "barter" | "hybrid";
   price: string;
   barterExpectations: string;
-  barterCategory: string;
-  estimatedBarterValue: string;
-  preferredBrands: string;
   minimumBarterValue: string;
   hybridCashAmount: string;
   thumbnailUrl: string;
@@ -272,6 +277,21 @@ interface WizardFormData {
   visibility: "public" | "private";
   status: "active" | "draft" | "under_review";
 }
+
+type BoundedNumberField = keyof Pick<
+  WizardFormData,
+  "price" | "hybridCashAmount" | "minimumBarterValue" | "deliveryDays" | "revisions"
+>;
+
+const getBoundedFieldError = (value: string, limits: { min: number; max: number }, label: string): string | null => {
+  if (!value.trim()) return `${label} is required`;
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return `${label} must be a number`;
+  if (numericValue < limits.min || numericValue > limits.max) {
+    return `${label} must be between ${limits.min.toLocaleString()} and ${limits.max.toLocaleString()}`;
+  }
+  return null;
+};
 
 const defaultForm: WizardFormData = {
   title: "",
@@ -288,9 +308,6 @@ const defaultForm: WizardFormData = {
   dealType: "paid",
   price: "",
   barterExpectations: "",
-  barterCategory: "products",
-  estimatedBarterValue: "",
-  preferredBrands: "",
   minimumBarterValue: "",
   hybridCashAmount: "",
   thumbnailUrl: "",
@@ -313,9 +330,6 @@ const isDefaultDraft = (formData: WizardFormData, currentStep: number) => (
   && formData.dealType === defaultForm.dealType
   && formData.price === defaultForm.price
   && formData.barterExpectations === defaultForm.barterExpectations
-  && formData.barterCategory === defaultForm.barterCategory
-  && formData.estimatedBarterValue === defaultForm.estimatedBarterValue
-  && formData.preferredBrands === defaultForm.preferredBrands
   && formData.minimumBarterValue === defaultForm.minimumBarterValue
   && formData.hybridCashAmount === defaultForm.hybridCashAmount
   && formData.thumbnailUrl === defaultForm.thumbnailUrl
@@ -360,6 +374,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   const createPackage = useCreatorPackagesStore((state) => state.createPackage);
   const updatePackage = useCreatorPackagesStore((state) => state.updatePackage);
   const [currentStep, setCurrentStep] = useState(1);
+  const wizardTopRef = useRef<HTMLDivElement | null>(null);
   const [hasRecoverableDraft, setHasRecoverableDraft] = useState(false);
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [draftNoticeDismissed, setDraftNoticeDismissed] = useState(false);
@@ -386,10 +401,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       dealType: initialPackage.dealType,
       price: String(initialPackage.price || ""),
       barterExpectations: initialPackage.creatorExpectations || "",
-      barterCategory: initialPackage.barterCategory || "products",
-      estimatedBarterValue: String(initialPackage.estimatedBarterValue || ""),
-      preferredBrands: "",
-      minimumBarterValue: String(initialPackage.hybridBarterValue || initialPackage.estimatedBarterValue || ""),
+      minimumBarterValue: initialPackage.barterValue?.match(/\d[\d,]*/)?.[0]?.replace(/,/g, "") || "",
       hybridCashAmount: String(initialPackage.hybridCashAmount || ""),
       thumbnailUrl: initialPackage.thumbnail,
       previousWorkUrls: initialPackage.mediaUrls?.length ? initialPackage.mediaUrls : [""],
@@ -404,6 +416,24 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   const [isLoadingPlatformOptions, setIsLoadingPlatformOptions] = useState(true);
   const [connectedPlatforms, setConnectedPlatforms] = useState<Platform[]>([]);
   const [tagInput, setTagInput] = useState("");
+
+  const scrollWizardToTop = useCallback(() => {
+    requestAnimationFrame(() => {
+      const top = wizardTopRef.current
+        ? wizardTopRef.current.getBoundingClientRect().top + window.scrollY - 88
+        : 0;
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    });
+  }, []);
+
+  const goToStep = useCallback((nextStep: number | ((step: number) => number)) => {
+    setCurrentStep((step) => {
+      const resolvedStep = typeof nextStep === "function" ? nextStep(step) : nextStep;
+      const boundedStep = Math.min(steps.length, Math.max(1, resolvedStep));
+      if (boundedStep !== step) scrollWizardToTop();
+      return boundedStep;
+    });
+  }, [scrollWizardToTop]);
 
   const serviceSections = useMemo(() => {
     const platform = formData.platform as Platform;
@@ -601,7 +631,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
             .filter((item) => item.serviceKey && item.label)
         : [];
 
-      setCurrentStep(draft.currentStep || 1);
+      goToStep(draft.currentStep || 1);
       setFormData({
         ...defaultForm,
         ...draft.formData,
@@ -620,7 +650,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
   const clearDraft = () => {
     if (draftKey) localStorage.removeItem(draftKey);
-    setCurrentStep(1);
+    goToStep(1);
     setFormData(defaultForm);
     setDraftNoticeDismissed(true);
     setHasRecoverableDraft(false);
@@ -643,20 +673,36 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     }
 
     if (stepId === 3) {
+      const missing: string[] = [];
+
       if (formData.dealType === "paid") {
-        return formData.price.trim() ? [] : ["Price (PKR)"];
+        const priceError = getBoundedFieldError(formData.price, PRICE_LIMITS, "Price");
+        if (priceError) missing.push(priceError);
       }
 
       if (formData.dealType === "barter") {
-        const missing: string[] = [];
         if (!formData.barterExpectations.trim()) missing.push("Barter expectations");
-        if (!formData.minimumBarterValue.trim()) missing.push("Minimum barter value");
-        return missing;
+        if (formData.minimumBarterValue.trim()) {
+          const minimumBarterError = getBoundedFieldError(formData.minimumBarterValue, PRICE_LIMITS, "Minimum barter value");
+          if (minimumBarterError) missing.push(minimumBarterError);
+        }
       }
 
-      const missing: string[] = [];
-      if (!formData.hybridCashAmount.trim()) missing.push("Cash amount (PKR)");
-      if (!formData.minimumBarterValue.trim()) missing.push("Minimum barter value");
+      if (formData.dealType === "hybrid") {
+        const cashError = getBoundedFieldError(formData.hybridCashAmount, PRICE_LIMITS, "Cash amount");
+        if (cashError) missing.push(cashError);
+        if (formData.minimumBarterValue.trim()) {
+          const minimumBarterError = getBoundedFieldError(formData.minimumBarterValue, PRICE_LIMITS, "Minimum barter value");
+          if (minimumBarterError) missing.push(minimumBarterError);
+        }
+      }
+
+      const deliveryError = getBoundedFieldError(formData.deliveryDays, DELIVERY_LIMITS, "Delivery time");
+      if (deliveryError) missing.push(deliveryError);
+
+      const revisionError = getBoundedFieldError(formData.revisions, REVISION_LIMITS, "Revisions included");
+      if (revisionError) missing.push(revisionError);
+
       return missing;
     }
 
@@ -676,14 +722,133 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
   useEffect(() => {
     if (currentStep > maxUnlockedStep) {
-      setCurrentStep(maxUnlockedStep);
+      goToStep(maxUnlockedStep);
     }
-  }, [currentStep, maxUnlockedStep]);
+  }, [currentStep, goToStep, maxUnlockedStep]);
 
   const canMoveNext = getStepMissingFields(currentStep).length === 0;
 
   const updateField = (field: keyof WizardFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateBoundedNumberField = (
+    field: BoundedNumberField,
+    value: string,
+  ) => {
+    if (value === "" || /^\d*$/.test(value)) {
+      updateField(field, value);
+    }
+  };
+
+  const normalizeBoundedNumberField = (
+    field: BoundedNumberField,
+    limits: { min: number; max: number },
+  ) => {
+    const raw = formData[field];
+    if (!raw) return;
+    const next = Math.min(limits.max, Math.max(limits.min, Number(raw)));
+    updateField(field, String(Number.isFinite(next) ? next : limits.min));
+  };
+
+  const setBoundedNumberTo = (
+    field: BoundedNumberField,
+    value: number,
+  ) => {
+    updateField(field, String(value));
+  };
+
+  const BoundedNumberControl = ({
+    field,
+    label,
+    limits,
+    icon: Icon,
+    prefix,
+    suffix,
+    placeholder,
+    helper,
+    required = true,
+  }: {
+    field: BoundedNumberField;
+    label: string;
+    limits: { min: number; max: number };
+    icon: ElementType;
+    prefix?: string;
+    suffix?: string;
+    placeholder?: string;
+    helper?: string;
+    required?: boolean;
+  }) => {
+    const error = required || formData[field].trim()
+      ? getBoundedFieldError(formData[field], limits, label)
+      : null;
+
+    return (
+      <div className="rounded-2xl border border-[#dce6df] bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e8f0ec] text-[#2d6b4e]">
+              <Icon className="size-4" />
+            </span>
+            <div className="min-w-0">
+              <Label htmlFor={`bounded-${field}`} className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#7a8f82]">
+                {label}
+              </Label>
+              <p className="mt-0.5 text-xs leading-5 text-[#87938b]">
+            {helper || `${required ? "Allowed" : "Optional"} range: ${limits.min.toLocaleString()}-${limits.max.toLocaleString()}`}
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setBoundedNumberTo(field, limits.min)}
+              className="inline-flex h-7 items-center rounded-full border border-[#dce6df] bg-[#fbfaf5] px-2.5 text-[11px] font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
+            >
+              Min
+            </button>
+            <button
+              type="button"
+              onClick={() => setBoundedNumberTo(field, limits.max)}
+              className="inline-flex h-7 items-center rounded-full border border-[#dce6df] bg-[#fbfaf5] px-2.5 text-[11px] font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
+            >
+              Max
+            </button>
+          </div>
+        </div>
+        <div className="mt-3 flex overflow-hidden rounded-xl border-2 border-[#dce6df] bg-[#fbfaf5] focus-within:border-[#2d6b4e] focus-within:ring-4 focus-within:ring-[#2d6b4e]/8">
+          {prefix && (
+            <span className="flex h-11 shrink-0 items-center border-r border-[#dce6df] px-3 text-xs font-extrabold text-[#7a8f82]">
+              {prefix}
+            </span>
+          )}
+          <Input
+            id={`bounded-${field}`}
+            type="number"
+            min={limits.min}
+            max={limits.max}
+            value={formData[field]}
+            onChange={(event) => updateBoundedNumberField(field, event.target.value)}
+            onBlur={() => normalizeBoundedNumberField(field, limits)}
+            placeholder={placeholder}
+            className="h-11 rounded-none border-0 bg-transparent px-3 text-base font-extrabold text-[#1e3d2e] shadow-none placeholder:text-sm placeholder:font-medium placeholder:text-[#a8b8af] focus-visible:ring-0"
+          />
+          {suffix && (
+            <span className="flex h-11 shrink-0 items-center border-l border-[#dce6df] px-3 text-xs font-extrabold text-[#7a8f82]">
+              {suffix}
+            </span>
+          )}
+        </div>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+          <span className={error ? "font-bold text-[#c0392b]" : "font-semibold text-[#7a8f82]"}>
+            {error || (required ? "Looks good" : "Optional")}
+          </span>
+          <span className="font-semibold text-[#a0b4aa]">
+            {limits.min.toLocaleString()} - {limits.max.toLocaleString()}
+          </span>
+        </div>
+      </div>
+    );
   };
 
   const addTagsFromRawInput = (rawInput: string) => {
@@ -854,20 +1019,12 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       currency: "PKR",
       dealType: formData.dealType,
       barterValue:
-        formData.dealType === "barter" || formData.dealType === "hybrid"
+        (formData.dealType === "barter" || formData.dealType === "hybrid") && formData.minimumBarterValue
           ? `Min PKR ${Number(formData.minimumBarterValue || 0).toLocaleString()}`
           : undefined,
       barterDescription:
         formData.dealType === "barter" || formData.dealType === "hybrid"
           ? formData.barterExpectations
-          : undefined,
-      barterCategory:
-        formData.dealType === "barter" || formData.dealType === "hybrid"
-          ? (formData.barterCategory as CreatorPackage["barterCategory"])
-          : undefined,
-      estimatedBarterValue:
-        formData.dealType === "barter" || formData.dealType === "hybrid"
-          ? Number(formData.estimatedBarterValue || formData.minimumBarterValue || 0)
           : undefined,
       creatorExpectations:
         formData.dealType === "barter" || formData.dealType === "hybrid"
@@ -875,8 +1032,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
           : undefined,
       hybridCashAmount:
         formData.dealType === "hybrid" ? Number(formData.hybridCashAmount || 0) : undefined,
-      hybridBarterValue:
-        formData.dealType === "hybrid" ? Number(formData.minimumBarterValue || 0) : undefined,
       platform: formData.platform as CreatorPackage["platform"],
       tags,
       isPopular: initialPackage?.isPopular || false,
@@ -938,7 +1093,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   };
 
   return (
-    <div className="container mx-auto p-4 pb-6 md:p-6">
+    <div ref={wizardTopRef} className="container mx-auto p-4 pb-6 md:p-6">
 
       {/* Step progress */}
       <div className={`sticky top-16 z-20 mb-6 ${panelClass} p-3`}>
@@ -985,7 +1140,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                     );
                     return;
                   }
-                  setCurrentStep(step.id);
+                  goToStep(step.id);
                 }}
                 className={`inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200 ${
                   isCurrent
@@ -1426,154 +1581,189 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
         {/* ── Step 3: Pricing ── */}
         {currentStep === 3 && (
-          <div className={`${panelClass} p-6 md:p-8`}>
-            <h2 className={`mb-6 ${sectionTitle}`}>Pricing &amp; Deal Type</h2>
-            <div className="space-y-6">
-
-              {/* Deal type */}
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { key: "paid", label: "Paid", icon: DollarSign, desc: "Cash only" },
-                  { key: "barter", label: "Barter", icon: Gift, desc: "Products / services" },
-                  { key: "hybrid", label: "Hybrid", icon: Sparkles, desc: "Cash + barter" },
-                ].map((option) => (
-                  <button
-                    key={option.key}
-                    type="button"
-                    onClick={() => updateField("dealType", option.key)}
-                    className={`rounded-xl border-2 p-4 text-center transition-all duration-200 ${
-                      formData.dealType === option.key
-                        ? "border-[#2d6b4e] bg-[#2d6b4e] text-white shadow-sm"
-                        : "border-[#dce6df] text-[#496159] hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
-                    }`}
-                  >
-                    <option.icon className={`mx-auto mb-1.5 size-5 ${formData.dealType === option.key ? "text-white" : "text-[#6b7870]"}`} />
-                    <p className="text-sm font-bold">{option.label}</p>
-                    <p className={`mt-0.5 text-[10px] ${formData.dealType === option.key ? "text-white/70" : "text-[#a0b4aa]"}`}>
-                      {option.desc}
-                    </p>
-                  </button>
-                ))}
-              </div>
-
-              {/* Paid/hybrid cash amount */}
-              {(formData.dealType === "paid" || formData.dealType === "hybrid") && (
-                <div className="space-y-1.5">
-                  <Label htmlFor="pkg-price" className={labelClass}>
-                    {formData.dealType === "hybrid" ? "Cash Amount (PKR)" : "Price (PKR)"}
-                  </Label>
-                  <Input
-                    id="pkg-price"
-                    type="number"
-                    value={formData.dealType === "hybrid" ? formData.hybridCashAmount : formData.price}
-                    onChange={(e) =>
-                      formData.dealType === "hybrid"
-                        ? updateField("hybridCashAmount", e.target.value)
-                        : updateField("price", e.target.value)
-                    }
-                    placeholder="15000"
-                    className={inputClass}
-                  />
+          <div className={`${panelClass} overflow-hidden`}>
+            <div className="border-b border-[#edf1ed] bg-[#fbfaf5] px-5 py-5 sm:px-6 md:px-8">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Commercial terms</p>
+                  <h2 className="mt-1 text-xl font-black tracking-tight text-[#1e3d2e]">Pricing &amp; Delivery</h2>
+                  <p className="mt-1 max-w-2xl text-sm leading-6 text-[#647168]">
+                    Set bounded, brand-ready package terms that are easy to compare and safe to publish.
+                  </p>
                 </div>
-              )}
+                <div className="grid grid-cols-3 gap-2 text-center text-[11px] font-bold text-[#496159] sm:min-w-[24rem]">
+                  <div className="rounded-xl border border-[#dce6df] bg-white px-3 py-2">
+                    <p className="text-[9px] uppercase tracking-widest text-[#a0b4aa]">Price</p>
+                    <p className="mt-1 truncate text-[#1e3d2e]">
+                      {formData.dealType === "barter"
+                        ? "Barter"
+                        : formatPkr(formData.dealType === "hybrid" ? formData.hybridCashAmount : formData.price)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-[#dce6df] bg-white px-3 py-2">
+                    <p className="text-[9px] uppercase tracking-widest text-[#a0b4aa]">Delivery</p>
+                    <p className="mt-1 text-[#1e3d2e]">{formData.deliveryDays || "0"} days</p>
+                  </div>
+                  <div className="rounded-xl border border-[#dce6df] bg-white px-3 py-2">
+                    <p className="text-[9px] uppercase tracking-widest text-[#a0b4aa]">Revisions</p>
+                    <p className="mt-1 text-[#1e3d2e]">{formData.revisions || "0"}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-              {/* Barter / hybrid details */}
-              {(formData.dealType === "barter" || formData.dealType === "hybrid") && (
-                <div className="space-y-4 rounded-2xl border border-[#d1ddd6] bg-[#f4f7f5] p-5">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a8f82]">Barter Details</p>
+            <div className="grid gap-6 p-5 sm:p-6 md:p-8 xl:grid-cols-[minmax(0,1fr)_20rem]">
+              <div className="space-y-6">
+                <div className="grid gap-3 md:grid-cols-3">
+                  {[
+                    { key: "paid", label: "Paid", icon: DollarSign, desc: "Cash package", note: "Best for fixed-scope content" },
+                    { key: "barter", label: "Barter", icon: Gift, desc: "Products / services", note: "Best for exchange campaigns" },
+                    { key: "hybrid", label: "Hybrid", icon: Sparkles, desc: "Cash + barter", note: "Best for premium deals" },
+                  ].map((option) => (
+                    <button
+                      key={option.key}
+                      type="button"
+                      onClick={() => updateField("dealType", option.key)}
+                      className={`group rounded-2xl border-2 p-4 text-left transition-all duration-200 ${
+                        formData.dealType === option.key
+                          ? "border-[#2d6b4e] bg-[#2d6b4e] text-white shadow-[0_18px_36px_rgba(45,107,78,0.18)]"
+                          : "border-[#dce6df] bg-white text-[#496159] hover:border-[#2d6b4e] hover:bg-[#fbfaf5]"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <span className={`grid size-10 place-items-center rounded-xl ${
+                          formData.dealType === option.key ? "bg-white/15 text-white" : "bg-[#e8f0ec] text-[#2d6b4e]"
+                        }`}>
+                          <option.icon className="size-4" />
+                        </span>
+                        {formData.dealType === option.key && <Check className="size-4 text-white" />}
+                      </div>
+                      <p className="mt-3 text-sm font-black">{option.label}</p>
+                      <p className={`mt-1 text-xs font-bold ${formData.dealType === option.key ? "text-white/80" : "text-[#7a8f82]"}`}>
+                        {option.desc}
+                      </p>
+                      <p className={`mt-2 text-[11px] leading-5 ${formData.dealType === option.key ? "text-white/65" : "text-[#87938b]"}`}>
+                        {option.note}
+                      </p>
+                    </button>
+                  ))}
+                </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="barter-exp" className={labelClass}>Barter Expectations</Label>
-                    <Textarea
-                      id="barter-exp"
-                      rows={3}
-                      value={formData.barterExpectations}
-                      onChange={(e) => updateField("barterExpectations", e.target.value)}
-                      placeholder="Hotel stay, salon service, product gifting, or event invite expectations"
-                      className={textareaClass}
+                {(formData.dealType === "paid" || formData.dealType === "hybrid") && (
+                  <BoundedNumberControl
+                    field={formData.dealType === "hybrid" ? "hybridCashAmount" : "price"}
+                    label={formData.dealType === "hybrid" ? "Cash amount" : "Package price"}
+                    limits={PRICE_LIMITS}
+                    icon={DollarSign}
+                    prefix="PKR"
+                    placeholder="e.g. 15000"
+                    helper={`Cash must be between ${formatPkr(PRICE_LIMITS.min)} and ${formatPkr(PRICE_LIMITS.max)}.`}
+                  />
+                )}
+
+                {(formData.dealType === "barter" || formData.dealType === "hybrid") && (
+                  <div className="space-y-4 rounded-2xl border border-[#d1ddd6] bg-[#f4f7f5] p-4 sm:p-5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Barter terms</p>
+                        <h3 className="mt-1 text-base font-black text-[#1e3d2e]">What brands should provide</h3>
+                      </div>
+                      <span className="rounded-full border border-[#efcf83] bg-[#fff7df] px-3 py-1 text-[11px] font-bold text-[#8b5e12]">
+                        Minimum value required
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="barter-exp" className={labelClass}>Barter Expectations</Label>
+                      <Textarea
+                        id="barter-exp"
+                        rows={4}
+                        value={formData.barterExpectations}
+                        onChange={(e) => updateField("barterExpectations", e.target.value)}
+                        placeholder="Hotel stay, salon service, product gifting, or event invite expectations"
+                        className={`${textareaClass} bg-white`}
+                      />
+                    </div>
+
+                    <BoundedNumberControl
+                      field="minimumBarterValue"
+                      label="Minimum barter value"
+                      limits={PRICE_LIMITS}
+                      icon={Gift}
+                      prefix="PKR"
+                      placeholder="e.g. 20000"
+                      required={false}
+                      helper={`Optional floor for barter value, capped at ${formatPkr(PRICE_LIMITS.max)}.`}
                     />
                   </div>
+                )}
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label className={labelClass}>Acceptable Barter Category</Label>
-                      <Select value={formData.barterCategory} onValueChange={(v) => updateField("barterCategory", v)}>
-                        <SelectTrigger className="h-10 rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] focus:border-[#2d6b4e] focus:ring-4 focus:ring-[#2d6b4e]/8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="food">Restaurant Meal</SelectItem>
-                          <SelectItem value="hotel">Hotel Stay</SelectItem>
-                          <SelectItem value="salon">Salon Service</SelectItem>
-                          <SelectItem value="products">Clothing Products</SelectItem>
-                          <SelectItem value="events">Event Invitations</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="est-barter-val" className={labelClass}>Estimated Barter Value (PKR)</Label>
-                      <Input
-                        id="est-barter-val"
-                        type="number"
-                        value={formData.estimatedBarterValue}
-                        onChange={(e) => updateField("estimatedBarterValue", e.target.value)}
-                        placeholder="45000"
-                        className={inputClass}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="pref-brands" className={labelClass}>Preferred Brands</Label>
-                      <Input
-                        id="pref-brands"
-                        value={formData.preferredBrands}
-                        onChange={(e) => updateField("preferredBrands", e.target.value)}
-                        placeholder="Noon Food, Oud Royale, Noura Abaya House"
-                        className={inputClass}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="min-barter-val" className={labelClass}>Minimum Barter Value (PKR)</Label>
-                      <Input
-                        id="min-barter-val"
-                        type="number"
-                        value={formData.minimumBarterValue}
-                        onChange={(e) => updateField("minimumBarterValue", e.target.value)}
-                        placeholder="20000"
-                        className={inputClass}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Delivery / revisions */}
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="delivery-days" className={labelClass}>Delivery Time (Days)</Label>
-                  <Input
-                    id="delivery-days"
-                    type="number"
-                    value={formData.deliveryDays}
-                    onChange={(e) => updateField("deliveryDays", e.target.value)}
-                    className={inputClass}
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <BoundedNumberControl
+                    field="deliveryDays"
+                    label="Delivery time"
+                    limits={DELIVERY_LIMITS}
+                    icon={Clock}
+                    suffix="days"
+                    placeholder="e.g. 5"
+                    helper={`Delivery must be ${DELIVERY_LIMITS.min}-${DELIVERY_LIMITS.max} days.`}
                   />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="revisions" className={labelClass}>Revisions Included</Label>
-                  <Input
-                    id="revisions"
-                    type="number"
-                    value={formData.revisions}
-                    onChange={(e) => updateField("revisions", e.target.value)}
-                    className={inputClass}
+                  <BoundedNumberControl
+                    field="revisions"
+                    label="Revisions included"
+                    limits={REVISION_LIMITS}
+                    icon={RotateCcw}
+                    suffix="rounds"
+                    placeholder="e.g. 2"
+                    helper={`Revisions must be ${REVISION_LIMITS.min}-${REVISION_LIMITS.max} rounds.`}
                   />
                 </div>
               </div>
 
+              <aside className="space-y-4 xl:sticky xl:top-32 xl:self-start">
+                <div className="rounded-2xl border border-[#dce6df] bg-[#1e3d2e] p-5 text-white shadow-[0_18px_42px_rgba(30,61,46,0.16)]">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#f0c56e]">Package terms</p>
+                  <div className="mt-4 space-y-3">
+                    <div>
+                      <p className="text-xs font-semibold text-white/55">Deal type</p>
+                      <p className="mt-0.5 text-lg font-black capitalize">{formData.dealType}</p>
+                    </div>
+                    <div className="h-px bg-white/10" />
+                    <div>
+                      <p className="text-xs font-semibold text-white/55">Creator receives</p>
+                      <p className="mt-0.5 text-base font-black">
+                        {formData.dealType === "paid" && formatPkr(formData.price)}
+                        {formData.dealType === "barter" && (formData.minimumBarterValue ? `Barter worth at least ${formatPkr(formData.minimumBarterValue)}` : "Barter offer")}
+                        {formData.dealType === "hybrid" && `${formatPkr(formData.hybridCashAmount)} + ${formData.minimumBarterValue ? `barter worth at least ${formatPkr(formData.minimumBarterValue)}` : "barter"}`}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="rounded-xl bg-white/8 px-3 py-2">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-white/45">Delivery</p>
+                        <p className="mt-1 text-sm font-black">{formData.deliveryDays || "0"} days</p>
+                      </div>
+                      <div className="rounded-xl bg-white/8 px-3 py-2">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-white/45">Revisions</p>
+                        <p className="mt-1 text-sm font-black">{formData.revisions || "0"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
+                <div className="rounded-2xl border border-[#efcf83] bg-[#fff7df] p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#f0c56e]/30 text-[#8b5e12]">
+                      <Lock className="size-4" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-black text-[#6e4a10]">Publishing guardrails</p>
+                      <p className="mt-1 text-xs leading-5 text-[#8b5e12]">
+                        Price uses {formatPkr(PRICE_LIMITS.min)}-{formatPkr(PRICE_LIMITS.max)}, delivery uses {DELIVERY_LIMITS.min}-{DELIVERY_LIMITS.max} days, and revisions use {REVISION_LIMITS.min}-{REVISION_LIMITS.max} rounds.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </aside>
             </div>
           </div>
         )}
@@ -1698,9 +1888,9 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                 </div>
                 <p className="mt-4 text-lg font-extrabold text-[#2d6b4e]">
                   {formData.dealType === "paid" && (formData.price ? `PKR ${Number(formData.price).toLocaleString()}` : "PKR 0")}
-                  {formData.dealType === "barter" && `Barter · Min PKR ${Number(formData.minimumBarterValue || 0).toLocaleString()}`}
+                  {formData.dealType === "barter" && (formData.minimumBarterValue ? `Barter · Min PKR ${Number(formData.minimumBarterValue).toLocaleString()}` : "Barter")}
                   {formData.dealType === "hybrid" &&
-                    `PKR ${Number(formData.hybridCashAmount || 0).toLocaleString()} + barter (Min PKR ${Number(formData.minimumBarterValue || 0).toLocaleString()})`}
+                    `PKR ${Number(formData.hybridCashAmount || 0).toLocaleString()} + barter${formData.minimumBarterValue ? ` (Min PKR ${Number(formData.minimumBarterValue).toLocaleString()})` : ""}`}
                 </p>
               </div>
 
@@ -1754,7 +1944,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         <Button
           type="button"
           disabled={currentStep === 1}
-          onClick={() => setCurrentStep((step) => Math.max(1, step - 1))}
+          onClick={() => goToStep((step) => Math.max(1, step - 1))}
           className="flex-1 h-11 rounded-full border-2 border-[#dce6df] bg-white text-sm font-bold text-[#496159] shadow-none transition-colors hover:border-[#2d6b4e] hover:text-[#1e3d2e] disabled:opacity-40"
         >
           Back
@@ -1772,7 +1962,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                 );
                 return;
               }
-              setCurrentStep((step) => Math.min(steps.length, step + 1));
+              goToStep((step) => Math.min(steps.length, step + 1));
             }}
             className="flex-1 h-11 rounded-full bg-[#2d6b4e] text-sm font-bold text-white shadow-none transition-colors hover:bg-[#1f5239]"
           >

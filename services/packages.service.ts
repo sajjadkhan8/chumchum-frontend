@@ -33,10 +33,7 @@ export interface PackageUpsertRequest {
   deal_type?: PackageDealTypeRequest;
   barter_details?: string;
   barter_description?: string;
-  barter_category?: string;
-  estimated_barter_value?: number;
   hybrid_cash_amount?: number;
-  hybrid_barter_value?: number;
   creator_expectations?: string;
   price: number;
   currency?: string;

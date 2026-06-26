@@ -141,9 +141,6 @@ export function PackageCard({ pkg, onOrder, className }: PackageCardProps) {
               {pkg.barterValue && (
                 <p className="mt-0.5 text-[11px] font-semibold text-[#7a9a87]">{pkg.barterValue}</p>
               )}
-              {pkg.estimatedBarterValue ? (
-                <p className="mt-0.5 text-[11px] font-semibold text-[#7a9a87]">Estimated value: {formatPrice(pkg.estimatedBarterValue)}</p>
-              ) : null}
             </div>
             <Button
               onClick={onOrder}

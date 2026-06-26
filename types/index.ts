@@ -114,11 +114,8 @@ export interface Package {
   dealType: DealType;
   barterValue?: string;
   barterDescription?: string;
-  barterCategory?: BarterCategory;
-  estimatedBarterValue?: number;
   creatorExpectations?: string;
   hybridCashAmount?: number;
-  hybridBarterValue?: number;
   platform: Platform;
   tags: string[];
   isPopular: boolean;

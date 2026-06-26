@@ -334,11 +334,8 @@ interface BackendPackageResponse {
   deal_type?: string;
   barter_details?: string;
   barter_description?: string;
-  barter_category?: string;
-  estimated_barter_value?: number;
   creator_expectations?: string;
   hybrid_cash_amount?: number;
-  hybrid_barter_value?: number;
   price?: number;
   deliverables?: string[];
   delivery_days?: number;
@@ -370,11 +367,8 @@ export const mapPackage = (input: BackendPackageResponse): CreatorPackage => ({
   dealType: normalizeDealType(input.deal_type),
   barterValue: input.barter_details,
   barterDescription: input.barter_description,
-  barterCategory: (input.barter_category as CreatorPackage['barterCategory']) || undefined,
-  estimatedBarterValue: input.estimated_barter_value,
   creatorExpectations: input.creator_expectations,
   hybridCashAmount: input.hybrid_cash_amount,
-  hybridBarterValue: input.hybrid_barter_value,
   platform: normalizePlatform(input.platform),
   tags: input.tags || [],
   currency: input.currency || 'PKR',
