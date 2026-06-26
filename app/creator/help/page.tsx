@@ -27,7 +27,7 @@ const categories: Category[] = [
     faqs: [
       {
         question: 'How do I price my packages?',
-        answer: 'Set your paid package price based on your engagement rate, niche, and the deliverables included. For barter packages, describe the exact in-kind product/service you expect. Hybrid packages combine a cash component with in-kind benefits. Go to Creator → Packages → New Package to get started.',
+        answer: 'Set your paid package price based on your engagement rate, content category, and the deliverables included. For barter packages, describe the exact in-kind product/service you expect. Hybrid packages combine a cash component with in-kind benefits. Go to Creator → Packages → New Package to get started.',
       },
       {
         question: 'What is a barter deal and how does valuation work?',

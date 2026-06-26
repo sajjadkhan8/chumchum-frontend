@@ -33,7 +33,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { creatorsService } from "@/services/creators.service";
 import { packagesService } from "@/services/packages.service";
 import { reviewsService } from "@/services/reviews.service";
-import { getPlatformMeta } from "@/components/platform-icons";
+import { PlatformIconBadge, getPlatformMeta } from "@/components/platform-icons";
 import { getCategoryLabel } from "@/lib/categories";
 import type { Creator, CreatorPackage, Review } from "@/types";
 import { cn } from "@/lib/utils";
@@ -390,16 +390,10 @@ export default function PublicCreatorProfilePage({
                 <div className="divide-y divide-[#f4f6f4]">
                   {creator.platforms.map((p) => {
                     const meta = getPlatformMeta(p.platform);
-                    const Icon = meta?.icon ?? Users;
                     const trustInfo = p.verified_by ? verifiedByLabel[p.verified_by] : verifiedByLabel.SELF;
                   return (
                       <div key={p.platform} className="flex items-center gap-3 px-5 py-3.5">
-                        <div
-                          className="grid size-9 shrink-0 place-items-center rounded-xl"
-                          style={{ background: `${meta?.color ?? "#2d6b4e"}18` }}
-                        >
-                          <Icon className="size-4" style={{ color: meta?.color ?? "#2d6b4e" }} />
-                        </div>
+                        <PlatformIconBadge platform={p.platform} fallbackIcon={Users} />
                         <div className="min-w-0 flex-1">
                           <p className="text-[13px] font-bold text-[#1e3d2e]">{meta?.label ?? p.platform}</p>
                           <p className="truncate text-[11px] text-[#7a8f82]">@{p.username}</p>

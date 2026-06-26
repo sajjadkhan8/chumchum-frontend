@@ -50,7 +50,7 @@ import { AMBASSADOR_TIERS } from "@/lib/ambassador-scoring";
 import type { Creator, CreatorAmbassadorMetrics, DealType, BarterCategory, Platform, VerificationSource } from "@/types";
 import { toast } from "sonner";
 import { ShareProfileModal } from "@/components/share-profile-modal";
-import { getPlatformIcon } from "@/components/platform-icons";
+import { PlatformIconBadge } from "@/components/platform-icons";
 
 // ─── Design-system constants ─────────────────────────────────────────────────
 
@@ -1508,6 +1508,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                         <p className={labelClass}>Reel / Short Video (PKR)</p>
                         <input
                           type="number"
+                          onWheel={(event) => event.currentTarget.blur()}
                           min="0"
                           className={inputClass}
                           placeholder="e.g. 15000"
@@ -1519,6 +1520,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                         <p className={labelClass}>Story / Highlight (PKR)</p>
                         <input
                           type="number"
+                          onWheel={(event) => event.currentTarget.blur()}
                           min="0"
                           className={inputClass}
                           placeholder="e.g. 5000"
@@ -1530,6 +1532,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                         <p className={labelClass}>Static Post (PKR)</p>
                         <input
                           type="number"
+                          onWheel={(event) => event.currentTarget.blur()}
                           min="0"
                           className={inputClass}
                           placeholder="e.g. 8000"
@@ -1541,6 +1544,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                         <p className={labelClass}>YouTube / Long Video (PKR)</p>
                         <input
                           type="number"
+                          onWheel={(event) => event.currentTarget.blur()}
                           min="0"
                           className={inputClass}
                           placeholder="e.g. 40000"
@@ -1611,7 +1615,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
               {/* Categories */}
               <div className={panelClass}>
                 <PanelHeader eyebrow="Content" title="Categories" />
-                <p className="mb-3 text-sm text-[#496159]">Select all the niches you create content in</p>
+                <p className="mb-3 text-sm text-[#496159]">Select the content categories you create in</p>
                 <div className="flex flex-wrap gap-2">
                   {categoryOptions.map((category) => (
                     <button
@@ -1803,6 +1807,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                       <p className={labelClass}>Views <span className="normal-case font-normal text-[#b0bfb8]">(optional)</span></p>
                       <input
                         type="number"
+                        onWheel={(event) => event.currentTarget.blur()}
                         min="0"
                         className={inputClass}
                         placeholder="e.g. 12500"
@@ -1814,6 +1819,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                       <p className={labelClass}>Likes <span className="normal-case font-normal text-[#b0bfb8]">(optional)</span></p>
                       <input
                         type="number"
+                        onWheel={(event) => event.currentTarget.blur()}
                         min="0"
                         className={inputClass}
                         placeholder="e.g. 890"
@@ -1918,7 +1924,6 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                 <div className="grid gap-3 sm:grid-cols-3">
                   {platformOrder.map((platform) => {
                     const label = platformLabels[platform];
-                    const Icon = getPlatformIcon(platform) || LinkIcon;
                     const alreadyConnected = socialAccounts.some(
                       (a) => a.platform === platform && a.verifiedBy === 'API_CONNECTED',
                     );
@@ -1935,7 +1940,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                             : "border-[#dce6df] bg-white text-[#2d6b4e] hover:border-[#2d6b4e] hover:bg-[#e4f1e8] disabled:opacity-50",
                         )}
                       >
-                        <Icon className="size-4" />
+                        <PlatformIconBadge platform={platform} size="sm" fallbackIcon={LinkIcon} />
                         {isConnecting ? 'Redirecting…' : alreadyConnected ? `${label} connected` : `Connect ${label}`}
                       </button>
                     );
@@ -1947,7 +1952,6 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                 <PanelHeader eyebrow="Social" title="Connected Accounts" />
                 <div className="space-y-4">
                   {socialAccounts.map((account, index) => {
-                    const Icon = getPlatformIcon(account.platform) || LinkIcon;
                     const isSavedAccount = Boolean(
                       socialAccountsSnapshotRef.current?.some((savedAccount) => savedAccount.platform === account.platform),
                     );
@@ -1958,9 +1962,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="grid size-9 place-items-center rounded-xl bg-[#e6eceb] text-[#2d6b4e]">
-                              <Icon className="size-4" />
-                            </div>
+                            <PlatformIconBadge platform={account.platform} fallbackIcon={LinkIcon} />
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-extrabold capitalize text-[#1e3d2e]">
                                 {account.platform}
@@ -2035,6 +2037,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                             <p className={labelClass}>Follower count</p>
                             <input
                               type="number"
+                              onWheel={(event) => event.currentTarget.blur()}
                               className={inputClass}
                               value={account.followers ? String(account.followers) : ""}
                               placeholder="e.g. 125000"
@@ -2049,6 +2052,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                             <p className={labelClass}>Average views</p>
                             <input
                               type="number"
+                              onWheel={(event) => event.currentTarget.blur()}
                               className={inputClass}
                               value={account.avgViews ? String(account.avgViews) : ""}
                               placeholder="e.g. 18000"
@@ -2063,6 +2067,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                             <p className={labelClass}>Engagement rate (%)</p>
                             <input
                               type="number"
+                              onWheel={(event) => event.currentTarget.blur()}
                               step="0.1"
                               className={inputClass}
                               value={account.engagementRate ? String(account.engagementRate) : ""}
@@ -2121,6 +2126,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                     <p className={labelClass}>Minimum Collaboration Budget (PKR)</p>
                     <input
                       type="number"
+                      onWheel={(event) => event.currentTarget.blur()}
                       min="5000"
                       className={inputClass}
                       placeholder="e.g. 25000"

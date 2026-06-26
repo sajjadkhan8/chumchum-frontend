@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/collapsible";
 import { formatPrice } from "@/lib/utils";
 import { getCategoryLabel } from "@/lib/categories";
+import { PlatformIconBadge } from "@/components/platform-icons";
 import type { CreatorPackage, PackageStatus } from "@/types";
 import { toast } from "sonner";
 import { useCreatorPackagesStore } from "@/store/creator-packages-store";
@@ -415,7 +416,12 @@ function CreatorPackagesPageContent() {
                   </SelectTrigger>
                   <SelectContent>
                     {platformOptions.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      <SelectItem key={o.value} value={o.value}>
+                        <span className="inline-flex items-center gap-2">
+                          {o.value !== "all" && <PlatformIconBadge platform={o.value} size="xs" />}
+                          {o.label}
+                        </span>
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -533,8 +539,9 @@ function CreatorPackagesPageContent() {
                         <h3 className="truncate font-extrabold leading-tight text-[#1e3d2e]">
                           {pkg.title}
                         </h3>
-                        <p className="mt-0.5 text-xs text-[#87938b]">
-                          {pkg.platform} · {getCategoryLabel(pkg.category)}
+                        <p className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-[#87938b]">
+                          <PlatformIconBadge platform={pkg.platform} size="xs" />
+                          <span>{pkg.platform} · {getCategoryLabel(pkg.category)}</span>
                         </p>
                       </div>
                       <DropdownMenu>

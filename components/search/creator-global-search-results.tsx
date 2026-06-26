@@ -23,6 +23,7 @@ import { getCreatorGlobalSearchResults, rankCreators, type CreatorGlobalSearchRe
 import { creatorsService } from '@/services/creators.service';
 import { metadataService } from '@/services/metadata.service';
 import { getCategoryLabel } from '@/lib/categories';
+import { PlatformIconBadge } from '@/components/platform-icons';
 import type { BrandCampaign, City, Creator, CreatorBadgeLevel, Platform } from '@/types';
 
 type SearchTab = 'brands' | 'campaigns' | 'creators';
@@ -132,7 +133,7 @@ const contentTypeTokens = (offer: BrandCampaign) => {
 };
 
 const offerIndustryTokens = (offer: BrandCampaign) => {
-  const tokens = [...splitList(offer.categories), ...splitList(offer.niches)];
+  const tokens = splitList(offer.categories);
   return tokens.length > 0 ? tokens : ['Brand collaborations'];
 };
 
@@ -482,7 +483,8 @@ function CreatorResultCard({ creator }: { creator: Creator }) {
             <p className="max-w-2xl text-sm leading-6 text-[#87938b]">{creator.bio}</p>
             <div className="flex flex-wrap gap-1.5">
               {creator.platforms.slice(0, 3).map((platform) => (
-                <span key={platform.platform} className="rounded-full border border-[#d1ddd6] bg-[#f4f7f5] px-2.5 py-0.5 text-xs text-[#87938b]">
+                <span key={platform.platform} className="inline-flex items-center gap-1.5 rounded-full border border-[#d1ddd6] bg-[#f4f7f5] px-2.5 py-0.5 text-xs text-[#87938b]">
+                  <PlatformIconBadge platform={platform.platform} size="xs" />
                   {titleCase(platform.platform)}
                 </span>
               ))}
@@ -1020,6 +1022,7 @@ export function CreatorGlobalSearchResults() {
             <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#b0bfb8]">Min</label>
             <input
               type="number"
+              onWheel={(event) => event.currentTarget.blur()}
               placeholder="e.g. 5000"
               value={creatorFilters.minFollowers ?? ''}
               onChange={(e) => setCreatorFilters((c) => ({ ...c, minFollowers: e.target.value ? Number(e.target.value) : null }))}
@@ -1030,6 +1033,7 @@ export function CreatorGlobalSearchResults() {
             <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#b0bfb8]">Max</label>
             <input
               type="number"
+              onWheel={(event) => event.currentTarget.blur()}
               placeholder="e.g. 500k"
               value={creatorFilters.maxFollowers ?? ''}
               onChange={(e) => setCreatorFilters((c) => ({ ...c, maxFollowers: e.target.value ? Number(e.target.value) : null }))}
@@ -1046,6 +1050,7 @@ export function CreatorGlobalSearchResults() {
             <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#b0bfb8]">Min (Rs)</label>
             <input
               type="number"
+              onWheel={(event) => event.currentTarget.blur()}
               min={0}
               placeholder="e.g. 5000"
               value={creatorFilters.minPrice ?? ''}
@@ -1057,6 +1062,7 @@ export function CreatorGlobalSearchResults() {
             <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#b0bfb8]">Max (Rs)</label>
             <input
               type="number"
+              onWheel={(event) => event.currentTarget.blur()}
               min={0}
               placeholder="e.g. 50000"
               value={creatorFilters.maxPrice ?? ''}
@@ -1150,6 +1156,7 @@ export function CreatorGlobalSearchResults() {
               </label>
               <input
                 type="number"
+                onWheel={(event) => event.currentTarget.blur()}
                 min={0}
                 placeholder="e.g. 30000"
                 value={creatorFilters.maxRateCard ?? ''}

@@ -39,7 +39,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { creatorsService } from "@/services/creators.service";
 import { packagesService } from "@/services/packages.service";
 import { reviewsService } from "@/services/reviews.service";
-import { getPlatformIcon } from "@/components/platform-icons";
+import { PlatformIconBadge } from "@/components/platform-icons";
 import { getCategoryLabel } from "@/lib/categories";
 import type { Creator, CreatorPackage, Review } from "@/types";
 
@@ -412,15 +412,11 @@ export default function CreatorProfilePage({
               <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Channels</p>
               <h2 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">Platforms</h2>
               <div className="mt-4 space-y-2.5">
-                {creator.platforms.map((platform) => {
-                  const Icon = getPlatformIcon(platform.platform);
-                  return (
+                {creator.platforms.map((platform) => (
                     <div key={platform.platform} className="rounded-xl border border-[#edf1ed] bg-[#fbfaf5] p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 items-center gap-3">
-                          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#e8f0ec] text-[#2d6b4e]">
-                            <Icon className="size-4" />
-                          </span>
+                          <PlatformIconBadge platform={platform.platform} />
                           <div className="min-w-0">
                             <p className="text-[13px] font-extrabold capitalize text-[#1e3d2e]">{platform.platform}</p>
                             <p className="truncate text-[11px] font-medium text-[#87938b]">@{platform.username}</p>
@@ -437,8 +433,7 @@ export default function CreatorProfilePage({
                         </p>
                       )}
                     </div>
-                  );
-                })}
+                ))}
               </div>
             </section>
           </aside>

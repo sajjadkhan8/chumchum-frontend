@@ -33,8 +33,8 @@ import { creatorsService } from "@/services/creators.service";
 import { useCreatorPackagesStore } from "@/store/creator-packages-store";
 import { useAuthStore } from "@/store/auth-store";
 import { uploadsService } from "@/services/uploads.service";
-import { platformMeta } from "@/components/platform-icons";
-import { getCategoryLabel, normalizeCategories, normalizeCategory, sortCategoryOptionsForProfile } from "@/lib/categories";
+import { PlatformIconBadge, platformMeta } from "@/components/platform-icons";
+import { categoryOptions, getCategoryLabel, normalizeCategories, normalizeCategory } from "@/lib/categories";
 
 const DRAFT_KEY = "creator-package-draft-v3";
 
@@ -195,7 +195,7 @@ const serviceCatalogByPlatform: Record<Platform, ServiceSection[]> = {
       label: "Live & groups",
       items: [
         { key: "fb_live", label: "Facebook Live", description: "Scheduled live segment" },
-        { key: "fb_group_post", label: "Group Post", description: "Brand content in niche group" },
+        { key: "fb_group_post", label: "Group Post", description: "Brand content in audience group" },
       ],
     },
   ],
@@ -245,14 +245,12 @@ const normalizeTag = (value: string): string =>
     .replace(/^#+/, "")
     .replace(/\s+/g, " ");
 
-const MAX_NICHES = 5;
 const MAX_TAGS = 5;
 
 interface WizardFormData {
   title: string;
   category: string;
   platform: string;
-  niche: string;
   fullDescription: string;
   tags: string;
   responseTime: string;
@@ -279,7 +277,6 @@ const defaultForm: WizardFormData = {
   title: "",
   category: "",
   platform: "",
-  niche: "",
   fullDescription: "",
   tags: "",
   responseTime: "Within 3 hours",
@@ -305,9 +302,6 @@ const defaultForm: WizardFormData = {
 const isDefaultDraft = (formData: WizardFormData, currentStep: number) => (
   currentStep === 1
   && formData.title === defaultForm.title
-  && formData.category === defaultForm.category
-  && formData.platform === defaultForm.platform
-  && formData.niche === defaultForm.niche
   && formData.fullDescription === defaultForm.fullDescription
   && formData.tags === defaultForm.tags
   && formData.responseTime === defaultForm.responseTime
@@ -366,8 +360,9 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   const createPackage = useCreatorPackagesStore((state) => state.createPackage);
   const updatePackage = useCreatorPackagesStore((state) => state.updatePackage);
   const [currentStep, setCurrentStep] = useState(1);
-  const [hasSavedDraft, setHasSavedDraft] = useState(false);
+  const [hasRecoverableDraft, setHasRecoverableDraft] = useState(false);
   const [showDraftModal, setShowDraftModal] = useState(false);
+  const [draftNoticeDismissed, setDraftNoticeDismissed] = useState(false);
   const draftKey = useMemo(
     () => (user?.id ? `${DRAFT_KEY}:${user.id}` : null),
     [user?.id],
@@ -380,7 +375,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       title: initialPackage.title,
       category: normalizeCategory(initialPackage.category),
       platform: initialPackage.platform,
-      niche: getCategoryLabel(initialPackage.category),
       fullDescription: initialPackage.fullDescription,
       tags: initialPackage.tags.join(", "),
       responseTime: initialPackage.responseTime,
@@ -410,7 +404,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   const [isLoadingPlatformOptions, setIsLoadingPlatformOptions] = useState(true);
   const [connectedPlatforms, setConnectedPlatforms] = useState<Platform[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [nicheInput, setNicheInput] = useState("");
 
   const serviceSections = useMemo(() => {
     const platform = formData.platform as Platform;
@@ -433,7 +426,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   );
 
   const tagsList = useMemo(() => parseTags(formData.tags), [formData.tags]);
-  const nichesList = useMemo(() => parseTags(formData.niche), [formData.niche]);
 
   const resolvedDeliverables = useMemo(() => {
     const items = [
@@ -510,6 +502,20 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     }));
   }, [connectedPlatforms, formData.platform]);
 
+  useEffect(() => {
+    if (mode !== "create") return;
+    if (formData.platform) return;
+    if (connectedPlatforms.length !== 1) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      platform: connectedPlatforms[0],
+      selectedServiceKeys: [],
+      deliverableItems: [],
+      serviceNotes: "",
+    }));
+  }, [connectedPlatforms, formData.platform, mode]);
+
   const platformOptions = useMemo(
     () => platforms.filter((platform) => connectedPlatforms.includes(platform.id as Platform)),
     [connectedPlatforms]
@@ -525,8 +531,13 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     [creatorProfile?.categories]
   );
 
-  const categoryOptionsForPackage = useMemo(
-    () => sortCategoryOptionsForProfile(profileCategories),
+  const profileCategoryOptions = useMemo(
+    () => categoryOptions.filter((category) => profileCategories.includes(category.value)),
+    [profileCategories]
+  );
+
+  const otherCategoryOptions = useMemo(
+    () => categoryOptions.filter((category) => !profileCategories.includes(category.value)),
     [profileCategories]
   );
 
@@ -537,7 +548,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     setFormData((prev) => ({
       ...prev,
       category: prev.category || profileCategories[0],
-      niche: prev.niche || getCategoryLabel(profileCategories[0]),
     }));
   }, [formData.category, mode, profileCategories]);
 
@@ -545,7 +555,8 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     if (mode !== "create" || !draftKey) return;
     localStorage.removeItem(DRAFT_KEY);
     const raw = localStorage.getItem(draftKey);
-    setHasSavedDraft(Boolean(raw));
+    setDraftNoticeDismissed(false);
+    setHasRecoverableDraft(Boolean(raw));
     if (raw) {
       setShowDraftModal(true);
     }
@@ -561,12 +572,10 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
     if (isDefaultDraft(formData, currentStep)) {
       localStorage.removeItem(draftKey);
-      setHasSavedDraft(false);
       return;
     }
 
     localStorage.setItem(draftKey, JSON.stringify(payload));
-    setHasSavedDraft(true);
   }, [draftKey, mode, currentStep, formData]);
 
   const restoreDraft = () => {
@@ -579,28 +588,30 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         currentStep: number;
         formData: Partial<WizardFormData>;
       };
+      const deliverableItems = Array.isArray(draft.formData?.deliverableItems)
+        ? draft.formData.deliverableItems
+            .map((item) => ({
+              serviceKey: typeof item?.serviceKey === "string" ? item.serviceKey : "",
+              label: typeof item?.label === "string" ? item.label : "",
+              quantity:
+                typeof item?.quantity === "number" && item.quantity > 0
+                  ? Math.floor(item.quantity)
+                  : 1,
+            }))
+            .filter((item) => item.serviceKey && item.label)
+        : [];
 
       setCurrentStep(draft.currentStep || 1);
       setFormData({
         ...defaultForm,
         ...draft.formData,
         category: normalizeCategory(draft.formData?.category) || "",
-        selectedServiceKeys: Array.isArray(draft.formData?.selectedServiceKeys)
-          ? draft.formData.selectedServiceKeys
-          : [],
-        deliverableItems: Array.isArray(draft.formData?.deliverableItems)
-          ? draft.formData.deliverableItems
-              .map((item) => ({
-                serviceKey: typeof item?.serviceKey === "string" ? item.serviceKey : "",
-                label: typeof item?.label === "string" ? item.label : "",
-                quantity:
-                  typeof item?.quantity === "number" && item.quantity > 0
-                    ? Math.floor(item.quantity)
-                    : 1,
-              }))
-              .filter((item) => item.serviceKey && item.label)
-          : [],
+        selectedServiceKeys: deliverableItems.map((item) => item.serviceKey),
+        deliverableItems,
       });
+      setDraftNoticeDismissed(true);
+      setHasRecoverableDraft(false);
+      setShowDraftModal(false);
       toast.success("Draft restored");
     } catch {
       toast.error("Could not restore draft");
@@ -609,7 +620,10 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
   const clearDraft = () => {
     if (draftKey) localStorage.removeItem(draftKey);
-    setHasSavedDraft(false);
+    setCurrentStep(1);
+    setFormData(defaultForm);
+    setDraftNoticeDismissed(true);
+    setHasRecoverableDraft(false);
     setShowDraftModal(false);
     toast.success("Saved draft cleared");
   };
@@ -621,7 +635,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       if (!formData.category.trim()) missing.push("Category");
       if (!isLoadingPlatformOptions && platformOptions.length === 0) missing.push("Connected social account");
       if (!formData.platform.trim()) missing.push("Platform");
-      if (!formData.niche.trim()) missing.push("Niche");
       return missing;
     }
 
@@ -711,51 +724,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     setTagInput("");
   };
 
-  const addNichesFromRawInput = (rawInput: string) => {
-    const rawPieces = rawInput
-      .split(/[,\n]/)
-      .map((part) => normalizeTag(part))
-      .filter(Boolean);
-
-    if (!rawPieces.length) return;
-
-    let reachedLimit = false;
-
-    setFormData((prev) => {
-      const existing = parseTags(prev.niche);
-      const seen = new Set(existing.map((item) => item.toLowerCase()));
-      const next = [...existing];
-
-      rawPieces.forEach((piece) => {
-        if (next.length >= MAX_NICHES) {
-          reachedLimit = true;
-          return;
-        }
-
-        const key = piece.toLowerCase();
-        if (!seen.has(key)) {
-          seen.add(key);
-          next.push(piece);
-        }
-      });
-
-      return { ...prev, niche: next.join(", ") };
-    });
-
-    if (reachedLimit) {
-      toast.error(`You can add up to ${MAX_NICHES} niches only.`);
-    }
-
-    setNicheInput("");
-  };
-
-  const removeNiche = (nicheToRemove: string) => {
-    setFormData((prev) => {
-      const next = parseTags(prev.niche).filter((item) => item !== nicheToRemove);
-      return { ...prev, niche: next.join(", ") };
-    });
-  };
-
   const removeTag = (tagToRemove: string) => {
     setFormData((prev) => {
       const next = parseTags(prev.tags).filter((tag) => tag !== tagToRemove);
@@ -765,48 +733,20 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
   const onToggleService = (serviceKey: string) => {
     setFormData((prev) => {
-      const exists = prev.selectedServiceKeys.includes(serviceKey);
+      const exists = prev.deliverableItems.some((item) => item.serviceKey === serviceKey);
+      const label = serviceLabelMap.get(serviceKey);
+      if (!exists && !label) return prev;
+
       return {
         ...prev,
         selectedServiceKeys: exists
           ? prev.selectedServiceKeys.filter((key) => key !== serviceKey)
           : [...prev.selectedServiceKeys, serviceKey],
+        deliverableItems: exists
+          ? prev.deliverableItems.filter((item) => item.serviceKey !== serviceKey)
+          : [...prev.deliverableItems, { serviceKey, label: label!, quantity: 1 }],
       };
     });
-  };
-
-  const addSelectedServicesToDeliverables = () => {
-    if (!formData.selectedServiceKeys.length) {
-      toast.error("Select at least one service first.");
-      return;
-    }
-
-    setFormData((prev) => {
-      const nextItems = [...prev.deliverableItems];
-
-      prev.selectedServiceKeys.forEach((serviceKey) => {
-        const label = serviceLabelMap.get(serviceKey);
-        if (!label) return;
-
-        const existingIndex = nextItems.findIndex((item) => item.serviceKey === serviceKey);
-        if (existingIndex >= 0) {
-          nextItems[existingIndex] = {
-            ...nextItems[existingIndex],
-            quantity: nextItems[existingIndex].quantity + 1,
-          };
-        } else {
-          nextItems.push({ serviceKey, label, quantity: 1 });
-        }
-      });
-
-      return {
-        ...prev,
-        deliverableItems: nextItems,
-        selectedServiceKeys: [],
-      };
-    });
-
-    toast.success("Added to deliverables");
   };
 
   const updateDeliverableQuantity = (serviceKey: string, delta: number) => {
@@ -826,6 +766,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     setFormData((prev) => ({
       ...prev,
       deliverableItems: prev.deliverableItems.filter((item) => item.serviceKey !== serviceKey),
+      selectedServiceKeys: prev.selectedServiceKeys.filter((key) => key !== serviceKey),
     }));
   };
 
@@ -979,7 +920,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
       if (mode === "create") {
         if (draftKey) localStorage.removeItem(draftKey);
-        setHasSavedDraft(false);
+        setHasRecoverableDraft(false);
       }
 
       toast.success(
@@ -1001,7 +942,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
       {/* Step progress */}
       <div className={`sticky top-16 z-20 mb-6 ${panelClass} p-3`}>
-        {mode === "create" && hasSavedDraft && !showDraftModal && (
+        {mode === "create" && hasRecoverableDraft && !showDraftModal && !draftNoticeDismissed && (
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e3c97a] bg-[#fdf3dc] px-3.5 py-2.5 text-xs text-[#8a6010]">
             <span className="font-semibold">You have a saved draft.</span>
             <div className="flex items-center gap-2">
@@ -1083,7 +1024,11 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
               <p className="mt-1 text-sm text-white/70">Restore where you left off, or start fresh.</p>
               <button
                 type="button"
-                onClick={() => setShowDraftModal(false)}
+                onClick={() => {
+                  setShowDraftModal(false);
+                  setDraftNoticeDismissed(true);
+                  setHasRecoverableDraft(false);
+                }}
                 className="absolute right-4 top-4 flex size-7 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white"
                 aria-label="Dismiss"
               >
@@ -1093,14 +1038,14 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
             <div className="flex gap-2 p-5">
               <button
                 type="button"
-                onClick={() => { restoreDraft(); setShowDraftModal(false); }}
+                onClick={restoreDraft}
                 className="flex-1 rounded-full bg-[#2d6b4e] py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#1f5239]"
               >
                 Restore Draft
               </button>
               <button
                 type="button"
-                onClick={() => { clearDraft(); setShowDraftModal(false); }}
+                onClick={clearDraft}
                 className="flex-1 rounded-full border-2 border-[#dce6df] py-2.5 text-sm font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
               >
                 Start Fresh
@@ -1219,7 +1164,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                           }`}
                         >
                           <div className="flex items-center justify-center gap-2 font-semibold">
-                            <platform.icon className="size-4" />
+                            <PlatformIconBadge platform={platform.id} size="sm" />
                             {platform.label}
                           </div>
                           <p className="mt-1 text-center text-[10px] font-medium text-[#a0b4aa]">
@@ -1244,8 +1189,8 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                 </div>
               </div>
 
-              {/* Category / Niche / Tags */}
-              <div className="grid gap-5 sm:grid-cols-3">
+              {/* Category / Tags */}
+              <div className="grid gap-5 sm:grid-cols-2">
                 {/* Category */}
                 <div className="space-y-1.5">
                   <Label className={labelClass}>Category</Label>
@@ -1254,73 +1199,32 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                     onChange={(e) => setFormData((p) => ({
                       ...p,
                       category: e.target.value,
-                      niche: p.niche || getCategoryLabel(e.target.value),
                     }))}
                     className="h-10 w-full rounded-xl border-2 border-[#dce6df] bg-white px-3 text-sm text-[#1e3d2e] transition-colors focus:border-[#2d6b4e] focus:outline-none focus:ring-4 focus:ring-[#2d6b4e]/8"
                   >
                     <option value="">Select a category</option>
-                    {categoryOptionsForPackage.map((category) => (
-                      <option key={category.value} value={category.value}>
-                        {profileCategories.includes(category.value) ? `${category.label} - on profile` : category.label}
-                      </option>
-                    ))}
+                    {profileCategoryOptions.length > 0 && (
+                      <optgroup label="On your profile">
+                        {profileCategoryOptions.map((category) => (
+                          <option key={category.value} value={category.value}>
+                            {category.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    <optgroup label={profileCategoryOptions.length > 0 ? "Other categories" : "All categories"}>
+                      {otherCategoryOptions.map((category) => (
+                        <option key={category.value} value={category.value}>
+                          {category.label}
+                        </option>
+                      ))}
+                    </optgroup>
                   </select>
                   {formData.category && !profileCategories.includes(formData.category) && formData.status !== "draft" && (
                     <p className="text-[11px] font-semibold text-[#7a8f82]">
                       Publishing will also add {getCategoryLabel(formData.category)} to your public profile.
                     </p>
                   )}
-                </div>
-
-                {/* Niche */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label className={labelClass}>Niche</Label>
-                    <span className="text-[11px] text-[#a0b4aa]">{nichesList.length}/{MAX_NICHES}</span>
-                  </div>
-                  <div className="min-h-10 rounded-xl border-2 border-[#dce6df] bg-white px-3 py-2 transition-colors focus-within:border-[#2d6b4e] focus-within:ring-4 focus-within:ring-[#2d6b4e]/8">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {nichesList.map((niche) => (
-                        <span key={niche} className="inline-flex items-center gap-1 rounded-full bg-[#e4f1e8] px-2.5 py-0.5 text-xs font-bold text-[#1e5c3e]">
-                          {niche}
-                          <button
-                            type="button"
-                            aria-label={`Remove ${niche}`}
-                            onClick={() => removeNiche(niche)}
-                            className="rounded-full p-0.5 text-[#1e5c3e]/60 transition-colors hover:text-[#1e5c3e]"
-                          >
-                            <X className="size-2.5" />
-                          </button>
-                        </span>
-                      ))}
-                      <input
-                        value={nicheInput}
-                        onChange={(e) => setNicheInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
-                            if (!nicheInput.trim()) return;
-                            e.preventDefault();
-                            addNichesFromRawInput(nicheInput);
-                            return;
-                          }
-                          if (e.key === "Backspace" && !nicheInput.trim() && nichesList.length) {
-                            e.preventDefault();
-                            removeNiche(nichesList[nichesList.length - 1]);
-                          }
-                        }}
-                        onBlur={() => addNichesFromRawInput(nicheInput)}
-                        onPaste={(e) => {
-                          const pasted = e.clipboardData.getData("text");
-                          if (!pasted.includes(",") && !pasted.includes("\n")) return;
-                          e.preventDefault();
-                          addNichesFromRawInput(pasted);
-                        }}
-                        placeholder={nichesList.length ? "Add more…" : "e.g. Travel"}
-                        className="min-w-[80px] flex-1 border-0 bg-transparent py-0.5 text-sm text-[#1e3d2e] outline-none placeholder:text-[#b0bfb8]"
-                      />
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-[#a0b4aa]">Up to {MAX_NICHES}. Enter or comma to add.</p>
                 </div>
 
                 {/* Tags */}
@@ -1446,33 +1350,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                   />
                 </div>
 
-                {/* Add to deliverables bar */}
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#dce6df] bg-[#f4f7f5] px-4 py-3">
-                  <p className="text-sm text-[#6b7870]">
-                    {formData.selectedServiceKeys.length > 0
-                      ? `${formData.selectedServiceKeys.length} service${formData.selectedServiceKeys.length > 1 ? "s" : ""} selected`
-                      : "Select services above to add to your package"}
-                  </p>
-                  {formData.selectedServiceKeys.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={addSelectedServicesToDeliverables}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[#2d6b4e] px-4 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#1f5239]"
-                      >
-                        <Plus className="size-3.5" /> Add to deliverables
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData((prev) => ({ ...prev, selectedServiceKeys: [] }))}
-                        className="rounded-full border border-[#dce6df] px-3 py-1.5 text-xs font-bold text-[#6b7870] transition-colors hover:border-[#b0c5ba] hover:text-[#1e3d2e]"
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  )}
-                </div>
-
                 {/* Deliverables list */}
                 <div className="rounded-xl border border-[#dce6df] bg-[#f4f7f5] p-4">
                   <div className="mb-3 flex items-center justify-between gap-2">
@@ -1486,7 +1363,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
                   {formData.deliverableItems.length === 0 ? (
                     <p className="text-sm text-[#a0b4aa]">
-                      Nothing added yet. Select services above, then click "Add to deliverables".
+                      Nothing added yet. Select a service above to add it to this package.
                     </p>
                   ) : (
                     <div className="space-y-2">

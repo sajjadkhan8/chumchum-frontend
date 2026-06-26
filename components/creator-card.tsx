@@ -15,7 +15,7 @@ import { cn, formatFollowers, formatPrice } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import { CreatorAmbassadorBadge } from '@/components/creator-ambassador-badge';
 import { CreatorTrustBadge } from '@/components/creator-trust-badge';
-import { getPlatformIcon } from '@/components/platform-icons';
+import { PlatformIconBadge } from '@/components/platform-icons';
 import { getCategoryLabel } from '@/lib/categories';
 
 interface CreatorCardProps {
@@ -189,18 +189,14 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
                 <span className="truncate">{creator.responseTime}</span>
               </div>
               <div className="flex shrink-0 items-center gap-1">
-                {creator.platforms.slice(0, 4).map((platform) => {
-                  const Icon = getPlatformIcon(platform.platform);
-                  return (
-                    <span
-                      key={platform.platform}
-                      className="grid size-6 place-items-center rounded-lg bg-[#e8f0ec] text-[#2d6b4e]"
-                      title={`${platform.platform}: ${formatFollowers(platform.followers)}`}
-                    >
-                      <Icon className="size-3.5" />
-                    </span>
-                  );
-                })}
+                {creator.platforms.slice(0, 4).map((platform) => (
+                  <PlatformIconBadge
+                    key={platform.platform}
+                    platform={platform.platform}
+                    size="sm"
+                    title={`${platform.platform}: ${formatFollowers(platform.followers)}`}
+                  />
+                ))}
               </div>
             </div>
 

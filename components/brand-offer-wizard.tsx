@@ -20,7 +20,7 @@ import type { BrandCampaign } from '@/types';
 import { cn } from '@/lib/utils';
 import { getCategoryLabel, normalizeCategories, normalizeCategory } from '@/lib/categories';
 import { toast } from 'sonner';
-import { platformMeta as sharedPlatformMeta } from '@/components/platform-icons';
+import { PlatformIconBadge, platformMeta as sharedPlatformMeta } from '@/components/platform-icons';
 
 const DRAFT_KEY = 'brand-offer-wizard-draft-v1';
 const steps = ['Basics', 'Deliverables', 'Budget & Payment', 'Control', 'References & Legal', 'Publish'];
@@ -184,7 +184,7 @@ const serviceCatalogByPlatform: Record<SupportedPlatform, ServiceSection[]> = {
       label: 'Live & groups',
       items: [
         { key: 'fb_live', label: 'Facebook Live', description: 'Creator-hosted live coverage, promo, or walkthrough.' },
-        { key: 'fb_group_post', label: 'Group Post', description: 'Campaign placement inside a relevant niche group.' },
+        { key: 'fb_group_post', label: 'Group Post', description: 'Campaign placement inside a relevant audience group.' },
       ],
     },
   ],
@@ -255,7 +255,6 @@ interface OfferForm {
    targetCity: string;
    targetLanguage: string;
    categories: string[];
-   niches: string[];
    coverImageUrl: string;
    referenceUrls: string[];
    keyMessage: string;
@@ -306,7 +305,6 @@ const defaultForm: OfferForm = {
    targetCity: '',
    targetLanguage: '',
    categories: [],
-   niches: [],
    coverImageUrl: '',
    referenceUrls: [''],
    keyMessage: '',
@@ -390,7 +388,6 @@ const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
       portfolioRequired: typeof pf.portfolioRequired === 'boolean' ? pf.portfolioRequired : defaultForm.portfolioRequired,
       // Guarantee every array field is always an array regardless of stale/corrupt localStorage data.
       categories: Array.isArray(pf.categories) ? pf.categories : defaultForm.categories,
-      niches: Array.isArray(pf.niches) ? pf.niches : defaultForm.niches,
       customScreeningQuestions: Array.isArray(pf.customScreeningQuestions) ? pf.customScreeningQuestions : defaultForm.customScreeningQuestions,
       targetPlatforms: isSupportedPlatform(pf.offerType)
         ? [pf.offerType]
@@ -473,7 +470,6 @@ const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
       targetCity: offer.targetCity || '',
       targetLanguage: offer.targetLanguage || '',
       categories: normalizeCategories(splitCsv(offer.categories)),
-      niches: splitCsv(offer.niches),
       coverImageUrl: offer.coverImageUrl || '',
       referenceUrls: splitLines(offer.referenceUrls).length > 0 ? splitLines(offer.referenceUrls) : [''],
       visibility: offer.visibility === 'private' ? 'private' : 'public',
@@ -912,7 +908,6 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
          contentFormats: form.contentFormats.length > 0 ? form.contentFormats.join(', ') : undefined,
          targetPlatforms: (resolvedPlatforms.length > 0 ? resolvedPlatforms : [form.offerType]).join(', '),
          categories: normalizeCategories(form.categories).join(', '),
-         niches: form.niches.join(', '),
          referenceUrls: form.referenceUrls.map((url) => url.trim()).filter(Boolean).join('\n') || undefined,
          keyMessage: form.keyMessage.trim() || undefined,
          dosAndDonts: form.dosAndDonts.trim() || undefined,
@@ -1150,7 +1145,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
               <SectionRow label="Platform *" count={form.offerType ? 1 : 0} max={1} hint="selected" />
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                 {platformOptions.map((platform) => {
-                  const { icon: Icon, label } = platformMeta[platform];
+                  const { label } = platformMeta[platform];
                   return (
                     <button
                       key={platform}
@@ -1165,7 +1160,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                           : 'border-[#e1e6df] hover:border-[#185c39]/50'
                       }`}
                     >
-                      <Icon className="h-4 w-4" />
+                      <PlatformIconBadge platform={platform} size="sm" />
                       {label}
                     </button>
                   );
@@ -1285,15 +1280,6 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                 max={5}
                 helperText="Press Enter, comma, or Tab to add"
               />
-              <ChipInput
-                label="Niches"
-                chips={form.niches}
-                onAdd={(v) => updateForm({ niches: [...form.niches, v] })}
-                onRemove={(i) => updateForm({ niches: form.niches.filter((_, idx) => idx !== i) })}
-                placeholder="UGC, Reviews…"
-                max={5}
-                helperText="Press Enter, comma, or Tab to add"
-              />
             </div>
           </div>
         )}
@@ -1309,10 +1295,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                 {serviceSections.map((platformEntry) => (
                   <div key={platformEntry.platform} className="space-y-3">
                     <div className="flex items-center gap-2">
-                      {(() => {
-                        const Icon = platformMeta[platformEntry.platform].icon;
-                        return <Icon className="h-4 w-4 text-muted-foreground" />;
-                      })()}
+                      <PlatformIconBadge platform={platformEntry.platform} size="sm" />
                       <p className="text-sm font-semibold">{platformEntry.platformLabel} deliverables</p>
                     </div>
 
@@ -2196,10 +2179,10 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
                   if (!isSupportedPlatform(p)) {
                     return <Badge key={p} variant="secondary" className="capitalize">{p}</Badge>;
                   }
-                  const { icon: Icon, label } = platformMeta[p];
+                  const { label } = platformMeta[p];
                   return (
                     <Badge key={p} variant="secondary" className="inline-flex items-center gap-1.5 bg-[#e7f0ea] text-[#185c39] hover:bg-[#e7f0ea]">
-                      <Icon className="h-3.5 w-3.5" />{label}
+                      <PlatformIconBadge platform={p} size="xs" />{label}
                     </Badge>
                   );
                 })}
@@ -2222,13 +2205,12 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
               {form.deliverableNotes && <p className="text-xs text-[#607168]">{form.deliverableNotes}</p>}
             </div>
 
-            {/* Categories / Niches */}
-            {(form.categories.length > 0 || form.niches.length > 0) && (
+            {/* Categories */}
+            {form.categories.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#8fa898]">Categories & Niches</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#8fa898]">Categories</p>
                 <div className="flex flex-wrap gap-1.5">
                   {form.categories.map((c) => <Badge key={c} className="bg-[#e7f0ea] text-[#185c39] hover:bg-[#e7f0ea]">{getCategoryLabel(c)}</Badge>)}
-                  {form.niches.map((n) => <Badge key={n} variant="outline" className="border-[#d9e0d8] text-[#526259]">{n}</Badge>)}
                 </div>
               </div>
             )}

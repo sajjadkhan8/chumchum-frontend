@@ -42,7 +42,7 @@ const resourceGroups = [
       },
       {
         title: 'Influencer Vetting Scorecard',
-        description: 'Evaluate fit by niche alignment, engagement quality, audience geography, and content style.',
+        description: 'Evaluate fit by category alignment, engagement quality, audience geography, and content style.',
       },
       {
         title: 'Post-Campaign Performance Review',

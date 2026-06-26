@@ -245,7 +245,6 @@ export interface BrandCampaign {
    targetPlatforms?: string;
    campaignGoal?: string;
    categories?: string;
-   niches?: string;
    referenceUrls?: string;
    keyMessage?: string;
    dosAndDonts?: string;

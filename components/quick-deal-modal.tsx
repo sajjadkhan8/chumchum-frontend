@@ -220,6 +220,7 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
                   <input
                     id="budget"
                     type="number"
+                    onWheel={(event) => event.currentTarget.blur()}
                     placeholder={creator.minPrice ? String(creator.minPrice) : '25000'}
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
@@ -278,6 +279,7 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
                     <input
                       id="barter-value"
                       type="number"
+                      onWheel={(event) => event.currentTarget.blur()}
                       placeholder="e.g. 15000"
                       value={barterValue}
                       onChange={(e) => setBarterValue(e.target.value)}

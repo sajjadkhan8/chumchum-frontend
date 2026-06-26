@@ -27,7 +27,6 @@ interface BackendBrandCampaign {
    targetPlatforms?: string;
    campaignGoal?: string;
    categories?: string;
-   niches?: string;
    referenceUrls?: string;
    keyMessage?: string;
    dosAndDonts?: string;
@@ -130,7 +129,6 @@ const mapCampaign = (input: BackendBrandCampaign): BrandCampaign => ({
    targetPlatforms: input.targetPlatforms,
    campaignGoal: input.campaignGoal,
    categories: input.categories,
-   niches: input.niches,
    referenceUrls: input.referenceUrls,
    keyMessage: input.keyMessage,
    dosAndDonts: input.dosAndDonts,
@@ -207,7 +205,6 @@ export const campaignsService = {
      targetPlatforms?: string;
      campaignGoal?: string;
      categories?: string;
-     niches?: string;
      referenceUrls?: string;
      keyMessage?: string;
      dosAndDonts?: string;
@@ -259,7 +256,6 @@ export const campaignsService = {
      targetPlatforms: string;
      campaignGoal: string;
      categories: string;
-     niches: string;
      referenceUrls: string;
      keyMessage: string;
      dosAndDonts: string;
@@ -333,7 +329,6 @@ export const campaignsService = {
       targetPlatforms: source.targetPlatforms,
       campaignGoal: source.campaignGoal,
       categories: source.categories,
-      niches: source.niches,
       referenceUrls: source.referenceUrls,
       keyMessage: source.keyMessage,
       dosAndDonts: source.dosAndDonts,

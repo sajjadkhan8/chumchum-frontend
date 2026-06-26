@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { PlatformAmbassador } from '@/types';
 import { cn, formatFollowers, formatPrice } from '@/lib/utils';
-import { getPlatformIcon } from '@/components/platform-icons';
+import { PlatformIconBadge } from '@/components/platform-icons';
 import { getCategoryLabel } from '@/lib/categories';
 
 interface AmbassadorCardProps {
@@ -81,18 +81,15 @@ export function AmbassadorCard({ ambassador, onContact, className }: AmbassadorC
               <div className="flex items-center gap-2.5">
                 {/* Platforms */}
                 <div className="flex items-center gap-1">
-                  {ambassador.platforms.slice(0, 3).map((platform) => {
-                    const Icon = getPlatformIcon(platform.platform);
-                    return (
-                      <div
-                        key={platform.platform}
-                        className="flex h-6 w-6 items-center justify-center rounded-full bg-muted"
-                        title={`${platform.platform}: ${formatFollowers(platform.followers)}`}
-                      >
-                        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                    );
-                  })}
+                  {ambassador.platforms.slice(0, 3).map((platform) => (
+                    <PlatformIconBadge
+                      key={platform.platform}
+                      platform={platform.platform}
+                      size="sm"
+                      className="rounded-full"
+                      title={`${platform.platform}: ${formatFollowers(platform.followers)}`}
+                    />
+                  ))}
                 </div>
                 <span className="text-xs font-medium sm:text-sm">{formatFollowers(ambassador.totalFollowers)}</span>
               </div>

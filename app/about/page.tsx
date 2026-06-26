@@ -7,7 +7,7 @@ const pillars = [
     icon: Users,
     title: 'Creator-first marketplace',
     description:
-      'Creators own their profiles, define packages, and collaborate with brands that align with their niche and audience.',
+      'Creators own their profiles, define packages, and collaborate with brands that align with their category and audience.',
   },
   {
     icon: Shield,
@@ -28,7 +28,7 @@ const steps = [
     step: '01',
     icon: Rocket,
     title: 'Discover creators',
-    description: 'Search by city, niche, platform, and budget to shortlist ideal creator partners.',
+    description: 'Search by city, category, platform, and budget to shortlist ideal creator partners.',
   },
   {
     step: '02',

@@ -489,6 +489,7 @@ export default function AdminUsersPage() {
                 <label className="mb-1.5 block text-xs font-bold text-[#173b2a]">Suspension duration (days)</label>
                 <input
                   type="number"
+                  onWheel={(event) => event.currentTarget.blur()}
                   min={1}
                   max={365}
                   className="w-full rounded-xl border border-[#d1ddd6] bg-[#fbfaf5] px-3 py-2.5 text-sm text-[#173b2a] focus:border-[#185c39] focus:outline-none focus:ring-1 focus:ring-[#185c39]/20"
@@ -550,6 +551,7 @@ export default function AdminUsersPage() {
                     <label className="mb-1.5 block text-xs font-bold text-[#173b2a]">Suspension duration (days)</label>
                     <input
                       type="number"
+                      onWheel={(event) => event.currentTarget.blur()}
                       min={1}
                       max={365}
                       className="w-full rounded-xl border border-[#d1ddd6] bg-[#fbfaf5] px-3 py-2.5 text-sm text-[#173b2a] focus:border-[#185c39] focus:outline-none focus:ring-1 focus:ring-[#185c39]/20"

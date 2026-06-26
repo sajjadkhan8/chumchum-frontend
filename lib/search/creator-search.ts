@@ -77,7 +77,6 @@ const rankOffers = (offers: BrandCampaign[], searchTerm: string) =>
       right.brief,
       right.campaignGoal,
       right.categories,
-      right.niches,
       right.contentFormats,
       right.targetPlatforms,
       right.targetLanguage,
@@ -88,7 +87,6 @@ const rankOffers = (offers: BrandCampaign[], searchTerm: string) =>
       left.brief,
       left.campaignGoal,
       left.categories,
-      left.niches,
       left.contentFormats,
       left.targetPlatforms,
       left.targetLanguage,
@@ -129,7 +127,6 @@ const deriveBrandTags = (offers: BrandCampaign[]) => {
     for (const token of [
       ...splitValues(offer.contentFormats),
       ...splitValues(offer.categories),
-      ...splitValues(offer.niches),
       ...splitValues(offer.targetPlatforms),
     ]) {
       if (token.length > 1) values.add(token);
@@ -151,7 +148,7 @@ const inferBrandIndustry = (brand: Brand | undefined, offers: BrandCampaign[]) =
 
   const counts = new Map<string, number>();
   for (const offer of offers) {
-    for (const token of [...splitValues(offer.categories), ...splitValues(offer.niches)]) {
+    for (const token of splitValues(offer.categories)) {
       counts.set(token, (counts.get(token) ?? 0) + 1);
     }
   }
@@ -201,7 +198,6 @@ const mergeBrandCampaigns = (offers: BrandCampaign[], brand: Brand | undefined, 
     primaryOffer?.title,
     primaryOffer?.brief,
     primaryOffer?.categories,
-    primaryOffer?.niches,
   ]);
 
   return {
@@ -302,7 +298,7 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
         campaignCount: brandOffers.length,
         tags: deriveBrandTags(brandOffers),
         activeOffers: brandOffers.slice(0, 3),
-        matchScore: calculateMatchScore(term, [firstOffer.brandName, firstOffer.title, firstOffer.brief, firstOffer.categories, firstOffer.niches]),
+        matchScore: calculateMatchScore(term, [firstOffer.brandName, firstOffer.title, firstOffer.brief, firstOffer.categories]),
       });
     }
   }

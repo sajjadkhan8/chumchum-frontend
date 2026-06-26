@@ -389,6 +389,7 @@ export default function BrandCampaignDetailPage() {
                 </label>
                 <input
                   type="number"
+                  onWheel={(event) => event.currentTarget.blur()}
                   min="1"
                   value={newAlertThreshold}
                   onChange={(e) => setNewAlertThreshold(e.target.value)}

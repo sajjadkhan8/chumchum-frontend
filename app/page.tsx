@@ -13,7 +13,6 @@ import {
   ChevronRight,
   Hotel,
   IceCreamBowl,
-  Instagram,
   MapPin,
   Menu,
   Pizza,
@@ -28,6 +27,7 @@ import { creatorsService } from "@/services/creators.service";
 import type { Creator } from "@/types";
 import { formatFollowers, getInitials } from "@/lib/utils";
 import { getCategoryLabel } from "@/lib/categories";
+import { PlatformIconBadge } from "@/components/platform-icons";
 
 const categories = [
   { label: "Restaurants", icon: Utensils },
@@ -105,8 +105,8 @@ function CreatorCard({ creator }: { creator: Creator }) {
         <p className="mt-1 text-xs font-semibold text-[#738078]">
           {creator.categories[0] ? getCategoryLabel(creator.categories[0]) : "Creator"}
         </p>
-        <p className="mt-3 flex items-center gap-1 text-xs font-bold text-[#365442]">
-          <Instagram className="size-3.5" /> {followers}
+        <p className="mt-3 flex items-center gap-1.5 text-xs font-bold text-[#365442]">
+          <PlatformIconBadge platform={creator.platforms[0]?.platform ?? "instagram"} size="xs" /> {followers}
         </p>
       </div>
     </motion.article>

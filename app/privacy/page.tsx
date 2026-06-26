@@ -111,7 +111,7 @@ export default function PrivacyPage() {
                   <SubHeading>Account &amp; Profile Data</SubHeading>
                   <InfoList items={[
                     'Name, email address, phone number, and password (hashed).',
-                    'Profile photo, bio, social-media handles, and niche categories.',
+                    'Profile photo, bio, social-media handles, and content categories.',
                     'Business name, logo, and industry (brands).',
                     'Bank or payment details for payout processing (creators).',
                   ]} />
@@ -149,7 +149,7 @@ export default function PrivacyPage() {
                   <p>We share your data only in the following limited circumstances:</p>
                   <SubHeading>With other platform users</SubHeading>
                   <p>
-                    Public profile information (name, photo, niche, follower counts) is visible to all
+                    Public profile information (name, photo, content categories, follower counts) is visible to all
                     users. Campaign messages and offer details are visible only to the parties involved in
                     that conversation.
                   </p>

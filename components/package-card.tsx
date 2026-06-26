@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Package } from '@/types';
 import { cn, formatPrice } from '@/lib/utils';
-import { getPlatformIcon } from '@/components/platform-icons';
+import { PlatformIconBadge } from '@/components/platform-icons';
 import { getCategoryLabel } from '@/lib/categories';
 
 interface PackageCardProps {
@@ -17,7 +17,6 @@ interface PackageCardProps {
 }
 
 export function PackageCard({ pkg, onOrder, className }: PackageCardProps) {
-  const PlatformIcon = getPlatformIcon(pkg.platform);
   const categoryLabel = getCategoryLabel(pkg.category);
   const showCashAmount = pkg.dealType === 'paid' ? pkg.price : pkg.hybridCashAmount || pkg.price;
   const dealMeta = {
@@ -56,9 +55,7 @@ export function PackageCard({ pkg, onOrder, className }: PackageCardProps) {
         <CardContent className="p-0">
           <div className="flex items-start justify-between gap-3 border-b border-[#edf1ed] bg-[#fbfaf5] px-4 py-3.5">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#e8f0ec] text-[#2d6b4e]">
-                <PlatformIcon className="size-4" />
-              </div>
+              <PlatformIconBadge platform={pkg.platform} />
               <div className="min-w-0">
                 <p className="truncate text-[13px] font-extrabold capitalize text-[#1e3d2e]">{pkg.platform}</p>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a9a87]">
