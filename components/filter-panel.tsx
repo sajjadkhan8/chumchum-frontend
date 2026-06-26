@@ -17,6 +17,7 @@ import type { Platform, City, DealType, BarterType } from '@/types';
 import { cn } from '@/lib/utils';
 import { pakistanLanguages } from '@/lib/localization';
 import { metadataService, defaultCreatorFilterMetadata, type CreatorFilterMetadata } from '@/services/metadata.service';
+import { getCategoryLabel } from '@/lib/categories';
 
 interface FilterPanelProps {
   className?: string;
@@ -91,7 +92,7 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
         <div className="flex flex-wrap gap-2">
           {metadata.categories.map((category) => (
             <Badge key={category} variant={filters.categories?.includes(category) ? 'default' : 'outline'} className="cursor-pointer transition-colors" onClick={() => toggleArrayFilter('categories', category)}>
-              {category}
+              {getCategoryLabel(category)}
             </Badge>
           ))}
         </div>

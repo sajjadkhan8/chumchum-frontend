@@ -7,6 +7,7 @@ import {
   type PackageStatusRequest,
   type PackageUpsertRequest,
 } from '@/services/packages.service';
+import { normalizeCategory } from '@/lib/categories';
 import type { CreatorPackage, PackageStatus } from '@/types';
 
 interface CreatorPackagesState {
@@ -33,7 +34,7 @@ const toCreateRequest = (pkg: CreatorPackage): PackageUpsertRequest => ({
   description: pkg.description,
   full_description: pkg.fullDescription,
   platform: toPackagePlatform(pkg.platform),
-  category: pkg.category,
+  category: normalizeCategory(pkg.category) || undefined,
   deal_type: toPackageDealType(pkg.dealType),
   barter_details: pkg.barterDescription || pkg.barterValue,
   barter_description: pkg.barterDescription,

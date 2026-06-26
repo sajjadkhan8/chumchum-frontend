@@ -27,6 +27,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { creatorsService } from "@/services/creators.service";
 import type { Creator } from "@/types";
 import { formatFollowers, getInitials } from "@/lib/utils";
+import { getCategoryLabel } from "@/lib/categories";
 
 const categories = [
   { label: "Restaurants", icon: Utensils },
@@ -102,7 +103,7 @@ function CreatorCard({ creator }: { creator: Creator }) {
       <div className="p-4">
         <h3 className="text-base font-extrabold tracking-tight">{creator.name}</h3>
         <p className="mt-1 text-xs font-semibold text-[#738078]">
-          {creator.categories[0] || "Creator"}
+          {creator.categories[0] ? getCategoryLabel(creator.categories[0]) : "Creator"}
         </p>
         <p className="mt-3 flex items-center gap-1 text-xs font-bold text-[#365442]">
           <Instagram className="size-3.5" /> {followers}

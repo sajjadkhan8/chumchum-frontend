@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import type { Package } from '@/types';
 import { cn, formatPrice } from '@/lib/utils';
 import { getPlatformIcon } from '@/components/platform-icons';
+import { getCategoryLabel } from '@/lib/categories';
 
 interface PackageCardProps {
   pkg: Package;
@@ -17,6 +18,7 @@ interface PackageCardProps {
 
 export function PackageCard({ pkg, onOrder, className }: PackageCardProps) {
   const PlatformIcon = getPlatformIcon(pkg.platform);
+  const categoryLabel = getCategoryLabel(pkg.category);
   const showCashAmount = pkg.dealType === 'paid' ? pkg.price : pkg.hybridCashAmount || pkg.price;
   const dealMeta = {
     paid: {
@@ -75,6 +77,9 @@ export function PackageCard({ pkg, onOrder, className }: PackageCardProps) {
                   Popular
                 </Badge>
               )}
+              <Badge className="rounded-full border border-[#d6eadf] bg-white px-2 py-0.5 text-[10px] font-extrabold text-[#496159] shadow-none">
+                {categoryLabel}
+              </Badge>
             </div>
           </div>
 

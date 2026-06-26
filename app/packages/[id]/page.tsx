@@ -15,6 +15,7 @@ import { creatorsService } from "@/services/creators.service";
 import { packagesService } from "@/services/packages.service";
 import { reviewsService } from "@/services/reviews.service";
 import type { Creator, CreatorPackage, Review } from "@/types";
+import { getCategoryLabel } from "@/lib/categories";
 
 export default function PublicPackageDetailPage() {
   const router = useRouter();
@@ -143,7 +144,7 @@ export default function PublicPackageDetailPage() {
               <div className="rounded-md border border-border/60 p-3 text-sm">
                 <p className="font-medium text-foreground">{creator.name}</p>
                 <p className="mt-1 text-muted-foreground">
-                  {(creator.categories[0] || "General")} creator in {creator.city}
+                  {getCategoryLabel(creator.categories[0] || "GENERAL")} creator in {creator.city}
                 </p>
                 <Button variant="link" className="mt-1 h-auto p-0" asChild>
                   <Link href={`/creator/${creator.id}`}>View creator profile</Link>

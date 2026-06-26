@@ -195,7 +195,11 @@ export const useAuthStore = create<AuthState>()(
       },
 
       restoreSession: async () => {
-        set({ hasHydrated: false, isAuthenticated: false });
+        const existingUser = get().user;
+        set({
+          hasHydrated: false,
+          isAuthenticated: Boolean(existingUser),
+        });
         try {
           const user = await authService.me();
           set({ user, isAuthenticated: true, hasHydrated: true });
@@ -203,13 +207,9 @@ export const useAuthStore = create<AuthState>()(
             await get().loadSavedCreators();
           }
         } catch {
-          tokenStorage.clear();
+          const currentUser = get().user;
           set({
-            user: null,
-            creatorProfile: null,
-            brandProfile: null,
-            savedCreators: [],
-            isAuthenticated: false,
+            isAuthenticated: Boolean(currentUser),
             hasHydrated: true,
           });
         }

@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { getCategoryLabel, normalizeCategories } from "@/lib/categories";
 import { authService } from "@/services/auth.service";
 import { brandsService, type VerificationDocument, type VerificationEvent } from "@/services/brands.service";
 import { apiClient } from "@/lib/api/client";
@@ -153,7 +154,7 @@ function BrandSettingsPageContent() {
   const [billing, setBilling] = useState({ plan: "Business", monthlyBudget: "500000" });
 
   const [campaignPreferences, setCampaignPreferences] = useState({
-    preferredCreatorCategories: "Food, Lifestyle, Beauty",
+    preferredCreatorCategories: "FOOD, LIFESTYLE, BEAUTY",
     targetCities: "Karachi, Lahore, Islamabad",
     targetPlatforms: "Instagram, TikTok, YouTube",
     campaignBudgetRange: "PKR 3,750,000 - PKR 20,000,000",
@@ -199,7 +200,7 @@ function BrandSettingsPageContent() {
         monthlyBudget: brand.monthlyBudget ? String(brand.monthlyBudget) : "",
       }));
       setCampaignPreferences({
-        preferredCreatorCategories: brand.preferredCreatorCategories || "",
+        preferredCreatorCategories: normalizeCategories(brand.preferredCreatorCategories?.split(",")).join(", "),
         targetCities: brand.targetCities || "",
         targetPlatforms: brand.targetPlatforms || "",
         campaignBudgetRange: brand.campaignBudgetRange || "",
@@ -239,9 +240,12 @@ function BrandSettingsPageContent() {
   const handleCampaignPreferencesSave = async () => {
     setIsSaving(true);
     try {
-      const saved = await brandsService.updateMe({ ...campaignPreferences });
+      const saved = await brandsService.updateMe({
+        ...campaignPreferences,
+        preferredCreatorCategories: normalizeCategories(campaignPreferences.preferredCreatorCategories.split(",")).join(", "),
+      });
       setCampaignPreferences({
-        preferredCreatorCategories: saved.preferredCreatorCategories || "",
+        preferredCreatorCategories: normalizeCategories(saved.preferredCreatorCategories?.split(",")).join(", "),
         targetCities: saved.targetCities || "",
         targetPlatforms: saved.targetPlatforms || "",
         campaignBudgetRange: saved.campaignBudgetRange || "",
@@ -569,8 +573,14 @@ function BrandSettingsPageContent() {
                 <Input
                   value={campaignPreferences.preferredCreatorCategories}
                   onChange={(e) => setCampaignPreferences((p) => ({ ...p, preferredCreatorCategories: e.target.value }))}
+                  placeholder="FOOD, BEAUTY, TECH"
                   className={inputCls}
                 />
+                {campaignPreferences.preferredCreatorCategories && (
+                  <p className="text-xs text-[#718077]">
+                    {normalizeCategories(campaignPreferences.preferredCreatorCategories.split(",")).map(getCategoryLabel).join(", ")}
+                  </p>
+                )}
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">

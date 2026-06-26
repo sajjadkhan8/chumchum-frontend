@@ -16,6 +16,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { CreatorAmbassadorBadge } from '@/components/creator-ambassador-badge';
 import { CreatorTrustBadge } from '@/components/creator-trust-badge';
 import { getPlatformIcon } from '@/components/platform-icons';
+import { getCategoryLabel } from '@/lib/categories';
 
 interface CreatorCardProps {
   creator: Creator;
@@ -177,7 +178,7 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
             <div className="mt-3 flex flex-wrap gap-1.5">
               {creator.categories.slice(0, 3).map((category) => (
                 <span key={category} className="rounded-full bg-[#e8f0ec] px-2.5 py-1 text-[10px] font-bold text-[#2d6b4e]">
-                  {category}
+                  {getCategoryLabel(category)}
                 </span>
               ))}
             </div>

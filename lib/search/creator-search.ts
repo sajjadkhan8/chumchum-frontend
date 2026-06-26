@@ -1,6 +1,7 @@
 'use client';
 
 import { getInitials } from '@/lib/utils';
+import { getCategoryLabel } from '@/lib/categories';
 import { campaignsService } from '@/services/campaigns.service';
 import { brandsService } from '@/services/brands.service';
 import type { Brand, BrandCampaign, Creator } from '@/types';
@@ -104,7 +105,7 @@ export const rankCreators = (creators: Creator[], searchTerm: string) =>
       right.username,
       right.bio,
       right.city ?? undefined,
-      right.categories.join(' '),
+      right.categories.map(getCategoryLabel).join(' '),
       right.platforms.map((platform) => platform.username).join(' '),
     ]);
     const leftScore = calculateMatchScore(searchTerm, [
@@ -112,7 +113,7 @@ export const rankCreators = (creators: Creator[], searchTerm: string) =>
       left.username,
       left.bio,
       left.city ?? undefined,
-      left.categories.join(' '),
+      left.categories.map(getCategoryLabel).join(' '),
       left.platforms.map((platform) => platform.username).join(' '),
     ]);
 

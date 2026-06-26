@@ -30,6 +30,7 @@ import { brandsService } from "@/services/brands.service";
 import { creatorsService } from "@/services/creators.service";
 import { ordersService } from "@/services/orders.service";
 import { formatFollowers, formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
+import { getCategoryLabel, normalizeCategories } from "@/lib/categories";
 import { useAuthStore } from "@/store/auth-store";
 import type { Brand, Creator, Order } from "@/types";
 
@@ -159,8 +160,7 @@ export default function BrandDashboardPage() {
       const hasPrefs = fetchedBrand?.preferredCreatorCategories || fetchedBrand?.targetCities || fetchedBrand?.targetPlatforms;
       let recommended: Creator[] = [];
       if (hasPrefs) {
-        const categories = fetchedBrand.preferredCreatorCategories
-          ?.split(',').map((s) => s.trim()).filter(Boolean);
+        const categories = normalizeCategories(fetchedBrand.preferredCreatorCategories?.split(','));
         const cities = fetchedBrand.targetCities
           ?.split(',').map((s) => s.trim()).filter(Boolean) as import('@/types').City[] | undefined;
         const platforms = fetchedBrand.targetPlatforms
@@ -390,10 +390,10 @@ export default function BrandDashboardPage() {
                           </div>
                           <span className="inline-flex items-center gap-1 text-xs font-extrabold text-[#8b5e12]"><Star className="size-3.5 fill-[#e6aa38] text-[#e6aa38]" /> {creator.rating}</span>
                         </div>
-                        <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#647168]">{creator.bio || creator.categories.join(", ")}</p>
+                        <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#647168]">{creator.bio || creator.categories.map(getCategoryLabel).join(", ")}</p>
                         <div className="mt-3 flex flex-wrap gap-1.5">
-                          {(creator.categories.length ? creator.categories : ["Food", "Lifestyle"]).slice(0, 3).map((category) => (
-                            <span key={category} className="rounded-full border border-[#d8dfd8] bg-white px-2 py-1 text-[11px] font-bold text-[#526259]">{category}</span>
+                          {(creator.categories.length ? creator.categories : ["FOOD", "LIFESTYLE"]).slice(0, 3).map((category) => (
+                            <span key={category} className="rounded-full border border-[#d8dfd8] bg-white px-2 py-1 text-[11px] font-bold text-[#526259]">{getCategoryLabel(category)}</span>
                           ))}
                         </div>
                         <div className="mt-3 flex items-center justify-between text-xs font-bold text-[#718077]">
@@ -484,7 +484,7 @@ export default function BrandDashboardPage() {
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-extrabold text-[#173b2a]">{creator.name}</p>
-                      <p className="truncate text-xs text-[#718077]">{creator.categories[0] || "Food creator"}</p>
+                      <p className="truncate text-xs text-[#718077]">{creator.categories[0] ? getCategoryLabel(creator.categories[0]) : "Food creator"}</p>
                     </div>
                     <Sparkles className="size-4 text-[#b77a12]" />
                   </Link>

@@ -9,7 +9,7 @@ export const creatorPackages: CreatorPackage[] = [
     description: 'One high-conversion restaurant reel with story bundle.',
     fullDescription:
       'A conversion-focused restaurant campaign including one reel, three story frames, and one pinned highlight mention with a CTA.',
-    category: 'Food',
+    category: 'FOOD',
     deliverables: ['1 Instagram Reel', '3 Story Frames', 'Pinned Highlight Mention'],
     deliveryDays: 4,
     revisions: 2,
@@ -41,7 +41,7 @@ export const creatorPackages: CreatorPackage[] = [
     description: 'Barter-first package for cafes and dessert brands.',
     fullDescription:
       'Creator exchange package for cafes featuring story sequence and tasting reaction reel. Ideal for launches and menu specials.',
-    category: 'Food',
+    category: 'FOOD',
     deliverables: ['1 Tasting Reel', '4 Story Frames', '1 Location Tag'],
     deliveryDays: 5,
     revisions: 1,
@@ -78,7 +78,7 @@ export const creatorPackages: CreatorPackage[] = [
     description: 'PKR 450,000 + weekend stay collaboration package.',
     fullDescription:
       'Hybrid campaign combining a cash fee and staycation barter for lifestyle and hospitality brands, including multi-format coverage.',
-    category: 'Travel',
+    category: 'TRAVEL',
     deliverables: ['1 Instagram Reel', '5 Story Frames', '1 Feed Carousel'],
     deliveryDays: 7,
     revisions: 2,
@@ -117,7 +117,7 @@ export const creatorPackages: CreatorPackage[] = [
     description: 'Draft package for quick gadget integrations.',
     fullDescription:
       'A draft package for short mention-style gadget integrations inside weekly review content.',
-    category: 'Tech',
+    category: 'TECH',
     deliverables: ['1 Integration Segment', '1 Story Teaser'],
     deliveryDays: 6,
     revisions: 1,
@@ -149,7 +149,7 @@ export const creatorPackages: CreatorPackage[] = [
     description: 'Offline event appearance and event-day social coverage.',
     fullDescription:
       'Creator appearance package for launches and festivals with event-day social push and venue tag amplification.',
-    category: 'Events',
+    category: 'ENTERTAINMENT',
     deliverables: ['2-hour Event Appearance', '4 Story Frames', '1 Reel Recap'],
     deliveryDays: 3,
     revisions: 1,
@@ -181,7 +181,7 @@ export const creatorPackages: CreatorPackage[] = [
     description: 'Archived winter capsule content bundle.',
     fullDescription:
       'Previously high-performing seasonal fashion package retained for reference and future relaunch.',
-    category: 'Fashion',
+    category: 'FASHION',
     deliverables: ['1 Reel', '1 Feed Post', '3 Stories'],
     deliveryDays: 6,
     revisions: 2,
@@ -206,5 +206,4 @@ export const creatorPackages: CreatorPackage[] = [
     },
   },
 ];
-
 

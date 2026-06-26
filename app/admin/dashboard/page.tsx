@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { CreatorMetricCard } from '@/components/creator-metric-card';
 import { adminService, type AdminDashboard, type AdminOrder, type AdminSLAMetrics } from '@/services/admin.service';
 import { formatPrice, getInitials } from '@/lib/utils';
+import { getCategoryLabel } from '@/lib/categories';
 import { useAuthStore } from '@/store/auth-store';
 
 /* ── compact PKR abbreviation ── */
@@ -447,7 +448,7 @@ export default function AdminDashboardPage() {
               <dl className="space-y-2">
                 {dashboard.ordersByCategory!.map(({ category, count }) => (
                   <div key={category} className="flex items-center justify-between rounded-xl border border-[#edf1ed] bg-[#fbfaf5] px-3.5 py-2.5">
-                    <dt className="text-[12px] font-semibold capitalize text-[#496159]">{category.replace(/_/g, ' ')}</dt>
+                    <dt className="text-[12px] font-semibold text-[#496159]">{getCategoryLabel(category)}</dt>
                     <dd className="text-[14px] font-extrabold text-[#1e3d2e]">{count.toString()}</dd>
                   </div>
                 ))}

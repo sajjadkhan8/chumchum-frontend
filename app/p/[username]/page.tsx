@@ -34,6 +34,7 @@ import { creatorsService } from "@/services/creators.service";
 import { packagesService } from "@/services/packages.service";
 import { reviewsService } from "@/services/reviews.service";
 import { getPlatformMeta } from "@/components/platform-icons";
+import { getCategoryLabel } from "@/lib/categories";
 import type { Creator, CreatorPackage, Review } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -375,7 +376,7 @@ export default function PublicCreatorProfilePage({
                 <div className="flex flex-wrap gap-2 px-5 py-4">
                   {creator.categories.map((c) => (
                     <span key={c} className="rounded-full border border-[#cddad1] bg-[#f0f6f2] px-3 py-1 text-[12px] font-semibold text-[#2d6b4e]">
-                      {c}
+                      {getCategoryLabel(c)}
                     </span>
                   ))}
                 </div>

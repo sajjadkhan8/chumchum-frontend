@@ -33,6 +33,7 @@ import { brandsService } from '@/services/brands.service';
 import type { Creator, DealType, Package, PlatformAmbassador } from '@/types';
 import { toast } from 'sonner';
 import { cn, formatFollowers, formatPrice } from '@/lib/utils';
+import { getCategoryLabel, normalizeCategory, normalizeCategories } from '@/lib/categories';
 import Link from 'next/link';
 
 const sortOptions = [
@@ -111,7 +112,7 @@ function AmbassadorRow({ ambassador }: { ambassador: PlatformAmbassador }) {
           <div className="mt-4 flex flex-wrap gap-2">
             {ambassador.categories.slice(0, 4).map((category) => (
               <span key={category} className="rounded-full bg-[#f4f2e9] px-2.5 py-1 text-[11px] font-black text-[#607168]">
-                {category}
+                {getCategoryLabel(category)}
               </span>
             ))}
           </div>
@@ -169,10 +170,10 @@ function computeMatchScore(creator: Creator, prefs: BrandPrefs | null): number {
   let score = 0;
 
   if (prefs.categories) {
-    const brandCats = prefs.categories.split(',').map((c) => c.trim().toLowerCase());
-    const creatorCats = (creator.categories ?? []).map((c) => c.toLowerCase());
+    const brandCats = normalizeCategories(prefs.categories.split(','));
+    const creatorCats = normalizeCategories(creator.categories ?? []);
     const overlap = brandCats.filter((bc) =>
-      creatorCats.some((cc) => cc.includes(bc) || bc.includes(cc)),
+      creatorCats.includes(bc),
     ).length;
     if (brandCats.length > 0) score += (overlap / brandCats.length) * 50;
   }
@@ -249,7 +250,7 @@ function ExplorePageContent() {
 
     if (category || dealTypeFromFilter || filter === 'rising') {
       setFilters({
-        categories: category ? [category.charAt(0).toUpperCase() + category.slice(1)] : filters.categories,
+        categories: category ? [normalizeCategory(category)].filter(Boolean) : filters.categories,
         dealTypes: dealTypeFromFilter || filters.dealTypes,
         sortBy: filter === 'rising' ? 'trending' : filters.sortBy,
       });
@@ -363,7 +364,7 @@ function ExplorePageContent() {
       savedCreatorsList.filter(
         (creator) =>
           creator.name.toLowerCase().includes(savedSearchQuery.toLowerCase()) ||
-          creator.categories.some((cat) => cat.toLowerCase().includes(savedSearchQuery.toLowerCase())),
+          creator.categories.some((cat) => getCategoryLabel(cat).toLowerCase().includes(savedSearchQuery.toLowerCase())),
       ),
     [savedCreatorsList, savedSearchQuery],
   );
@@ -498,7 +499,7 @@ function ExplorePageContent() {
                   {brandPrefs && (brandPrefs.categories || brandPrefs.cities || brandPrefs.platforms) ? (
                     <button
                       onClick={() => {
-                        const cats = brandPrefs.categories?.split(',').map((c) => c.trim()).filter(Boolean) ?? [];
+                        const cats = normalizeCategories(brandPrefs.categories?.split(','));
                         const cities = brandPrefs.cities?.split(',').map((c) => c.trim()).filter(Boolean) ?? [];
                         setFilters({
                           ...filters,
@@ -524,7 +525,7 @@ function ExplorePageContent() {
                   <span className="text-xs font-black uppercase tracking-[0.14em] text-[#7b867f]">Active</span>
                   {filters.categories?.map((cat) => (
                     <Badge key={cat} className="cursor-pointer rounded-full bg-[#e7f0ea] text-[#185c39]" onClick={() => setFilters({ categories: filters.categories?.filter((c) => c !== cat) })}>
-                      {cat} x
+                      {getCategoryLabel(cat)} x
                     </Badge>
                   ))}
                   {filters.cities?.map((city) => (

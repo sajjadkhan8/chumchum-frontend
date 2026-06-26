@@ -22,6 +22,7 @@ import { pakistanCities, pakistanLanguages } from '@/lib/localization';
 import { getCreatorGlobalSearchResults, rankCreators, type CreatorGlobalSearchResults as CreatorGlobalSearchPayload, type CreatorSearchBrandResult } from '@/lib/search/creator-search';
 import { creatorsService } from '@/services/creators.service';
 import { metadataService } from '@/services/metadata.service';
+import { getCategoryLabel } from '@/lib/categories';
 import type { BrandCampaign, City, Creator, CreatorBadgeLevel, Platform } from '@/types';
 
 type SearchTab = 'brands' | 'campaigns' | 'creators';
@@ -148,7 +149,7 @@ const brandMatchesContentType = (brand: CreatorSearchBrandResult, contentTypes: 
 
 const creatorMatchesIndustry = (creator: Creator, industries: string[]) => {
   if (industries.length === 0) return true;
-  const fields = [creator.bio, creator.city, ...creator.categories].map((value) => normalize(value));
+  const fields = [creator.bio, creator.city, ...creator.categories.map(getCategoryLabel)].map((value) => normalize(value));
   return industries.some((industry) => fields.some((field) => field.includes(normalize(industry))));
 };
 
@@ -475,7 +476,7 @@ function CreatorResultCard({ creator }: { creator: Creator }) {
               </span>
             </div>
             <p className="text-xs text-[#87938b]">
-              {creator.categories.slice(0, 3).join(' • ')}
+              {creator.categories.slice(0, 3).map(getCategoryLabel).join(' • ')}
               {creator.city && <><span className="px-1.5 text-[#d1ddd6]">·</span>{creator.city}</>}
             </p>
             <p className="max-w-2xl text-sm leading-6 text-[#87938b]">{creator.bio}</p>

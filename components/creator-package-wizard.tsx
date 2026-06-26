@@ -34,6 +34,7 @@ import { useCreatorPackagesStore } from "@/store/creator-packages-store";
 import { useAuthStore } from "@/store/auth-store";
 import { uploadsService } from "@/services/uploads.service";
 import { platformMeta } from "@/components/platform-icons";
+import { getCategoryLabel, normalizeCategories, normalizeCategory, sortCategoryOptionsForProfile } from "@/lib/categories";
 
 const DRAFT_KEY = "creator-package-draft-v3";
 
@@ -301,6 +302,35 @@ const defaultForm: WizardFormData = {
   status: "active",
 };
 
+const isDefaultDraft = (formData: WizardFormData, currentStep: number) => (
+  currentStep === 1
+  && formData.title === defaultForm.title
+  && formData.category === defaultForm.category
+  && formData.platform === defaultForm.platform
+  && formData.niche === defaultForm.niche
+  && formData.fullDescription === defaultForm.fullDescription
+  && formData.tags === defaultForm.tags
+  && formData.responseTime === defaultForm.responseTime
+  && formData.selectedServiceKeys.length === 0
+  && formData.deliverableItems.length === 0
+  && formData.serviceNotes === defaultForm.serviceNotes
+  && formData.deliveryDays === defaultForm.deliveryDays
+  && formData.revisions === defaultForm.revisions
+  && formData.dealType === defaultForm.dealType
+  && formData.price === defaultForm.price
+  && formData.barterExpectations === defaultForm.barterExpectations
+  && formData.barterCategory === defaultForm.barterCategory
+  && formData.estimatedBarterValue === defaultForm.estimatedBarterValue
+  && formData.preferredBrands === defaultForm.preferredBrands
+  && formData.minimumBarterValue === defaultForm.minimumBarterValue
+  && formData.hybridCashAmount === defaultForm.hybridCashAmount
+  && formData.thumbnailUrl === defaultForm.thumbnailUrl
+  && formData.previousWorkUrls.length === defaultForm.previousWorkUrls.length
+  && formData.previousWorkUrls.every((url, index) => url === defaultForm.previousWorkUrls[index])
+  && formData.visibility === defaultForm.visibility
+  && formData.status === defaultForm.status
+);
+
 const buildDeliverableItemsFromLegacy = (deliverables: string[] = []): DeliverableItem[] =>
   deliverables
     .map((label, index) => ({
@@ -330,6 +360,7 @@ const sectionTitle = "text-base font-bold text-[#1e3d2e] tracking-tight";
 
 export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWizardProps) {
   const router = useRouter();
+  const user = useAuthStore((state) => state.user);
   const creatorProfile = useAuthStore((state) => state.creatorProfile);
   const setCreatorProfile = useAuthStore((state) => state.setCreatorProfile);
   const createPackage = useCreatorPackagesStore((state) => state.createPackage);
@@ -337,15 +368,19 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   const [currentStep, setCurrentStep] = useState(1);
   const [hasSavedDraft, setHasSavedDraft] = useState(false);
   const [showDraftModal, setShowDraftModal] = useState(false);
+  const draftKey = useMemo(
+    () => (user?.id ? `${DRAFT_KEY}:${user.id}` : null),
+    [user?.id],
+  );
 
   const initialForm = useMemo<WizardFormData>(() => {
     if (!initialPackage) return defaultForm;
 
     return {
       title: initialPackage.title,
-      category: initialPackage.category,
+      category: normalizeCategory(initialPackage.category),
       platform: initialPackage.platform,
-      niche: initialPackage.category,
+      niche: getCategoryLabel(initialPackage.category),
       fullDescription: initialPackage.fullDescription,
       tags: initialPackage.tags.join(", "),
       responseTime: initialPackage.responseTime,
@@ -485,28 +520,58 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     [connectedPlatforms]
   );
 
+  const profileCategories = useMemo(
+    () => normalizeCategories(creatorProfile?.categories),
+    [creatorProfile?.categories]
+  );
+
+  const categoryOptionsForPackage = useMemo(
+    () => sortCategoryOptionsForProfile(profileCategories),
+    [profileCategories]
+  );
+
   useEffect(() => {
     if (mode !== "create") return;
-    const raw = localStorage.getItem(DRAFT_KEY);
+    if (formData.category || profileCategories.length === 0) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      category: prev.category || profileCategories[0],
+      niche: prev.niche || getCategoryLabel(profileCategories[0]),
+    }));
+  }, [formData.category, mode, profileCategories]);
+
+  useEffect(() => {
+    if (mode !== "create" || !draftKey) return;
+    localStorage.removeItem(DRAFT_KEY);
+    const raw = localStorage.getItem(draftKey);
     setHasSavedDraft(Boolean(raw));
     if (raw) {
       setShowDraftModal(true);
     }
-  }, [mode]);
+  }, [draftKey, mode]);
 
   useEffect(() => {
-    if (mode !== "create") return;
+    if (mode !== "create" || !draftKey) return;
 
     const payload = {
       currentStep,
       formData,
     };
 
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
-  }, [mode, currentStep, formData]);
+    if (isDefaultDraft(formData, currentStep)) {
+      localStorage.removeItem(draftKey);
+      setHasSavedDraft(false);
+      return;
+    }
+
+    localStorage.setItem(draftKey, JSON.stringify(payload));
+    setHasSavedDraft(true);
+  }, [draftKey, mode, currentStep, formData]);
 
   const restoreDraft = () => {
-    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!draftKey) return;
+    const raw = localStorage.getItem(draftKey);
     if (!raw) return;
 
     try {
@@ -519,6 +584,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       setFormData({
         ...defaultForm,
         ...draft.formData,
+        category: normalizeCategory(draft.formData?.category) || "",
         selectedServiceKeys: Array.isArray(draft.formData?.selectedServiceKeys)
           ? draft.formData.selectedServiceKeys
           : [],
@@ -542,8 +608,9 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   };
 
   const clearDraft = () => {
-    localStorage.removeItem(DRAFT_KEY);
+    if (draftKey) localStorage.removeItem(draftKey);
     setHasSavedDraft(false);
+    setShowDraftModal(false);
     toast.success("Saved draft cleared");
   };
 
@@ -817,6 +884,11 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   };
 
   const submitPackage = async () => {
+    if (formData.status !== "draft" && !normalizeCategory(formData.category)) {
+      toast.error("Select a category before publishing");
+      return;
+    }
+
     const tags = formData.tags
       .split(",")
       .map((tag) => tag.trim())
@@ -829,7 +901,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       shortDescription: formData.fullDescription || formData.title,
       description: formData.fullDescription || formData.title,
       fullDescription: formData.fullDescription,
-      category: formData.category,
+      category: normalizeCategory(formData.category),
       deliverables: resolvedDeliverables,
       deliveryDays: Number(formData.deliveryDays || 0),
       revisions: Number(formData.revisions || 0),
@@ -887,6 +959,18 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     };
 
     try {
+      const shouldSyncProfileCategory =
+        formData.status !== "draft" &&
+        normalizeCategory(formData.category) &&
+        !profileCategories.includes(normalizeCategory(formData.category));
+
+      if (shouldSyncProfileCategory && creatorProfile) {
+        const updatedProfile = await creatorsService.updateMe({
+          categories: normalizeCategories([...creatorProfile.categories, formData.category]),
+        });
+        setCreatorProfile(updatedProfile);
+      }
+
       if (mode === "edit" && initialPackage) {
         await updatePackage(initialPackage.id, packagePayload);
       } else {
@@ -894,7 +978,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       }
 
       if (mode === "create") {
-        localStorage.removeItem(DRAFT_KEY);
+        if (draftKey) localStorage.removeItem(draftKey);
         setHasSavedDraft(false);
       }
 
@@ -1081,56 +1165,78 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                   </p>
                 )}
 
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-                  {platforms.map((platform) => {
-                    const isConnected = connectedPlatformSet.has(platform.id as Platform);
-                    const isDisabled = isLoadingPlatformOptions || !isConnected;
-                    const isSelected = formData.platform === platform.id;
-
-                    return (
-                      <button
-                        key={platform.id}
-                        type="button"
-                        aria-disabled={isDisabled}
-                        onClick={() => {
-                          if (isDisabled) {
-                            toast.info(`Connect ${platform.label} in Settings → Connected Accounts to enable.`);
-                            return;
-                          }
-                          setFormData((prev) => ({
-                            ...prev,
-                            platform: platform.id,
-                            selectedServiceKeys: [],
-                            deliverableItems: [],
-                            serviceNotes: "",
-                          }));
-                        }}
-                        className={`rounded-xl border-2 p-3 text-sm transition-all duration-200 ${
-                          isSelected
-                            ? "border-[#2d6b4e] bg-[#e4f1e8] text-[#1e5c3e]"
-                            : isDisabled
-                              ? "cursor-not-allowed border-[#eef1ef] bg-[#f4f7f5] text-[#b0bfb8]"
-                              : "border-[#dce6df] text-[#496159] hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
-                        }`}
-                      >
-                        <div className="flex items-center justify-center gap-2 font-semibold">
-                          <platform.icon className="size-4" />
-                          {platform.label}
-                        </div>
-                        <p className="mt-1 text-center text-[10px] font-medium text-[#a0b4aa]">
-                          {isConnected ? "Connected" : "Connect to enable"}
+                {!isLoadingPlatformOptions && platformOptions.length === 0 ? (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-extrabold text-amber-800">Connect a social account first</p>
+                        <p className="mt-1 max-w-2xl text-xs leading-5 text-amber-700">
+                          Packages are tied to the platform where brands will book your content. Add at least one connected account to continue.
                         </p>
-                      </button>
-                    );
-                  })}
-                </div>
+                      </div>
+                      <Button
+                        asChild
+                        className="h-9 shrink-0 rounded-full bg-[#2d6b4e] px-4 text-xs font-bold text-white hover:bg-[#24563f]"
+                      >
+                        <Link href="/creator/profile/social">
+                          Connect social account
+                          <ArrowRight className="size-3.5" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                    {platforms.map((platform) => {
+                      const isConnected = connectedPlatformSet.has(platform.id as Platform);
+                      const isDisabled = isLoadingPlatformOptions || !isConnected;
+                      const isSelected = formData.platform === platform.id;
+
+                      return (
+                        <button
+                          key={platform.id}
+                          type="button"
+                          aria-disabled={isDisabled}
+                          onClick={() => {
+                            if (isDisabled) {
+                              toast.info(`Connect ${platform.label} in Social Accounts to enable.`);
+                              return;
+                            }
+                            setFormData((prev) => ({
+                              ...prev,
+                              platform: platform.id,
+                              selectedServiceKeys: [],
+                              deliverableItems: [],
+                              serviceNotes: "",
+                            }));
+                          }}
+                          className={`rounded-xl border-2 p-3 text-sm transition-all duration-200 ${
+                            isSelected
+                              ? "border-[#2d6b4e] bg-[#e4f1e8] text-[#1e5c3e]"
+                              : isDisabled
+                                ? "cursor-not-allowed border-[#eef1ef] bg-[#f4f7f5] text-[#b0bfb8]"
+                                : "border-[#dce6df] text-[#496159] hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
+                          }`}
+                        >
+                          <div className="flex items-center justify-center gap-2 font-semibold">
+                            <platform.icon className="size-4" />
+                            {platform.label}
+                          </div>
+                          <p className="mt-1 text-center text-[10px] font-medium text-[#a0b4aa]">
+                            {isConnected ? "Connected" : "Connect to enable"}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between rounded-xl border border-[#dce6df] bg-[#f4f7f5] px-4 py-3">
                   <p className="text-xs text-[#6b7870]">
                     {connectedPlatforms.length}/{platforms.length} platforms connected
                   </p>
                   <Link
-                    href="/creator/settings?tab=social"
+                    href="/creator/profile/social"
                     className="text-xs font-bold text-[#2d6b4e] hover:underline"
                   >
                     Manage accounts
@@ -1145,26 +1251,25 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                   <Label className={labelClass}>Category</Label>
                   <select
                     value={formData.category}
-                    onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value }))}
+                    onChange={(e) => setFormData((p) => ({
+                      ...p,
+                      category: e.target.value,
+                      niche: p.niche || getCategoryLabel(e.target.value),
+                    }))}
                     className="h-10 w-full rounded-xl border-2 border-[#dce6df] bg-white px-3 text-sm text-[#1e3d2e] transition-colors focus:border-[#2d6b4e] focus:outline-none focus:ring-4 focus:ring-[#2d6b4e]/8"
                   >
                     <option value="">Select a category</option>
-                    <option value="FASHION_BEAUTY">Fashion &amp; Beauty</option>
-                    <option value="FOOD_BEVERAGE">Food &amp; Beverage</option>
-                    <option value="TECHNOLOGY_GADGETS">Technology &amp; Gadgets</option>
-                    <option value="FITNESS_HEALTH">Fitness &amp; Health</option>
-                    <option value="TRAVEL_LIFESTYLE">Travel &amp; Lifestyle</option>
-                    <option value="ENTERTAINMENT_COMEDY">Entertainment &amp; Comedy</option>
-                    <option value="EDUCATION_CAREER">Education &amp; Career</option>
-                    <option value="BUSINESS_FINANCE">Business &amp; Finance</option>
-                    <option value="HOME_DECOR">Home &amp; Decor</option>
-                    <option value="GAMING">Gaming</option>
-                    <option value="PARENTING_FAMILY">Parenting &amp; Family</option>
-                    <option value="SPORTS">Sports</option>
-                    <option value="AUTOMOTIVE">Automotive</option>
-                    <option value="RELIGIOUS_SPIRITUAL">Religious &amp; Spiritual</option>
-                    <option value="GENERAL">General</option>
+                    {categoryOptionsForPackage.map((category) => (
+                      <option key={category.value} value={category.value}>
+                        {profileCategories.includes(category.value) ? `${category.label} - on profile` : category.label}
+                      </option>
+                    ))}
                   </select>
+                  {formData.category && !profileCategories.includes(formData.category) && formData.status !== "draft" && (
+                    <p className="text-[11px] font-semibold text-[#7a8f82]">
+                      Publishing will also add {getCategoryLabel(formData.category)} to your public profile.
+                    </p>
+                  )}
                 </div>
 
                 {/* Niche */}

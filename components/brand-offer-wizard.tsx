@@ -18,6 +18,7 @@ import { campaignsService } from '@/services/campaigns.service';
 import { uploadsService } from '@/services/uploads.service';
 import type { BrandCampaign } from '@/types';
 import { cn } from '@/lib/utils';
+import { getCategoryLabel, normalizeCategories, normalizeCategory } from '@/lib/categories';
 import { toast } from 'sonner';
 import { platformMeta as sharedPlatformMeta } from '@/components/platform-icons';
 
@@ -471,7 +472,7 @@ const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
       targetRegion: offer.targetRegion || '',
       targetCity: offer.targetCity || '',
       targetLanguage: offer.targetLanguage || '',
-      categories: splitCsv(offer.categories),
+      categories: normalizeCategories(splitCsv(offer.categories)),
       niches: splitCsv(offer.niches),
       coverImageUrl: offer.coverImageUrl || '',
       referenceUrls: splitLines(offer.referenceUrls).length > 0 ? splitLines(offer.referenceUrls) : [''],
@@ -910,7 +911,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
          deliverables: buildDeliverablesText(),
          contentFormats: form.contentFormats.length > 0 ? form.contentFormats.join(', ') : undefined,
          targetPlatforms: (resolvedPlatforms.length > 0 ? resolvedPlatforms : [form.offerType]).join(', '),
-         categories: form.categories.join(', '),
+         categories: normalizeCategories(form.categories).join(', '),
          niches: form.niches.join(', '),
          referenceUrls: form.referenceUrls.map((url) => url.trim()).filter(Boolean).join('\n') || undefined,
          keyMessage: form.keyMessage.trim() || undefined,
@@ -1274,10 +1275,13 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
             <div className="grid gap-4 sm:grid-cols-2">
               <ChipInput
                 label="Categories"
-                chips={form.categories}
-                onAdd={(v) => updateForm({ categories: [...form.categories, v] })}
+                chips={form.categories.map(getCategoryLabel)}
+                onAdd={(v) => {
+                  const category = normalizeCategory(v);
+                  if (category) updateForm({ categories: normalizeCategories([...form.categories, category]) });
+                }}
                 onRemove={(i) => updateForm({ categories: form.categories.filter((_, idx) => idx !== i) })}
-                placeholder="Beauty, Lifestyle…"
+                placeholder="Beauty, Lifestyle..."
                 max={5}
                 helperText="Press Enter, comma, or Tab to add"
               />
@@ -2223,7 +2227,7 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
               <div className="space-y-1.5">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#8fa898]">Categories & Niches</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {form.categories.map((c) => <Badge key={c} className="bg-[#e7f0ea] text-[#185c39] hover:bg-[#e7f0ea]">{c}</Badge>)}
+                  {form.categories.map((c) => <Badge key={c} className="bg-[#e7f0ea] text-[#185c39] hover:bg-[#e7f0ea]">{getCategoryLabel(c)}</Badge>)}
                   {form.niches.map((n) => <Badge key={n} variant="outline" className="border-[#d9e0d8] text-[#526259]">{n}</Badge>)}
                 </div>
               </div>

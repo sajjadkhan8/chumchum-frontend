@@ -19,6 +19,7 @@ import type {
   UserRole,
   VerificationSource,
 } from '@/types';
+import { normalizeCategory, normalizeCategories } from '@/lib/categories';
 
 const safeDate = (value?: string | Date | null): Date => {
   if (!value) return new Date();
@@ -174,7 +175,7 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
   const avatar = input.avatar_url || input.user?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
   const followers = input.followers || 0;
   const engagementRate = input.engagement_rate || 0;
-  const categories = input.categories?.length ? input.categories : ['General'];
+  const categories = normalizeCategories(input.categories).length ? normalizeCategories(input.categories) : ['GENERAL'];
   const badgeLevel = ['verified', 'rising_star', 'pro', 'elite'].includes((input.badge_level || '').toLowerCase())
     ? (input.badge_level?.toLowerCase() as CreatorBadgeLevel)
     : 'none';
@@ -361,7 +362,7 @@ export const mapPackage = (input: BackendPackageResponse): CreatorPackage => ({
   shortDescription: input.short_description || input.description || '',
   description: input.description || input.short_description || '',
   fullDescription: input.full_description || input.description || '',
-  category: input.category || 'General',
+  category: normalizeCategory(input.category) || 'GENERAL',
   deliverables: input.deliverables || [],
   deliveryDays: input.delivery_days || 1,
   revisions: input.revisions || 0,

@@ -86,13 +86,6 @@ export const tokenStorage = {
   },
 };
 
-const redirectToLogin = () => {
-  tokenStorage.clear();
-  if (typeof window !== 'undefined') {
-    window.location.href = '/login';
-  }
-};
-
 let refreshPromise: Promise<string | null> | null = null;
 
 const refreshAccessToken = async (): Promise<string | null> => {
@@ -107,7 +100,6 @@ const refreshAccessToken = async (): Promise<string | null> => {
       });
 
       if (!response.ok) {
-        tokenStorage.clear();
         return null;
       }
 
@@ -116,14 +108,12 @@ const refreshAccessToken = async (): Promise<string | null> => {
       const nextRefreshToken = payload?.data?.refreshToken;
 
       if (!nextAccessToken) {
-        tokenStorage.clear();
         return null;
       }
 
       tokenStorage.set(nextAccessToken, nextRefreshToken);
       return nextAccessToken;
     } catch {
-      tokenStorage.clear();
       return null;
     } finally {
       refreshPromise = null;
@@ -159,7 +149,6 @@ export const apiClient = {
       headers,
       auth = true,
       signal,
-      noGlobalRedirect = false,
     } = options;
 
     const url = `${API_BASE_URL}${path}${toQueryString(query)}`;
@@ -189,9 +178,6 @@ export const apiClient = {
       const nextToken = await refreshAccessToken();
       if (nextToken) {
         return this.request<T>(path, options, false);
-      }
-      if (!noGlobalRedirect) {
-        redirectToLogin();
       }
       throw new ApiError('Session expired. Please log in again.', response.status);
     }

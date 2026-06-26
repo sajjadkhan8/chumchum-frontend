@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import type { Creator } from "@/types";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import { formatFollowers } from "@/lib/utils";
+import { getCategoryLabel } from "@/lib/categories";
 
 // ── WhatsApp SVG icon ─────────────────────────────────────────────────────────
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -112,7 +113,7 @@ async function renderShareCard(
   }
 
   // Categories pills
-  const cats = creator.categories.slice(0, 4);
+  const cats = creator.categories.slice(0, 4).map(getCategoryLabel);
   const pillY = avatarY + avatarR + 280;
   const pillH = 64;
   const pillGap = 18;

@@ -36,6 +36,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { cn, getInitials } from "@/lib/utils";
+import { categoryOptions, getCategoryLabel, normalizeCategories } from "@/lib/categories";
 import { pakistanCities, pakistanLanguages } from "@/lib/localization";
 import { useAuthStore } from "@/store/auth-store";
 import { ambassadorService } from "@/services/ambassador.service";
@@ -65,19 +66,6 @@ const textareaClass =
 const labelClass = "text-[10px] font-bold uppercase tracking-widest text-[#7a8f82]";
 
 // ─── Static data ──────────────────────────────────────────────────────────────
-
-const categories = [
-  "Fashion",
-  "Beauty",
-  "Tech",
-  "Food",
-  "Travel",
-  "Fitness",
-  "Lifestyle",
-  "Gaming",
-  "Education",
-  "Entertainment",
-];
 
 const responseTimes = [
   'Within 1 hour',
@@ -359,7 +347,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       email,
       phone,
       city: creator.city || "Karachi",
-      categories: creator.categories || [],
+      categories: normalizeCategories(creator.categories),
       languages: creator.languages?.length ? creator.languages : defaultProfile.languages,
       website: creator.website || "",
       availabilityStatus: creator.availabilityStatus || defaultProfile.availabilityStatus,
@@ -447,11 +435,15 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       }
     }
 
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      toast.error(Object.values(errors)[0]);
-      return;
-    }
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        toast.error(Object.values(errors)[0]);
+        return;
+      }
+      if (profile.categories.length === 0) {
+        toast.error("Select at least one content category for your public profile");
+        return;
+      }
 
     setFieldErrors({});
     setPortfolioErrors({});
@@ -824,6 +816,17 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       if (duplicatePlatform) {
         toast.error(`${platformLabels[duplicatePlatform]} is already connected. Each platform can only be added once.`);
         return;
+      }
+
+      const savedPlatforms = new Set(filtered.map((account) => account.platform));
+      const removedPlatforms = (socialAccountsSnapshotRef.current || [])
+        .map((account) => account.platform)
+        .filter((platform) => !savedPlatforms.has(platform));
+
+      if (removedPlatforms.length > 0) {
+        await Promise.all(
+          removedPlatforms.map((platform) => creatorsService.deleteSocialAccount(platform)),
+        );
       }
 
       const patchResults = await Promise.allSettled(
@@ -1333,7 +1336,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                     </div>
                   </div>
                   <Link
-                    href="/creator/packages"
+                    href={activePackageCount === 0 ? "/creator/packages/new" : "/creator/packages"}
                     className="shrink-0 rounded-full border-2 border-[#d1ddd6] bg-white px-3.5 py-1.5 text-xs font-bold text-[#496159] transition-colors hover:border-[#b0c5ba]"
                   >
                     {activePackageCount === 0 ? "Create package" : "Manage"}
@@ -1610,17 +1613,17 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                 <PanelHeader eyebrow="Content" title="Categories" />
                 <p className="mb-3 text-sm text-[#496159]">Select all the niches you create content in</p>
                 <div className="flex flex-wrap gap-2">
-                  {categories.map((category) => (
+                  {categoryOptions.map((category) => (
                     <button
-                      key={category}
-                      onClick={() => handleCategoryToggle(category)}
+                      key={category.value}
+                      onClick={() => handleCategoryToggle(category.value)}
                       className={
-                        profile.categories.includes(category)
+                        profile.categories.includes(category.value)
                           ? "rounded-full border-2 border-[#2d6b4e] bg-[#e4f1e8] px-4 py-2 text-sm font-bold text-[#1e5c3e] transition-all"
                           : "rounded-full border-2 border-[#d1ddd6] bg-white px-4 py-2 text-sm font-semibold text-[#496159] transition-all hover:border-[#b0c5ba]"
                       }
                     >
-                      {category}
+                      {category.label}
                     </button>
                   ))}
                 </div>
@@ -1945,6 +1948,9 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                 <div className="space-y-4">
                   {socialAccounts.map((account, index) => {
                     const Icon = getPlatformIcon(account.platform) || LinkIcon;
+                    const isSavedAccount = Boolean(
+                      socialAccountsSnapshotRef.current?.some((savedAccount) => savedAccount.platform === account.platform),
+                    );
                     return (
                       <div
                         key={`${account.platform}-${index}`}
@@ -1987,20 +1993,22 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                         </div>
 
                         <div className="grid gap-3 sm:grid-cols-2">
-                          <div className="space-y-1.5">
-                            <p className={labelClass}>Platform</p>
-                            <DesignSelect
-                              value={account.platform}
-                              onValueChange={(value) =>
-                                updateSocialAccount(index, { platform: value as Platform })
-                              }
-                              options={platformOrder}
-                              disabledOptions={socialAccounts
-                                .filter((_, accountIndex) => accountIndex !== index)
-                                .map((socialAccount) => socialAccount.platform)}
-                              capitalize
-                            />
-                          </div>
+                          {!isSavedAccount && (
+                            <div className="space-y-1.5">
+                              <p className={labelClass}>Platform</p>
+                              <DesignSelect
+                                value={account.platform}
+                                onValueChange={(value) =>
+                                  updateSocialAccount(index, { platform: value as Platform })
+                                }
+                                options={platformOrder}
+                                disabledOptions={socialAccounts
+                                  .filter((_, accountIndex) => accountIndex !== index)
+                                  .map((socialAccount) => socialAccount.platform)}
+                                capitalize
+                              />
+                            </div>
+                          )}
                           <div className="space-y-1.5">
                             <p className={labelClass}>Username</p>
                             <input
@@ -2485,7 +2493,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
             coverImage: profile.coverImage,
             bio: profile.bio,
             city: (profile.city as Creator["city"]) ?? "Karachi",
-            categories: profile.categories,
+            categories: normalizeCategories(profile.categories).map(getCategoryLabel),
             languages: profile.languages,
             website: profile.website,
             availabilityStatus: profile.availabilityStatus,

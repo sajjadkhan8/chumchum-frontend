@@ -104,6 +104,7 @@ export interface Package {
   id: string;
   creatorId: string;
   title: string;
+  category: string;
   description: string;
   deliverables: string[];
   deliveryDays: number;

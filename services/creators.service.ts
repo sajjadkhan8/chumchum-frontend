@@ -138,6 +138,10 @@ rate_card_reel: payload.rateCardReel,
     await apiClient.patch(`/api/v1/creators/me/social-accounts/${platform}`, data);
   },
 
+  async deleteSocialAccount(platform: string): Promise<void> {
+    await apiClient.delete(`/api/v1/creators/me/social-accounts/${encodeURIComponent(platform)}`);
+  },
+
   async initiateOAuthConnect(platform: string): Promise<{ redirectUrl: string }> {
     const redirectUri = typeof window !== 'undefined'
       ? `${window.location.origin}/creator/social/oauth/callback`

@@ -40,6 +40,7 @@ import { creatorsService } from "@/services/creators.service";
 import { packagesService } from "@/services/packages.service";
 import { reviewsService } from "@/services/reviews.service";
 import { getPlatformIcon } from "@/components/platform-icons";
+import { getCategoryLabel } from "@/lib/categories";
 import type { Creator, CreatorPackage, Review } from "@/types";
 
 const PROFILE_FALLBACK_IMAGE = "/creator-card-fallback.svg";
@@ -298,7 +299,7 @@ export default function CreatorProfilePage({
               <div className="mt-5 flex flex-wrap gap-2">
                 {creator.categories.slice(0, 5).map((category) => (
                   <span key={category} className="rounded-full border border-white/12 bg-white/8 px-3 py-1.5 text-[11px] font-bold text-white/78">
-                    {category}
+                    {getCategoryLabel(category)}
                   </span>
                 ))}
                 {creatorLanguages.slice(0, 3).map((lang) => (

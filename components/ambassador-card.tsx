@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { PlatformAmbassador } from '@/types';
 import { cn, formatFollowers, formatPrice } from '@/lib/utils';
 import { getPlatformIcon } from '@/components/platform-icons';
+import { getCategoryLabel } from '@/lib/categories';
 
 interface AmbassadorCardProps {
   ambassador: PlatformAmbassador;
@@ -106,7 +107,7 @@ export function AmbassadorCard({ ambassador, onContact, className }: AmbassadorC
             <div className="flex flex-wrap gap-1">
               {ambassador.categories.slice(0, 3).map((category) => (
                 <Badge key={category} variant="secondary" className="rounded-full text-xs">
-                  {category}
+                  {getCategoryLabel(category)}
                 </Badge>
               ))}
             </div>

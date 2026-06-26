@@ -44,6 +44,7 @@ import {
   CollapsibleContent,
 } from "@/components/ui/collapsible";
 import { formatPrice } from "@/lib/utils";
+import { getCategoryLabel } from "@/lib/categories";
 import type { CreatorPackage, PackageStatus } from "@/types";
 import { toast } from "sonner";
 import { useCreatorPackagesStore } from "@/store/creator-packages-store";
@@ -533,7 +534,7 @@ function CreatorPackagesPageContent() {
                           {pkg.title}
                         </h3>
                         <p className="mt-0.5 text-xs text-[#87938b]">
-                          {pkg.platform} · {pkg.category}
+                          {pkg.platform} · {getCategoryLabel(pkg.category)}
                         </p>
                       </div>
                       <DropdownMenu>

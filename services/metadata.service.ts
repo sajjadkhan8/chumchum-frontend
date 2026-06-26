@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api/client';
+import { categoryOptions, categoryValues, normalizeCategories, type CategoryOption } from '@/lib/categories';
 import type { BarterType, City, DealType, Platform } from '@/types';
 
 export interface RangeOption {
@@ -14,6 +15,7 @@ export interface LabeledValueOption<T extends string> {
 
 export interface CreatorFilterMetadata {
   categories: string[];
+  categoryOptions: CategoryOption[];
   cities: City[];
   platforms: Platform[];
   dealTypes: LabeledValueOption<DealType>[];
@@ -23,25 +25,8 @@ export interface CreatorFilterMetadata {
 }
 
 export const defaultCreatorFilterMetadata: CreatorFilterMetadata = {
-  categories: [
-    'Food',
-    'Fashion',
-    'Beauty',
-    'Tech',
-    'Gaming',
-    'Travel',
-    'Fitness',
-    'Health',
-    'Lifestyle',
-    'Comedy',
-    'Entertainment',
-    'Education',
-    'Parenting',
-    'Automotive',
-    'Cooking',
-    'Vlogging',
-    'Reviews',
-  ],
+  categories: categoryValues,
+  categoryOptions,
   cities: ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'],
   platforms: ['instagram', 'tiktok', 'youtube', 'facebook', 'snapchat'],
   dealTypes: [
@@ -72,18 +57,31 @@ export const defaultCreatorFilterMetadata: CreatorFilterMetadata = {
   ],
 };
 
-const normalizeMetadata = (payload: Partial<CreatorFilterMetadata> | null | undefined): CreatorFilterMetadata => ({
-  categories: payload?.categories?.length ? payload.categories : defaultCreatorFilterMetadata.categories,
-  cities: payload?.cities?.length ? payload.cities : defaultCreatorFilterMetadata.cities,
-  platforms: payload?.platforms?.length ? payload.platforms : defaultCreatorFilterMetadata.platforms,
-  dealTypes: payload?.dealTypes?.length ? payload.dealTypes : defaultCreatorFilterMetadata.dealTypes,
-  barterTypes: payload?.barterTypes?.length ? payload.barterTypes : defaultCreatorFilterMetadata.barterTypes,
-  followerRanges: payload?.followerRanges?.length ? payload.followerRanges : defaultCreatorFilterMetadata.followerRanges,
-  priceRanges: payload?.priceRanges?.length ? payload.priceRanges : defaultCreatorFilterMetadata.priceRanges,
-});
+const normalizeMetadata = (payload: Partial<CreatorFilterMetadata> | null | undefined): CreatorFilterMetadata => {
+  const categories = normalizeCategories(payload?.categories).length
+    ? normalizeCategories(payload?.categories)
+    : defaultCreatorFilterMetadata.categories;
+  const options = payload?.categoryOptions?.length
+    ? payload.categoryOptions
+        .map((option) => ({ value: option.value, label: option.label }))
+        .filter((option) => categories.includes(option.value))
+    : categoryOptions.filter((option) => categories.includes(option.value));
+
+  return {
+    categories,
+    categoryOptions: options.length ? options : defaultCreatorFilterMetadata.categoryOptions,
+    cities: payload?.cities?.length ? payload.cities : defaultCreatorFilterMetadata.cities,
+    platforms: payload?.platforms?.length ? payload.platforms : defaultCreatorFilterMetadata.platforms,
+    dealTypes: payload?.dealTypes?.length ? payload.dealTypes : defaultCreatorFilterMetadata.dealTypes,
+    barterTypes: payload?.barterTypes?.length ? payload.barterTypes : defaultCreatorFilterMetadata.barterTypes,
+    followerRanges: payload?.followerRanges?.length ? payload.followerRanges : defaultCreatorFilterMetadata.followerRanges,
+    priceRanges: payload?.priceRanges?.length ? payload.priceRanges : defaultCreatorFilterMetadata.priceRanges,
+  };
+};
 
 export interface SearchFilterMeta {
   categories: string[];
+  categoryOptions?: CategoryOption[];
   languages: string[];
 }
 
@@ -91,7 +89,13 @@ export const metadataService = {
   async getSearchFilters(): Promise<SearchFilterMeta> {
     try {
       const response = await apiClient.get<SearchFilterMeta>('/api/v1/metadata/search-filters', { auth: false });
-      return response ?? { categories: [], languages: [] };
+      return response
+        ? {
+            ...response,
+            categories: normalizeCategories(response.categories),
+            categoryOptions: response.categoryOptions?.length ? response.categoryOptions : categoryOptions,
+          }
+        : { categories: [], languages: [] };
     } catch {
       return { categories: [], languages: [] };
     }
