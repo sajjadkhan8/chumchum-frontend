@@ -46,11 +46,29 @@ const REVISION_LIMITS = { min: 0, max: 10 };
 const formatPkr = (value: number | string): string =>
   `PKR ${Number(value || 0).toLocaleString()}`;
 
+const packageFallbackThumbnail = "/creator-card-fallback.svg";
+
+const getPackageFallbackThumbnail = (platform?: string, category?: string): string => {
+  const params = new URLSearchParams();
+  if (platform) params.set("platform", platform);
+  if (category) params.set("category", category);
+  const query = params.toString();
+  return query ? `${packageFallbackThumbnail}?${query}` : packageFallbackThumbnail;
+};
+
+const isUploadConnectionError = (message: string) =>
+  /failed to fetch|networkerror|load failed|network request failed/i.test(message);
+
+const getUploadErrorMessage = (error: unknown, fallback: string) => {
+  const message = error instanceof Error ? error.message : fallback;
+  return isUploadConnectionError(message) ? fallback : message;
+};
+
 const steps = [
   { id: 1, label: "Basic Info" },
   { id: 2, label: "Services" },
   { id: 3, label: "Pricing" },
-  { id: 4, label: "Media" },
+  { id: 4, label: "Cover & Portfolio" },
   { id: 5, label: "Publish" },
 ];
 
@@ -366,6 +384,109 @@ const labelClass = "text-[10px] font-bold uppercase tracking-widest text-[#7a8f8
 
 const sectionTitle = "text-base font-bold text-[#1e3d2e] tracking-tight";
 
+interface BoundedNumberControlProps {
+  field: BoundedNumberField;
+  value: string;
+  label: string;
+  limits: { min: number; max: number };
+  icon: ElementType;
+  prefix?: string;
+  suffix?: string;
+  placeholder?: string;
+  helper?: string;
+  required?: boolean;
+  onChange: (field: BoundedNumberField, value: string) => void;
+  onBlur: (field: BoundedNumberField, limits: { min: number; max: number }) => void;
+  onSetValue: (field: BoundedNumberField, value: number) => void;
+}
+
+function BoundedNumberControl({
+  field,
+  value,
+  label,
+  limits,
+  icon: Icon,
+  prefix,
+  suffix,
+  placeholder,
+  helper,
+  required = true,
+  onChange,
+  onBlur,
+  onSetValue,
+}: BoundedNumberControlProps) {
+  const error = required || value.trim()
+    ? getBoundedFieldError(value, limits, label)
+    : null;
+
+  return (
+    <div className="rounded-2xl border border-[#dce6df] bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e8f0ec] text-[#2d6b4e]">
+            <Icon className="size-4" />
+          </span>
+          <div className="min-w-0">
+            <Label htmlFor={`bounded-${field}`} className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#7a8f82]">
+              {label}
+            </Label>
+            <p className="mt-0.5 text-xs leading-5 text-[#87938b]">
+              {helper || `${required ? "Allowed" : "Optional"} range: ${limits.min.toLocaleString()}-${limits.max.toLocaleString()}`}
+            </p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => onSetValue(field, limits.min)}
+            className="inline-flex h-7 items-center rounded-full border border-[#dce6df] bg-[#fbfaf5] px-2.5 text-[11px] font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
+          >
+            Min
+          </button>
+          <button
+            type="button"
+            onClick={() => onSetValue(field, limits.max)}
+            className="inline-flex h-7 items-center rounded-full border border-[#dce6df] bg-[#fbfaf5] px-2.5 text-[11px] font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
+          >
+            Max
+          </button>
+        </div>
+      </div>
+      <div className="mt-3 flex overflow-hidden rounded-xl border-2 border-[#dce6df] bg-[#fbfaf5] focus-within:border-[#2d6b4e] focus-within:ring-4 focus-within:ring-[#2d6b4e]/8">
+        {prefix && (
+          <span className="flex h-11 shrink-0 items-center border-r border-[#dce6df] px-3 text-xs font-extrabold text-[#7a8f82]">
+            {prefix}
+          </span>
+        )}
+        <Input
+          id={`bounded-${field}`}
+          type="number"
+          min={limits.min}
+          max={limits.max}
+          value={value}
+          onChange={(event) => onChange(field, event.target.value)}
+          onBlur={() => onBlur(field, limits)}
+          placeholder={placeholder}
+          className="h-11 rounded-none border-0 bg-transparent px-3 text-base font-extrabold text-[#1e3d2e] shadow-none placeholder:text-sm placeholder:font-medium placeholder:text-[#a8b8af] focus-visible:ring-0"
+        />
+        {suffix && (
+          <span className="flex h-11 shrink-0 items-center border-l border-[#dce6df] px-3 text-xs font-extrabold text-[#7a8f82]">
+            {suffix}
+          </span>
+        )}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+        <span className={error ? "font-bold text-[#c0392b]" : "font-semibold text-[#7a8f82]"}>
+          {error || (required ? "Looks good" : "Optional")}
+        </span>
+        <span className="font-semibold text-[#a0b4aa]">
+          {limits.min.toLocaleString()} - {limits.max.toLocaleString()}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWizardProps) {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
@@ -469,6 +590,12 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     if (initialPackage?.deliverables?.length) return initialPackage.deliverables;
     return ["Custom deliverable - confirm scope in chat"];
   }, [formData.deliverableItems, formData.serviceNotes, initialPackage?.deliverables]);
+
+  const normalizedPackageCategory = normalizeCategory(formData.category);
+  const fallbackThumbnail = getPackageFallbackThumbnail(formData.platform, normalizedPackageCategory);
+  const coverPreviewUrl = formData.thumbnailUrl || fallbackThumbnail;
+  const selectedPlatform = platforms.find((platform) => platform.id === formData.platform);
+  const portfolioSampleCount = formData.previousWorkUrls.filter((url) => url.trim()).length;
 
   useEffect(() => {
     const deriveConnectedPlatforms = (platformsList: { platform: Platform; profileUrl?: string }[]) => {
@@ -758,99 +885,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     updateField(field, String(value));
   };
 
-  const BoundedNumberControl = ({
-    field,
-    label,
-    limits,
-    icon: Icon,
-    prefix,
-    suffix,
-    placeholder,
-    helper,
-    required = true,
-  }: {
-    field: BoundedNumberField;
-    label: string;
-    limits: { min: number; max: number };
-    icon: ElementType;
-    prefix?: string;
-    suffix?: string;
-    placeholder?: string;
-    helper?: string;
-    required?: boolean;
-  }) => {
-    const error = required || formData[field].trim()
-      ? getBoundedFieldError(formData[field], limits, label)
-      : null;
-
-    return (
-      <div className="rounded-2xl border border-[#dce6df] bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e8f0ec] text-[#2d6b4e]">
-              <Icon className="size-4" />
-            </span>
-            <div className="min-w-0">
-              <Label htmlFor={`bounded-${field}`} className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#7a8f82]">
-                {label}
-              </Label>
-              <p className="mt-0.5 text-xs leading-5 text-[#87938b]">
-            {helper || `${required ? "Allowed" : "Optional"} range: ${limits.min.toLocaleString()}-${limits.max.toLocaleString()}`}
-              </p>
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setBoundedNumberTo(field, limits.min)}
-              className="inline-flex h-7 items-center rounded-full border border-[#dce6df] bg-[#fbfaf5] px-2.5 text-[11px] font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
-            >
-              Min
-            </button>
-            <button
-              type="button"
-              onClick={() => setBoundedNumberTo(field, limits.max)}
-              className="inline-flex h-7 items-center rounded-full border border-[#dce6df] bg-[#fbfaf5] px-2.5 text-[11px] font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
-            >
-              Max
-            </button>
-          </div>
-        </div>
-        <div className="mt-3 flex overflow-hidden rounded-xl border-2 border-[#dce6df] bg-[#fbfaf5] focus-within:border-[#2d6b4e] focus-within:ring-4 focus-within:ring-[#2d6b4e]/8">
-          {prefix && (
-            <span className="flex h-11 shrink-0 items-center border-r border-[#dce6df] px-3 text-xs font-extrabold text-[#7a8f82]">
-              {prefix}
-            </span>
-          )}
-          <Input
-            id={`bounded-${field}`}
-            type="number"
-            min={limits.min}
-            max={limits.max}
-            value={formData[field]}
-            onChange={(event) => updateBoundedNumberField(field, event.target.value)}
-            onBlur={() => normalizeBoundedNumberField(field, limits)}
-            placeholder={placeholder}
-            className="h-11 rounded-none border-0 bg-transparent px-3 text-base font-extrabold text-[#1e3d2e] shadow-none placeholder:text-sm placeholder:font-medium placeholder:text-[#a8b8af] focus-visible:ring-0"
-          />
-          {suffix && (
-            <span className="flex h-11 shrink-0 items-center border-l border-[#dce6df] px-3 text-xs font-extrabold text-[#7a8f82]">
-              {suffix}
-            </span>
-          )}
-        </div>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-          <span className={error ? "font-bold text-[#c0392b]" : "font-semibold text-[#7a8f82]"}>
-            {error || (required ? "Looks good" : "Optional")}
-          </span>
-          <span className="font-semibold text-[#a0b4aa]">
-            {limits.min.toLocaleString()} - {limits.max.toLocaleString()}
-          </span>
-        </div>
-      </div>
-    );
-  };
-
   const addTagsFromRawInput = (rawInput: string) => {
     const rawPieces = rawInput
       .split(/[,\n]/)
@@ -962,7 +996,10 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       updateField("thumbnailUrl", uploaded.url);
       toast.success("Package thumbnail uploaded");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to upload thumbnail";
+      const message = getUploadErrorMessage(
+        error,
+        "Upload service is unavailable. You can paste an image URL instead.",
+      );
       toast.error(message);
     } finally {
       setIsUploadingThumbnail(false);
@@ -982,7 +1019,10 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       updateWorkSample(index, uploaded.url);
       toast.success("Preview media uploaded");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to upload preview media";
+      const message = getUploadErrorMessage(
+        error,
+        "Upload service is unavailable. Paste a portfolio or sample URL instead.",
+      );
       toast.error(message);
     } finally {
       setUploadingSampleIndex(null);
@@ -1040,7 +1080,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       thumbnail:
         formData.thumbnailUrl ||
         initialPackage?.thumbnail ||
-        "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800",
+        getPackageFallbackThumbnail(formData.platform, normalizeCategory(formData.category)),
       mediaUrls: formData.previousWorkUrls.map((url) => url.trim()).filter(Boolean),
       visibility: formData.visibility,
       analytics: initialPackage?.analytics || {
@@ -1652,12 +1692,16 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                 {(formData.dealType === "paid" || formData.dealType === "hybrid") && (
                   <BoundedNumberControl
                     field={formData.dealType === "hybrid" ? "hybridCashAmount" : "price"}
+                    value={formData.dealType === "hybrid" ? formData.hybridCashAmount : formData.price}
                     label={formData.dealType === "hybrid" ? "Cash amount" : "Package price"}
                     limits={PRICE_LIMITS}
                     icon={DollarSign}
                     prefix="PKR"
                     placeholder="e.g. 15000"
                     helper={`Cash must be between ${formatPkr(PRICE_LIMITS.min)} and ${formatPkr(PRICE_LIMITS.max)}.`}
+                    onChange={updateBoundedNumberField}
+                    onBlur={normalizeBoundedNumberField}
+                    onSetValue={setBoundedNumberTo}
                   />
                 )}
 
@@ -1687,6 +1731,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
                     <BoundedNumberControl
                       field="minimumBarterValue"
+                      value={formData.minimumBarterValue}
                       label="Minimum barter value"
                       limits={PRICE_LIMITS}
                       icon={Gift}
@@ -1694,6 +1739,9 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                       placeholder="e.g. 20000"
                       required={false}
                       helper={`Optional floor for barter value, capped at ${formatPkr(PRICE_LIMITS.max)}.`}
+                      onChange={updateBoundedNumberField}
+                      onBlur={normalizeBoundedNumberField}
+                      onSetValue={setBoundedNumberTo}
                     />
                   </div>
                 )}
@@ -1701,21 +1749,29 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                 <div className="grid gap-4 lg:grid-cols-2">
                   <BoundedNumberControl
                     field="deliveryDays"
+                    value={formData.deliveryDays}
                     label="Delivery time"
                     limits={DELIVERY_LIMITS}
                     icon={Clock}
                     suffix="days"
                     placeholder="e.g. 5"
                     helper={`Delivery must be ${DELIVERY_LIMITS.min}-${DELIVERY_LIMITS.max} days.`}
+                    onChange={updateBoundedNumberField}
+                    onBlur={normalizeBoundedNumberField}
+                    onSetValue={setBoundedNumberTo}
                   />
                   <BoundedNumberControl
                     field="revisions"
+                    value={formData.revisions}
                     label="Revisions included"
                     limits={REVISION_LIMITS}
                     icon={RotateCcw}
                     suffix="rounds"
                     placeholder="e.g. 2"
                     helper={`Revisions must be ${REVISION_LIMITS.min}-${REVISION_LIMITS.max} rounds.`}
+                    onChange={updateBoundedNumberField}
+                    onBlur={normalizeBoundedNumberField}
+                    onSetValue={setBoundedNumberTo}
                   />
                 </div>
               </div>
@@ -1768,96 +1824,170 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
           </div>
         )}
 
-        {/* ── Step 4: Media ── */}
+        {/* ── Step 4: Cover & Portfolio ── */}
         {currentStep === 4 && (
-          <div className={`${panelClass} p-6 md:p-8`}>
-            <h2 className={`mb-6 ${sectionTitle}`}>Media &amp; Preview</h2>
-            <div className="space-y-6">
-
-              {/* Thumbnail */}
-              <div className="space-y-1.5">
-                <Label className={labelClass}>Package Thumbnail</Label>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Input
-                    value={formData.thumbnailUrl}
-                    onChange={(e) => updateField("thumbnailUrl", e.target.value)}
-                    placeholder="https://…"
-                    className={inputClass}
-                  />
-                  <label
-                    htmlFor="package-thumbnail-upload"
-                    className={`inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border-2 border-[#dce6df] bg-white px-4 text-sm font-bold text-[#2d6b4e] transition-colors hover:border-[#2d6b4e] ${isUploadingThumbnail ? "cursor-not-allowed opacity-60" : ""}`}
-                  >
-                    <Upload className="size-4" />
-                    {isUploadingThumbnail ? "Uploading…" : "Upload"}
-                  </label>
-                  <input
-                    id="package-thumbnail-upload"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    className="hidden"
-                    disabled={isUploadingThumbnail}
-                    onChange={(e) => void uploadThumbnail(e.target.files?.[0])}
-                  />
+          <div className={`${panelClass} overflow-hidden`}>
+            <div className="border-b border-[#e1e9e4] bg-[#f5f8f5] px-6 py-5 md:px-8">
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#7a8f82]">Optional media</p>
+              <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h2 className={sectionTitle}>Cover &amp; Portfolio</h2>
+                  <p className="mt-1 max-w-2xl text-sm leading-6 text-[#5f7268]">
+                    Add a cover to make this package stand out, or skip it and ChumChum will use a clean fallback.
+                    Portfolio links are optional proof points for brands.
+                  </p>
                 </div>
-                {formData.thumbnailUrl && (
-                  <div className="mt-2 overflow-hidden rounded-xl border border-[#d1ddd6]">
-                    <img
-                      src={formData.thumbnailUrl}
-                      alt="Thumbnail preview"
-                      className="h-40 w-full object-cover"
-                      onError={(e) => { e.currentTarget.style.display = "none"; }}
-                    />
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-2 text-xs font-black text-[#2d6b4e]">
+                  <span className="rounded-full border border-[#cfe0d6] bg-white px-3 py-1">
+                    Cover optional
+                  </span>
+                  <span className="rounded-full border border-[#cfe0d6] bg-white px-3 py-1">
+                    {portfolioSampleCount} sample{portfolioSampleCount === 1 ? "" : "s"}
+                  </span>
+                </div>
               </div>
+            </div>
 
-              {/* Work samples */}
-              <div className="space-y-2">
-                <Label className={labelClass}>Previous Work / Preview Gallery</Label>
-                {formData.previousWorkUrls.map((url, index) => (
-                  <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="grid gap-6 p-6 md:p-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+              <section className="space-y-4">
+                <div className="overflow-hidden rounded-2xl border border-[#d1ddd6] bg-[#eef4ef]">
+                  <div className="relative aspect-[16/9] bg-[#e5eee8]">
+                    <img
+                      src={coverPreviewUrl}
+                      alt={formData.thumbnailUrl ? "Package cover preview" : "Default package cover preview"}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = fallbackThumbnail;
+                      }}
+                    />
+                    {!formData.thumbnailUrl && (
+                      <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/70 bg-white/90 p-3 shadow-[0_12px_30px_rgba(38,70,50,0.12)] backdrop-blur">
+                        <p className="text-xs font-black text-[#1e3d2e]">Default cover ready</p>
+                        <p className="mt-1 text-[11px] leading-4 text-[#6b7870]">
+                          Add a cover to make this package stand out. You can skip this for now.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2 border-t border-[#d1ddd6] bg-white px-4 py-3">
+                    {selectedPlatform && (
+                      <span className="inline-flex items-center gap-2 rounded-full bg-[#edf5ef] px-3 py-1 text-xs font-black text-[#27563f]">
+                        <PlatformIconBadge platform={selectedPlatform.id as Platform} size="sm" />
+                        {selectedPlatform.label}
+                      </span>
+                    )}
+                    {normalizedPackageCategory && (
+                      <span className="rounded-full bg-[#f6edcf] px-3 py-1 text-xs font-black text-[#7a5b18]">
+                        {getCategoryLabel(normalizedPackageCategory)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className={labelClass}>Package cover image</Label>
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <Input
-                      value={url}
-                      onChange={(e) => updateWorkSample(index, e.target.value)}
-                      placeholder="https://…"
+                      value={formData.thumbnailUrl}
+                      onChange={(e) => updateField("thumbnailUrl", e.target.value)}
+                      placeholder="https://example.com/package-cover.jpg"
                       className={inputClass}
                     />
                     <label
-                      htmlFor={`work-sample-upload-${index}`}
-                      className={`inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border-2 border-[#dce6df] bg-white px-4 text-sm font-bold text-[#2d6b4e] transition-colors hover:border-[#2d6b4e] ${uploadingSampleIndex !== null ? "cursor-not-allowed opacity-60" : ""}`}
+                      htmlFor="package-thumbnail-upload"
+                      className={`inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border-2 border-[#dce6df] bg-white px-4 text-sm font-bold text-[#2d6b4e] transition-colors hover:border-[#2d6b4e] ${isUploadingThumbnail ? "cursor-not-allowed opacity-60" : ""}`}
                     >
                       <Upload className="size-4" />
-                      {uploadingSampleIndex === index ? "Uploading…" : "Upload"}
+                      {isUploadingThumbnail ? "Uploading..." : "Upload"}
                     </label>
                     <input
-                      id={`work-sample-upload-${index}`}
+                      id="package-thumbnail-upload"
                       type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/x-msvideo"
+                      accept="image/jpeg,image/png,image/webp"
                       className="hidden"
-                      disabled={uploadingSampleIndex !== null}
-                      onChange={(e) => void uploadWorkSample(index, e.target.files?.[0])}
+                      disabled={isUploadingThumbnail}
+                      onChange={(e) => {
+                        const file = e.currentTarget.files?.[0];
+                        e.currentTarget.value = "";
+                        void uploadThumbnail(file);
+                      }}
                     />
-                    {formData.previousWorkUrls.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeWorkSample(index)}
-                        className="flex size-10 shrink-0 items-center justify-center rounded-full text-[#b0bfb8] transition-colors hover:bg-[#ffe8e8] hover:text-[#c0392b]"
+                  </div>
+                  <p className="text-xs leading-5 text-[#6b7870]">
+                    JPEG, PNG, or WebP up to 5 MB. Upload is optional; pasted image URLs work too.
+                  </p>
+                </div>
+              </section>
+
+              <section className="space-y-4 rounded-2xl border border-[#d1ddd6] bg-white p-4 md:p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <Label className={labelClass}>Portfolio sample links</Label>
+                    <p className="mt-1 text-sm leading-6 text-[#5f7268]">
+                      Add previous work, proof posts, or short preview media. Brands can review these before ordering.
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-[#edf5ef] px-3 py-1 text-xs font-black text-[#2d6b4e]">
+                    Optional
+                  </span>
+                </div>
+
+                {formData.previousWorkUrls.map((url, index) => (
+                  <div key={index} className="rounded-2xl border border-[#e1e9e4] bg-[#f8faf8] p-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <Input
+                        value={url}
+                        onChange={(e) => updateWorkSample(index, e.target.value)}
+                        placeholder="https://example.com/sample-post-or-video"
+                        className={inputClass}
+                      />
+                      <label
+                        htmlFor={`work-sample-upload-${index}`}
+                        className={`inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border-2 border-[#dce6df] bg-white px-4 text-sm font-bold text-[#2d6b4e] transition-colors hover:border-[#2d6b4e] ${uploadingSampleIndex !== null ? "cursor-not-allowed opacity-60" : ""}`}
                       >
-                        <Trash2 className="size-4" />
-                      </button>
-                    )}
+                        <Upload className="size-4" />
+                        {uploadingSampleIndex === index ? "Uploading..." : "Upload"}
+                      </label>
+                      <input
+                        id={`work-sample-upload-${index}`}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime"
+                        className="hidden"
+                        disabled={uploadingSampleIndex !== null}
+                        onChange={(e) => {
+                          const file = e.currentTarget.files?.[0];
+                          e.currentTarget.value = "";
+                          void uploadWorkSample(index, file);
+                        }}
+                      />
+                      {formData.previousWorkUrls.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeWorkSample(index)}
+                          className="flex size-10 shrink-0 items-center justify-center rounded-full text-[#b0bfb8] transition-colors hover:bg-[#ffe8e8] hover:text-[#c0392b]"
+                          aria-label="Remove sample"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={addWorkSample}
-                  className="inline-flex items-center gap-1.5 rounded-full border-2 border-dashed border-[#b0c5ba] px-4 py-2 text-sm font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#2d6b4e]"
-                >
-                  <Plus className="size-4" /> Add Sample
-                </button>
-              </div>
 
+                <div className="flex flex-col gap-3 border-t border-[#e1e9e4] pt-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs leading-5 text-[#6b7870]">
+                    Images: JPEG, PNG, WebP. Video: MP4 or MOV up to 100 MB.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={addWorkSample}
+                    className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full border-2 border-dashed border-[#b0c5ba] px-4 text-sm font-bold text-[#496159] transition-colors hover:border-[#2d6b4e] hover:text-[#2d6b4e]"
+                  >
+                    <Plus className="size-4" /> Add sample
+                  </button>
+                </div>
+              </section>
             </div>
           </div>
         )}

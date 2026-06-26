@@ -1,4 +1,4 @@
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://192.168.100.188:8080').replace(/\/$/, '');
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
 
 const ACCESS_TOKEN_KEY = 'zingzing-access-token';
 

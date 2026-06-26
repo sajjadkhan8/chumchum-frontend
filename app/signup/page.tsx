@@ -14,7 +14,7 @@ import { isPasswordStrong, PASSWORD_REQUIREMENTS_MESSAGE, validatePassword, type
 import { useAuthStore } from '@/store/auth-store';
 import type { UserRole } from '@/types';
 
-const inputClass = 'h-11 rounded-xl border-[#cddad1] bg-[#fbfaf5] px-3.5 text-[#1e3d2e] shadow-none focus-visible:border-[#2d6b4e] focus-visible:ring-[#2d6b4e]/15';
+const inputClass = 'h-11 rounded-xl border-[#cddad1] bg-[#fbfaf5] px-3.5 font-semibold text-[#1e3d2e] shadow-none placeholder:font-normal placeholder:text-[#a8b8af] focus-visible:border-[#2d6b4e] focus-visible:ring-[#2d6b4e]/15';
 const primaryButtonClass = 'h-11 w-full rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239] disabled:opacity-50 disabled:cursor-not-allowed';
 
 const roleOptions: { value: UserRole; label: string; eyebrow: string; icon: React.ElementType; description: string; benefits: string[] }[] = [
