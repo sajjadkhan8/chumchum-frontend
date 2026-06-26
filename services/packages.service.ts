@@ -43,7 +43,6 @@ export interface PackageUpsertRequest {
   is_featured?: boolean;
   status?: PackageStatusRequest;
   visibility?: string;
-  response_time?: string;
   cover_image?: string;
   media_urls?: string[];
   tags?: string[];

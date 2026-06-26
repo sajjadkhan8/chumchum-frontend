@@ -123,7 +123,7 @@ export interface Package {
   ordersCompleted: number;
 }
 
-export type PackageStatus = 'active' | 'draft' | 'paused' | 'archived' | 'under_review';
+export type PackageStatus = 'active' | 'draft' | 'paused' | 'archived';
 
 export interface PackageAnalytics {
   views: number;
@@ -140,7 +140,6 @@ export interface CreatorPackage extends Package {
   fullDescription: string;
   category: string;
   status: PackageStatus;
-  responseTime: string;
   thumbnail: string;
   mediaUrls?: string[];
   visibility: 'public' | 'private';

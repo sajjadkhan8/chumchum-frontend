@@ -22,13 +22,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import type { CreatorPackage, Platform } from "@/types";
 import { creatorsService } from "@/services/creators.service";
@@ -279,7 +272,6 @@ interface WizardFormData {
   platform: string;
   fullDescription: string;
   tags: string;
-  responseTime: string;
   selectedServiceKeys: string[];
   deliverableItems: DeliverableItem[];
   serviceNotes: string;
@@ -293,7 +285,7 @@ interface WizardFormData {
   thumbnailUrl: string;
   previousWorkUrls: string[];
   visibility: "public" | "private";
-  status: "active" | "draft" | "under_review";
+  status: "active" | "draft";
 }
 
 type BoundedNumberField = keyof Pick<
@@ -317,7 +309,6 @@ const defaultForm: WizardFormData = {
   platform: "",
   fullDescription: "",
   tags: "",
-  responseTime: "Within 3 hours",
   selectedServiceKeys: [],
   deliverableItems: [],
   serviceNotes: "",
@@ -339,7 +330,6 @@ const isDefaultDraft = (formData: WizardFormData, currentStep: number) => (
   && formData.title === defaultForm.title
   && formData.fullDescription === defaultForm.fullDescription
   && formData.tags === defaultForm.tags
-  && formData.responseTime === defaultForm.responseTime
   && formData.selectedServiceKeys.length === 0
   && formData.deliverableItems.length === 0
   && formData.serviceNotes === defaultForm.serviceNotes
@@ -513,7 +503,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       platform: initialPackage.platform,
       fullDescription: initialPackage.fullDescription,
       tags: initialPackage.tags.join(", "),
-      responseTime: initialPackage.responseTime,
       selectedServiceKeys: [],
       deliverableItems: buildDeliverableItemsFromLegacy(initialPackage.deliverables),
       serviceNotes: "",
@@ -527,7 +516,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       thumbnailUrl: initialPackage.thumbnail,
       previousWorkUrls: initialPackage.mediaUrls?.length ? initialPackage.mediaUrls : [""],
       visibility: initialPackage.visibility,
-      status: initialPackage.status === "draft" ? "draft" : initialPackage.status === "under_review" ? "under_review" : "active",
+      status: initialPackage.status === "draft" ? "draft" : "active",
     };
   }, [initialPackage]);
 
@@ -596,6 +585,32 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   const coverPreviewUrl = formData.thumbnailUrl || fallbackThumbnail;
   const selectedPlatform = platforms.find((platform) => platform.id === formData.platform);
   const portfolioSampleCount = formData.previousWorkUrls.filter((url) => url.trim()).length;
+  const packagePriceSummary =
+    formData.dealType === "paid"
+      ? (formData.price ? formatPkr(formData.price) : "Price not set")
+      : formData.dealType === "barter"
+        ? (formData.minimumBarterValue ? `Barter · min ${formatPkr(formData.minimumBarterValue)}` : "Barter")
+        : `${formData.hybridCashAmount ? formatPkr(formData.hybridCashAmount) : "Cash not set"} + ${formData.minimumBarterValue ? `barter min ${formatPkr(formData.minimumBarterValue)}` : "barter"}`;
+  const pricingReady =
+    !getBoundedFieldError(formData.deliveryDays, DELIVERY_LIMITS, "Delivery time") &&
+    !getBoundedFieldError(formData.revisions, REVISION_LIMITS, "Revisions included") &&
+    (!formData.minimumBarterValue.trim() || !getBoundedFieldError(formData.minimumBarterValue, PRICE_LIMITS, "Minimum barter value")) &&
+    (
+      formData.dealType === "paid"
+        ? !getBoundedFieldError(formData.price, PRICE_LIMITS, "Price")
+        : formData.dealType === "hybrid"
+          ? !getBoundedFieldError(formData.hybridCashAmount, PRICE_LIMITS, "Cash amount")
+          : Boolean(formData.barterExpectations.trim())
+    );
+  const readinessItems = [
+    { label: "Title and category added", complete: Boolean(formData.title.trim() && normalizedPackageCategory) },
+    { label: "Connected platform selected", complete: Boolean(formData.platform.trim()) },
+    { label: "Deliverables added", complete: formData.deliverableItems.length > 0 },
+    { label: "Pricing and delivery valid", complete: pricingReady },
+    { label: "Cover image optional", complete: true },
+    { label: "Portfolio samples optional", complete: true },
+  ];
+  const completedReadinessItems = readinessItems.filter((item) => item.complete).length;
 
   useEffect(() => {
     const deriveConnectedPlatforms = (platformsList: { platform: Platform; profileUrl?: string }[]) => {
@@ -1051,7 +1066,6 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
       deliverables: resolvedDeliverables,
       deliveryDays: Number(formData.deliveryDays || 0),
       revisions: Number(formData.revisions || 0),
-      responseTime: formData.responseTime,
       price:
         formData.dealType === "barter"
           ? 0
@@ -1994,75 +2008,188 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
         {/* ── Step 5: Publish ── */}
         {currentStep === 5 && (
-          <div className={`${panelClass} p-6 md:p-8`}>
-            <h2 className={`mb-6 ${sectionTitle}`}>Review &amp; Publish</h2>
-            <div className="space-y-6">
-
-              {/* Preview card */}
-              <div className="rounded-2xl border border-[#d1ddd6] bg-[#f4f7f5] p-5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a8f82]">Package Preview</p>
-                <p className="mt-3 text-base font-bold text-[#1e3d2e]">{formData.title || "Untitled Package"}</p>
-                <p className="mt-1 text-sm text-[#6b7870]">{formData.fullDescription || "No description yet"}</p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {formData.platform && (
-                    <span className="rounded-full bg-[#e4f1e8] px-2.5 py-0.5 text-xs font-bold capitalize text-[#1e5c3e]">
-                      {formData.platform}
-                    </span>
-                  )}
-                  <span className="rounded-full bg-[#e4f1e8] px-2.5 py-0.5 text-xs font-bold capitalize text-[#1e5c3e]">
-                    {formData.dealType}
-                  </span>
-                  <span className="rounded-full bg-[#e8eae8] px-2.5 py-0.5 text-xs font-bold text-[#5a6a62]">
-                    {resolvedDeliverables.length} deliverable{resolvedDeliverables.length !== 1 ? "s" : ""}
-                  </span>
+          <div className={`${panelClass} overflow-hidden`}>
+            <div className="border-b border-[#e1e9e4] bg-[#f5f8f5] px-6 py-5 md:px-8">
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#7a8f82]">Final review</p>
+              <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h2 className={sectionTitle}>Review &amp; Publish</h2>
+                  <p className="mt-1 max-w-2xl text-sm leading-6 text-[#5f7268]">
+                    Check how brands will read this package, then publish it or keep it as a draft.
+                  </p>
                 </div>
-                <p className="mt-4 text-lg font-extrabold text-[#2d6b4e]">
-                  {formData.dealType === "paid" && (formData.price ? `PKR ${Number(formData.price).toLocaleString()}` : "PKR 0")}
-                  {formData.dealType === "barter" && (formData.minimumBarterValue ? `Barter · Min PKR ${Number(formData.minimumBarterValue).toLocaleString()}` : "Barter")}
-                  {formData.dealType === "hybrid" &&
-                    `PKR ${Number(formData.hybridCashAmount || 0).toLocaleString()} + barter${formData.minimumBarterValue ? ` (Min PKR ${Number(formData.minimumBarterValue).toLocaleString()})` : ""}`}
-                </p>
+                <span className="w-fit rounded-full border border-[#cfe0d6] bg-white px-3 py-1 text-xs font-black text-[#2d6b4e]">
+                  {completedReadinessItems}/{readinessItems.length} ready
+                </span>
               </div>
+            </div>
 
-              {/* Visibility / status / response time */}
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-1.5">
-                  <Label className={labelClass}>Visibility</Label>
-                  <Select value={formData.visibility} onValueChange={(v) => updateField("visibility", v as "public" | "private")}>
-                    <SelectTrigger className="h-10 rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] focus:border-[#2d6b4e] focus:ring-4 focus:ring-[#2d6b4e]/8">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="public">Public</SelectItem>
-                      <SelectItem value="private">Private</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className={labelClass}>Publish Status</Label>
-                  <Select value={formData.status} onValueChange={(v) => updateField("status", v as "active" | "draft" | "under_review")}>
-                    <SelectTrigger className="h-10 rounded-xl border-2 border-[#dce6df] bg-white px-3.5 text-sm text-[#1e3d2e] focus:border-[#2d6b4e] focus:ring-4 focus:ring-[#2d6b4e]/8">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Publish Active</SelectItem>
-                      <SelectItem value="draft">Save Draft</SelectItem>
-                      <SelectItem value="under_review">Submit for Review</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="response-time" className={labelClass}>Response Time</Label>
-                  <Input
-                    id="response-time"
-                    value={formData.responseTime}
-                    onChange={(e) => updateField("responseTime", e.target.value)}
-                    placeholder="Within 3 hours"
-                    className={inputClass}
+            <div className="grid gap-6 p-6 md:p-8 xl:grid-cols-[minmax(0,1fr)_22rem]">
+              <section className="overflow-hidden rounded-2xl border border-[#d1ddd6] bg-white">
+                <div className="relative aspect-[16/7] min-h-48 bg-[#e5eee8]">
+                  <img
+                    src={coverPreviewUrl}
+                    alt="Package preview cover"
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = fallbackThumbnail;
+                    }}
                   />
+                  <div className="absolute inset-x-4 bottom-4 flex flex-wrap gap-2">
+                    {selectedPlatform && (
+                      <span className="inline-flex items-center gap-2 rounded-full bg-white/92 px-3 py-1.5 text-xs font-black text-[#27563f] shadow-sm backdrop-blur">
+                        <PlatformIconBadge platform={selectedPlatform.id as Platform} size="sm" />
+                        {selectedPlatform.label}
+                      </span>
+                    )}
+                    {normalizedPackageCategory && (
+                      <span className="rounded-full bg-white/92 px-3 py-1.5 text-xs font-black text-[#7a5b18] shadow-sm backdrop-blur">
+                        {getCategoryLabel(normalizedPackageCategory)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
 
+                <div className="space-y-5 p-5 md:p-6">
+                  <div>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7a8f82]">Package preview</p>
+                        <h3 className="mt-2 text-2xl font-black tracking-tight text-[#1e3d2e]">
+                          {formData.title || "Untitled Package"}
+                        </h3>
+                      </div>
+                      <span className="rounded-full bg-[#e4f1e8] px-3 py-1 text-xs font-black capitalize text-[#1e5c3e]">
+                        {formData.dealType}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-[#5f7268]">
+                      {formData.fullDescription || "No description yet"}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-xl border border-[#e1e9e4] bg-[#f8faf8] p-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#8ba097]">Creator receives</p>
+                      <p className="mt-1 text-sm font-black text-[#2d6b4e]">{packagePriceSummary}</p>
+                    </div>
+                    <div className="rounded-xl border border-[#e1e9e4] bg-[#f8faf8] p-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#8ba097]">Delivery</p>
+                      <p className="mt-1 text-sm font-black text-[#1e3d2e]">{formData.deliveryDays || "0"} days</p>
+                    </div>
+                    <div className="rounded-xl border border-[#e1e9e4] bg-[#f8faf8] p-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#8ba097]">Revisions</p>
+                      <p className="mt-1 text-sm font-black text-[#1e3d2e]">{formData.revisions || "0"} rounds</p>
+                    </div>
+                  </div>
+
+                  {(formData.dealType === "barter" || formData.dealType === "hybrid") && formData.barterExpectations.trim() && (
+                    <div className="rounded-xl border border-[#efcf83] bg-[#fff7df] p-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#8b5e12]">Barter expectations</p>
+                      <p className="mt-1 text-sm leading-6 text-[#6e4a10]">{formData.barterExpectations}</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#7a8f82]">Deliverables</p>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      {resolvedDeliverables.map((item) => (
+                        <p key={item} className="flex items-start gap-2 rounded-xl bg-[#f4f7f5] px-3 py-2 text-sm font-semibold text-[#496159]">
+                          <Check className="mt-0.5 size-3.5 shrink-0 text-[#2d6b4e]" />
+                          {item}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {tagsList.map((tag) => (
+                      <span key={tag} className="rounded-full border border-[#d1ddd6] bg-white px-3 py-1 text-xs font-bold text-[#526259]">
+                        #{tag}
+                      </span>
+                    ))}
+                    <span className="rounded-full border border-[#d1ddd6] bg-white px-3 py-1 text-xs font-bold text-[#526259]">
+                      {portfolioSampleCount} portfolio sample{portfolioSampleCount === 1 ? "" : "s"}
+                    </span>
+                    <span className="rounded-full border border-[#d1ddd6] bg-white px-3 py-1 text-xs font-bold capitalize text-[#526259]">
+                      {formData.visibility}
+                    </span>
+                  </div>
+                </div>
+              </section>
+
+              <aside className="space-y-4">
+                <div className="rounded-2xl border border-[#d1ddd6] bg-white p-4">
+                  <Label className={labelClass}>Visibility</Label>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    {[
+                      { value: "public", label: "Public", note: "Visible to brands" },
+                      { value: "private", label: "Private", note: "Hidden from marketplace" },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => updateField("visibility", option.value as "public" | "private")}
+                        className={`rounded-2xl border-2 p-3 text-left transition-colors ${
+                          formData.visibility === option.value
+                            ? "border-[#2d6b4e] bg-[#e4f1e8] text-[#1e5c3e]"
+                            : "border-[#dce6df] bg-[#fbfaf5] text-[#5f7268] hover:border-[#2d6b4e]"
+                        }`}
+                      >
+                        <p className="text-sm font-black">{option.label}</p>
+                        <p className="mt-1 text-[11px] font-semibold">{option.note}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#d1ddd6] bg-white p-4">
+                  <Label className={labelClass}>Publish action</Label>
+                  <div className="mt-3 space-y-2">
+                    {[
+                      { value: "active", label: "Publish now", note: "Package can receive brand orders" },
+                      { value: "draft", label: "Save as draft", note: "Keep editing before launch" },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => updateField("status", option.value as "active" | "draft")}
+                        className={`flex w-full items-center justify-between gap-3 rounded-2xl border-2 p-3 text-left transition-colors ${
+                          formData.status === option.value
+                            ? "border-[#2d6b4e] bg-[#2d6b4e] text-white"
+                            : "border-[#dce6df] bg-[#fbfaf5] text-[#5f7268] hover:border-[#2d6b4e]"
+                        }`}
+                      >
+                        <span>
+                          <span className="block text-sm font-black">{option.label}</span>
+                          <span className={`mt-1 block text-[11px] font-semibold ${formData.status === option.value ? "text-white/75" : "text-[#7a8f82]"}`}>
+                            {option.note}
+                          </span>
+                        </span>
+                        {formData.status === option.value && <Check className="size-4 shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#d1ddd6] bg-[#f8faf8] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <Label className={labelClass}>Readiness checklist</Label>
+                    <span className="text-xs font-black text-[#2d6b4e]">{completedReadinessItems}/{readinessItems.length}</span>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {readinessItems.map((item) => (
+                      <div key={item.label} className="flex items-center gap-2 text-sm font-semibold text-[#496159]">
+                        <span className={`grid size-5 shrink-0 place-items-center rounded-full ${item.complete ? "bg-[#2d6b4e] text-white" : "bg-[#e8eae8] text-[#9aa9a1]"}`}>
+                          <Check className="size-3" />
+                        </span>
+                        {item.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </aside>
             </div>
           </div>
         )}
@@ -2108,9 +2235,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
               ? "Update Package"
               : formData.status === "draft"
                 ? "Save Draft"
-                : formData.status === "under_review"
-                  ? "Submit for Review"
-                  : "Publish Package"}
+                : "Publish Package"}
           </Button>
         )}
       </div>

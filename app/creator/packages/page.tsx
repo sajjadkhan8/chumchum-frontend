@@ -63,7 +63,6 @@ const statusPills: { value: PackageStatus | "all"; label: string }[] = [
   { value: "draft", label: "Draft" },
   { value: "paused", label: "Paused" },
   { value: "archived", label: "Archived" },
-  { value: "under_review", label: "Under Review" },
 ];
 
 const dealTypeOptions = [
@@ -93,8 +92,6 @@ function statusBadgeClass(value: PackageStatus) {
       return "bg-[#fdf3dc] text-[#8a6010]";
     case "archived":
       return "bg-[#eeeeed] text-[#5a5a5a]";
-    case "under_review":
-      return "bg-[#dde8f8] text-[#2a5097]";
     default:
       return "bg-[#e8eae8] text-[#5a6a62]";
   }
@@ -170,7 +167,7 @@ function CreatorPackagesPageContent() {
       setStatus("all");
       return;
     }
-    if (["active", "draft", "paused", "archived", "under_review"].includes(statusParam)) {
+    if (["active", "draft", "paused", "archived"].includes(statusParam)) {
       setStatus(statusParam as PackageStatus);
     }
   }, [searchParams]);
@@ -192,11 +189,10 @@ function CreatorPackagesPageContent() {
     const drafts = packages.filter((pkg) => pkg.status === "draft").length;
     const archived = packages.filter((pkg) => pkg.status === "archived").length;
     const paused = packages.filter((pkg) => pkg.status === "paused").length;
-    const underReview = packages.filter((pkg) => pkg.status === "under_review").length;
     const monthlyProjection = packages
       .filter((pkg) => pkg.status === "active")
       .reduce((total, pkg) => total + pkg.price, 0);
-    return { active, drafts, archived, paused, underReview, monthlyProjection };
+    return { active, drafts, archived, paused, monthlyProjection };
   }, [packages]);
 
   const filteredPackages = useMemo(() => {

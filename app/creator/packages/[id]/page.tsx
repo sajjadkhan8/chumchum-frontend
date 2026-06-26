@@ -110,8 +110,8 @@ export default function CreatorPackagePreviewPage() {
               <p className="font-semibold">{pkg.deliveryDays} days</p>
             </div>
             <div className="rounded-lg border border-border/60 p-3">
-              <p className="text-xs text-muted-foreground">Response Time</p>
-              <p className="font-semibold">{pkg.responseTime}</p>
+              <p className="text-xs text-muted-foreground">Revisions</p>
+              <p className="font-semibold">{pkg.revisions ?? 0} rounds</p>
             </div>
           </div>
 

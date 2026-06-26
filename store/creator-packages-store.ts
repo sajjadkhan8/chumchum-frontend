@@ -47,7 +47,6 @@ const toCreateRequest = (pkg: CreatorPackage): PackageUpsertRequest => ({
   revisions: pkg.revisions,
   status: toPackageStatus(pkg.status),
   visibility: pkg.visibility,
-  response_time: pkg.responseTime,
   cover_image: pkg.thumbnail,
   media_urls: cleanList(pkg.mediaUrls),
   tags: cleanList(pkg.tags),
