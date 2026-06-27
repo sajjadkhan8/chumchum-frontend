@@ -2,27 +2,70 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Clock, Star, TrendingUp } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Sparkles, TrendingUp, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
-import { ReviewCard } from "@/components/review-card";
+import { PackageDetailsView, type PackageDetailBadge } from "@/components/package-details-view";
+import { PackageOrderModal } from "@/components/package-order-modal";
 import { creatorsService } from "@/services/creators.service";
+import { ordersService } from "@/services/orders.service";
 import { packagesService } from "@/services/packages.service";
-import { reviewsService } from "@/services/reviews.service";
-import type { Creator, CreatorPackage, Review } from "@/types";
-import { getCategoryLabel } from "@/lib/categories";
+import { useAuthStore } from "@/store/auth-store";
+import type { Creator, CreatorPackage, Order } from "@/types";
+
+const CONCLUDED_ORDER_STATUSES = new Set(["completed", "cancelled"]);
+const isActivePackageOrder = (order: Order) => !CONCLUDED_ORDER_STATUSES.has(order.status);
+const getOrderTime = (order: Order) => order.updatedAt?.getTime?.() || order.createdAt?.getTime?.() || 0;
+
+function getPackageBadges(pkg: CreatorPackage): PackageDetailBadge[] {
+  const badges: PackageDetailBadge[] = [];
+
+  if (pkg.isPopular || pkg.isFeatured) {
+    badges.push({
+      label: "Featured",
+      Icon: Sparkles,
+      className: "border-[#efcf83] bg-[#fff1cd] text-[#8b5e12]",
+    });
+  }
+
+  if (pkg.ordersCompleted > 0) {
+    badges.push({
+      label: "Proven delivery",
+      Icon: BadgeCheck,
+      className: "border-sky-100 bg-sky-50 text-sky-700",
+    });
+  }
+
+  if (pkg.dealType === "barter" || pkg.dealType === "hybrid") {
+    badges.push({
+      label: "Barter-friendly",
+      Icon: Wallet,
+      className: "border-[#efcf83] bg-[#fff9e8] text-[#8b5e12]",
+    });
+  }
+
+  if (pkg.analytics.conversionRate > 0) {
+    badges.push({
+      label: "High intent",
+      Icon: TrendingUp,
+      className: "border-[#d6eadf] bg-[#e8f0ec] text-[#2d6b4e]",
+    });
+  }
+
+  return badges;
+}
 
 export default function PublicPackageDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
+  const { user } = useAuthStore();
   const [pkg, setPkg] = useState<CreatorPackage | null>(null);
   const [creator, setCreator] = useState<Creator | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<CreatorPackage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
@@ -34,22 +77,31 @@ export default function PublicPackageDetailPage() {
       setPkg(response);
       if (!response) {
         setCreator(null);
-        setReviews([]);
+        setActiveOrder(null);
         return;
       }
 
-      const [creatorResponse, reviewsResponse] = await Promise.all([
-        creatorsService.getById(response.creatorId).catch(() => null),
-        reviewsService.getByCreatorId(response.creatorId).catch(() => []),
+      const [creatorResponse, ordersResponse] = await Promise.allSettled([
+        creatorsService.getById(response.creatorId),
+        user?.role === "brand" ? ordersService.getAll({ limit: 200 }) : Promise.resolve({ orders: [], total: 0, hasMore: false }),
       ]);
 
-      setCreator(creatorResponse);
-      setReviews(reviewsResponse);
+      setCreator(creatorResponse.status === "fulfilled" ? creatorResponse.value : null);
+
+      if (ordersResponse.status !== "fulfilled" || user?.role !== "brand") {
+        setActiveOrder(null);
+        return;
+      }
+
+      const order = ordersResponse.value.orders
+        .filter((item) => item.packageId === response.id && isActivePackageOrder(item))
+        .sort((a, b) => getOrderTime(b) - getOrderTime(a))[0] ?? null;
+      setActiveOrder(order);
     } catch {
       setHasError(true);
       setPkg(null);
       setCreator(null);
-      setReviews([]);
+      setActiveOrder(null);
     } finally {
       setIsLoading(false);
     }
@@ -58,137 +110,94 @@ export default function PublicPackageDetailPage() {
   useEffect(() => {
     if (!params.id) return;
     void loadPackage();
-    // Reload when route id changes.
+    // Reload when route id or viewer role changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
+  }, [params.id, user?.role]);
+
+  const handleOrder = (item: CreatorPackage) => {
+    if (!user) {
+      router.push(`/login?next=${encodeURIComponent(`/packages/${item.id}`)}`);
+      return;
+    }
+
+    if (user.role !== "brand") return;
+
+    if (activeOrder) {
+      router.push(`/brand/orders?orderId=${activeOrder.id}`);
+      return;
+    }
+
+    void packagesService.trackEvent(item.id, "CLICK", "package_details_page").catch(() => undefined);
+    setSelectedPackage(item);
+  };
+
+  const handleCreated = async (orderId: string) => {
+    const order = await ordersService.getById(orderId).catch(() => null);
+    if (order && isActivePackageOrder(order)) {
+      setActiveOrder(order);
+    }
+    router.push(`/brand/orders?orderId=${orderId}`);
+  };
 
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-6">
-      <Button variant="ghost" asChild>
-        <Link href="/">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to home
-        </Link>
-      </Button>
+    <div className="min-h-screen bg-[#fbfaf5] pb-10">
+      <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6">
+        <Button variant="ghost" asChild className="mb-4 rounded-xl px-2.5 text-[12px] font-extrabold text-[#496159] hover:bg-[#e8f0ec] hover:text-[#1e3d2e]">
+          <Link href={creator ? `/creator/${creator.username || creator.id}` : "/"}>
+            <ArrowLeft className="mr-2 size-4" />
+            {creator ? "Back to creator" : "Back to home"}
+          </Link>
+        </Button>
 
-      {isLoading ? (
-        <Card className="mt-4 overflow-hidden">
-          <div className="aspect-[16/9] animate-pulse bg-muted" />
-          <CardContent className="space-y-3 p-5">
-            <div className="h-6 w-2/3 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-full animate-pulse rounded bg-muted" />
-            <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-          </CardContent>
-        </Card>
-      ) : hasError ? (
-        <ErrorState
-          title="Unable to load package"
-          description="Please try again in a moment."
-          onRetry={() => {
-            void loadPackage();
-          }}
-        />
-      ) : !pkg ? (
-        <EmptyState
-          title="Package not found"
-          description="This package may have been removed or is unavailable."
-          action={{
-            label: "Go to home",
-            onClick: () => {
-              router.push("/");
-            },
-          }}
-        />
-      ) : (
-        <Card className="mt-4 overflow-hidden">
-          <div className="relative aspect-[16/9] w-full">
-            <Image
-              src={pkg.thumbnail || `https://picsum.photos/seed/${pkg.id}/1200/675`}
-              alt={pkg.title}
-              fill
-              className="object-cover"
-            />
-            <div className="absolute left-4 top-4 flex items-center gap-2">
-              {pkg.isFeatured && <Badge className="bg-primary text-primary-foreground">Featured</Badge>}
-              {pkg.isPopular && (
-                <Badge variant="secondary" className="bg-accent text-accent-foreground">
-                  <TrendingUp className="mr-1 h-3 w-3" />
-                  Popular
-                </Badge>
-              )}
-            </div>
-          </div>
+        {isLoading ? (
+          <Card className="overflow-hidden rounded-2xl border-[#e2e7e1] bg-white shadow-sm">
+            <div className="h-44 animate-pulse bg-[#1e3d2e]" />
+            <CardContent className="space-y-3 p-5">
+              <div className="h-6 w-2/3 animate-pulse rounded bg-[#e8f0ec]" />
+              <div className="h-4 w-full animate-pulse rounded bg-[#e8f0ec]" />
+              <div className="h-4 w-3/4 animate-pulse rounded bg-[#e8f0ec]" />
+            </CardContent>
+          </Card>
+        ) : hasError ? (
+          <ErrorState
+            title="Unable to load package"
+            description="Please try again in a moment."
+            onRetry={() => {
+              void loadPackage();
+            }}
+          />
+        ) : !pkg ? (
+          <EmptyState
+            title="Package not found"
+            description="This package may have been removed or is unavailable."
+            action={{
+              label: "Go to home",
+              onClick: () => {
+                router.push("/");
+              },
+            }}
+          />
+        ) : (
+          <PackageDetailsView
+            pkg={pkg}
+            creator={creator}
+            badges={getPackageBadges(pkg)}
+            creatorProfileHref={creator ? `/creator/${creator.username || creator.id}` : undefined}
+            activeOrder={activeOrder}
+            canOrder={!user || user.role === "brand"}
+            onOrder={handleOrder}
+            onViewActiveOrder={(order) => router.push(`/brand/orders?orderId=${order.id}`)}
+            className="rounded-[1.75rem] border border-[#d1ddd6] shadow-[0_24px_64px_rgba(38,70,50,0.12)]"
+          />
+        )}
+      </div>
 
-          <CardHeader>
-            <CardTitle>{pkg.title}</CardTitle>
-            <p className="text-sm text-muted-foreground">{pkg.shortDescription || pkg.description}</p>
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap items-center gap-4 text-sm">
-              <span className="font-semibold text-primary">
-                {(pkg.currency || "PKR")} {pkg.price.toLocaleString()}
-              </span>
-              <span className="text-muted-foreground">{pkg.ordersCompleted} completed orders</span>
-              <span className="inline-flex items-center gap-1 text-muted-foreground">
-                <Star className="h-4 w-4 fill-accent text-accent" />
-                {(creator?.rating ?? 0).toFixed(1)} ({creator?.totalReviews ?? reviews.length})
-              </span>
-              <span className="inline-flex items-center gap-1 text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                {pkg.deliveryDays} days delivery
-              </span>
-            </div>
-
-            {creator && (
-              <div className="rounded-md border border-border/60 p-3 text-sm">
-                <p className="font-medium text-foreground">{creator.name}</p>
-                <p className="mt-1 text-muted-foreground">
-                  {getCategoryLabel(creator.categories[0] || "GENERAL")} creator in {creator.city}
-                </p>
-                <Button variant="link" className="mt-1 h-auto p-0" asChild>
-                  <Link href={`/creator/${creator.id}`}>View creator profile</Link>
-                </Button>
-              </div>
-            )}
-
-            <div>
-              <h3 className="mb-2 text-sm font-semibold text-foreground">Deliverables</h3>
-              <div className="space-y-2">
-                {pkg.deliverables.length > 0 ? (
-                  pkg.deliverables.map((item) => (
-                    <div key={item} className="rounded-md bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-                      {item}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">No deliverables listed.</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="mb-2 text-sm font-semibold text-foreground">Creator Reviews</h3>
-              {reviews.length > 0 ? (
-                <div className="space-y-3">
-                  {reviews.slice(0, 3).map((review) => (
-                    <ReviewCard key={review.id} review={review} />
-                  ))}
-                  {creator && reviews.length > 3 && (
-                    <Button variant="outline" asChild>
-                      <Link href={`/creator/${creator.id}`}>View all reviews</Link>
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <p className="rounded-md bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-                  No completed-order reviews yet.
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <PackageOrderModal
+        isOpen={Boolean(selectedPackage)}
+        pkg={selectedPackage}
+        onClose={() => setSelectedPackage(null)}
+        onCreated={handleCreated}
+      />
     </div>
   );
 }

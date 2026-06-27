@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PackageCard } from "@/components/package-card";
+import { PackageDetailsModal } from "@/components/package-details-view";
 import { ReviewCard } from "@/components/review-card";
 import { QuickDealModal } from "@/components/quick-deal-modal";
 import { PackageOrderModal } from "@/components/package-order-modal";
@@ -75,6 +76,7 @@ export default function PublicCreatorProfilePage({
   const [activeTab, setActiveTab]           = useState<Tab>("packages");
   const [quickDealOpen, setQuickDealOpen]   = useState(false);
   const [selectedPkg, setSelectedPkg]       = useState<CreatorPackage | null>(null);
+  const [selectedPkgDetails, setSelectedPkgDetails] = useState<CreatorPackage | null>(null);
   const [shareOpen, setShareOpen]           = useState(false);
   const [isSaving, setIsSaving]             = useState(false);
 
@@ -165,6 +167,12 @@ export default function PublicCreatorProfilePage({
     if (user.role !== "brand") return;
     void packagesService.trackEvent(pkg.id, "CLICK", "public_profile_order").catch(() => undefined);
     setSelectedPkg(pkg);
+    setSelectedPkgDetails(null);
+  };
+
+  const handleViewDetails = (pkg: CreatorPackage) => {
+    void packagesService.trackEvent(pkg.id, "VIEW", "public_profile_details").catch(() => undefined);
+    setSelectedPkgDetails(pkg);
   };
 
   const handleSave = async () => {
@@ -533,6 +541,7 @@ export default function PublicCreatorProfilePage({
                           key={pkg.id}
                           pkg={pkg}
                           onOrder={canHire ? () => handleBook(pkg) : undefined}
+                          onViewDetails={() => handleViewDetails(pkg)}
                         />
                       ))
                     ) : (
@@ -686,6 +695,17 @@ export default function PublicCreatorProfilePage({
         pkg={selectedPkg}
         onClose={() => setSelectedPkg(null)}
         onCreated={() => router.push("/brand/orders")}
+      />
+      <PackageDetailsModal
+        isOpen={Boolean(selectedPkgDetails)}
+        pkg={selectedPkgDetails}
+        creator={creator}
+        creatorProfileHref={`/creator/${creator.username || creator.id}`}
+        shareUrl={selectedPkgDetails ? `/packages/${selectedPkgDetails.id}` : undefined}
+        canOrder={canHire}
+        onClose={() => setSelectedPkgDetails(null)}
+        onOrder={handleBook}
+        onViewActiveOrder={(order) => router.push(`/brand/orders?orderId=${order.id}`)}
       />
       <ShareProfileModal isOpen={shareOpen} onClose={() => setShareOpen(false)} creator={creator} />
     </div>

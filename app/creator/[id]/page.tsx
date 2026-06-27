@@ -30,6 +30,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PackageCard } from "@/components/package-card";
+import { PackageDetailsModal, type PackageDetailBadge } from "@/components/package-details-view";
 import { ReviewCard } from "@/components/review-card";
 import { QuickDealModal } from "@/components/quick-deal-modal";
 import { PackageOrderModal } from "@/components/package-order-modal";
@@ -40,11 +41,15 @@ import { useAuthStore } from "@/store/auth-store";
 import { creatorsService } from "@/services/creators.service";
 import { packagesService } from "@/services/packages.service";
 import { reviewsService } from "@/services/reviews.service";
-import { PlatformIconBadge } from "@/components/platform-icons";
+import { ordersService } from "@/services/orders.service";
+import { PlatformIconBadge, getPlatformMeta } from "@/components/platform-icons";
 import { getCategoryLabel } from "@/lib/categories";
-import type { Creator, CreatorPackage, Review } from "@/types";
+import type { Creator, CreatorPackage, Order, Platform, Review } from "@/types";
 
 const PROFILE_FALLBACK_IMAGE = "/creator-card-fallback.svg";
+const CONCLUDED_ORDER_STATUSES = new Set(["completed", "cancelled"]);
+const isActivePackageOrder = (order: Order) => !CONCLUDED_ORDER_STATUSES.has(order.status);
+const getOrderTime = (order: Order) => order.updatedAt?.getTime?.() || order.createdAt?.getTime?.() || 0;
 
 function ProfileStat({ label, value, icon: Icon, dark = false }: { label: string; value: string; icon: React.ElementType; dark?: boolean }) {
   return (
@@ -67,22 +72,24 @@ function ProfileStat({ label, value, icon: Icon, dark = false }: { label: string
   );
 }
 
-type PackageMerit = {
-  label: string;
-  className: string;
-  Icon: React.ElementType;
-};
+type PackageMerit = PackageDetailBadge;
 
 function PackageMenuItem({
   pkg,
   badges,
   canOrder,
+  activeOrder,
   onOrder,
+  onViewActiveOrder,
+  onViewDetails,
 }: {
   pkg: CreatorPackage;
   badges: PackageMerit[];
   canOrder: boolean;
+  activeOrder?: Order | null;
   onOrder: (pkg: CreatorPackage) => void;
+  onViewActiveOrder: (order: Order) => void;
+  onViewDetails: (pkg: CreatorPackage) => void;
 }) {
   return (
     <div className="space-y-2.5">
@@ -101,7 +108,10 @@ function PackageMenuItem({
       )}
       <PackageCard
         pkg={pkg}
-        onOrder={canOrder ? () => onOrder(pkg) : undefined}
+        activeOrder={activeOrder ? { id: activeOrder.id, status: activeOrder.status } : null}
+        onViewActiveOrder={activeOrder ? () => onViewActiveOrder(activeOrder) : undefined}
+        onOrder={canOrder && !activeOrder ? () => onOrder(pkg) : undefined}
+        onViewDetails={() => onViewDetails(pkg)}
       />
     </div>
   );
@@ -118,9 +128,12 @@ export default function CreatorProfilePage({
   const [activeTab, setActiveTab] = useState("packages");
   const [quickDealOpen, setQuickDealOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<CreatorPackage | null>(null);
+  const [selectedPackageDetails, setSelectedPackageDetails] = useState<CreatorPackage | null>(null);
+  const [selectedPackagePlatforms, setSelectedPackagePlatforms] = useState<Platform[]>([]);
   const [creator, setCreator] = useState<Creator | null>(null);
   const [creatorPackages, setCreatorPackages] = useState<CreatorPackage[]>([]);
   const [creatorReviews, setCreatorReviews] = useState<Review[]>([]);
+  const [activePackageOrders, setActivePackageOrders] = useState<Record<string, Order>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingCreator, setIsSavingCreator] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -136,25 +149,46 @@ export default function CreatorProfilePage({
           setCreator(null);
           setCreatorPackages([]);
           setCreatorReviews([]);
+          setActivePackageOrders({});
           return;
         }
 
         setCreator(foundCreator);
 
-        const [packagesResponse, reviewsResponse] = await Promise.allSettled([
+        const [packagesResponse, reviewsResponse, ordersResponse] = await Promise.allSettled([
           packagesService.getByCreatorId(foundCreator.id),
           reviewsService.getByCreatorId(foundCreator.id),
+          user?.role === "brand" ? ordersService.getAll({ limit: 200 }) : Promise.resolve({ orders: [], total: 0, hasMore: false }),
         ]);
 
-        setCreatorPackages(packagesResponse.status === "fulfilled" ? packagesResponse.value : []);
+        const packages = packagesResponse.status === "fulfilled" ? packagesResponse.value : [];
+        setCreatorPackages(packages);
         setCreatorReviews(reviewsResponse.status === "fulfilled" ? reviewsResponse.value : []);
+        if (ordersResponse.status !== "fulfilled" || user?.role !== "brand") {
+          setActivePackageOrders({});
+          return;
+        }
+
+        const packageIds = new Set(packages.map((pkg) => pkg.id));
+        const activeOrders = ordersResponse.value.orders
+          .filter((order) => packageIds.has(order.packageId) && isActivePackageOrder(order))
+          .sort((a, b) => getOrderTime(b) - getOrderTime(a));
+
+        setActivePackageOrders(
+          activeOrders.reduce<Record<string, Order>>((map, order) => {
+            if (!map[order.packageId]) {
+              map[order.packageId] = order;
+            }
+            return map;
+          }, {})
+        );
       } finally {
         setIsLoading(false);
       }
     };
 
     void loadCreatorProfile();
-  }, [id]);
+  }, [id, user?.role]);
 
   useEffect(() => {
     if (!creator) return;
@@ -235,6 +269,29 @@ export default function CreatorProfilePage({
       pkg.ordersCompleted;
     return score(b) - score(a);
   });
+  const packagePlatformOptions = uniqueCreatorPackages.reduce(
+    (options, pkg) => {
+      const current = options.get(pkg.platform) ?? { platform: pkg.platform, count: 0 };
+      options.set(pkg.platform, { ...current, count: current.count + 1 });
+      return options;
+    },
+    new Map<Platform, { platform: Platform; count: number }>()
+  );
+  const packagePlatforms = Array.from(packagePlatformOptions.values()).sort((a, b) => {
+    const labelA = getPlatformMeta(a.platform)?.label ?? a.platform;
+    const labelB = getPlatformMeta(b.platform)?.label ?? b.platform;
+    return labelA.localeCompare(labelB);
+  });
+  const filteredPackageMenu = selectedPackagePlatforms.length === 0
+    ? packageMenu
+    : packageMenu.filter((pkg) => selectedPackagePlatforms.includes(pkg.platform));
+  const togglePackagePlatform = (platform: Platform) => {
+    setSelectedPackagePlatforms((current) =>
+      current.includes(platform)
+        ? current.filter((item) => item !== platform)
+        : [...current, platform]
+    );
+  };
   const getPackageBadges = (pkg: CreatorPackage): PackageMerit[] => {
     const badges: PackageMerit[] = [];
     if (pkg.isPopular || pkg.isFeatured) {
@@ -269,6 +326,11 @@ export default function CreatorProfilePage({
   };
   const completionRate = creator.completionRate ?? Math.min(99, Math.round((creator.completedDeals / (creator.completedDeals + 5)) * 100));
   const repeatClients = creator.repeatClients ?? Math.max(3, Math.round(creator.completedDeals * 0.24));
+  const selectedPackageActiveOrder = selectedPackageDetails ? activePackageOrders[selectedPackageDetails.id] ?? null : null;
+
+  const handleViewActiveOrder = (order: Order) => {
+    router.push(`/brand/orders?orderId=${order.id}`);
+  };
 
   const handleBookPackage = (pkg: CreatorPackage) => {
     if (!user) {
@@ -280,8 +342,28 @@ export default function CreatorProfilePage({
       return;
     }
 
+    const activeOrder = activePackageOrders[pkg.id];
+    if (activeOrder) {
+      handleViewActiveOrder(activeOrder);
+      return;
+    }
+
     void packagesService.trackEvent(pkg.id, "CLICK", "creator_profile_order").catch(() => undefined);
     setSelectedPackage(pkg);
+    setSelectedPackageDetails(null);
+  };
+
+  const handlePackageOrderCreated = async (orderId: string) => {
+    const order = await ordersService.getById(orderId).catch(() => null);
+    if (order && isActivePackageOrder(order)) {
+      setActivePackageOrders((current) => ({ ...current, [order.packageId]: order }));
+    }
+    router.push(`/brand/orders?orderId=${orderId}`);
+  };
+
+  const handleViewPackageDetails = (pkg: CreatorPackage) => {
+    void packagesService.trackEvent(pkg.id, "VIEW", "creator_profile_details").catch(() => undefined);
+    setSelectedPackageDetails(pkg);
   };
 
   const handleSavedCreatorToggle = async () => {
@@ -541,28 +623,100 @@ export default function CreatorProfilePage({
               <TabsContent value="packages" className="space-y-4">
                 {packageMenu.length > 0 ? (
                   <section className="overflow-hidden rounded-2xl border border-[#e2e7e1] bg-white shadow-sm">
-                    <div className="flex flex-col gap-3 border-b border-[#edf1ed] bg-[#fbfaf5] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Package menu</p>
-                        <h3 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">Available Packages</h3>
-                        <p className="mt-1 max-w-2xl text-[12px] font-medium leading-5 text-[#647168]">
-                          Each package appears once. Badges show why it may be a strong fit.
-                        </p>
+                    <div className="border-b border-[#edf1ed] bg-[#fbfaf5] px-4 py-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Package menu</p>
+                          <h3 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">Available Packages</h3>
+                          <p className="mt-1 text-[12px] font-medium leading-5 text-[#647168]">
+                            {filteredPackageMenu.length} of {packageMenu.length} packages
+                          </p>
+                        </div>
+                        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e8f0ec] text-[#2d6b4e]">
+                          <Package className="size-4" />
+                        </span>
                       </div>
-                      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e8f0ec] text-[#2d6b4e]">
-                        <Package className="size-4" />
-                      </span>
+
+                      {packagePlatforms.length > 1 && (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPackagePlatforms([])}
+                            className={cn(
+                              "inline-flex min-h-9 items-center gap-2 rounded-xl border px-3 text-[12px] font-extrabold transition-colors",
+                              selectedPackagePlatforms.length === 0
+                                ? "border-[#2d6b4e] bg-[#2d6b4e] text-white shadow-sm"
+                                : "border-[#d1ddd6] bg-white text-[#496159] hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
+                            )}
+                          >
+                            All
+                            <span className={cn(
+                              "rounded-full px-1.5 py-0.5 text-[10px]",
+                              selectedPackagePlatforms.length === 0 ? "bg-white/18 text-white" : "bg-[#e8f0ec] text-[#2d6b4e]"
+                            )}>
+                              {packageMenu.length}
+                            </span>
+                          </button>
+
+                          {packagePlatforms.map(({ platform, count }) => {
+                            const selected = selectedPackagePlatforms.includes(platform);
+                            const meta = getPlatformMeta(platform);
+                            return (
+                              <button
+                                key={platform}
+                                type="button"
+                                onClick={() => togglePackagePlatform(platform)}
+                                className={cn(
+                                  "inline-flex min-h-9 items-center gap-2 rounded-xl border px-3 text-[12px] font-extrabold transition-colors",
+                                  selected
+                                    ? "border-[#2d6b4e] bg-[#e8f0ec] text-[#1e3d2e] shadow-sm"
+                                    : "border-[#d1ddd6] bg-white text-[#496159] hover:border-[#2d6b4e] hover:text-[#1e3d2e]"
+                                )}
+                                aria-pressed={selected}
+                              >
+                                <PlatformIconBadge platform={platform} size="xs" />
+                                {meta?.label ?? platform}
+                                <span className={cn(
+                                  "rounded-full px-1.5 py-0.5 text-[10px]",
+                                  selected ? "bg-white text-[#2d6b4e]" : "bg-[#e8f0ec] text-[#2d6b4e]"
+                                )}>
+                                  {count}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-4 p-4">
-                      {packageMenu.map((pkg) => (
-                        <PackageMenuItem
-                          key={pkg.id}
-                          pkg={pkg}
-                          badges={getPackageBadges(pkg)}
-                          canOrder={canHireCreator}
-                          onOrder={handleBookPackage}
-                        />
-                      ))}
+                      {filteredPackageMenu.length > 0 ? (
+                        filteredPackageMenu.map((pkg) => (
+                          <PackageMenuItem
+                            key={pkg.id}
+                            pkg={pkg}
+                            badges={getPackageBadges(pkg)}
+                            canOrder={canHireCreator}
+                            activeOrder={activePackageOrders[pkg.id] ?? null}
+                            onOrder={handleBookPackage}
+                            onViewActiveOrder={handleViewActiveOrder}
+                            onViewDetails={handleViewPackageDetails}
+                          />
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-[#edf1ed] bg-[#fbfaf5] px-5 py-8 text-center">
+                          <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#e8f0ec] text-[#2d6b4e]">
+                            <Package className="size-5" />
+                          </span>
+                          <p className="mt-3 text-sm font-extrabold text-[#1e3d2e]">No packages for this platform mix</p>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPackagePlatforms([])}
+                            className="mt-3 inline-flex min-h-9 items-center justify-center rounded-xl bg-[#2d6b4e] px-4 text-[12px] font-extrabold text-white hover:bg-[#1f5239]"
+                          >
+                            Show all packages
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </section>
                 ) : (
@@ -717,7 +871,20 @@ export default function CreatorProfilePage({
         isOpen={Boolean(selectedPackage)}
         pkg={selectedPackage}
         onClose={() => setSelectedPackage(null)}
-        onCreated={() => router.push("/brand/orders")}
+        onCreated={handlePackageOrderCreated}
+      />
+      <PackageDetailsModal
+        isOpen={Boolean(selectedPackageDetails)}
+        pkg={selectedPackageDetails}
+        badges={selectedPackageDetails ? getPackageBadges(selectedPackageDetails) : []}
+        creator={creator}
+        creatorProfileHref={`/creator/${creator.username || creator.id}`}
+        shareUrl={selectedPackageDetails ? `/packages/${selectedPackageDetails.id}` : undefined}
+        canOrder={canHireCreator}
+        activeOrder={selectedPackageActiveOrder}
+        onClose={() => setSelectedPackageDetails(null)}
+        onOrder={handleBookPackage}
+        onViewActiveOrder={handleViewActiveOrder}
       />
       <ShareProfileModal
         isOpen={shareOpen}
