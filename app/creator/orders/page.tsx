@@ -25,6 +25,13 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreatorMetricCard } from "@/components/creator-metric-card";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -388,33 +395,36 @@ function CreatorOrdersPageContent() {
 
         {/* Filter panel */}
         <div className={`${panelClass} p-4`}>
-          {/* Status pill tabs */}
-          <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {statusTabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => updateStatusFilterWithUrl(tab.key)}
-                className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold transition-colors ${
-                  statusFilter === tab.key
-                    ? "bg-[#2d6b4e] text-white"
-                    : "bg-[#f4f7f5] text-[#6b7870] hover:bg-[#e6eceb]"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <div className="grid gap-3 md:grid-cols-[1fr_minmax(13rem,17rem)] md:items-end">
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-black uppercase tracking-[0.14em] text-[#87938b]">Search</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#87938b]" />
+                <Input
+                  type="text"
+                  placeholder="Search orders..."
+                  className="h-10 rounded-xl border-[#d1ddd6] bg-[#f4f7f5] pl-9 text-[#1e3d2e] placeholder:text-[#87938b] focus-visible:ring-[#2d6b4e]"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
 
-          {/* Search input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#87938b]" />
-            <Input
-              type="text"
-              placeholder="Search orders..."
-              className="h-10 rounded-xl border-[#d1ddd6] bg-[#f4f7f5] pl-9 text-[#1e3d2e] placeholder:text-[#87938b] focus-visible:ring-[#2d6b4e]"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-black uppercase tracking-[0.14em] text-[#87938b]">Status</Label>
+              <Select value={statusFilter} onValueChange={updateStatusFilterWithUrl}>
+                <SelectTrigger className="h-10 rounded-xl border-[#d1ddd6] bg-[#f4f7f5] text-sm font-bold text-[#1e3d2e] focus:ring-[#2d6b4e]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusTabs.map((tab) => (
+                    <SelectItem key={tab.key} value={tab.key}>
+                      {tab.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 

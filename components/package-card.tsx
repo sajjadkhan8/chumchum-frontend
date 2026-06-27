@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { AlertCircle, CheckCircle, Clock, Gift, PackageCheck, Sparkles, TrendingUp } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, Gift, PackageCheck, Sparkles, TrendingUp, Wallet } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,15 +35,8 @@ export function PackageCard({ pkg, onOrder, onViewDetails, activeOrder, onViewAc
   const displayDescription = pkg.shortDescription || pkg.description;
   const bannerImage = pkg.thumbnail || '/creator-card-fallback.svg';
   const platformLabel = getPlatformMeta(pkg.platform)?.label ?? pkg.platform;
-  const visibleDeliverables = pkg.deliverables.slice(0, 2);
+  const visibleDeliverables = pkg.deliverables.slice(0, 1);
   const extraDeliverables = Math.max(0, pkg.deliverables.length - visibleDeliverables.length);
-  const compactStats = [
-    { label: `${pkg.deliveryDays}d`, title: 'Delivery', Icon: Clock },
-    { label: `${pkg.ordersCompleted}`, title: 'Orders', Icon: PackageCheck },
-    ...(pkg.analytics?.conversionRate
-      ? [{ label: `${pkg.analytics.conversionRate}%`, title: 'Convert', Icon: TrendingUp }]
-      : []),
-  ];
   const dealMeta = {
     paid: {
       label: 'Paid',
@@ -80,6 +73,8 @@ export function PackageCard({ pkg, onOrder, onViewDetails, activeOrder, onViewAc
         Icon: CheckCircle,
       };
   const PriceIcon = priceBlock.Icon;
+  const analytics = pkg.analytics;
+  const signalValue = analytics?.completionRate || analytics?.conversionRate || (pkg.ordersCompleted > 0 ? 92 : 0);
 
   return (
     <motion.div
@@ -89,133 +84,147 @@ export function PackageCard({ pkg, onOrder, onViewDetails, activeOrder, onViewAc
     >
       <Card
         className={cn(
-          'group relative overflow-hidden rounded-2xl border border-[#dce8e2] bg-white transition-colors duration-200 hover:border-[#2d6b4e]/45',
+          'group rounded-[1.45rem] border bg-white shadow-[0_14px_45px_rgba(38,70,50,0.055)] transition hover:-translate-y-0.5 hover:border-[#b7c8bd] hover:shadow-[0_22px_70px_rgba(38,70,50,0.10)]',
+          activeOrder ? 'border-[#e6aa38] ring-4 ring-[#e6aa38]/12' : 'border-[#d9e0d8]',
           className
         )}
-        style={{ boxShadow: '0 10px 28px rgba(30,61,46,0.07), 0 1px 2px rgba(30,61,46,0.04)' }}
       >
-        <CardContent className="p-0">
-          <div className="grid gap-0 md:grid-cols-[148px_minmax(0,1fr)]">
-            <div className="relative min-h-36 overflow-hidden bg-[#e8f0ec] md:min-h-full">
-              <Image
-                src={bannerImage}
-                alt={pkg.title}
-                fill
-                sizes="(max-width: 768px) 100vw, 148px"
-                className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-              />
-            </div>
-
+        <CardContent className="p-3.5 sm:p-4">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_230px] lg:items-start">
             <div className="min-w-0">
-              <div className="grid gap-3 p-3.5 sm:grid-cols-[minmax(0,1fr)_170px] sm:p-4">
-                <div className="min-w-0">
-                  <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                    <Badge className={`rounded-full border px-2 py-0.5 text-[10px] font-extrabold shadow-none ${dealMeta.className}`}>
+              <div className="flex items-start gap-3">
+                <div className="relative size-12 shrink-0 overflow-hidden rounded-[0.9rem] border border-[#d9e0d8] bg-[#e8f0ec] sm:size-14">
+                  <Image
+                    src={bannerImage}
+                    alt={pkg.title}
+                    fill
+                    sizes="56px"
+                    className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="line-clamp-1 text-lg font-black tracking-[-0.04em] text-[#173b2a] sm:text-xl">
+                      {pkg.title}
+                    </h3>
+                    <Badge className={`rounded-full px-2 py-0.5 text-[10px] font-black ring-1 shadow-none ${dealMeta.className}`}>
                       <DealIcon className="mr-1 size-3" />
                       {dealMeta.label}
                     </Badge>
-                    <Badge className="rounded-full border border-[#d6eadf] bg-white px-2 py-0.5 text-[10px] font-extrabold text-[#496159] shadow-none">
-                      {categoryLabel}
-                    </Badge>
                     {pkg.isPopular && (
-                      <Badge className="rounded-full border border-[#efcf83] bg-[#fff1cd] px-2 py-0.5 text-[10px] font-extrabold text-[#8b5e12] shadow-none">
+                      <Badge className="rounded-full bg-[#fdf3dc] px-2 py-0.5 text-[10px] font-black text-[#9b6712] ring-1 ring-[#e3a52f]/35 shadow-none">
                         <TrendingUp className="mr-1 size-3" />
                         Popular
                       </Badge>
                     )}
                   </div>
-
-                  <h3 className="line-clamp-2 text-[18px] font-black leading-[1.15] text-[#123021] sm:text-[20px]">
-                    {pkg.title}
-                  </h3>
-                  <p className="mt-1.5 line-clamp-2 text-[12px] font-semibold leading-5 text-[#647168]">
-                    {displayDescription}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-[#edf1ed] bg-[#fbfaf5] p-3 sm:text-right">
-                  <div className="flex items-center gap-1.5 text-[#2d6b4e] sm:justify-end">
-                    <PriceIcon className="size-3.5" />
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#7a9a87]">{priceBlock.label}</p>
-                  </div>
-                  <p className="mt-1 line-clamp-2 text-[17px] font-black leading-tight text-[#1e3d2e]">
-                    {priceBlock.value}
-                  </p>
-                  {pkg.barterValue && pkg.dealType !== 'barter' && (
-                    <p className="mt-0.5 line-clamp-1 text-[11px] font-bold text-[#7a9a87]">{pkg.barterValue}</p>
-                  )}
+                  <p className="mt-0.5 line-clamp-1 text-[13px] font-bold text-[#647168]">{displayDescription}</p>
+                  <p className="mt-0.5 text-[11px] font-bold text-[#8a958d]">{categoryLabel} package</p>
                 </div>
               </div>
 
-              <div className="border-t border-[#edf1ed] px-3.5 py-3 sm:px-4">
-                <div className="flex flex-wrap gap-1.5">
-                  {compactStats.map(({ label, title, Icon }) => (
-                    <span key={title} className="inline-flex items-center gap-1 rounded-full bg-[#e8f0ec] px-2 py-1 text-[10px] font-black text-[#2d6b4e]">
-                      <Icon className="size-3" />
-                      {label} {title}
-                    </span>
-                  ))}
-                  {pkg.tags.slice(0, 3).map((tag) => (
-                    <span key={tag} className="rounded-full bg-[#f4f7f5] px-2 py-1 text-[10px] font-bold text-[#647168]">
+              <div className="mt-3 grid grid-cols-3 gap-1.5 text-[12px] font-bold text-[#607168]">
+                <span className="inline-flex min-w-0 items-center gap-1.5 rounded-xl bg-[#fbfaf5] px-2.5 py-1.5">
+                  <Wallet className="size-3.5 shrink-0 text-[#185c39]" />
+                  <span className="line-clamp-1">{priceBlock.value}</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#fbfaf5] px-2.5 py-1.5">
+                  <Clock className="size-3.5 shrink-0 text-[#185c39]" />
+                  {pkg.deliveryDays} days
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#fbfaf5] px-2.5 py-1.5">
+                  <PackageCheck className="size-3.5 shrink-0 text-[#185c39]" />
+                  {pkg.ordersCompleted} orders
+                </span>
+              </div>
+
+              <div className="mt-2 rounded-[1rem] bg-[#fbfaf5] px-2.5 py-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <PlatformIconBadge platform={pkg.platform} size="xs" className="border-0 bg-white shadow-none" />
+                    <p className="truncate text-[10px] font-black uppercase tracking-[0.15em] text-[#2d6b4e]">
+                      {platformLabel} deliverables
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-[#7b867f]">
+                    {pkg.deliverables.length}
+                  </span>
+                </div>
+                <div className="mt-1.5 grid gap-1">
+                  {visibleDeliverables.length > 0 ? visibleDeliverables.map((deliverable, index) => (
+                    <div key={index} className="flex items-center gap-2 text-[12px] font-bold text-[#173b2a]">
+                      <CheckCircle className="size-3.5 shrink-0 text-[#185c39]" />
+                      <span className="line-clamp-1">{deliverable}</span>
+                    </div>
+                  )) : (
+                    <p className="text-sm font-bold text-[#647168]">Deliverables will be confirmed with the creator.</p>
+                  )}
+                </div>
+                {extraDeliverables > 0 && (
+                  <p className="mt-1 pl-6 text-xs font-black text-[#718077]">
+                    +{extraDeliverables} more deliverable{extraDeliverables === 1 ? '' : 's'}
+                  </p>
+                )}
+              </div>
+
+              {(pkg.tags.length > 0 || pkg.barterDescription || pkg.creatorExpectations || activeOrder) && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {pkg.tags.slice(0, 2).map((tag) => (
+                    <span key={tag} className="rounded-full bg-[#f4f2e9] px-2 py-0.5 text-[10px] font-black text-[#607168]">
                       {tag}
                     </span>
                   ))}
-                  {pkg.tags.length > 3 && (
-                    <span className="rounded-full bg-[#f4f7f5] px-2 py-1 text-[10px] font-bold text-[#7a9a87]">
-                      +{pkg.tags.length - 3}
+                  {pkg.tags.length > 2 && (
+                    <span className="rounded-full bg-[#f4f2e9] px-2 py-0.5 text-[10px] font-black text-[#7b867f]">
+                      +{pkg.tags.length - 2}
+                    </span>
+                  )}
+                  {pkg.barterDescription && (
+                    <span className="max-w-full rounded-full bg-[#fdf3dc] px-2 py-0.5 text-[10px] font-black text-[#9b6712]">
+                      {pkg.barterDescription}
+                    </span>
+                  )}
+                  {activeOrder && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fdf3dc] px-2 py-0.5 text-[10px] font-black text-[#9b6712]">
+                      <AlertCircle className="size-3 shrink-0" />
+                      Active {orderStatusLabel(activeOrder.status)} order already exists.
                     </span>
                   )}
                 </div>
+              )}
+            </div>
 
-                {visibleDeliverables.length > 0 && (
-                  <div className="mt-2 rounded-xl border border-[#edf1ed] bg-white px-3 py-2">
-                    <div className="mb-1.5 flex items-center gap-1.5">
-                      <PlatformIconBadge platform={pkg.platform} size="xs" className="border-0 bg-transparent shadow-none" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[#2d6b4e]">
-                        {platformLabel} deliverables
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      {visibleDeliverables.map((deliverable, index) => (
-                        <div key={index} className="flex items-center gap-2 text-[11px] font-semibold text-[#496159]">
-                          <CheckCircle className="size-3 shrink-0 text-[#2d6b4e]" />
-                          <span className="line-clamp-1">{deliverable}</span>
-                        </div>
-                      ))}
-                    </div>
-                    {extraDeliverables > 0 && (
-                      <p className="mt-1 pl-5 text-[11px] font-black text-[#7a9a87]">
-                        +{extraDeliverables} more deliverable{extraDeliverables === 1 ? '' : 's'}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {(pkg.barterDescription || pkg.creatorExpectations) && (
-                  <div className="mt-2 rounded-xl border border-[#efcf83] bg-[#fff9e8] px-3 py-2 text-[11px] font-semibold leading-5 text-[#8b5e12]">
-                    {pkg.barterDescription && <p className="line-clamp-1">{pkg.barterDescription}</p>}
-                    {pkg.creatorExpectations && (
-                      <p className="line-clamp-1">Creator expects: {pkg.creatorExpectations}</p>
-                    )}
-                  </div>
-                )}
-
-                {activeOrder && (
-                  <div className="mt-2 flex items-start gap-2 rounded-xl border border-[#efcf83] bg-[#fff9e8] px-3 py-2 text-[11px] font-bold leading-5 text-[#8b5e12]">
-                    <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
-                    <span>
-                      Active {orderStatusLabel(activeOrder.status)} order already exists.
-                    </span>
-                  </div>
-                )}
+            <div className="space-y-2 rounded-[1.05rem] bg-[#fbfaf5] p-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#7b867f]">Package fit</p>
+                <div className="flex items-center gap-1.5 text-[12px] font-black text-[#173b2a]">
+                  <PriceIcon className="size-3.5 text-[#185c39]" />
+                  {signalValue > 0 ? `${signalValue}%` : 'New'}
+                </div>
               </div>
 
-              <div className="flex gap-2 border-t border-[#edf1ed] bg-[#fbfaf5] px-3.5 py-3 sm:justify-end sm:px-4">
+              <div className="flex items-end justify-between gap-2">
+                <p className="line-clamp-1 text-base font-black tracking-[-0.04em] text-[#173b2a]">
+                  {priceBlock.value}
+                </p>
+                <p className="shrink-0 text-[11px] font-bold text-[#718077]">
+                  {analytics?.conversionRate || 0}% conv.
+                </p>
+              </div>
+
+              <div className="h-1.5 overflow-hidden rounded-full bg-[#e6ece6]">
+                <div
+                  className="h-full rounded-full bg-[#185c39]"
+                  style={{ width: `${Math.max(8, Math.min(100, signalValue || 24))}%` }}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
                 {onViewDetails && (
                   <Button
                     variant="outline"
                     onClick={onViewDetails}
-                    className="min-h-9 flex-1 rounded-xl border-[#d1ddd6] bg-white px-3 text-[12px] font-extrabold text-[#2d6b4e] hover:bg-[#e8f0ec] hover:text-[#1e3d2e] sm:flex-none"
+                    className="h-8 rounded-full border-[#d9e0d8] bg-white text-[12px] font-black text-[#185c39] hover:bg-[#e7f0ea]"
                   >
                     Details
                   </Button>
@@ -223,8 +232,8 @@ export function PackageCard({ pkg, onOrder, onViewDetails, activeOrder, onViewAc
                 <Button
                   onClick={activeOrder ? onViewActiveOrder : onOrder}
                   className={cn(
-                    "min-h-9 flex-1 rounded-xl px-3 text-[12px] font-extrabold text-white sm:flex-none",
-                    activeOrder ? "bg-[#8b5e12] hover:bg-[#70490d]" : "bg-[#2d6b4e] hover:bg-[#1f5239]"
+                    "h-8 rounded-full text-[12px] font-black text-white",
+                    activeOrder ? "bg-[#9b6712] hover:bg-[#7c510e]" : "bg-[#185c39] hover:bg-[#12462b]"
                   )}
                   disabled={activeOrder ? !onViewActiveOrder : !onOrder}
                 >
