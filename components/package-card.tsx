@@ -104,10 +104,6 @@ export function PackageCard({ pkg, onOrder, onViewDetails, activeOrder, onViewAc
                 sizes="(max-width: 768px) 100vw, 148px"
                 className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
               />
-              <div className="absolute left-2 top-2 flex max-w-[calc(100%-1rem)] items-center gap-1.5 rounded-full bg-white/92 px-2 py-1 shadow-sm backdrop-blur">
-                <PlatformIconBadge platform={pkg.platform} size="xs" className="border-0 bg-transparent shadow-none" />
-                <span className="truncate text-[10px] font-black text-[#1e3d2e]">{platformLabel}</span>
-              </div>
             </div>
 
             <div className="min-w-0">
@@ -172,15 +168,23 @@ export function PackageCard({ pkg, onOrder, onViewDetails, activeOrder, onViewAc
                 </div>
 
                 {visibleDeliverables.length > 0 && (
-                  <div className="mt-2 flex flex-col gap-1.5">
-                    {visibleDeliverables.map((deliverable, index) => (
-                      <div key={index} className="flex items-center gap-2 text-[11px] font-semibold text-[#496159]">
-                        <CheckCircle className="size-3 shrink-0 text-[#2d6b4e]" />
-                        <span className="line-clamp-1">{deliverable}</span>
-                      </div>
-                    ))}
+                  <div className="mt-2 rounded-xl border border-[#edf1ed] bg-white px-3 py-2">
+                    <div className="mb-1.5 flex items-center gap-1.5">
+                      <PlatformIconBadge platform={pkg.platform} size="xs" className="border-0 bg-transparent shadow-none" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#2d6b4e]">
+                        {platformLabel} deliverables
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      {visibleDeliverables.map((deliverable, index) => (
+                        <div key={index} className="flex items-center gap-2 text-[11px] font-semibold text-[#496159]">
+                          <CheckCircle className="size-3 shrink-0 text-[#2d6b4e]" />
+                          <span className="line-clamp-1">{deliverable}</span>
+                        </div>
+                      ))}
+                    </div>
                     {extraDeliverables > 0 && (
-                      <p className="pl-5 text-[11px] font-black text-[#7a9a87]">
+                      <p className="mt-1 pl-5 text-[11px] font-black text-[#7a9a87]">
                         +{extraDeliverables} more deliverable{extraDeliverables === 1 ? '' : 's'}
                       </p>
                     )}
