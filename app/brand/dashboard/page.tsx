@@ -157,18 +157,12 @@ export default function BrandDashboardPage() {
       setActiveOrders(orders.filter((order) => activeOrderStatuses.has(order.status)).slice(0, 4));
 
       // Build recommendation filters from brand preferences
-      const hasPrefs = fetchedBrand?.preferredCreatorCategories || fetchedBrand?.targetCities || fetchedBrand?.targetPlatforms;
+      const hasPrefs = fetchedBrand?.preferredCreatorCategories;
       let recommended: Creator[] = [];
       if (hasPrefs) {
         const categories = normalizeCategories(fetchedBrand.preferredCreatorCategories?.split(','));
-        const cities = fetchedBrand.targetCities
-          ?.split(',').map((s) => s.trim()).filter(Boolean) as import('@/types').City[] | undefined;
-        const platforms = fetchedBrand.targetPlatforms
-          ?.split(',').map((s) => s.trim()).filter(Boolean) as import('@/types').Platform[] | undefined;
         const result = await capture("recommended creators", creatorsService.getAll({
           ...(categories?.length && { categories }),
-          ...(cities?.length && { cities }),
-          ...(platforms?.length && { platforms }),
           page: 0,
         }), { creators: [], total: 0 });
         recommended = result.creators.slice(0, 4);
@@ -363,10 +357,10 @@ export default function BrandDashboardPage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#b77a12]">
-                    {brand?.preferredCreatorCategories || brand?.targetCities ? 'Matched for you' : 'Recommended creators'}
+                    {brand?.preferredCreatorCategories ? 'Matched for you' : 'Recommended creators'}
                   </p>
                   <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.04em] text-[#173b2a]">
-                    {brand?.preferredCreatorCategories || brand?.targetCities ? 'Creators matching your preferences' : 'Food voices to review next'}
+                    {brand?.preferredCreatorCategories ? 'Creators matching your preferences' : 'Food voices to review next'}
                   </h2>
                 </div>
                 <Link href="/brand/explore?search=food" className="inline-flex items-center gap-2 text-sm font-extrabold text-[#185c39]">

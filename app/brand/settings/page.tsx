@@ -15,9 +15,6 @@ import {
   ShieldCheck,
   Layers,
   UserCircle2,
-  History,
-  CalendarClock,
-  RefreshCw,
   Upload,
   FileCheck,
   XCircle,
@@ -29,19 +26,18 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { getCategoryLabel, normalizeCategories } from "@/lib/categories";
+import { categoryOptions, normalizeCategories } from "@/lib/categories";
 import { authService } from "@/services/auth.service";
 import { brandsService, type VerificationDocument, type VerificationEvent } from "@/services/brands.service";
-import { apiClient } from "@/lib/api/client";
 import { usersService } from "@/services/users.service";
+import { uploadsService } from "@/services/uploads.service";
 import { useAuthStore } from "@/store/auth-store";
-import type { BrandVerificationStatus } from "@/types";
+import type { Brand, BrandVerificationStatus } from "@/types";
 import { isPasswordStrong, PASSWORD_REQUIREMENTS_MESSAGE } from "@/lib/password-validation";
 import { toast } from "sonner";
 
 const TABS = [
   { id: "billing", label: "Billing", icon: CreditCard },
-  { id: "subscriptions", label: "Subscriptions", icon: History },
   { id: "campaigns", label: "Campaigns", icon: Layers },
   { id: "verification", label: "Verification", icon: CheckCircle },
   { id: "notifications", label: "Notifications", icon: Bell },
@@ -53,6 +49,11 @@ type TabId = typeof TABS[number]["id"];
 const inputCls =
   "h-9 rounded-xl border-[#d9e0d8] bg-[#f4f2e9] text-[#1a2e22] placeholder:text-[#8fa098] focus-visible:border-[#2d6b4e] focus-visible:ring-2 focus-visible:ring-[#2d6b4e]/15 focus-visible:bg-white";
 const labelCls = "text-xs font-bold text-[#526259]";
+const requiredVerificationDocuments = [
+  { type: "tax_id" as const, label: "Tax ID / NTN Certificate", description: "National Tax Number certificate or proof of registration with FBR." },
+  { type: "business_registration" as const, label: "Business Registration", description: "SECP certificate of incorporation or partnership deed." },
+  { type: "bank_details" as const, label: "Bank Account Details", description: "Cancelled cheque or bank statement showing account holder name and IBAN." },
+] as const;
 
 const verificationStatusMeta: Record<BrandVerificationStatus, { label: string; className: string }> = {
   verified: { label: "✓ Verified", className: "border-[#bcd3c5] bg-[#eef6f1] text-[#185c39]" },
@@ -133,37 +134,23 @@ function ToggleRow({
   );
 }
 
-interface SubscriptionRecord {
-  id: string;
-  packageTitle: string;
-  status: string;
-  interval: string;
-  duration: number;
-  cyclesCompleted: number;
-  nextRenewalAt?: string;
-  cancelledAt?: string;
-  createdAt?: string;
-}
-
 function BrandSettingsPageContent() {
   const searchParams = useSearchParams();
   const { user, logout } = useAuthStore();
   const [activeTab, setActiveTab] = useState<TabId>("billing");
   const [isSaving, setIsSaving] = useState(false);
+  const [hasLoadedBrandProfile, setHasLoadedBrandProfile] = useState(false);
 
-  const [billing, setBilling] = useState({ plan: "Business", monthlyBudget: "500000" });
+  const [billing, setBilling] = useState<{ plan: Brand["planTier"]; monthlyBudget: string }>({ plan: "STARTER", monthlyBudget: "500000" });
 
   const [campaignPreferences, setCampaignPreferences] = useState({
     preferredCreatorCategories: "FOOD, LIFESTYLE, BEAUTY",
-    targetCities: "Karachi, Lahore, Islamabad",
-    targetPlatforms: "Instagram, TikTok, YouTube",
-    campaignBudgetRange: "PKR 3,750,000 - PKR 20,000,000",
   });
 
   const [verification, setVerification] = useState({
     businessStatus: "unverified" as BrandVerificationStatus,
-    contactEmail: "verification@karachigourmet.pk",
-    phoneNumber: "+92 300 778 8899",
+    contactEmail: "",
+    phoneNumber: "",
   });
 
   const [notifications, setNotifications] = useState({
@@ -184,8 +171,6 @@ function BrandSettingsPageContent() {
     deleteConfirmPassword: "",
   });
 
-  const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>([]);
-  const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
   const [verificationDocs, setVerificationDocs] = useState<VerificationDocument[]>([]);
   const [verificationEvents, setVerificationEvents] = useState<VerificationEvent[]>([]);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -197,21 +182,20 @@ function BrandSettingsPageContent() {
       if (!brand) return;
       setBilling((current) => ({
         ...current,
+        plan: brand.planTier || "STARTER",
         monthlyBudget: brand.monthlyBudget ? String(brand.monthlyBudget) : "",
       }));
       setCampaignPreferences({
         preferredCreatorCategories: normalizeCategories(brand.preferredCreatorCategories?.split(",")).join(", "),
-        targetCities: brand.targetCities || "",
-        targetPlatforms: brand.targetPlatforms || "",
-        campaignBudgetRange: brand.campaignBudgetRange || "",
       });
       setVerification({
         businessStatus: brand.businessVerificationStatus || "unverified",
-        contactEmail: brand.verificationContactEmail || "",
-        phoneNumber: brand.verificationPhoneNumber || "",
+        contactEmail: brand.verificationContactEmail || brand.contactEmail || "",
+        phoneNumber: brand.verificationPhoneNumber || brand.contactPhone || "",
       });
+      setHasLoadedBrandProfile(true);
     } catch {
-      // Silently fall back to defaults
+      setHasLoadedBrandProfile(false);
     }
   }, []);
 
@@ -246,9 +230,6 @@ function BrandSettingsPageContent() {
       });
       setCampaignPreferences({
         preferredCreatorCategories: normalizeCategories(saved.preferredCreatorCategories?.split(",")).join(", "),
-        targetCities: saved.targetCities || "",
-        targetPlatforms: saved.targetPlatforms || "",
-        campaignBudgetRange: saved.campaignBudgetRange || "",
       });
       toast.success("Campaign preferences saved");
     } catch (error) {
@@ -258,7 +239,25 @@ function BrandSettingsPageContent() {
     }
   };
 
+  const togglePreferredCreatorCategory = (category: string) => {
+    setCampaignPreferences((current) => {
+      const categories = normalizeCategories(current.preferredCreatorCategories.split(","));
+      const nextCategories = categories.includes(category)
+        ? categories.filter((item) => item !== category)
+        : [...categories, category];
+
+      return {
+        ...current,
+        preferredCreatorCategories: nextCategories.join(", "),
+      };
+    });
+  };
+
   const handleVerificationSave = async () => {
+    if (!hasLoadedBrandProfile) {
+      toast.error("Load your brand profile before saving verification settings");
+      return;
+    }
     setIsSaving(true);
     try {
       const saved = await brandsService.updateMe({
@@ -290,18 +289,6 @@ function BrandSettingsPageContent() {
       setIsSaving(false);
     }
   };
-
-  const loadSubscriptions = useCallback(async () => {
-    setSubscriptionsLoading(true);
-    try {
-      const data = await apiClient.get<SubscriptionRecord[]>("/api/v1/subscriptions");
-      setSubscriptions(Array.isArray(data) ? data : []);
-    } catch {
-      // silently fall back
-    } finally {
-      setSubscriptionsLoading(false);
-    }
-  }, []);
 
   const handlePasswordChange = async () => {
     if (!security.currentPassword || !security.newPassword || !security.confirmPassword) {
@@ -359,27 +346,24 @@ function BrandSettingsPageContent() {
   const handleDocUpload = async (type: VerificationDocument['type'], file: File) => {
     setUploadingDocType(type);
     try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const fileUrl = reader.result as string;
-          const uploaded = await brandsService.submitVerificationDocument({ type, fileUrl, fileName: file.name });
-          setVerificationDocs((prev) => [...prev.filter((d) => d.type !== type), uploaded]);
-          brandsService.getVerificationEvents().then(setVerificationEvents).catch(() => undefined);
-          toast.success(`${file.name} uploaded successfully`);
-        } catch (err) {
-          toast.error(err instanceof Error ? err.message : 'Upload failed');
-        } finally {
-          setUploadingDocType(null);
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch {
+      const stored = await uploadsService.verificationDocument(file);
+      const uploaded = await brandsService.submitVerificationDocument({ type, fileUrl: stored.url, fileName: file.name });
+      setVerificationDocs((prev) => [...prev.filter((d) => d.type !== type), uploaded]);
+      brandsService.getVerificationEvents().then(setVerificationEvents).catch(() => undefined);
+      toast.success(`${file.name} uploaded successfully`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Upload failed');
+    } finally {
       setUploadingDocType(null);
     }
   };
 
   const handleSubmitForReview = async () => {
+    const uploadedTypes = new Set(verificationDocs.map((doc) => doc.type));
+    if (!requiredVerificationDocuments.every((item) => uploadedTypes.has(item.type))) {
+      toast.error("Upload all required verification documents before submitting");
+      return;
+    }
     setIsSubmittingReview(true);
     try {
       await brandsService.submitForReview();
@@ -405,16 +389,15 @@ function BrandSettingsPageContent() {
   }, [loadBrandProfile, loadNotificationPreferences]);
 
   useEffect(() => {
-    if (activeTab === "subscriptions" && subscriptions.length === 0 && !subscriptionsLoading) {
-      void loadSubscriptions();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
-
-  useEffect(() => {
     const tab = searchParams.get("tab") as TabId | null;
     if (tab && TABS.some((t) => t.id === tab)) setActiveTab(tab);
   }, [searchParams]);
+
+  const selectedPreferredCreatorCategories = normalizeCategories(campaignPreferences.preferredCreatorCategories.split(","));
+  const planLabel = billing.plan ? billing.plan.charAt(0) + billing.plan.slice(1).toLowerCase() : "Starter";
+  const hasAllVerificationDocs = requiredVerificationDocuments.every((item) =>
+    verificationDocs.some((doc) => doc.type === item.type)
+  );
 
   return (
     <div className="min-h-screen bg-[#f4f2e9]">
@@ -454,16 +437,16 @@ function BrandSettingsPageContent() {
             <SectionCard title="Current Plan" icon={CreditCard}>
               <div className="flex items-center justify-between rounded-[1.15rem] border border-[#c8e0d0] bg-[#eef6f1] px-4 py-3">
                 <div>
-                  <p className="text-sm font-extrabold text-[#185c39]">{billing.plan} Plan</p>
+                  <p className="text-sm font-extrabold text-[#185c39]">{planLabel} Plan</p>
                   <p className="text-xs text-[#526259]">Unlimited creators · Priority support</p>
                 </div>
                 <Button
                   size="sm"
                   variant="outline"
                   className="h-7 rounded-lg border-[#d9e0d8] px-3 text-xs font-semibold text-[#526259] hover:bg-[#f4f2e9]"
-                  onClick={() => toast.info("Plan changes are handled by ZingZing support.")}
+                  asChild
                 >
-                  Upgrade
+                  <Link href="/pricing">Upgrade</Link>
                 </Button>
               </div>
             </SectionCard>
@@ -480,16 +463,6 @@ function BrandSettingsPageContent() {
                 <p className="text-[11px] text-[#8fa098]">You&apos;ll be notified when you hit 80% of this limit.</p>
               </div>
 
-              <div className="mt-3 flex items-center justify-between rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] px-4 py-3">
-                <div>
-                  <p className="text-xs font-semibold text-[#1a2e22]">Payment Methods</p>
-                  <p className="text-[11px] text-[#8fa098]">Funding rails and invoices</p>
-                </div>
-                <Button size="sm" variant="outline" className="h-7 rounded-lg border-[#d9e0d8] px-3 text-xs font-semibold text-[#526259] hover:bg-[#f4f2e9]" asChild>
-                  <Link href="/brand/payments">Manage</Link>
-                </Button>
-              </div>
-
               <Button
                 onClick={() => void handleBillingSave()}
                 disabled={isSaving}
@@ -501,112 +474,33 @@ function BrandSettingsPageContent() {
           </div>
         )}
 
-        {/* ── Subscriptions ── */}
-        {activeTab === "subscriptions" && (
-          <SectionCard title="Subscription History" description="Past and active platform subscriptions" icon={History}>
-            {subscriptionsLoading ? (
-              <div className="flex items-center justify-center py-10 text-sm text-[#8fa098]">
-                <RefreshCw className="mr-2 size-4 animate-spin" />
-                Loading subscriptions…
-              </div>
-            ) : subscriptions.length === 0 ? (
-              <div className="rounded-[1.15rem] border border-dashed border-[#d9e0d8] p-6 text-center">
-                <History className="mx-auto size-8 text-[#b77a12] opacity-60" />
-                <p className="mt-3 text-sm font-semibold text-[#526259]">No subscriptions yet</p>
-                <p className="mt-1 text-[11px] text-[#8fa098]">Your plan history will appear here once you subscribe.</p>
-                <Button asChild size="sm" className="mt-4 rounded-full bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#185c39]">
-                  <Link href="/pricing">View Plans</Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="divide-y divide-[#f0f4f0]">
-                {subscriptions.map((sub) => {
-                  const statusColor: Record<string, string> = {
-                    ACTIVE: "bg-[#e7f0ea] text-[#185c39]",
-                    CANCELLED: "bg-[#f9ebe8] text-[#9d3c36]",
-                    EXPIRED: "bg-[#f0f0f0] text-[#6b7c72]",
-                    TRIAL: "bg-[#fff1cd] text-[#8b5e12]",
-                  };
-                  const badge = statusColor[sub.status] ?? "bg-[#f0f0f0] text-[#526259]";
-                  return (
-                    <div key={sub.id} className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
-                      <div className="min-w-0 space-y-1">
-                        <p className="text-sm font-bold text-[#1a2e22]">{sub.packageTitle}</p>
-                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#8fa098]">
-                          <span className="capitalize">{sub.interval.toLowerCase()} · {sub.duration} {sub.interval.toLowerCase() === "monthly" ? "mo" : "yr"}</span>
-                          <span>·</span>
-                          <span>{sub.cyclesCompleted} cycle{sub.cyclesCompleted !== 1 ? "s" : ""} completed</span>
-                          {sub.nextRenewalAt && sub.status === "ACTIVE" && (
-                            <>
-                              <span>·</span>
-                              <span className="inline-flex items-center gap-1">
-                                <CalendarClock className="size-3" />
-                                Renews {new Date(sub.nextRenewalAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
-                              </span>
-                            </>
-                          )}
-                          {sub.cancelledAt && (
-                            <>
-                              <span>·</span>
-                              <span>Cancelled {new Date(sub.cancelledAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold", badge)}>
-                        {sub.status.charAt(0) + sub.status.slice(1).toLowerCase()}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </SectionCard>
-        )}
-
         {/* ── Campaigns ── */}
         {activeTab === "campaigns" && (
           <SectionCard title="Campaign Preferences" description="Default targeting for faster offer setup" icon={Layers}>
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label className={labelCls}>Preferred Creator Categories</Label>
-                <Input
-                  value={campaignPreferences.preferredCreatorCategories}
-                  onChange={(e) => setCampaignPreferences((p) => ({ ...p, preferredCreatorCategories: e.target.value }))}
-                  placeholder="FOOD, BEAUTY, TECH"
-                  className={inputCls}
-                />
-                {campaignPreferences.preferredCreatorCategories && (
-                  <p className="text-xs text-[#718077]">
-                    {normalizeCategories(campaignPreferences.preferredCreatorCategories.split(",")).map(getCategoryLabel).join(", ")}
-                  </p>
-                )}
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label className={labelCls}>Target Cities</Label>
-                  <Input
-                    value={campaignPreferences.targetCities}
-                    onChange={(e) => setCampaignPreferences((p) => ({ ...p, targetCities: e.target.value }))}
-                    className={inputCls}
-                  />
+                <div className="flex flex-wrap gap-2">
+                  {categoryOptions.map((category) => {
+                    const isSelected = selectedPreferredCreatorCategories.includes(category.value);
+
+                    return (
+                      <button
+                        key={category.value}
+                        type="button"
+                        onClick={() => togglePreferredCreatorCategory(category.value)}
+                        className={cn(
+                          "rounded-full border-2 px-4 py-2 text-sm transition-all",
+                          isSelected
+                            ? "border-[#2d6b4e] bg-[#e4f1e8] font-bold text-[#1e5c3e]"
+                            : "border-[#d1ddd6] bg-white font-semibold text-[#496159] hover:border-[#b0c5ba]"
+                        )}
+                      >
+                        {category.label}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="space-y-1.5">
-                  <Label className={labelCls}>Target Platforms</Label>
-                  <Input
-                    value={campaignPreferences.targetPlatforms}
-                    onChange={(e) => setCampaignPreferences((p) => ({ ...p, targetPlatforms: e.target.value }))}
-                    className={inputCls}
-                  />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label className={labelCls}>Campaign Budget Range</Label>
-                <Input
-                  value={campaignPreferences.campaignBudgetRange}
-                  onChange={(e) => setCampaignPreferences((p) => ({ ...p, campaignBudgetRange: e.target.value }))}
-                  className={inputCls}
-                />
               </div>
               <Button
                 onClick={() => void handleCampaignPreferencesSave()}
@@ -671,11 +565,7 @@ function BrandSettingsPageContent() {
                 <p className="mb-1 text-base font-extrabold text-[#173b2a]">Verification Checklist</p>
                 <p className="mb-4 text-sm text-[#647168]">Upload the required documents to get verified. Our team reviews submissions within 2–3 business days.</p>
                 <div className="space-y-3">
-                  {([
-                    { type: 'tax_id' as const, label: 'Tax ID / NTN Certificate', description: 'National Tax Number certificate or proof of registration with FBR.' },
-                    { type: 'business_registration' as const, label: 'Business Registration', description: 'SECP certificate of incorporation or partnership deed.' },
-                    { type: 'bank_details' as const, label: 'Bank Account Details', description: 'Cancelled cheque or bank statement showing account holder name and IBAN.' },
-                  ] as const).map((item) => {
+                  {requiredVerificationDocuments.map((item) => {
                     const doc = verificationDocs.find((d) => d.type === item.type);
                     return (
                       <div key={item.type} className="flex flex-col gap-3 rounded-2xl border border-[#d9e0d8] bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -728,7 +618,7 @@ function BrandSettingsPageContent() {
                 {verificationDocs.length > 0 ? (
                   <div className="mt-4">
                     <Button
-                      disabled={isSubmittingReview}
+                      disabled={isSubmittingReview || !hasAllVerificationDocs}
                       onClick={() => void handleSubmitForReview()}
                       className="rounded-full bg-[#185c39] text-white hover:bg-[#12462b]"
                     >

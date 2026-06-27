@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Review } from '@/types';
 import { formatRelativeTime } from '@/lib/utils';
+import { getCategoryLabel } from '@/lib/categories';
 
 interface ReviewCardProps {
   review: Review;
@@ -22,7 +23,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
             </Avatar>
             <div>
               <p className="font-medium text-foreground">{review.brand.name}</p>
-              <p className="text-xs text-muted-foreground">{review.brand.industry}</p>
+              <p className="text-xs text-muted-foreground">{getCategoryLabel(review.brand.category)}</p>
             </div>
           </div>
           <div className="flex items-center gap-1">

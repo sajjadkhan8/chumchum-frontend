@@ -30,7 +30,7 @@ type SearchTab = 'brands' | 'campaigns' | 'creators';
 type SortOption = 'relevant' | 'top-rated' | 'budget-high';
 
 type SearchFilters = {
-  industries: string[];
+  categories: string[];
   contentTypes: string[];
   verifiedOnly: boolean;
   fourStarPlus: boolean;
@@ -99,7 +99,7 @@ const SORT_OPTIONS: Array<{ value: SortOption; label: string }> = [
   { value: 'top-rated', label: 'Top rated' },
   { value: 'budget-high', label: 'Budget: high' },
 ];
-const FALLBACK_INDUSTRIES = ['Fashion & Apparel', 'Sports & Fitness', 'Beauty & Lifestyle', 'Tech & Gadgets'];
+const FALLBACK_CATEGORIES = ['Fashion', 'Sports', 'Beauty', 'Tech'];
 const FALLBACK_CONTENT_TYPES = ['Reels / Short video', 'Static post', 'Story', 'Blog / Article'];
 
 const normalize = (value?: string | null) => value?.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() ?? '';
@@ -132,37 +132,20 @@ const contentTypeTokens = (offer: BrandCampaign) => {
   return Array.from(values);
 };
 
-const offerIndustryTokens = (offer: BrandCampaign) => {
+const offerCategoryTokens = (offer: BrandCampaign) => {
   const tokens = splitList(offer.categories);
   return tokens.length > 0 ? tokens : ['Brand collaborations'];
 };
 
-const brandMatchesIndustry = (brand: CreatorSearchBrandResult, industries: string[]) => {
-  if (industries.length === 0) return true;
-  const fields = [brand.industry, ...brand.tags].map((value) => normalize(value));
-  return industries.some((industry) => fields.some((field) => field.includes(normalize(industry))));
+const brandMatchesCategory = (brand: CreatorSearchBrandResult, categories: string[]) => {
+  if (categories.length === 0) return true;
+  const fields = [brand.category, ...brand.tags].map((value) => normalize(value));
+  return categories.some((category) => fields.some((field) => field.includes(normalize(category))));
 };
 
 const brandMatchesContentType = (brand: CreatorSearchBrandResult, contentTypes: string[]) => {
   if (contentTypes.length === 0) return true;
   return brand.activeOffers.some((offer) => contentTypes.some((contentType) => contentTypeTokens(offer).includes(contentType)));
-};
-
-const creatorMatchesIndustry = (creator: Creator, industries: string[]) => {
-  if (industries.length === 0) return true;
-  const fields = [creator.bio, creator.city, ...creator.categories.map(getCategoryLabel)].map((value) => normalize(value));
-  return industries.some((industry) => fields.some((field) => field.includes(normalize(industry))));
-};
-
-const creatorMatchesContentType = (creator: Creator, contentTypes: string[]) => {
-  if (contentTypes.length === 0) return true;
-  const platformNames = creator.platforms.map((platform) => normalize(platform.platform));
-  return contentTypes.some((contentType) => {
-    if (contentType === 'Reels / Short video') return platformNames.some((platform) => ['instagram', 'tiktok', 'youtube'].includes(platform));
-    if (contentType === 'Story') return platformNames.includes('instagram') || platformNames.includes('snapchat');
-    if (contentType === 'Blog / Article') return platformNames.includes('facebook') || normalize(creator.bio).includes('blog');
-    return true;
-  });
 };
 
 const offerDaysLeft = (offer: BrandCampaign) => {
@@ -305,7 +288,7 @@ function BrandResultCard({
             </div>
 
             <p className="text-xs text-[#87938b]">
-              {brand.industry}
+              {brand.category}
               <span className="px-1.5 text-[#d1ddd6]">·</span>
               {brand.city}
               <span className="px-1.5 text-[#d1ddd6]">·</span>
@@ -542,7 +525,7 @@ export function CreatorGlobalSearchResults() {
   const [creatorFilters, setCreatorFilters] = useState<CreatorSearchFilters>(DEFAULT_CREATOR_FILTERS);
   const [metadataCategories, setMetadataCategories] = useState<string[]>([]);
   const [filters, setFilters] = useState<SearchFilters>({
-    industries: [],
+    categories: [],
     contentTypes: [],
     verifiedOnly: false,
     fourStarPlus: false,
@@ -693,14 +676,14 @@ export function CreatorGlobalSearchResults() {
   }, [results]);
 
   useEffect(() => {
-    setFilters({ industries: [], contentTypes: [], verifiedOnly: false, fourStarPlus: false, budgetRange: budgetBounds });
+    setFilters({ categories: [], contentTypes: [], verifiedOnly: false, fourStarPlus: false, budgetRange: budgetBounds });
   }, [budgetBounds, searchTerm]);
 
-  const industryOptions = useMemo(() => {
-    const seed = metadataCategories.length > 0 ? metadataCategories : FALLBACK_INDUSTRIES;
+  const categoryFilterOptions = useMemo(() => {
+    const seed = metadataCategories.length > 0 ? metadataCategories.map(getCategoryLabel) : FALLBACK_CATEGORIES;
     const options = new Set<string>(seed);
-    results.brands.forEach((b) => options.add(b.industry));
-    results.campaigns.forEach((o) => offerIndustryTokens(o).forEach((t) => options.add(t)));
+    results.brands.forEach((b) => options.add(b.category));
+    results.campaigns.forEach((o) => offerCategoryTokens(o).forEach((t) => options.add(getCategoryLabel(t))));
     return Array.from(options).filter(Boolean).slice(0, 8);
   }, [results.brands, results.campaigns, metadataCategories]);
 
@@ -719,7 +702,7 @@ export function CreatorGlobalSearchResults() {
     router.replace(`/creator/search?${params.toString()}`);
   }, [router, searchParams]);
 
-  const toggleSelection = (key: 'industries' | 'contentTypes', value: string) => {
+  const toggleSelection = (key: 'categories' | 'contentTypes', value: string) => {
     setFilters((current) => ({
       ...current,
       [key]: current[key].includes(value) ? current[key].filter((e) => e !== value) : [...current[key], value],
@@ -727,7 +710,7 @@ export function CreatorGlobalSearchResults() {
   };
 
   const clearAllFilters = () => {
-    setFilters((current) => ({ ...current, industries: [], contentTypes: [], verifiedOnly: false, fourStarPlus: false, budgetRange: budgetBounds }));
+    setFilters((current) => ({ ...current, categories: [], contentTypes: [], verifiedOnly: false, fourStarPlus: false, budgetRange: budgetBounds }));
   };
 
   const clearCreatorFilters = () => setCreatorFilters(DEFAULT_CREATOR_FILTERS);
@@ -743,7 +726,7 @@ export function CreatorGlobalSearchResults() {
     return results.brands
       .filter((brand) => {
         if (brand.avgBudget > 0 && (brand.avgBudget < budgetMin || brand.avgBudget > budgetMax)) return false;
-        if (!brandMatchesIndustry(brand, filters.industries)) return false;
+        if (!brandMatchesCategory(brand, filters.categories)) return false;
         if (!brandMatchesContentType(brand, filters.contentTypes)) return false;
         if (filters.verifiedOnly && !brand.isVerified) return false;
         if (filters.fourStarPlus && (brand.rating === null || brand.rating < 4)) return false;
@@ -766,10 +749,10 @@ export function CreatorGlobalSearchResults() {
         if (brandFocus && assoc && assoc.id !== brandFocus) return false;
         if (brandFocus && !assoc && offer.brandId !== brandFocus) return false;
         if (offerBudget > 0 && (offerBudget < budgetMin || offerBudget > budgetMax)) return false;
-        if (filters.industries.length > 0) {
-          const matches = filters.industries.some((ind) => {
-            const target = normalize(ind);
-            return offerIndustryTokens(offer).some((t) => normalize(t).includes(target)) || (assoc ? normalize(assoc.industry).includes(target) : false);
+        if (filters.categories.length > 0) {
+          const matches = filters.categories.some((category) => {
+            const target = normalize(category);
+            return offerCategoryTokens(offer).some((t) => normalize(getCategoryLabel(t)).includes(target)) || (assoc ? normalize(assoc.category).includes(target) : false);
           });
           if (!matches) return false;
         }
@@ -807,16 +790,16 @@ export function CreatorGlobalSearchResults() {
   const BrandCampaignSidebar = (
     <>
       <section className="space-y-3">
-        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Industry</h2>
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">Category</h2>
         <div className="space-y-2.5">
-          {industryOptions.map((industry) => (
-            <label key={industry} className="flex cursor-pointer items-center gap-3 text-sm text-[#496159]">
+          {categoryFilterOptions.map((category) => (
+            <label key={category} className="flex cursor-pointer items-center gap-3 text-sm text-[#496159]">
               <Checkbox
-                checked={filters.industries.includes(industry)}
-                onCheckedChange={() => toggleSelection('industries', industry)}
+                checked={filters.categories.includes(category)}
+                onCheckedChange={() => toggleSelection('categories', category)}
                 className="size-4 rounded-[3px] border-[#d1ddd6] data-[state=checked]:border-[#2d6b4e] data-[state=checked]:bg-[#2d6b4e]"
               />
-              <span className={cn(filters.industries.includes(industry) && 'font-bold text-[#2d6b4e]')}>{industry}</span>
+              <span className={cn(filters.categories.includes(category) && 'font-bold text-[#2d6b4e]')}>{category}</span>
             </label>
           ))}
         </div>
@@ -1246,19 +1229,19 @@ export function CreatorGlobalSearchResults() {
                   </button>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {industryOptions.slice(0, 4).map((industry) => (
+                  {categoryFilterOptions.slice(0, 4).map((category) => (
                     <button
-                      key={industry}
+                      key={category}
                       type="button"
-                      onClick={() => toggleSelection('industries', industry)}
+                      onClick={() => toggleSelection('categories', category)}
                       className={cn(
                         'rounded-xl border px-4 py-2.5 text-left text-sm font-medium transition',
-                        filters.industries.includes(industry)
+                        filters.categories.includes(category)
                           ? 'border-[#2d6b4e] bg-[#e4f1e8] text-[#1e3d2e]'
                           : 'border-[#d1ddd6] text-[#87938b] hover:border-[#b0c5ba] hover:text-[#1e3d2e]',
                       )}
                     >
-                      {industry}
+                      {category}
                     </button>
                   ))}
                 </div>

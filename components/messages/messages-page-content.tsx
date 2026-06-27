@@ -49,6 +49,7 @@ import { QuickDealModal } from "@/components/quick-deal-modal";
 import { creatorsService } from "@/services/creators.service";
 import { messagesService } from "@/services/messages.service";
 import { apiClient } from "@/lib/api/client";
+import { getCategoryLabel } from "@/lib/categories";
 import { formatRelativeTime, formatPrice, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import type { Message, Conversation } from "@/types";
@@ -170,7 +171,7 @@ export function MessagesPageContent() {
           id: conversation.brand.id,
           name: conversation.brand.name,
           avatar: conversation.brand.logo,
-          subtitle: conversation.brand.industry,
+          subtitle: getCategoryLabel(conversation.brand.category),
           href: null,
         };
       }

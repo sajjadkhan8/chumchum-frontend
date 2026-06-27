@@ -594,11 +594,16 @@ function SectionRow({ label, count, max, hint }: { label: string; count?: number
   );
 }
 
-interface BrandOfferWizardProps {
-  offerId?: string;
+export interface BrandOfferWizardDefaults {
+  categories?: string[];
 }
 
-export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
+interface BrandOfferWizardProps {
+  offerId?: string;
+  initialDefaults?: BrandOfferWizardDefaults;
+}
+
+export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardProps) {
   const router = useRouter();
   const isEditMode = Boolean(offerId);
   const draftKey = isEditMode ? `${DRAFT_KEY}-edit-${offerId}` : DRAFT_KEY;
@@ -608,14 +613,14 @@ export function BrandOfferWizard({ offerId }: BrandOfferWizardProps) {
   const prevOfferTypeRef = useRef<string>('');
   const [activeCampaignGoalSection, setActiveCampaignGoalSection] = useState<string>(CAMPAIGN_GOAL_SECTIONS[0].label);
   const [form, setForm] = useState<OfferForm>(() => {
-    if (typeof window === 'undefined') return defaultForm;
+    if (typeof window === 'undefined') return normalizeDraftForm(initialDefaults);
     const raw = window.localStorage.getItem(draftKey);
-    if (!raw) return defaultForm;
+    if (!raw) return normalizeDraftForm(initialDefaults);
     try {
       const parsed = JSON.parse(raw) as { step?: number; form?: Partial<OfferForm> };
       return normalizeDraftForm(parsed.form);
     } catch {
-      return defaultForm;
+      return normalizeDraftForm(initialDefaults);
     }
   });
   const [isSaving, setIsSaving] = useState(false);

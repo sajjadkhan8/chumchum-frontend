@@ -25,7 +25,7 @@ const fallbackBrand = (brandId: string): Brand => ({
   userId: brandId,
   name: 'Brand',
   logo: '',
-  industry: 'General',
+  category: 'GENERAL',
   city: 'Karachi' as City,
   description: '',
   totalCampaigns: 0,

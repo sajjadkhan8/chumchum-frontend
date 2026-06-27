@@ -112,7 +112,7 @@ export default function PrivacyPage() {
                   <InfoList items={[
                     'Name, email address, phone number, and password (hashed).',
                     'Profile photo, bio, social-media handles, and content categories.',
-                    'Business name, logo, and industry (brands).',
+                    'Business name, logo, and category (brands).',
                     'Bank or payment details for payout processing (creators).',
                   ]} />
                   <SubHeading>Campaign &amp; Transaction Data</SubHeading>

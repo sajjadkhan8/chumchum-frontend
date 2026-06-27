@@ -211,15 +211,12 @@ export interface Brand {
   userId: string;
   name: string;
   logo: string;
-  industry: string;
+  category: string;
   website?: string;
   city: City | null;
   description: string;
   monthlyBudget?: number;
   preferredCreatorCategories?: string;
-  targetCities?: string;
-  targetPlatforms?: string;
-  campaignBudgetRange?: string;
   businessVerificationStatus?: BrandVerificationStatus;
   verificationContactEmail?: string;
   verificationPhoneNumber?: string;

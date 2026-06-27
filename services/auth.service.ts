@@ -12,6 +12,7 @@ interface AuthUserResponse {
   avatarUrl?: string;
   brand?: {
     companyName?: string;
+    category?: string;
   } | null;
   creatorProgramStatus?: User['creatorProgramStatus'];
   active?: boolean;

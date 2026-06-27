@@ -29,15 +29,11 @@ export interface VerificationEvent {
 export interface BrandProfileUpdatePayload {
   companyName?: string;
   website?: string;
-  industry?: string;
+  category?: string;
   description?: string;
   logoUrl?: string;
   monthlyBudget?: number;
   preferredCreatorCategories?: string;
-  targetCities?: string;
-  targetPlatforms?: string;
-  campaignBudgetRange?: string;
-  businessVerificationStatus?: string;
   verificationContactEmail?: string;
   verificationPhoneNumber?: string;
   city?: string;
@@ -66,15 +62,11 @@ export const brandsService = {
     const response = await apiClient.patch<unknown>('/api/v1/brands/me/profile', {
       company_name: payload.companyName,
       website: payload.website,
-      industry: payload.industry,
+      category: payload.category,
       description: payload.description,
       logo_url: payload.logoUrl,
       monthly_budget: payload.monthlyBudget,
       preferred_creator_categories: payload.preferredCreatorCategories,
-      target_cities: payload.targetCities,
-      target_platforms: payload.targetPlatforms,
-      campaign_budget_range: payload.campaignBudgetRange,
-      business_verification_status: payload.businessVerificationStatus,
       verification_contact_email: payload.verificationContactEmail,
       verification_phone_number: payload.verificationPhoneNumber,
       city: payload.city,

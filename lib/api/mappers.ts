@@ -75,6 +75,8 @@ interface BackendUser {
   avatarUrl?: string;
   brand?: {
     companyName?: string;
+    category?: string;
+    [key: string]: unknown;
   } | null;
   creatorProgramStatus?: User['creatorProgramStatus'];
   active?: boolean;
@@ -268,14 +270,11 @@ interface BackendBrandResponse {
   id: string;
   name?: string;
   website?: string;
-  industry?: string;
+  category?: string;
   description?: string;
   logo_url?: string;
   monthly_budget?: number;
   preferred_creator_categories?: string;
-  target_cities?: string;
-  target_platforms?: string;
-  campaign_budget_range?: string;
   business_verification_status?: string;
   verification_contact_email?: string;
   verification_phone_number?: string;
@@ -299,15 +298,12 @@ export const mapBrand = (input: BackendBrandResponse): Brand => ({
   userId: input.user?.id || input.id,
   name: input.name || 'Brand',
   logo: input.logo_url || '',
-  industry: input.industry || 'General',
+  category: normalizeCategory(input.category) || 'GENERAL',
   website: input.website,
   city: (input.user?.city as City | null) || null,
   description: input.description || '',
   monthlyBudget: input.monthly_budget,
   preferredCreatorCategories: input.preferred_creator_categories,
-  targetCities: input.target_cities,
-  targetPlatforms: input.target_platforms,
-  campaignBudgetRange: input.campaign_budget_range,
   businessVerificationStatus: normalizeBrandVerificationStatus(input.business_verification_status),
   verificationContactEmail: input.verification_contact_email,
   verificationPhoneNumber: input.verification_phone_number,
@@ -498,7 +494,7 @@ export const mapOrder = (input: BackendOrderResponse, packageMap: Record<string,
     userId: input.brandId,
     name: input.brandName || 'Brand',
     logo: '',
-    industry: '',
+    category: 'GENERAL',
     city: null,
     description: '',
     totalCampaigns: 0,
@@ -642,7 +638,7 @@ export const mapConversation = (
       userId: input.brandId,
       name: 'Brand',
       logo: '',
-      industry: '',
+      category: 'GENERAL',
       city: null,
       description: '',
       totalCampaigns: 0,

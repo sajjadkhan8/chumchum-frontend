@@ -10,7 +10,7 @@ export interface CreatorSearchBrandResult {
   id: string;
   name: string;
   initials: string;
-  industry: string;
+  category: string;
   city: string | null;
   description: string;
   isVerified: boolean;
@@ -143,8 +143,8 @@ const inferBrandDescription = (brand: Brand | undefined, offers: BrandCampaign[]
   return topOffer.brief.length > 120 ? `${topOffer.brief.slice(0, 117)}...` : topOffer.brief;
 };
 
-const inferBrandIndustry = (brand: Brand | undefined, offers: BrandCampaign[]) => {
-  if (brand?.industry) return brand.industry;
+const inferBrandCategory = (brand: Brand | undefined, offers: BrandCampaign[]) => {
+  if (brand?.category) return getCategoryLabel(brand.category);
 
   const counts = new Map<string, number>();
   for (const offer of offers) {
@@ -153,7 +153,8 @@ const inferBrandIndustry = (brand: Brand | undefined, offers: BrandCampaign[]) =
     }
   }
 
-  return Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'Brand collaborations';
+  const topCategory = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0];
+  return topCategory ? getCategoryLabel(topCategory) : 'Brand collaborations';
 };
 
 const inferBrandCity = (brand: Brand | undefined, offers: BrandCampaign[]) => {
@@ -191,7 +192,7 @@ const mergeBrandCampaigns = (offers: BrandCampaign[], brand: Brand | undefined, 
   const { rating, reviewCount } = realBrandRating(brand);
   const matchScore = calculateMatchScore(searchTerm, [
     brand?.name,
-    brand?.industry,
+    brand?.category ? getCategoryLabel(brand.category) : undefined,
     brand?.description,
     brand?.city ?? undefined,
     name,
@@ -204,7 +205,7 @@ const mergeBrandCampaigns = (offers: BrandCampaign[], brand: Brand | undefined, 
     id: brand?.id ?? primaryOffer?.brandId ?? normalize(name),
     name,
     initials: getInitials(name),
-    industry: inferBrandIndustry(brand, offers),
+    category: inferBrandCategory(brand, offers),
     city: inferBrandCity(brand, offers),
     description: inferBrandDescription(brand, offers),
     isVerified: inferBrandVerification(brand, offers),
@@ -233,7 +234,7 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
   const offers = offersResult.status === 'fulfilled' ? rankOffers(offersResult.value.content || [], term) : [];
 
   const brandsResult = await brandsService.getAll().catch(() => []);
-  const matchedBrands = brandsResult.filter((brand) => calculateMatchScore(term, [brand.name, brand.industry, brand.description, brand.city ?? undefined]) > 0);
+  const matchedBrands = brandsResult.filter((brand) => calculateMatchScore(term, [brand.name, getCategoryLabel(brand.category), brand.description, brand.city ?? undefined]) > 0);
   const offersByBrand = new Map<string, BrandCampaign[]>();
 
   for (const offer of offers) {
@@ -253,12 +254,12 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
     if (merged) {
       brandResults.set(merged.id, merged);
     } else {
-      const matchScore = calculateMatchScore(term, [brand.name, brand.industry, brand.description, brand.city ?? undefined]);
+      const matchScore = calculateMatchScore(term, [brand.name, getCategoryLabel(brand.category), brand.description, brand.city ?? undefined]);
       brandResults.set(brand.id, {
         id: brand.id,
         name: brand.name,
         initials: getInitials(brand.name),
-        industry: brand.industry,
+        category: getCategoryLabel(brand.category),
         city: brand.city,
         description: brand.description,
         isVerified: inferBrandVerification(brand, []),
@@ -266,7 +267,7 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
         avgBudget: brand.monthlyBudget ?? 0,
         activeCampaignCount: 0,
         campaignCount: brand.totalCampaigns,
-        tags: splitValues(brand.targetPlatforms).slice(0, 4),
+        tags: [],
         activeOffers: [],
         website: brand.website,
         matchScore,
@@ -287,7 +288,7 @@ export async function getCreatorGlobalSearchResults(searchTerm: string): Promise
         id: key,
         name: firstOffer.brandName,
         initials: getInitials(firstOffer.brandName),
-        industry: inferBrandIndustry(undefined, brandOffers),
+        category: inferBrandCategory(undefined, brandOffers),
         city: inferBrandCity(undefined, brandOffers),
         description: inferBrandDescription(undefined, brandOffers),
         isVerified: inferBrandVerification(undefined, brandOffers),

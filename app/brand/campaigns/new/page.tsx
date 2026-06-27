@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowRight, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BrandOfferWizard } from '@/components/brand-offer-wizard';
+import { BrandOfferWizard, type BrandOfferWizardDefaults } from '@/components/brand-offer-wizard';
 import { brandsService } from '@/services/brands.service';
 import { campaignsService } from '@/services/campaigns.service';
+import { normalizeCategories } from '@/lib/categories';
 import { toast } from 'sonner';
 import type { Brand } from '@/types';
 
@@ -105,12 +106,21 @@ type Template = (typeof TEMPLATES)[number];
 
 type PageState = 'loading' | 'gated' | 'picker' | 'wizard';
 
+const buildCampaignDefaults = (brand: Brand | null): BrandOfferWizardDefaults => {
+  const categories = normalizeCategories(brand?.preferredCreatorCategories?.split(','));
+
+  return {
+    categories,
+  };
+};
+
 export default function BrandCampaignCreatePage() {
   const router = useRouter();
   const [pageState, setPageState] = useState<PageState>('loading');
   const [brand, setBrand] = useState<Brand | null>(null);
   const [activeCampaignCount, setActiveCampaignCount] = useState(0);
   const [isCreatingFromTemplate, setIsCreatingFromTemplate] = useState(false);
+  const campaignDefaults = useMemo(() => buildCampaignDefaults(brand), [brand]);
 
   useEffect(() => {
     const init = async () => {
@@ -141,7 +151,10 @@ export default function BrandCampaignCreatePage() {
   const onUseTemplate = async (template: Template) => {
     setIsCreatingFromTemplate(true);
     try {
-      const created = await campaignsService.createCampaign({ ...template.values });
+      const created = await campaignsService.createCampaign({
+        categories: campaignDefaults.categories?.join(', '),
+        ...template.values,
+      });
       toast.success(`"${template.name}" template applied — complete the details below.`);
       router.push(`/brand/campaigns/${created.id}/edit`);
     } catch (error) {
@@ -178,7 +191,7 @@ export default function BrandCampaignCreatePage() {
         <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Button
             className="rounded-full bg-[#e6aa38] px-5 text-[#173b2a] hover:bg-[#d49d30]"
-            onClick={() => router.push('/brand/settings?tab=subscription')}
+            onClick={() => router.push('/pricing')}
           >
             Upgrade to {upgradeTarget} <Zap className="ml-2 size-4" />
           </Button>
@@ -238,5 +251,5 @@ export default function BrandCampaignCreatePage() {
     );
   }
 
-  return <BrandOfferWizard />;
+  return <BrandOfferWizard initialDefaults={campaignDefaults} />;
 }

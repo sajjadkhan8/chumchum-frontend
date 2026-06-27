@@ -159,13 +159,11 @@ function AmbassadorRow({ ambassador }: { ambassador: PlatformAmbassador }) {
 
 interface BrandPrefs {
   categories?: string;
-  cities?: string;
-  platforms?: string;
 }
 
 function computeMatchScore(creator: Creator, prefs: BrandPrefs | null): number {
   if (!prefs) return 0;
-  if (!prefs.categories && !prefs.cities && !prefs.platforms) return 0;
+  if (!prefs.categories) return 0;
 
   let score = 0;
 
@@ -176,23 +174,6 @@ function computeMatchScore(creator: Creator, prefs: BrandPrefs | null): number {
       creatorCats.includes(bc),
     ).length;
     if (brandCats.length > 0) score += (overlap / brandCats.length) * 50;
-  }
-
-  if (prefs.cities && creator.city) {
-    const brandCities = prefs.cities.split(',').map((c) => c.trim().toLowerCase());
-    const creatorCity = creator.city.toLowerCase();
-    if (brandCities.some((bc) => creatorCity.includes(bc) || bc.includes(creatorCity))) {
-      score += 30;
-    }
-  }
-
-  if (prefs.platforms) {
-    const brandPlatforms = prefs.platforms.split(',').map((p) => p.trim().toLowerCase());
-    const creatorPlatforms = (creator.platforms ?? []).map((a) => a.platform.toLowerCase());
-    if (creatorPlatforms.length > 0 && brandPlatforms.length > 0) {
-      const overlap = brandPlatforms.filter((bp) => creatorPlatforms.includes(bp)).length;
-      score += (overlap / brandPlatforms.length) * 20;
-    }
   }
 
   return Math.min(Math.round(score), 100);
@@ -326,8 +307,6 @@ function ExplorePageContent() {
         if (b) {
           setBrandPrefs({
             categories: b.preferredCreatorCategories ?? undefined,
-            cities: b.targetCities ?? undefined,
-            platforms: b.targetPlatforms ?? undefined,
           });
         }
       })
@@ -496,15 +475,13 @@ function ExplorePageContent() {
                       })}
                     </SelectContent>
                   </Select>
-                  {brandPrefs && (brandPrefs.categories || brandPrefs.cities || brandPrefs.platforms) ? (
+                  {brandPrefs?.categories ? (
                     <button
                       onClick={() => {
                         const cats = normalizeCategories(brandPrefs.categories?.split(','));
-                        const cities = brandPrefs.cities?.split(',').map((c) => c.trim()).filter(Boolean) ?? [];
                         setFilters({
                           ...filters,
                           ...(cats.length > 0 ? { categories: cats as never } : {}),
-                          ...(cities.length > 0 ? { cities: cities as never } : {}),
                         });
                         toast.success('Filters updated from your brand preferences');
                       }}

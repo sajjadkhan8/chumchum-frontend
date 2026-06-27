@@ -9,7 +9,6 @@ import {
   Mail,
   Phone,
   Star,
-  Target,
   User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { pakistanCities } from "@/lib/localization";
+import { categoryOptions, getCategoryLabel } from "@/lib/categories";
 import { formatRelativeTime, getInitials } from "@/lib/utils";
 import { brandsService } from "@/services/brands.service";
 import { reviewsService } from "@/services/reviews.service";
@@ -32,20 +32,6 @@ import { uploadsService } from "@/services/uploads.service";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 import type { BrandVerificationStatus, Review } from "@/types";
-
-const industries = [
-  "Fashion & Apparel",
-  "Beauty & Cosmetics",
-  "Technology",
-  "Food & Beverage",
-  "Health & Fitness",
-  "Travel & Hospitality",
-  "Entertainment",
-  "Education",
-  "Finance",
-  "E-commerce",
-  "Other",
-];
 
 const verificationStatusMeta: Record<BrandVerificationStatus, { label: string; className: string }> = {
   verified: { label: "✓ Verified", className: "border-[#bcd3c5] bg-[#e7f0ea] text-[#185c39]" },
@@ -69,68 +55,76 @@ const inputCls =
   "h-9 rounded-xl border-[#d9e0d8] bg-[#f4f2e9] text-[#1a2e22] placeholder:text-[#8fa098] focus-visible:border-[#2d6b4e] focus-visible:ring-2 focus-visible:ring-[#2d6b4e]/15 focus-visible:bg-white";
 const labelCls = "text-xs font-bold text-[#526259]";
 
+const emptyProfile = {
+  companyName: "",
+  website: "",
+  category: "GENERAL",
+  companySize: "",
+  city: "",
+  description: "",
+  logo: "",
+  contactName: "",
+  contactEmail: "",
+  contactPhone: "",
+  verificationStatus: "unverified" as BrandVerificationStatus,
+};
+
 export default function BrandProfilePage() {
   const { user } = useAuthStore();
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
+  const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
   const [brandReviews, setBrandReviews] = useState<Review[]>([]);
 
   const [brandRating, setBrandRating] = useState(0);
   const [brandTotalReviews, setBrandTotalReviews] = useState(0);
 
-  const [profile, setProfile] = useState({
-    companyName: "Karachi Gourmet Group",
-    website: "https://karachigourmet.pk",
-    industry: "Food & Beverage",
-    companySize: "51-200 employees",
-    city: "Karachi",
-    description:
-      "Leading organic food retailer in Pakistan, committed to bringing fresh and healthy products to every home.",
-    logo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=400",
-    contactName: "Ali Raza",
-    contactEmail: "ali@karachigourmet.pk",
-    contactPhone: "+92 300 987 6543",
-    verificationStatus: 'unverified' as BrandVerificationStatus,
-    monthlyBudget: '' as string,
-    targetPlatforms: '' as string,
-    targetCities: '' as string,
-  });
+  const [profile, setProfile] = useState(emptyProfile);
 
   const loadBrandProfile = useCallback(async () => {
+    setIsProfileLoading(true);
+    setProfileLoadError(null);
     try {
       const brand = await brandsService.getMe();
-      if (!brand) return;
-      setProfile((current) => ({
-        ...current,
-        companyName: brand.name || current.companyName,
+      if (!brand) throw new Error("Brand profile not found");
+      setProfile({
+        companyName: brand.name || "",
         website: brand.website || "",
-        industry: brand.industry || current.industry,
+        category: brand.category || "GENERAL",
         description: brand.description || "",
-        logo: brand.logo || current.logo,
-        city: brand.city || current.city,
-        companySize: brand.companySize || current.companySize,
-        contactName: brand.contactName || current.contactName,
-        contactEmail: brand.contactEmail || current.contactEmail,
-        contactPhone: brand.contactPhone || current.contactPhone,
-        verificationStatus: brand.businessVerificationStatus || 'unverified',
-        monthlyBudget: brand.monthlyBudget ? String(brand.monthlyBudget) : '',
-        targetPlatforms: brand.targetPlatforms || '',
-        targetCities: brand.targetCities || '',
-      }));
+        logo: brand.logo || "",
+        city: brand.city || "",
+        companySize: brand.companySize || "",
+        contactName: brand.contactName || "",
+        contactEmail: brand.contactEmail || "",
+        contactPhone: brand.contactPhone || "",
+        verificationStatus: brand.businessVerificationStatus || "unverified",
+      });
       setBrandRating(brand.brandRating ?? 0);
       setBrandTotalReviews(brand.brandTotalReviews ?? 0);
-    } catch {
-      // Silently fall back to defaults on load failure
+      setHasLoadedProfile(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not load company profile";
+      setProfileLoadError(message);
+      setHasLoadedProfile(false);
+    } finally {
+      setIsProfileLoading(false);
     }
   }, []);
 
   const handleSave = async () => {
+    if (!hasLoadedProfile) {
+      toast.error("Load your company profile before saving changes");
+      return;
+    }
     setIsSaving(true);
     try {
       await brandsService.updateMe({
         companyName: profile.companyName,
         website: profile.website,
-        industry: profile.industry,
+        category: profile.category,
         description: profile.description,
         logoUrl: profile.logo || undefined,
         city: profile.city,
@@ -138,9 +132,6 @@ export default function BrandProfilePage() {
         contactName: profile.contactName,
         contactEmail: profile.contactEmail,
         contactPhone: profile.contactPhone,
-        monthlyBudget: profile.monthlyBudget ? Number(profile.monthlyBudget) : undefined,
-        targetPlatforms: profile.targetPlatforms || undefined,
-        targetCities: profile.targetCities || undefined,
       });
       await loadBrandProfile();
       toast.success("Company profile saved");
@@ -154,11 +145,16 @@ export default function BrandProfilePage() {
 
   const uploadLogo = async (file?: File | null) => {
     if (!file) return;
+    if (!hasLoadedProfile) {
+      toast.error("Load your company profile before changing the logo");
+      return;
+    }
     setIsUploadingLogo(true);
     try {
       const uploaded = await uploadsService.brandLogo(file);
-      setProfile((current) => ({ ...current, logo: uploaded.url }));
-      toast.success("Brand logo uploaded");
+      const saved = await brandsService.updateMe({ logoUrl: uploaded.url });
+      setProfile((current) => ({ ...current, logo: saved.logo || uploaded.url }));
+      toast.success("Brand logo saved");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not upload brand logo";
       toast.error(message);
@@ -187,7 +183,7 @@ export default function BrandProfilePage() {
               <Avatar className="size-16 ring-2 ring-white/20">
                 <AvatarImage src={profile.logo || undefined} alt={profile.companyName} />
                 <AvatarFallback className="bg-[#2d6b4e] text-lg font-extrabold text-white">
-                  {getInitials(profile.companyName)}
+                  {getInitials(profile.companyName || "Brand")}
                 </AvatarFallback>
               </Avatar>
               <Label
@@ -201,17 +197,17 @@ export default function BrandProfilePage() {
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
                 className="hidden"
-                disabled={isUploadingLogo}
+                disabled={isUploadingLogo || !hasLoadedProfile}
                 onChange={(e) => void uploadLogo(e.target.files?.[0])}
               />
             </div>
 
             <div className="min-w-0">
               <h1 className="truncate text-xl font-extrabold tracking-tight text-white">
-                {profile.companyName}
+                {profile.companyName || "Company Profile"}
               </h1>
               <p className="mt-0.5 text-sm font-medium text-[#8fb09a]">
-                {profile.industry}
+                {getCategoryLabel(profile.category)}
               </p>
               {brandTotalReviews > 0 && (
                 <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1">
@@ -229,7 +225,7 @@ export default function BrandProfilePage() {
                 variant="ghost"
                 size="sm"
                 className="mt-1.5 h-7 rounded-lg border border-white/15 px-3 text-[11px] font-bold text-white/80 hover:border-white/30 hover:bg-white/10 hover:text-white disabled:opacity-50"
-                disabled={isUploadingLogo}
+                disabled={isUploadingLogo || !hasLoadedProfile}
                 asChild
               >
                 <Label htmlFor="brand-logo-upload" className="cursor-pointer">
@@ -259,6 +255,20 @@ export default function BrandProfilePage() {
             } as React.CSSProperties
           }
         >
+          {profileLoadError && (
+            <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-[#efcf83] bg-[#fff9e8] p-4 text-sm text-[#6f4a0f] sm:flex-row sm:items-center sm:justify-between">
+              <p className="font-semibold">{profileLoadError}</p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void loadBrandProfile()}
+                className="h-8 self-start rounded-lg border-[#efcf83] bg-white px-3 text-xs font-extrabold text-[#6f4a0f] hover:bg-[#fff3c7] sm:self-auto"
+              >
+                Retry
+              </Button>
+            </div>
+          )}
+
           {/* Company Information */}
           <section>
             <div className="mb-4 flex items-center gap-2">
@@ -284,22 +294,22 @@ export default function BrandProfilePage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="industry" className={labelCls}>
-                    Industry
+                  <Label htmlFor="category" className={labelCls}>
+                    Category
                   </Label>
                   <Select
-                    value={profile.industry}
+                    value={profile.category}
                     onValueChange={(v) =>
-                      setProfile((p) => ({ ...p, industry: v }))
+                      setProfile((p) => ({ ...p, category: v }))
                     }
                   >
-                    <SelectTrigger className={inputCls}>
+                    <SelectTrigger id="category" className={inputCls}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {industries.map((industry) => (
-                        <SelectItem key={industry} value={industry}>
-                          {industry}
+                      {categoryOptions.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -465,56 +475,6 @@ export default function BrandProfilePage() {
             </div>
           </section>
 
-          <div className="my-6 border-t border-[#e8ede9]" />
-
-          {/* Targeting & Budget */}
-          <section>
-            <div className="mb-4 flex items-center gap-2">
-              <span className="grid size-7 place-items-center rounded-lg bg-[#e7f0ea]">
-                <Target className="size-3.5 text-[#185c39]" />
-              </span>
-              <div>
-                <h2 className="text-sm font-extrabold text-[#1a2e22]">Targeting & Budget</h2>
-                <p className="text-[11px] text-[#8fa098]">Influences creator recommendations and campaign defaults</p>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="monthlyBudget" className={labelCls}>Monthly Budget (PKR)</Label>
-                <Input
-                  id="monthlyBudget"
-                  type="number"
-                  className={inputCls}
-                  value={profile.monthlyBudget}
-                  placeholder="e.g. 500000"
-                  onChange={(e) => setProfile((p) => ({ ...p, monthlyBudget: e.target.value }))}
-                />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="targetPlatforms" className={labelCls}>Target Platforms</Label>
-                  <Input
-                    id="targetPlatforms"
-                    className={inputCls}
-                    value={profile.targetPlatforms}
-                    placeholder="Instagram, TikTok, YouTube"
-                    onChange={(e) => setProfile((p) => ({ ...p, targetPlatforms: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="targetCities" className={labelCls}>Target Cities</Label>
-                  <Input
-                    id="targetCities"
-                    className={inputCls}
-                    value={profile.targetCities}
-                    placeholder="Karachi, Lahore, Islamabad"
-                    onChange={(e) => setProfile((p) => ({ ...p, targetCities: e.target.value }))}
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
-
           <section className="mt-6 rounded-[1.4rem] border border-[#d9e0d8] bg-[#f4f2e9] p-5">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b77a12]">Reputation</p>
             <div className="mt-1 flex items-center justify-between gap-3">
@@ -566,7 +526,7 @@ export default function BrandProfilePage() {
           <div className="mt-6">
             <Button
               onClick={handleSave}
-              disabled={isSaving}
+              disabled={isSaving || isProfileLoading || !hasLoadedProfile}
               className="h-10 w-full gap-2 rounded-xl bg-[#2d6b4e] text-sm font-bold text-white shadow-sm hover:bg-[#185c39] disabled:opacity-50"
             >
               {isSaving ? (
