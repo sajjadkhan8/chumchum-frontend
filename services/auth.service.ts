@@ -2,21 +2,26 @@ import { apiClient } from '@/lib/api/client';
 import { mapUser } from '@/lib/api/mappers';
 import type { User, UserRole } from '@/types';
 
+interface AuthUserResponse {
+  id: string;
+  email?: string;
+  emailVerified?: boolean;
+  phone?: string;
+  role?: string;
+  name?: string;
+  avatarUrl?: string;
+  brand?: {
+    companyName?: string;
+  } | null;
+  creatorProgramStatus?: User['creatorProgramStatus'];
+  active?: boolean;
+  createdAt?: string;
+}
+
 export interface AuthTokenResponse {
   accessToken: string;
   refreshToken?: string;
-  user: {
-    id: string;
-    email?: string;
-    emailVerified?: boolean;
-    phone?: string;
-    role?: string;
-    name?: string;
-    avatarUrl?: string;
-    creatorProgramStatus?: User['creatorProgramStatus'];
-    active?: boolean;
-    createdAt?: string;
-  };
+  user: AuthUserResponse;
 }
 
 export interface MfaChallengeResponse {
@@ -117,7 +122,7 @@ export const authService = {
   },
 
   async me(): Promise<User> {
-    const response = await apiClient.get<{ id: string; email?: string; emailVerified?: boolean; phone?: string; role?: string; name?: string; avatarUrl?: string; creatorProgramStatus?: User['creatorProgramStatus']; active?: boolean; createdAt?: string }>('/api/v1/users/me', { noGlobalRedirect: true });
+    const response = await apiClient.get<AuthUserResponse>('/api/v1/users/me', { noGlobalRedirect: true });
     return mapUser(response);
   },
 };

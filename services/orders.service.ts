@@ -10,6 +10,17 @@ export interface CreateOrderRequest {
   message?: string;
 }
 
+export interface PreOrderPaymentResponse {
+  walletSufficient: boolean;
+  balance: number;
+  required: number;
+  checkoutRequired: boolean;
+  topUpAmount?: number;
+  sessionId?: string;
+  checkoutUrl?: string;
+  expiresAt?: string;
+}
+
 export interface UpdateOrderStatusRequest {
   status: Uppercase<OrderStatus>;
   progress_update?: string;
@@ -64,6 +75,10 @@ export const ordersService = {
     return response ? mapOrder(response as never, {}, {}, {}) : null;
   },
 
+  async initiatePayment(amount: number): Promise<PreOrderPaymentResponse> {
+    return apiClient.post<PreOrderPaymentResponse>('/api/v1/orders/payment/initiate', { amount });
+  },
+
   async getAll(filters?: { status?: OrderStatus; search?: string; page?: number; limit?: number }): Promise<{ orders: Order[]; total: number; hasMore: boolean }> {
     type PaginatedResponse = { orders?: BackendOrderResponse[]; content?: BackendOrderResponse[]; total?: number; totalElements?: number };
     const page = filters?.page ?? 0;
@@ -114,8 +129,11 @@ export const ordersService = {
     return orders;
   },
 
-  async updateStatus(orderId: string, status: OrderStatus): Promise<Order | null> {
-    const payload: UpdateOrderStatusRequest = { status: status.toUpperCase() as Uppercase<OrderStatus> };
+  async updateStatus(orderId: string, status: OrderStatus, message?: string): Promise<Order | null> {
+    const payload: UpdateOrderStatusRequest = {
+      status: status.toUpperCase() as Uppercase<OrderStatus>,
+      message: message?.trim() || undefined,
+    };
     const response = await apiClient.patch<BackendOrderResponse>(`/api/v1/orders/${orderId}/status`, {
       ...payload,
     });

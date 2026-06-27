@@ -81,7 +81,7 @@ const categories: Category[] = [
       },
       {
         question: 'Can I cancel an order?',
-        answer: 'Creators cannot cancel orders after they have been accepted. If both parties agree, the brand can cancel a PENDING order and their escrow funds are returned. For disputes after work has started, contact support.',
+        answer: 'You can decline a PENDING order request before accepting it, and any escrowed brand funds are returned. Creators cannot cancel orders after they have been accepted. If work has started and there is an issue, message the brand or open a dispute.',
       },
     ],
   },

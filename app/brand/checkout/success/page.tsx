@@ -12,6 +12,12 @@ type Phase = "polling" | "completed" | "failed" | "timeout";
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLLS = 20; // 40 seconds before giving up
+const pendingPackageTopupKey = 'chumchum:pending-package-order-topup';
+
+interface PendingPackageTopup {
+  returnPath: string;
+  packageTitle?: string;
+}
 
 export default function CheckoutSuccessPage() {
   return (
@@ -36,8 +42,25 @@ function CheckoutSuccessContent() {
 
   const [phase, setPhase] = useState<Phase>("polling");
   const [sessionStatus, setSessionStatus] = useState<SafepaySessionStatus | null>(null);
+  const [pendingPackageTopup, setPendingPackageTopup] = useState<PendingPackageTopup | null>(null);
   const pollCount = useRef(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const raw = window.sessionStorage.getItem(pendingPackageTopupKey);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as Partial<PendingPackageTopup>;
+      if (parsed.returnPath) {
+        setPendingPackageTopup({
+          returnPath: parsed.returnPath,
+          packageTitle: parsed.packageTitle,
+        });
+      }
+    } catch {
+      window.sessionStorage.removeItem(pendingPackageTopupKey);
+    }
+  }, []);
 
   useEffect(() => {
     if (!sessionId) {
@@ -97,8 +120,23 @@ function CheckoutSuccessContent() {
         className="w-full max-w-md rounded-[2rem] border border-[#d9e0d8] bg-white p-8 shadow-[0_24px_80px_rgba(38,70,50,0.10)] text-center"
       >
         {phase === "polling" && <PollingState />}
-        {phase === "completed" && <CompletedState status={sessionStatus} onDone={() => router.push("/brand/payments")} />}
-        {phase === "failed" && <FailedState status={sessionStatus} onRetry={() => router.push("/brand/payments")} />}
+        {phase === "completed" && (
+          <CompletedState
+            status={sessionStatus}
+            pendingPackageTopup={pendingPackageTopup}
+            onDone={() => {
+              window.sessionStorage.removeItem(pendingPackageTopupKey);
+              router.push(pendingPackageTopup?.returnPath || "/brand/payments");
+            }}
+          />
+        )}
+        {phase === "failed" && (
+          <FailedState
+            status={sessionStatus}
+            pendingPackageTopup={pendingPackageTopup}
+            onRetry={() => router.push(pendingPackageTopup?.returnPath || "/brand/payments")}
+          />
+        )}
         {phase === "timeout" && <TimeoutState onDone={() => router.push("/brand/payments")} />}
       </motion.div>
     </div>
@@ -131,9 +169,11 @@ function PollingState() {
 
 function CompletedState({
   status,
+  pendingPackageTopup,
   onDone,
 }: {
   status: SafepaySessionStatus | null;
+  pendingPackageTopup: PendingPackageTopup | null;
   onDone: () => void;
 }) {
   return (
@@ -155,7 +195,9 @@ function CompletedState({
           </p>
         ) : null}
         <p className="mt-2 text-sm text-[#647168]">
-          Your campaign wallet has been credited. You can now use these funds to place orders with creators.
+          {pendingPackageTopup
+            ? "Your campaign wallet has been credited. Return to the package page to send the order request."
+            : "Your campaign wallet has been credited. You can now use these funds to place orders with creators."}
         </p>
       </div>
 
@@ -171,7 +213,7 @@ function CompletedState({
         onClick={onDone}
         className="w-full rounded-full bg-[#1e3d2e] font-black text-white hover:bg-[#2d6b4e]"
       >
-        Go to Payments
+        {pendingPackageTopup ? "Return to Package" : "Go to Payments"}
         <ArrowRight className="ml-2 size-4" />
       </Button>
     </div>
@@ -180,9 +222,11 @@ function CompletedState({
 
 function FailedState({
   status,
+  pendingPackageTopup,
   onRetry,
 }: {
   status: SafepaySessionStatus | null;
+  pendingPackageTopup: PendingPackageTopup | null;
   onRetry: () => void;
 }) {
   return (
@@ -210,7 +254,7 @@ function FailedState({
         onClick={onRetry}
         className="w-full rounded-full bg-[#1e3d2e] font-black text-white hover:bg-[#2d6b4e]"
       >
-        Try again
+        {pendingPackageTopup ? "Return to Package" : "Try again"}
         <ArrowRight className="ml-2 size-4" />
       </Button>
     </div>

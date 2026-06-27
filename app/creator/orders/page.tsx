@@ -160,6 +160,9 @@ function CreatorOrdersPageContent() {
   const [disputeTitle, setDisputeTitle] = useState('');
   const [disputeDesc, setDisputeDesc] = useState('');
   const [isSubmittingDispute, setIsSubmittingDispute] = useState(false);
+  const [declineTarget, setDeclineTarget] = useState<Order | null>(null);
+  const [declineReason, setDeclineReason] = useState('');
+  const [isDeclining, setIsDeclining] = useState(false);
 
   const loadOrders = async (status?: string, append = false, page = 0) => {
     if (append) setIsLoadingMore(true);
@@ -251,6 +254,31 @@ function CreatorOrdersPageContent() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update order";
       toast.error(message);
+    }
+  };
+
+  const handleDeclineOrder = async () => {
+    if (!declineTarget) return;
+    setIsDeclining(true);
+    try {
+      const updated = await ordersService.updateStatus(
+        declineTarget.id,
+        "cancelled",
+        declineReason.trim() || "Creator declined the order request before accepting.",
+      );
+      if (updated) {
+        setOrders((current) => current.map((order) => (order.id === declineTarget.id ? updated : order)));
+      }
+      toast.success("Order request declined", {
+        description: "The brand has been notified and any escrowed funds are returned.",
+      });
+      setDeclineTarget(null);
+      setDeclineReason('');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to decline order";
+      toast.error(message);
+    } finally {
+      setIsDeclining(false);
     }
   };
 
@@ -679,13 +707,27 @@ function CreatorOrdersPageContent() {
                             </Button>
                           )}
                           {order.status === "pending" ? (
-                            <Button
-                              className="flex-1 rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]"
-                              onClick={(e) => { e.stopPropagation(); void updateOrderStatus(order.id, "accepted"); }}
-                            >
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Accept
-                            </Button>
+                            <>
+                              <Button
+                                variant="outline"
+                                className="flex-1 rounded-full border-[#efcf83] font-bold text-[#8b5e12] hover:bg-[#fff7df]"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeclineTarget(order);
+                                  setDeclineReason('');
+                                }}
+                              >
+                                <XCircle className="mr-2 h-4 w-4" />
+                                Decline
+                              </Button>
+                              <Button
+                                className="flex-1 rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]"
+                                onClick={(e) => { e.stopPropagation(); void updateOrderStatus(order.id, "accepted"); }}
+                              >
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Accept
+                              </Button>
+                            </>
                           ) : order.status === "accepted" ? (
                             <Button
                               className="flex-1 rounded-full bg-[#2d6b4e] font-bold text-white hover:bg-[#1f5239]"
@@ -801,6 +843,51 @@ function CreatorOrdersPageContent() {
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Submitting..." : "Submit"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Decline order dialog */}
+      <Dialog open={Boolean(declineTarget)} onOpenChange={(open) => { if (!open) { setDeclineTarget(null); setDeclineReason(''); } }}>
+        <DialogContent className="max-w-[calc(100%-1rem)] rounded-[1.5rem] border-[#d9e0d8] bg-[#fbfaf5] sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black tracking-[-0.04em] text-[#1e3d2e]">Decline order request</DialogTitle>
+            <DialogDescription className="font-bold text-[#647168]">
+              This will cancel the pending request from {declineTarget?.brand.name || "the brand"} and return any escrowed funds.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-1">
+            <div className="rounded-2xl border border-[#efcf83] bg-[#fff7df] p-4 text-sm leading-6 text-[#6b5a32]">
+              Declining is only available before you accept the order. After accepting, use messages or open a dispute if work cannot continue.
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="decline-reason" className="text-sm font-black text-[#173b2a]">Optional note to brand</Label>
+              <Textarea
+                id="decline-reason"
+                rows={4}
+                value={declineReason}
+                onChange={(event) => setDeclineReason(event.target.value)}
+                placeholder="e.g. Timeline does not fit my availability this week."
+                className="resize-none rounded-xl border-[#cddad1] bg-white text-[#1e3d2e] placeholder:text-[#87938b] focus-visible:ring-[#2d6b4e]"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button
+                variant="outline"
+                className="rounded-full border-[#d1ddd6] font-bold text-[#6b7870] hover:bg-[#f4f7f5]"
+                onClick={() => { setDeclineTarget(null); setDeclineReason(''); }}
+                disabled={isDeclining}
+              >
+                Keep Request
+              </Button>
+              <Button
+                className="rounded-full bg-[#9d3c36] font-bold text-white hover:bg-[#7f2f2a]"
+                onClick={() => void handleDeclineOrder()}
+                disabled={isDeclining}
+              >
+                {isDeclining ? "Declining..." : "Decline Request"}
               </Button>
             </div>
           </div>

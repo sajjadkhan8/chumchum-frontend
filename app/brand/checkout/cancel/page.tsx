@@ -1,17 +1,37 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { paymentsService } from "@/services/payments.service";
 
+const pendingPackageTopupKey = 'chumchum:pending-package-order-topup';
+
+interface PendingPackageTopup {
+  returnPath: string;
+}
+
 export default function CheckoutCancelPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const sessionId = searchParams.get("session");
+  const [pendingPackageTopup, setPendingPackageTopup] = useState<PendingPackageTopup | null>(null);
+
+  useEffect(() => {
+    const raw = window.sessionStorage.getItem(pendingPackageTopupKey);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as Partial<PendingPackageTopup>;
+      if (parsed.returnPath) {
+        setPendingPackageTopup({ returnPath: parsed.returnPath });
+      }
+    } catch {
+      window.sessionStorage.removeItem(pendingPackageTopupKey);
+    }
+  }, []);
 
   // Best-effort: record the cancellation so the backend can close the session
   useEffect(() => {
@@ -42,15 +62,22 @@ export default function CheckoutCancelPage() {
         </div>
 
         <div className="rounded-2xl bg-[#f4f2e9] p-4 text-sm text-[#647168]">
-          You can initiate a new top-up at any time from your Payments workspace.
+          {pendingPackageTopup
+            ? "Return to the package page when you are ready to try the wallet top-up again."
+            : "You can initiate a new top-up at any time from your Payments workspace."}
         </div>
 
         <Button
-          onClick={() => router.push("/brand/payments")}
+          onClick={() => {
+            if (pendingPackageTopup) {
+              window.sessionStorage.removeItem(pendingPackageTopupKey);
+            }
+            router.push(pendingPackageTopup?.returnPath || "/brand/payments");
+          }}
           className="w-full rounded-full bg-[#1e3d2e] font-black text-white hover:bg-[#2d6b4e]"
         >
           <ArrowLeft className="mr-2 size-4" />
-          Back to Payments
+          {pendingPackageTopup ? "Back to Package" : "Back to Payments"}
         </Button>
       </motion.div>
     </div>

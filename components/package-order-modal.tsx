@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Banknote, CheckCircle, Clock, Gift, Loader2, PackageCheck, Send, Sparkles } from 'lucide-react';
+import Image from 'next/image';
+import { AlertCircle, Banknote, Gift, Loader2, Send, Sparkles, Wallet } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,9 +14,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { PlatformIconBadge } from '@/components/platform-icons';
 import { ordersService } from '@/services/orders.service';
+import type { PreOrderPaymentResponse } from '@/services/orders.service';
 import type { DealType, Package } from '@/types';
-import { cn, formatPrice } from '@/lib/utils';
-import { getCategoryLabel } from '@/lib/categories';
+import { formatPrice } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface PackageOrderModalProps {
@@ -57,40 +58,46 @@ const inputClassName =
 const textareaClassName =
   'resize-none rounded-xl border-[#d9e0d8] bg-[#f4f2e9] text-sm text-[#1e3d2e] placeholder:text-[#8fa098] focus-visible:ring-[#2d6b4e]/20';
 const labelClassName = 'text-[10px] font-bold uppercase tracking-widest text-[#8fa098]';
+const pendingPackageTopupKey = 'chumchum:pending-package-order-topup';
+const cashAmountLimits = { min: 100, max: 1_000_000 };
 
 export function PackageOrderModal({ isOpen, pkg, onClose, onCreated }: PackageOrderModalProps) {
   const [amount, setAmount] = useState('');
-  const [barterDetails, setBarterDetails] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentAssist, setPaymentAssist] = useState<PreOrderPaymentResponse | null>(null);
+  const [isRedirectingToCheckout, setIsRedirectingToCheckout] = useState(false);
 
   useEffect(() => {
     if (!pkg || !isOpen) return;
     setAmount(getInitialAmount(pkg));
-    setBarterDetails(pkg.barterDescription || pkg.creatorExpectations || '');
     setMessage(`Hi, I would like to order "${pkg.title}".`);
+    setPaymentAssist(null);
+    setIsRedirectingToCheckout(false);
   }, [isOpen, pkg]);
 
   const needsAmount = pkg?.dealType === 'paid' || pkg?.dealType === 'hybrid';
-  const needsBarter = pkg?.dealType === 'barter' || pkg?.dealType === 'hybrid';
-
   const priceSummary = useMemo(() => {
     if (!pkg) return '';
     if (pkg.dealType === 'barter') return pkg.barterValue || 'Barter deal';
     if (pkg.dealType === 'hybrid') return `${formatPrice(pkg.hybridCashAmount || pkg.price)} + barter`;
     return formatPrice(pkg.price);
   }, [pkg]);
+  const packageThumbnail = pkg ? (pkg as Package & { thumbnail?: string }).thumbnail : undefined;
 
   const handleSubmit = async () => {
     if (!pkg) return;
+    const cashAmount = Number(amount);
 
-    if (needsAmount && (!amount || Number(amount) <= 0)) {
+    if (needsAmount && (!amount || cashAmount <= 0)) {
       toast.error('Please enter the cash amount for this order.');
       return;
     }
 
-    if (needsBarter && !barterDetails.trim()) {
-      toast.error('Please describe the barter item or service.');
+    if (needsAmount && (cashAmount < cashAmountLimits.min || cashAmount > cashAmountLimits.max)) {
+      toast.error(
+        `Cash amount must be between ${formatPrice(cashAmountLimits.min)} and ${formatPrice(cashAmountLimits.max)}.`,
+      );
       return;
     }
 
@@ -100,13 +107,25 @@ export function PackageOrderModal({ isOpen, pkg, onClose, onCreated }: PackageOr
     }
 
     setIsSubmitting(true);
+    setPaymentAssist(null);
 
     try {
+      if (needsAmount) {
+        const paymentCheck = await ordersService.initiatePayment(cashAmount);
+        if (!paymentCheck.walletSufficient) {
+          setPaymentAssist(paymentCheck);
+          toast.warning('Add funds to place this order', {
+            description: `${formatPrice(paymentCheck.topUpAmount || 0)} is needed in your brand wallet.`,
+          });
+          return;
+        }
+      }
+
       const order = await ordersService.create({
         packageId: pkg.id,
         dealType: pkg.dealType.toUpperCase() as Uppercase<DealType>,
-        amount: amount ? Number(amount) : undefined,
-        barterDetails: barterDetails.trim() || undefined,
+        amount: amount ? cashAmount : undefined,
+        barterDetails: pkg.dealType === 'barter' || pkg.dealType === 'hybrid' ? message.trim() : undefined,
         message: message.trim(),
       });
 
@@ -121,10 +140,54 @@ export function PackageOrderModal({ isOpen, pkg, onClose, onCreated }: PackageOr
       onClose();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create order';
-      toast.error(message);
+      if (needsAmount && message.toLowerCase().includes('insufficient wallet')) {
+        try {
+          const paymentCheck = await ordersService.initiatePayment(cashAmount);
+          setPaymentAssist(paymentCheck);
+          toast.warning('Add funds to place this order', {
+            description: `${formatPrice(paymentCheck.topUpAmount || Math.max(cashAmount, 1000))} is needed in your brand wallet.`,
+          });
+        } catch {
+          toast.error(message);
+        }
+      } else {
+        toast.error(message);
+      }
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleContinueToCheckout = () => {
+    if (!paymentAssist?.checkoutUrl) {
+      toast.error('Checkout link is unavailable. Please try again.');
+      return;
+    }
+    window.sessionStorage.setItem(pendingPackageTopupKey, JSON.stringify({
+      returnPath: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      packageTitle: pkg?.title,
+      topUpAmount: paymentAssist.topUpAmount,
+      createdAt: Date.now(),
+    }));
+    setIsRedirectingToCheckout(true);
+    window.location.href = paymentAssist.checkoutUrl;
+  };
+
+  const updateCashAmount = (value: string) => {
+    if (value === '' || /^\d*$/.test(value)) {
+      setAmount(value);
+      setPaymentAssist(null);
+    }
+  };
+
+  const normalizeCashAmount = () => {
+    if (!amount) return;
+    const numericAmount = Number(amount);
+    const nextAmount = Math.min(
+      cashAmountLimits.max,
+      Math.max(cashAmountLimits.min, numericAmount),
+    );
+    setAmount(String(Number.isFinite(nextAmount) ? nextAmount : cashAmountLimits.min));
   };
 
   return (
@@ -134,84 +197,38 @@ export function PackageOrderModal({ isOpen, pkg, onClose, onCreated }: PackageOr
 
         {pkg && (
           <>
-            <div className="relative overflow-hidden bg-[#1e3d2e] px-5 pb-5 pt-5 text-white sm:px-6">
+            <div className="relative overflow-hidden bg-[#1e3d2e] px-5 py-5 text-white sm:px-6">
               <div
                 className="pointer-events-none absolute right-0 top-0 h-full w-2/3 opacity-25"
                 style={{ background: 'radial-gradient(ellipse at 100% 0%, #e6aa38, transparent 65%)' }}
                 aria-hidden
               />
-              <div className="relative">
-                <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-[#f0c56e]">
-                  <PackageCheck className="size-3" />
-                  Package Order
+              <div className="relative flex items-start gap-3">
+                <div className="relative size-16 shrink-0 overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/15">
+                  <Image
+                    src={packageThumbnail || '/creator-card-fallback.svg'}
+                    alt={pkg.title}
+                    fill
+                    sizes="64px"
+                    className="object-cover"
+                  />
                 </div>
-                <p className="text-sm text-[#8fa098]">Send a request for</p>
-                <div className="mt-3 flex items-start gap-3">
-                  <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/10 text-[#f0c56e] ring-1 ring-white/15">
-                    <PlatformIconBadge platform={pkg.platform} className="border-white/10 bg-transparent shadow-none" />
+                <div className="min-w-0 flex-1">
+                  <span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#f0c56e]">
+                    <PlatformIconBadge platform={pkg.platform} size="xs" className="border-0 bg-transparent shadow-none" />
+                    Order package
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <h2 className="line-clamp-2 text-lg font-extrabold leading-tight tracking-[-0.02em] text-white">
-                      {pkg.title}
-                    </h2>
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-bold capitalize text-white/75">
-                        {pkg.platform}
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-bold text-white/75">
-                        <Clock className="size-3" />
-                        {pkg.deliveryDays} days
-                      </span>
-                    </div>
-                  </div>
+                  <h2 className="line-clamp-2 text-lg font-black leading-tight tracking-[-0.03em] text-white">
+                    {pkg.title}
+                  </h2>
                 </div>
               </div>
             </div>
 
-            <div className="max-h-[calc(100dvh-13rem)] space-y-5 overflow-y-auto bg-white px-5 py-5 sm:max-h-[calc(90dvh-12rem)] sm:px-6 sm:py-6">
-              <div className="overflow-hidden rounded-2xl border border-[#e2e7e1] bg-white shadow-sm">
-                <div className="flex items-start justify-between gap-3 border-b border-[#edf1ed] bg-[#fbfaf5] px-4 py-3.5">
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">
-                      Selected Package
-                    </p>
-                    <p className="mt-1 line-clamp-2 text-[13px] font-extrabold leading-snug text-[#1e3d2e]">
-                      {pkg.title}
-                    </p>
-                  </div>
-                  <span className={cn('inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-extrabold', dealMeta[pkg.dealType].badgeClass)}>
-                    {(() => {
-                      const DealIcon = dealMeta[pkg.dealType].Icon;
-                      return <DealIcon className="size-3" />;
-                    })()}
-                    {dealMeta[pkg.dealType].label}
-                  </span>
-                </div>
-
-                <div className="space-y-4 p-4">
-                  <p className="line-clamp-3 text-[13px] leading-5 text-[#647168]">{pkg.description}</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="rounded-xl border border-[#edf1ed] bg-[#fbfaf5] px-3 py-2.5">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a9a87]">Price</p>
-                      <p className="mt-1 text-[15px] font-black text-[#1e3d2e]">{priceSummary}</p>
-                    </div>
-                    <div className="rounded-xl border border-[#edf1ed] bg-[#fbfaf5] px-3 py-2.5">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a9a87]">Category</p>
-                      <p className="mt-1 truncate text-[13px] font-extrabold text-[#1e3d2e]">{getCategoryLabel(pkg.category)}</p>
-                    </div>
-                  </div>
-
-                  {pkg.deliverables.length > 0 && (
-                    <div className="grid gap-2">
-                      {pkg.deliverables.slice(0, 3).map((deliverable, index) => (
-                        <div key={`${deliverable}-${index}`} className="flex items-start gap-2 rounded-xl border border-[#edf1ed] bg-[#fbfaf5] px-3 py-2 text-[12px]">
-                          <CheckCircle className="mt-0.5 size-3.5 shrink-0 text-[#2d6b4e]" />
-                          <span className="leading-5 text-[#496159]">{deliverable}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+            <div className="max-h-[calc(100dvh-11rem)] space-y-5 overflow-y-auto bg-white px-5 py-5 sm:max-h-[calc(90dvh-10rem)] sm:px-6 sm:py-6">
+              <div className="rounded-2xl border border-[#edf1ed] bg-[#fbfaf5] px-4 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a9a87]">Price</p>
+                <p className="mt-1 text-[16px] font-black text-[#1e3d2e]">{priceSummary}</p>
               </div>
 
               {needsAmount && (
@@ -220,25 +237,17 @@ export function PackageOrderModal({ isOpen, pkg, onClose, onCreated }: PackageOr
                   <Input
                     id="order-amount"
                     type="number"
+                    min={cashAmountLimits.min}
+                    max={cashAmountLimits.max}
                     value={amount}
-                    onChange={(event) => setAmount(event.target.value)}
+                    onChange={(event) => updateCashAmount(event.target.value)}
+                    onBlur={normalizeCashAmount}
                     placeholder="15000"
                     className={inputClassName}
                   />
-                </div>
-              )}
-
-              {needsBarter && (
-                <div className="space-y-2">
-                  <Label htmlFor="order-barter" className={labelClassName}>Barter Details</Label>
-                  <Textarea
-                    id="order-barter"
-                    rows={3}
-                    value={barterDetails}
-                    onChange={(event) => setBarterDetails(event.target.value)}
-                    placeholder="Describe the product, service, or experience you will provide."
-                    className={textareaClassName}
-                  />
+                  <p className="text-[11px] font-medium leading-5 text-[#8fa098]">
+                    Cash must be between {formatPrice(cashAmountLimits.min)} and {formatPrice(cashAmountLimits.max)}.
+                  </p>
                 </div>
               )}
 
@@ -254,10 +263,41 @@ export function PackageOrderModal({ isOpen, pkg, onClose, onCreated }: PackageOr
                 />
               </div>
 
+              {paymentAssist && (
+                <div className="rounded-2xl border border-[#f1d38a] bg-[#fff8e8] p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#f0c56e]/25 text-[#8b5e12]">
+                      <Wallet className="size-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 text-[12px] font-black uppercase tracking-[0.12em] text-[#8b5e12]">
+                        <AlertCircle className="size-3.5" />
+                        Wallet top-up needed
+                      </div>
+                      <p className="mt-1 text-[13px] leading-5 text-[#6c5b32]">
+                        Your wallet has {formatPrice(paymentAssist.balance)}. This order needs {formatPrice(paymentAssist.required)}, so add {formatPrice(paymentAssist.topUpAmount || 0)} to continue.
+                      </p>
+                      <Button
+                        className="mt-3 h-10 w-full rounded-full bg-[#e6aa38] text-xs font-black text-[#173b2a] hover:bg-[#f0bb55] disabled:cursor-not-allowed disabled:opacity-60"
+                        onClick={handleContinueToCheckout}
+                        disabled={isRedirectingToCheckout || !paymentAssist.checkoutUrl}
+                      >
+                        {isRedirectingToCheckout ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        ) : (
+                          <Wallet className="mr-2 size-4" />
+                        )}
+                        {isRedirectingToCheckout ? 'Redirecting...' : `Add ${formatPrice(paymentAssist.topUpAmount || 0)} via Safepay`}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <Button
                 className="h-11 w-full rounded-full bg-[#2d6b4e] text-sm font-extrabold text-white hover:bg-[#1f5239] disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={handleSubmit}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isRedirectingToCheckout}
               >
                 {isSubmitting ? (
                   <Loader2 className="mr-2 size-4 animate-spin" />

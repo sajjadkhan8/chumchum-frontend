@@ -73,25 +73,33 @@ interface BackendUser {
   role?: string;
   name?: string;
   avatarUrl?: string;
+  brand?: {
+    companyName?: string;
+  } | null;
   creatorProgramStatus?: User['creatorProgramStatus'];
   active?: boolean;
   mfaEnabled?: boolean;
   createdAt?: string;
 }
 
-export const mapUser = (input: BackendUser): User => ({
-  id: input.id,
-  email: input.email || '',
-  emailVerified: input.emailVerified,
-  phone: input.phone,
-  role: normalizeRole(input.role),
-  name: input.name || 'User',
-  avatar: input.avatarUrl,
-  creatorProgramStatus: input.creatorProgramStatus || 'none',
-  active: input.active,
-  mfaEnabled: input.mfaEnabled,
-  createdAt: safeDate(input.createdAt),
-});
+export const mapUser = (input: BackendUser): User => {
+  const role = normalizeRole(input.role);
+  const brandCompanyName = input.brand?.companyName?.trim();
+
+  return {
+    id: input.id,
+    email: input.email || '',
+    emailVerified: input.emailVerified,
+    phone: input.phone,
+    role,
+    name: role === 'brand' ? brandCompanyName || input.name || 'Brand' : input.name || 'User',
+    avatar: input.avatarUrl,
+    creatorProgramStatus: input.creatorProgramStatus || 'none',
+    active: input.active,
+    mfaEnabled: input.mfaEnabled,
+    createdAt: safeDate(input.createdAt),
+  };
+};
 
 interface BackendCreatorResponse {
   id: string;
