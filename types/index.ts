@@ -21,9 +21,28 @@ export type CreatorVerificationStatus = 'unverified' | 'pending' | 'under_review
 // Creator Types
 export type Platform = 'instagram' | 'tiktok' | 'youtube' | 'facebook' | 'snapchat';
 export type DealType = 'paid' | 'barter' | 'hybrid';
+export type CollaborationPreference = DealType;
 export type CreatorBadgeLevel = 'none' | 'verified' | 'rising_star' | 'pro' | 'elite';
-export type BarterType = 'food' | 'hotel' | 'salon' | 'events' | 'products';
-export type City = 'Karachi' | 'Lahore' | 'Islamabad' | 'Rawalpindi' | 'Faisalabad' | 'Multan' | 'Peshawar';
+export type BarterType =
+  | 'FOOD'
+  | 'FASHION'
+  | 'BEAUTY'
+  | 'TECH'
+  | 'FITNESS'
+  | 'HEALTH'
+  | 'TRAVEL'
+  | 'LIFESTYLE'
+  | 'GAMING'
+  | 'EDUCATION'
+  | 'ENTERTAINMENT'
+  | 'BUSINESS_FINANCE'
+  | 'HOME_DECOR'
+  | 'PARENTING_FAMILY'
+  | 'SPORTS'
+  | 'AUTOMOTIVE'
+  | 'RELIGIOUS_SPIRITUAL'
+  | 'GENERAL';
+export type City = string;
 
 export type VerificationSource = 'SELF' | 'PLATFORM_REVIEWED' | 'API_CONNECTED';
 
@@ -40,7 +59,7 @@ export interface SocialStats {
   sync_error?: string;
 }
 
-export type BarterCategory = BarterType | 'services' | 'travel' | 'education';
+export type BarterCategory = BarterType;
 
 export interface Creator {
   id: string;
@@ -57,14 +76,12 @@ export interface Creator {
   languages?: string[];
   website?: string;
   availabilityStatus?: string;
-  acceptsBarter?: boolean;
-  acceptsHybridDeals?: boolean;
   isFiler?: boolean;
   minimumBudget?: number;
   platforms: SocialStats[];
   totalFollowers: number;
   avgEngagementRate: number;
-  dealTypes: DealType[];
+  collaborationPreferences: CollaborationPreference[];
   barterTypes?: BarterType[];
   minPrice?: number;
   maxPrice?: number;
@@ -359,7 +376,7 @@ export interface CreatorFilters {
   languages?: string[];
   platforms?: Platform[];
   cities?: City[];
-  dealTypes?: DealType[];
+  collaborationPreferences?: CollaborationPreference[];
   barterTypes?: BarterType[];
   minFollowers?: number;
   maxFollowers?: number;
@@ -369,7 +386,6 @@ export interface CreatorFilters {
   maxPrice?: number;
   badgeLevel?: CreatorBadgeLevel;
   availabilityStatus?: 'available' | 'busy';
-  acceptsBarter?: boolean;
   ambassadorOnly?: boolean;
   isTrending?: boolean;
   isFastResponder?: boolean;

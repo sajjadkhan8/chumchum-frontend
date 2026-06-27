@@ -179,7 +179,7 @@ export default function CreatorDashboardPage() {
     name: user?.name ?? "Creator", avatar: user?.avatar ?? "",
     bio: "", city: "Karachi", categories: [],
     platforms: [{ platform: "instagram", followers: 0, engagementRate: 0, username: "creator" }],
-    totalFollowers: 0, avgEngagementRate: 0, dealTypes: ["paid"],
+    totalFollowers: 0, avgEngagementRate: 0, collaborationPreferences: ["paid"],
     responseTime: "Within 24 hours", isVerified: false, isTrending: false,
     isFastResponder: false, rating: 0, totalReviews: 0, completedDeals: 0,
     contentPreviews: [], createdAt: new Date(),

@@ -95,7 +95,7 @@ export const mockPackages: Package[] = [
     barterDescription: 'Showcase premium salon treatment experience and before/after transformation.',
     creatorExpectations: 'Service booking flexibility, branded setup, and product takeaway kit.',
     platform: 'instagram' as Platform,
-    tags: ['Barter', 'Salon & Spa'],
+    tags: ['Barter', 'Beauty'],
     isPopular: true,
     ordersCompleted: 18,
   },

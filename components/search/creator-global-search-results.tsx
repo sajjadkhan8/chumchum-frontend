@@ -40,7 +40,7 @@ type SearchFilters = {
 type CreatorSearchFilters = {
   badgeLevel: CreatorBadgeLevel | 'any';
   availableOnly: boolean;
-  acceptsBarterOnly: boolean;
+  barterOnly: boolean;
   cities: City[];
   platforms: Platform[];
   languages: string[];
@@ -61,7 +61,7 @@ const DEFAULT_BUDGET_RANGE: [number, number] = [10000, 200000];
 const DEFAULT_CREATOR_FILTERS: CreatorSearchFilters = {
   badgeLevel: 'any',
   availableOnly: false,
-  acceptsBarterOnly: false,
+  barterOnly: false,
   cities: [],
   platforms: [],
   languages: [],
@@ -77,7 +77,7 @@ const DEFAULT_CREATOR_FILTERS: CreatorSearchFilters = {
   maxRateCard: null,
 };
 
-const CREATOR_CITY_OPTIONS = pakistanCities.slice(0, 7) as City[];
+const CREATOR_CITY_OPTIONS: City[] = [...pakistanCities];
 
 const PLATFORM_OPTIONS: Array<{ value: Platform; label: string }> = [
   { value: 'instagram', label: 'Instagram' },
@@ -601,7 +601,7 @@ export function CreatorGlobalSearchResults() {
       search: searchTerm,
       badgeLevel: creatorFilters.badgeLevel !== 'any' ? creatorFilters.badgeLevel as CreatorBadgeLevel : undefined,
       availabilityStatus: creatorFilters.availableOnly ? 'available' : undefined,
-      acceptsBarter: creatorFilters.acceptsBarterOnly ? true : undefined,
+      collaborationPreferences: creatorFilters.barterOnly ? ['barter'] : undefined,
       cities: creatorFilters.cities.length > 0 ? creatorFilters.cities : undefined,
       platforms: creatorFilters.platforms.length > 0 ? creatorFilters.platforms : undefined,
       languages: creatorFilters.languages.length > 0 ? creatorFilters.languages : undefined,
@@ -647,7 +647,7 @@ export function CreatorGlobalSearchResults() {
         search: searchTerm,
         badgeLevel: creatorFilters.badgeLevel !== 'any' ? creatorFilters.badgeLevel as CreatorBadgeLevel : undefined,
         availabilityStatus: creatorFilters.availableOnly ? 'available' : undefined,
-        acceptsBarter: creatorFilters.acceptsBarterOnly ? true : undefined,
+        collaborationPreferences: creatorFilters.barterOnly ? ['barter'] : undefined,
         cities: creatorFilters.cities.length > 0 ? creatorFilters.cities : undefined,
         platforms: creatorFilters.platforms.length > 0 ? creatorFilters.platforms : undefined,
         languages: creatorFilters.languages.length > 0 ? creatorFilters.languages : undefined,
@@ -938,7 +938,7 @@ export function CreatorGlobalSearchResults() {
 
       <section className="space-y-3">
         <h2 className="text-xs font-extrabold uppercase tracking-widest text-[#7a8f82]">City</h2>
-        <div className="space-y-2">
+        <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
           {CREATOR_CITY_OPTIONS.map((city) => (
             <label key={city} className="flex cursor-pointer items-center gap-3 text-sm text-[#496159]">
               <Checkbox
@@ -972,11 +972,11 @@ export function CreatorGlobalSearchResults() {
           </label>
           <label className="flex cursor-pointer items-center gap-3 text-sm text-[#496159]">
             <Checkbox
-              checked={creatorFilters.acceptsBarterOnly}
-              onCheckedChange={() => setCreatorFilters((c) => ({ ...c, acceptsBarterOnly: !c.acceptsBarterOnly }))}
+              checked={creatorFilters.barterOnly}
+              onCheckedChange={() => setCreatorFilters((c) => ({ ...c, barterOnly: !c.barterOnly }))}
               className="size-4 rounded-[3px] border-[#d1ddd6] data-[state=checked]:border-[#2d6b4e] data-[state=checked]:bg-[#2d6b4e]"
             />
-            <span className={cn(creatorFilters.acceptsBarterOnly && 'font-bold text-[#2d6b4e]')}>Accepts barter</span>
+            <span className={cn(creatorFilters.barterOnly && 'font-bold text-[#2d6b4e]')}>Barter collaborations</span>
           </label>
         </div>
       </section>

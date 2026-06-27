@@ -19,7 +19,7 @@ import type {
   UserRole,
   VerificationSource,
 } from '@/types';
-import { normalizeCategory, normalizeCategories } from '@/lib/categories';
+import { normalizeBarterTypes, normalizeCategory, normalizeCategories } from '@/lib/categories';
 
 const safeDate = (value?: string | Date | null): Date => {
   if (!value) return new Date();
@@ -115,8 +115,6 @@ interface BackendCreatorResponse {
   completed_deals?: number;
   completion_rate?: number;
   repeat_clients?: number;
-  accepts_barter?: boolean;
-  accepts_hybrid_deals?: boolean;
   is_filer?: boolean;
   active_order_count?: number;
   minimum_budget?: number;
@@ -164,7 +162,7 @@ interface BackendCreatorResponse {
     email?: string;
     phone?: string;
   };
-  deal_types?: string[];
+  collaboration_preferences?: string[];
   barter_types?: string[];
   created_at?: string;
 }
@@ -210,24 +208,18 @@ export const mapCreator = (input: BackendCreatorResponse): Creator => {
     languages: input.languages || [],
     website: input.website,
     availabilityStatus: input.availability_status,
-    acceptsBarter: input.accepts_barter,
-    acceptsHybridDeals: input.accepts_hybrid_deals,
     minimumBudget: input.minimum_budget,
     platforms: socialAccounts.length > 0 ? socialAccounts : [{ platform: 'instagram', followers, engagementRate, username }],
     totalFollowers: followers,
     avgEngagementRate: engagementRate,
-    dealTypes: (
-      input.deal_types?.length
-        ? (input.deal_types.map((d) => d.toLowerCase()) as DealType[])
-        : ([
-            'paid' as DealType,
-            input.accepts_barter ? ('barter' as DealType) : null,
-            input.accepts_hybrid_deals ? ('hybrid' as DealType) : null,
-          ].filter(Boolean) as DealType[])
+    collaborationPreferences: (
+      input.collaboration_preferences?.length
+        ? (input.collaboration_preferences.map((d) => d.toLowerCase()) as DealType[])
+        : ['paid']
     ),
     barterTypes: (
       input.barter_types?.length
-        ? (input.barter_types.map((b) => b.toLowerCase()) as BarterType[])
+        ? (normalizeBarterTypes(input.barter_types) as BarterType[])
         : undefined
     ),
     minPrice: input.min_price,
@@ -481,7 +473,7 @@ export const mapOrder = (input: BackendOrderResponse, packageMap: Record<string,
     platforms: [{ platform: 'instagram', followers: 0, engagementRate: 0, username: 'creator' }],
     totalFollowers: 0,
     avgEngagementRate: 0,
-    dealTypes: ['paid'],
+    collaborationPreferences: ['paid'],
     responseTime: 'Within 24 hours',
     isVerified: false,
     isTrending: false,
@@ -625,7 +617,7 @@ export const mapConversation = (
       platforms: [{ platform: 'instagram', followers: 0, engagementRate: 0, username: 'creator' }],
       totalFollowers: 0,
       avgEngagementRate: 0,
-      dealTypes: ['paid'],
+      collaborationPreferences: ['paid'],
       responseTime: 'Within 24 hours',
       isVerified: false,
       isTrending: false,

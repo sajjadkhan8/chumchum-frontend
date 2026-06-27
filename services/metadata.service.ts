@@ -1,6 +1,16 @@
 import { apiClient } from '@/lib/api/client';
-import { categoryOptions, categoryValues, normalizeCategories, type CategoryOption } from '@/lib/categories';
-import type { BarterType, City, DealType, Platform } from '@/types';
+import {
+  barterTypeOptions,
+  barterTypeValues,
+  categoryOptions,
+  categoryValues,
+  getBarterTypeLabel,
+  normalizeBarterTypes,
+  normalizeCategories,
+  type CategoryOption,
+} from '@/lib/categories';
+import { pakistanCities } from '@/lib/localization';
+import type { BarterType, City, CollaborationPreference, Platform } from '@/types';
 
 export interface RangeOption {
   min: number;
@@ -18,7 +28,7 @@ export interface CreatorFilterMetadata {
   categoryOptions: CategoryOption[];
   cities: City[];
   platforms: Platform[];
-  dealTypes: LabeledValueOption<DealType>[];
+  collaborationPreferences: LabeledValueOption<CollaborationPreference>[];
   barterTypes: LabeledValueOption<BarterType>[];
   followerRanges: RangeOption[];
   priceRanges: RangeOption[];
@@ -27,20 +37,14 @@ export interface CreatorFilterMetadata {
 export const defaultCreatorFilterMetadata: CreatorFilterMetadata = {
   categories: categoryValues,
   categoryOptions,
-  cities: ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'],
+  cities: [...pakistanCities],
   platforms: ['instagram', 'tiktok', 'youtube', 'facebook', 'snapchat'],
-  dealTypes: [
+  collaborationPreferences: [
     { value: 'paid', label: 'Paid' },
     { value: 'barter', label: 'Barter' },
     { value: 'hybrid', label: 'Hybrid' },
   ],
-  barterTypes: [
-    { value: 'food', label: 'Food & Dining' },
-    { value: 'hotel', label: 'Hotels & Stays' },
-    { value: 'salon', label: 'Salon & Spa' },
-    { value: 'events', label: 'Events & Tickets' },
-    { value: 'products', label: 'Products' },
-  ],
+  barterTypes: barterTypeOptions.map((option) => ({ value: option.value as BarterType, label: option.label })),
   followerRanges: [
     { min: 0, max: 10000, label: 'Nano (0-10K)' },
     { min: 10000, max: 50000, label: 'Micro (10K-50K)' },
@@ -72,8 +76,16 @@ const normalizeMetadata = (payload: Partial<CreatorFilterMetadata> | null | unde
     categoryOptions: options.length ? options : defaultCreatorFilterMetadata.categoryOptions,
     cities: payload?.cities?.length ? payload.cities : defaultCreatorFilterMetadata.cities,
     platforms: payload?.platforms?.length ? payload.platforms : defaultCreatorFilterMetadata.platforms,
-    dealTypes: payload?.dealTypes?.length ? payload.dealTypes : defaultCreatorFilterMetadata.dealTypes,
-    barterTypes: payload?.barterTypes?.length ? payload.barterTypes : defaultCreatorFilterMetadata.barterTypes,
+    collaborationPreferences: payload?.collaborationPreferences?.length ? payload.collaborationPreferences : defaultCreatorFilterMetadata.collaborationPreferences,
+    barterTypes: payload?.barterTypes?.length
+      ? payload.barterTypes
+          .map((option) => {
+            const value = normalizeBarterTypes([option.value])[0] as BarterType | undefined;
+            return value ? { value, label: getBarterTypeLabel(value) } : null;
+          })
+          .filter((option): option is LabeledValueOption<BarterType> => Boolean(option))
+          .filter((option) => barterTypeValues.includes(option.value))
+      : defaultCreatorFilterMetadata.barterTypes,
     followerRanges: payload?.followerRanges?.length ? payload.followerRanges : defaultCreatorFilterMetadata.followerRanges,
     priceRanges: payload?.priceRanges?.length ? payload.priceRanges : defaultCreatorFilterMetadata.priceRanges,
   };

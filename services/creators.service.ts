@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api/client';
 import { mapCreator } from '@/lib/api/mappers';
-import type { Creator, CreatorFilters, DealType, BarterCategory } from '@/types';
+import type { BarterCategory, CollaborationPreference, Creator, CreatorFilters } from '@/types';
 
 interface SearchResponse {
   creators?: unknown[];
@@ -23,8 +23,6 @@ interface CreatorProfileUpdatePayload {
   responseTime?: string;
   minPrice?: number;
   maxPrice?: number;
-  acceptsBarter?: boolean;
-  acceptsHybridDeals?: boolean;
   minimumBudget?: number;
   languages?: string[];
   categories?: string[];
@@ -32,7 +30,7 @@ interface CreatorProfileUpdatePayload {
   rateCardStory?: number;
   rateCardPost?: number;
   rateCardVideo?: number;
-  dealTypes?: DealType[];
+  collaborationPreferences?: CollaborationPreference[];
   barterTypes?: BarterCategory[];
 }
 
@@ -47,8 +45,7 @@ export interface CreatorSocialAccountPayload {
 }
 
 interface CreatorPreferencesPayload {
-  acceptsBarter: boolean;
-  acceptsHybridDeals: boolean;
+  collaborationPreferences: CollaborationPreference[];
   minimumBudget?: number;
 }
 
@@ -110,8 +107,6 @@ export const creatorsService = {
       response_time: payload.responseTime,
       min_price: payload.minPrice,
       max_price: payload.maxPrice,
-      accepts_barter: payload.acceptsBarter,
-      accepts_hybrid_deals: payload.acceptsHybridDeals,
       minimum_budget: payload.minimumBudget,
       languages: payload.languages,
       categories: payload.categories,
@@ -119,7 +114,7 @@ rate_card_reel: payload.rateCardReel,
       rate_card_story: payload.rateCardStory,
       rate_card_post: payload.rateCardPost,
       rate_card_video: payload.rateCardVideo,
-      deal_types: payload.dealTypes,
+      collaboration_preferences: payload.collaborationPreferences,
       barter_types: payload.barterTypes,
     });
 
@@ -186,14 +181,6 @@ rate_card_reel: payload.rateCardReel,
   },
 
   async getAll(filters?: CreatorFilters): Promise<{ creators: Creator[]; total: number }> {
-    // acceptsBarter: explicit flag takes precedence, then derive from dealTypes
-    const acceptsBarter =
-      filters?.acceptsBarter === true
-        ? true
-        : filters?.dealTypes?.includes('barter')
-          ? true
-          : undefined;
-
     // Map frontend badgeLevel ('rising_star') → backend enum name ('RISING_STAR')
     const badgeLevelParam =
       !filters?.badgeLevel || filters.badgeLevel === 'none'
@@ -218,7 +205,7 @@ rate_card_reel: payload.rateCardReel,
         maxPrice: filters?.maxPrice,
         badgeLevel: badgeLevelParam,
         availabilityStatus: availabilityParam,
-        acceptsBarter,
+        collaborationPreferences: filters?.collaborationPreferences?.length ? filters.collaborationPreferences : undefined,
         // Boolean toggles: send only when explicitly true so they don't over-filter when unset/false
         ambassadorOnly: filters?.ambassadorOnly ? true : undefined,
         isTrending: filters?.isTrending ? true : undefined,
@@ -240,7 +227,7 @@ rate_card_reel: payload.rateCardReel,
     const backendTotal: number = typeof raw?.total === 'number' ? raw.total : 0;
     let results = unwrapCreators(payload).map((creator) => mapCreator(creator as never));
 
-    // barterTypes is still client-side (backend only filters acceptsBarter boolean)
+    // barterTypes is still client-side; collaboration preference filtering is backend-backed.
     if (filters?.barterTypes?.length) {
       results = results.filter((creator) => creator.barterTypes?.some((type) => filters.barterTypes?.includes(type)));
     }

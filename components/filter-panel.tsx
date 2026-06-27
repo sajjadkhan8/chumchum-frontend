@@ -13,7 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useFilterStore } from '@/store/filter-store';
-import type { Platform, City, DealType, BarterType } from '@/types';
+import type { Platform, City, CollaborationPreference, BarterType } from '@/types';
 import { cn } from '@/lib/utils';
 import { pakistanLanguages } from '@/lib/localization';
 import { metadataService, defaultCreatorFilterMetadata, type CreatorFilterMetadata } from '@/services/metadata.service';
@@ -41,7 +41,7 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
     filters.categories?.length || 0,
     filters.platforms?.length || 0,
     filters.cities?.length || 0,
-    filters.dealTypes?.length || 0,
+    filters.collaborationPreferences?.length || 0,
     filters.barterTypes?.length || 0,
     filters.languages?.length || 0,
     filters.minFollowers ? 1 : 0,
@@ -58,7 +58,7 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
   ].reduce((a, b) => a + b, 0);
 
   const toggleArrayFilter = <T extends string>(
-    key: 'categories' | 'platforms' | 'cities' | 'dealTypes' | 'barterTypes' | 'languages',
+    key: 'categories' | 'platforms' | 'cities' | 'collaborationPreferences' | 'barterTypes' | 'languages',
     value: T
   ) => {
     const current = (filters[key] as T[]) || [];
@@ -109,7 +109,7 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
       </Section>
 
       <Section title="City" value="cities">
-        <div className="space-y-2">
+        <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
           {metadata.cities.map((city) => (
             <div key={city} className="flex items-center space-x-2">
               <Checkbox id={`city-${city}`} checked={filters.cities?.includes(city)} onCheckedChange={() => toggleArrayFilter('cities', city as City)} />
@@ -119,10 +119,10 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
         </div>
       </Section>
 
-      <Section title="Pricing Type" value="dealTypes">
+      <Section title="Collaboration Type" value="collaborationPreferences">
         <div className="flex flex-wrap gap-2">
-          {metadata.dealTypes.map((type) => (
-            <Badge key={type.value} variant={filters.dealTypes?.includes(type.value) ? 'default' : 'outline'} className={cn('cursor-pointer transition-colors', type.value === 'barter' && filters.dealTypes?.includes(type.value) && 'bg-accent text-accent-foreground')} onClick={() => toggleArrayFilter('dealTypes', type.value as DealType)}>
+          {metadata.collaborationPreferences.map((type) => (
+            <Badge key={type.value} variant={filters.collaborationPreferences?.includes(type.value) ? 'default' : 'outline'} className={cn('cursor-pointer transition-colors', type.value === 'barter' && filters.collaborationPreferences?.includes(type.value) && 'bg-accent text-accent-foreground')} onClick={() => toggleArrayFilter('collaborationPreferences', type.value as CollaborationPreference)}>
               {type.value === 'barter' && '🎁 '}
               {type.value === 'hybrid' && '💰🎁 '}
               {type.label}
@@ -173,8 +173,8 @@ export function FilterPanel({ className, isMobile = false }: FilterPanelProps) {
         </div>
       </Section>
 
-      {(filters.dealTypes?.includes('barter') || filters.dealTypes?.includes('hybrid')) && (
-        <Section title="Barter Type" value="barterTypes">
+      {(filters.collaborationPreferences?.includes('barter') || filters.collaborationPreferences?.includes('hybrid')) && (
+        <Section title="Accepted Barter Offers" value="barterTypes">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-wrap gap-2">
             {metadata.barterTypes.map((type) => (
               <Badge key={type.value} variant={filters.barterTypes?.includes(type.value) ? 'default' : 'outline'} className="cursor-pointer transition-colors" onClick={() => toggleArrayFilter('barterTypes', type.value as BarterType)}>

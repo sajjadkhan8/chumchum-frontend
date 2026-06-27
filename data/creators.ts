@@ -1,4 +1,5 @@
 import type { Creator, City, Platform, DealType, BarterType, ContentPreview } from '@/types';
+import { barterTypeOptions } from '@/lib/categories';
 
 const generateContentPreviews = (creatorName: string): ContentPreview[] => {
   const previews: ContentPreview[] = [];
@@ -34,8 +35,8 @@ export const mockCreators: Creator[] = [
     ],
     totalFollowers: 259000,
     avgEngagementRate: 4.8,
-    dealTypes: ['paid', 'barter', 'hybrid'] as DealType[],
-    barterTypes: ['food', 'hotel'] as BarterType[],
+    collaborationPreferences: ['paid', 'barter', 'hybrid'] as DealType[],
+    barterTypes: ['FOOD', 'TRAVEL'] as BarterType[],
     minPrice: 375000,
     maxPrice: 1875000,
     responseTime: 'Within 2 hours',
@@ -65,8 +66,8 @@ export const mockCreators: Creator[] = [
     ],
     totalFollowers: 835000,
     avgEngagementRate: 5.7,
-    dealTypes: ['paid', 'barter'] as DealType[],
-    barterTypes: ['salon', 'products'] as BarterType[],
+    collaborationPreferences: ['paid', 'barter'] as DealType[],
+    barterTypes: ['BEAUTY', 'GENERAL'] as BarterType[],
     minPrice: 875000,
     maxPrice: 3750000,
     responseTime: 'Within 1 hour',
@@ -96,8 +97,8 @@ export const mockCreators: Creator[] = [
     ],
     totalFollowers: 765000,
     avgEngagementRate: 4.7,
-    dealTypes: ['paid', 'hybrid'] as DealType[],
-    barterTypes: ['products'] as BarterType[],
+    collaborationPreferences: ['paid', 'hybrid'] as DealType[],
+    barterTypes: ['GENERAL'] as BarterType[],
     minPrice: 1250000,
     maxPrice: 5000000,
     responseTime: 'Within 6 hours',
@@ -127,8 +128,8 @@ export const mockCreators: Creator[] = [
     ],
     totalFollowers: 504000,
     avgEngagementRate: 6.4,
-    dealTypes: ['paid', 'barter', 'hybrid'] as DealType[],
-    barterTypes: ['products', 'salon'] as BarterType[],
+    collaborationPreferences: ['paid', 'barter', 'hybrid'] as DealType[],
+    barterTypes: ['GENERAL', 'BEAUTY'] as BarterType[],
     minPrice: 625000,
     maxPrice: 2500000,
     responseTime: 'Within 3 hours',
@@ -158,8 +159,8 @@ export const mockCreators: Creator[] = [
     ],
     totalFollowers: 1280000,
     avgEngagementRate: 4.4,
-    dealTypes: ['paid', 'barter'] as DealType[],
-    barterTypes: ['hotel', 'events'] as BarterType[],
+    collaborationPreferences: ['paid', 'barter'] as DealType[],
+    barterTypes: ['TRAVEL', 'ENTERTAINMENT'] as BarterType[],
     minPrice: 1875000,
     maxPrice: 8750000,
     responseTime: 'Within 12 hours',
@@ -189,8 +190,8 @@ export const mockCreators: Creator[] = [
     ],
     totalFollowers: 1324000,
     avgEngagementRate: 6.0,
-    dealTypes: ['paid', 'barter', 'hybrid'] as DealType[],
-    barterTypes: ['food', 'products'] as BarterType[],
+    collaborationPreferences: ['paid', 'barter', 'hybrid'] as DealType[],
+    barterTypes: ['FOOD', 'GENERAL'] as BarterType[],
     minPrice: 1000000,
     maxPrice: 4375000,
     responseTime: 'Within 4 hours',
@@ -220,7 +221,7 @@ export const mockCreators: Creator[] = [
     ],
     totalFollowers: 1212000,
     avgEngagementRate: 6.6,
-    dealTypes: ['paid'] as DealType[],
+    collaborationPreferences: ['paid'] as DealType[],
     barterTypes: [] as BarterType[],
     minPrice: 750000,
     maxPrice: 3125000,
@@ -251,8 +252,8 @@ export const mockCreators: Creator[] = [
     ],
     totalFollowers: 712000,
     avgEngagementRate: 5.6,
-    dealTypes: ['paid', 'barter'] as DealType[],
-    barterTypes: ['products', 'salon'] as BarterType[],
+    collaborationPreferences: ['paid', 'barter'] as DealType[],
+    barterTypes: ['GENERAL', 'BEAUTY'] as BarterType[],
     minPrice: 500000,
     maxPrice: 2125000,
     responseTime: 'Within 2 hours',
@@ -282,8 +283,8 @@ export const mockCreators: Creator[] = [
     ],
     totalFollowers: 813000,
     avgEngagementRate: 4.4,
-    dealTypes: ['paid', 'hybrid'] as DealType[],
-    barterTypes: ['products', 'events'] as BarterType[],
+    collaborationPreferences: ['paid', 'hybrid'] as DealType[],
+    barterTypes: ['GENERAL', 'ENTERTAINMENT'] as BarterType[],
     minPrice: 1125000,
     maxPrice: 4500000,
     responseTime: 'Within 6 hours',
@@ -313,7 +314,7 @@ export const mockCreators: Creator[] = [
     ],
     totalFollowers: 1501000,
     avgEngagementRate: 6.5,
-    dealTypes: ['paid'] as DealType[],
+    collaborationPreferences: ['paid'] as DealType[],
     barterTypes: [] as BarterType[],
     minPrice: 2000000,
     maxPrice: 7500000,
@@ -344,8 +345,8 @@ export const mockCreators: Creator[] = [
     ],
     totalFollowers: 2434000,
     avgEngagementRate: 7.2,
-    dealTypes: ['paid', 'hybrid'] as DealType[],
-    barterTypes: ['events', 'food'] as BarterType[],
+    collaborationPreferences: ['paid', 'hybrid'] as DealType[],
+    barterTypes: ['ENTERTAINMENT', 'FOOD'] as BarterType[],
     minPrice: 2500000,
     maxPrice: 12500000,
     responseTime: 'Within 48 hours',
@@ -375,8 +376,8 @@ export const mockCreators: Creator[] = [
     ],
     totalFollowers: 790000,
     avgEngagementRate: 4.9,
-    dealTypes: ['paid', 'barter', 'hybrid'] as DealType[],
-    barterTypes: ['products', 'food', 'events'] as BarterType[],
+    collaborationPreferences: ['paid', 'barter', 'hybrid'] as DealType[],
+    barterTypes: ['GENERAL', 'FOOD', 'ENTERTAINMENT'] as BarterType[],
     minPrice: 625000,
     maxPrice: 2375000,
     responseTime: 'Within 4 hours',
@@ -417,19 +418,16 @@ export const cities: City[] = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', '
 
 export const platforms: Platform[] = ['instagram', 'tiktok', 'youtube', 'facebook', 'snapchat'];
 
-export const dealTypes: { value: DealType; label: string }[] = [
+export const collaborationPreferences: { value: DealType; label: string }[] = [
   { value: 'paid', label: 'Paid' },
   { value: 'barter', label: 'Barter' },
   { value: 'hybrid', label: 'Hybrid' },
 ];
 
-export const barterTypes: { value: BarterType; label: string }[] = [
-  { value: 'food', label: 'Food & Dining' },
-  { value: 'hotel', label: 'Hotels & Stays' },
-  { value: 'salon', label: 'Salon & Spa' },
-  { value: 'events', label: 'Events & Tickets' },
-  { value: 'products', label: 'Products' },
-];
+export const barterTypes: { value: BarterType; label: string }[] = barterTypeOptions.map((option) => ({
+  value: option.value as BarterType,
+  label: option.label,
+}));
 
 export const followerRanges = [
   { min: 0, max: 10000, label: 'Nano (0-10K)' },

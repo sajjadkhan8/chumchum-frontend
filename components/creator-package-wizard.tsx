@@ -9,6 +9,8 @@ import {
   Check,
   Clock,
   DollarSign,
+  Eye,
+  FileText,
   Gift,
   Lock,
   Plus,
@@ -62,7 +64,7 @@ const steps = [
   { id: 2, label: "Services" },
   { id: 3, label: "Pricing" },
   { id: 4, label: "Cover & Portfolio" },
-  { id: 5, label: "Publish" },
+  { id: 5, label: "Review" },
 ];
 
 const platforms = [
@@ -2124,8 +2126,8 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                   <Label className={labelClass}>Visibility</Label>
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     {[
-                      { value: "public", label: "Public", note: "Visible to brands" },
-                      { value: "private", label: "Private", note: "Hidden from marketplace" },
+                      { value: "public", label: "Public", note: "Visible to brands", icon: Eye, iconClass: "bg-[#e4f1e8] text-[#2d6b4e]" },
+                      { value: "private", label: "Private", note: "Hidden from marketplace", icon: Lock, iconClass: "bg-[#fdf3dc] text-[#8a6010]" },
                     ].map((option) => (
                       <button
                         key={option.value}
@@ -2137,8 +2139,15 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                             : "border-[#dce6df] bg-[#fbfaf5] text-[#5f7268] hover:border-[#2d6b4e]"
                         }`}
                       >
-                        <p className="text-sm font-black">{option.label}</p>
-                        <p className="mt-1 text-[11px] font-semibold">{option.note}</p>
+                        <span className="flex items-start gap-2.5">
+                          <span className={`grid size-8 shrink-0 place-items-center rounded-xl ${option.iconClass}`}>
+                            <option.icon className="size-4" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-black">{option.label}</span>
+                            <span className="mt-1 block text-[11px] font-semibold">{option.note}</span>
+                          </span>
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -2148,8 +2157,8 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                   <Label className={labelClass}>Publish action</Label>
                   <div className="mt-3 space-y-2">
                     {[
-                      { value: "active", label: "Publish now", note: "Package can receive brand orders" },
-                      { value: "draft", label: "Save as draft", note: "Keep editing before launch" },
+                      { value: "active", label: "Publish now", note: "Package can receive brand orders", icon: Sparkles, iconClass: "bg-[#f6edcf] text-[#8b5e12]" },
+                      { value: "draft", label: "Save as draft", note: "Keep editing before launch", icon: FileText, iconClass: "bg-[#e8eae8] text-[#5a6a62]" },
                     ].map((option) => (
                       <button
                         key={option.value}
@@ -2161,10 +2170,15 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
                             : "border-[#dce6df] bg-[#fbfaf5] text-[#5f7268] hover:border-[#2d6b4e]"
                         }`}
                       >
-                        <span>
-                          <span className="block text-sm font-black">{option.label}</span>
-                          <span className={`mt-1 block text-[11px] font-semibold ${formData.status === option.value ? "text-white/75" : "text-[#7a8f82]"}`}>
-                            {option.note}
+                        <span className="flex min-w-0 items-start gap-3">
+                          <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${formData.status === option.value ? "bg-white/18 text-white" : option.iconClass}`}>
+                            <option.icon className="size-4" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-black">{option.label}</span>
+                            <span className={`mt-1 block text-[11px] font-semibold ${formData.status === option.value ? "text-white/75" : "text-[#7a8f82]"}`}>
+                              {option.note}
+                            </span>
                           </span>
                         </span>
                         {formData.status === option.value && <Check className="size-4 shrink-0" />}

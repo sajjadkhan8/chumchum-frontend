@@ -15,7 +15,7 @@ const defaultFilters: CreatorFilters = {
   categories: [],
   platforms: [],
   cities: [],
-  dealTypes: [],
+  collaborationPreferences: [],
   barterTypes: [],
   sortBy: 'trending',
 };

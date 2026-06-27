@@ -143,7 +143,7 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
                     Limited
                   </Badge>
                 )}
-              {creator.dealTypes.includes('barter') && (
+              {creator.collaborationPreferences.includes('barter') && (
                 <Badge className="rounded-full border border-[#efcf83] bg-[#fff1cd] px-2 py-0.5 text-[10px] font-extrabold text-[#8b5e12] shadow-none">
                   <Gift className="mr-1 size-3" />
                   Barter
@@ -202,17 +202,17 @@ export function CreatorCard({ creator, onQuickDeal, className, variant = 'defaul
 
             <div className="mt-4 flex flex-col gap-3 border-t border-[#edf1ed] pt-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                {creator.dealTypes.includes('paid') && creator.minPrice && (
+                {creator.collaborationPreferences.includes('paid') && creator.minPrice && (
                   <p className="truncate text-[14px] font-extrabold text-[#1e3d2e]">
                     From {formatPrice(creator.minPrice)}
                   </p>
                 )}
-                {creator.dealTypes.includes('barter') && !creator.minPrice && (
+                {creator.collaborationPreferences.includes('barter') && !creator.minPrice && (
                   <p className="truncate text-[14px] font-extrabold text-[#2d6b4e]">
                     Barter Available
                   </p>
                 )}
-                {creator.dealTypes.includes('barter') && creator.minPrice && (
+                {creator.collaborationPreferences.includes('barter') && creator.minPrice && (
                   <p className="mt-0.5 text-[10px] font-semibold text-[#87938b]">
                     Barter also available
                   </p>

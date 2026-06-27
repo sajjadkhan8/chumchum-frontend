@@ -11,13 +11,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { CAMPAIGN_GOAL_OPTIONS } from '@/lib/offer-campaign-goals';
+import { pakistanCities } from '@/lib/localization';
 import { campaignsService } from '@/services/campaigns.service';
 import type { BrandCampaign, BrandCampaignReactionType } from '@/types';
 import { formatPrice, formatRelativeTime } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const OFFER_TYPES = ['UGC', 'POST', 'REEL', 'STORY', 'BUNDLE', 'Custom'];
-const CITIES = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'];
+const CITIES = [...pakistanCities];
 const PLATFORMS = ['instagram', 'youtube', 'tiktok', 'facebook', 'snapchat'];
 const ANY_CITY_VALUE = '__any_city__';
 const ANY_TYPE_VALUE = '__any_type__';
@@ -642,4 +643,3 @@ function CreatorCampaignsFeedPage() {
 export default function CreatorCampaignsPage() {
   return <CreatorCampaignsFeedPage />;
 }
-

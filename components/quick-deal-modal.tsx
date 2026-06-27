@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import type { BarterType, Creator, DealType } from '@/types';
 import { cn, formatFollowers, formatPrice } from '@/lib/utils';
+import { getBarterTypeLabel } from '@/lib/categories';
 import { messagesService } from '@/services/messages.service';
 import { metadataService, defaultCreatorFilterMetadata } from '@/services/metadata.service';
 
@@ -18,7 +19,7 @@ interface QuickDealModalProps {
   onCreated?: (result: { conversationId: string; messageId: string; offerId: string }) => void;
 }
 
-type DealOption = {
+type CollaborationOption = {
   value: DealType;
   label: string;
   icon: React.ElementType;
@@ -29,7 +30,7 @@ type DealOption = {
   iconBg: string;
 };
 
-const dealTypeOptions: DealOption[] = [
+const collaborationOptions: CollaborationOption[] = [
   {
     value: 'paid',
     label: 'Paid',
@@ -72,7 +73,7 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
   const [dealType, setDealType] = useState<DealType>('paid');
   const [budget, setBudget] = useState('');
   const [barterDescription, setBarterDescription] = useState('');
-  const [barterCategory, setBarterCategory] = useState('products');
+  const [barterCategory, setBarterCategory] = useState<BarterType>('GENERAL');
   const [barterValue, setBarterValue] = useState('');
   const [creatorExpectation, setCreatorExpectation] = useState('');
   const [message, setMessage] = useState('');
@@ -125,7 +126,7 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
       setDealType('paid');
       setBudget('');
       setBarterDescription('');
-      setBarterCategory('products');
+        setBarterCategory('GENERAL');
       setBarterValue('');
       setCreatorExpectation('');
       setMessage('');
@@ -138,8 +139,8 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
     }
   };
 
-  const availableDealTypes = dealTypeOptions.filter((opt) => creator.dealTypes.includes(opt.value));
-  const cols = availableDealTypes.length === 1 ? 'grid-cols-1' : availableDealTypes.length === 2 ? 'grid-cols-2' : 'grid-cols-3';
+  const availableCollaborationOptions = collaborationOptions.filter((opt) => creator.collaborationPreferences.includes(opt.value));
+  const cols = availableCollaborationOptions.length === 1 ? 'grid-cols-1' : availableCollaborationOptions.length === 2 ? 'grid-cols-2' : 'grid-cols-3';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -172,11 +173,11 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
         {/* Scrollable form body */}
         <div className="max-h-[calc(100dvh-13rem)] space-y-5 overflow-y-auto bg-white px-5 py-5 sm:max-h-[calc(90dvh-12rem)] sm:px-6 sm:py-6">
 
-          {/* Deal type selector */}
+          {/* Collaboration type selector */}
           <div>
-            <label className={labelCls}>Deal Type</label>
+            <label className={labelCls}>Collaboration Type</label>
             <div className={cn('mt-2 grid gap-2', cols)}>
-              {availableDealTypes.map((opt) => {
+              {availableCollaborationOptions.map((opt) => {
                 const Icon = opt.icon;
                 const active = dealType === opt.value;
                 return (
@@ -264,7 +265,7 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
                     <div className="relative">
                       <select
                         value={barterCategory}
-                        onChange={(e) => setBarterCategory(e.target.value)}
+                        onChange={(e) => setBarterCategory(e.target.value as BarterType)}
                         className={cn(inputCls, 'appearance-none pr-8')}
                       >
                         {barterTypeOptions.map((type) => (
@@ -302,7 +303,7 @@ export function QuickDealModal({ creator, isOpen, onClose, onCreated }: QuickDea
 
                 {creator.barterTypes && creator.barterTypes.length > 0 && (
                   <p className="text-[11px] text-[#8fa098]">
-                    Creator accepts: {creator.barterTypes.join(', ')}
+                    Creator accepts: {creator.barterTypes.map(getBarterTypeLabel).join(', ')}
                   </p>
                 )}
               </motion.div>

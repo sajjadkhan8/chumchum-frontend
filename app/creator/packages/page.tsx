@@ -1,14 +1,12 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Archive,
-  Bookmark,
-  BookmarkCheck,
   ChevronDown,
   Copy,
   Eye,
@@ -23,6 +21,7 @@ import {
   Search,
   TrendingUp,
   Wallet,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreatorMetricCard } from "@/components/creator-metric-card";
@@ -57,7 +56,7 @@ const inputClass =
   "h-10 w-full rounded-xl border-[#cddad1] bg-[#fbfaf5] px-3.5 text-sm text-[#1e3d2e] placeholder:text-[#b0bfb8] shadow-none focus-visible:border-[#2d6b4e] focus-visible:ring-4 focus-visible:ring-[#2d6b4e]/8 focus-visible:ring-offset-0";
 
 // ── Static options ─────────────────────────────────────────────────────────────
-const statusPills: { value: PackageStatus | "all"; label: string }[] = [
+const statusOptions: { value: PackageStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
   { value: "active", label: "Active" },
   { value: "draft", label: "Draft" },
@@ -152,9 +151,6 @@ function CreatorPackagesPageContent() {
   const [status, setStatus] = useState<PackageStatus | "all">("all");
   const [dealType, setDealType] = useState<"all" | "paid" | "barter" | "hybrid">("all");
   const [platform, setPlatform] = useState<"all" | "instagram" | "youtube" | "tiktok" | "facebook" | "snapchat">("all");
-  const [performance, setPerformance] = useState<"all" | "top" | "mid" | "low">("all");
-  const [earningsBand, setEarningsBand] = useState<"all" | "under25" | "25to50" | "50plus">("all");
-  const [sortBy, setSortBy] = useState<"recent" | "views" | "conversion" | "orders">("recent");
   const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   useEffect(() => {
@@ -172,7 +168,7 @@ function CreatorPackagesPageContent() {
     }
   }, [searchParams]);
 
-  const updateStatusWithUrl = (nextStatus: PackageStatus | "all") => {
+  const updateStatusWithUrl = useCallback((nextStatus: PackageStatus | "all") => {
     setStatus(nextStatus);
     const params = new URLSearchParams(searchParams.toString());
     if (nextStatus === "all") {
@@ -182,7 +178,7 @@ function CreatorPackagesPageContent() {
     }
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname);
-  };
+  }, [pathname, router, searchParams]);
 
   const summary = useMemo(() => {
     const active = packages.filter((pkg) => pkg.status === "active").length;
@@ -209,64 +205,48 @@ function CreatorPackagesPageContent() {
         const matchesDealType = dealType === "all" || pkg.dealType === dealType;
         const matchesPlatform = platform === "all" || pkg.platform === platform;
 
-        const matchesPerformance =
-          performance === "all" ||
-          (performance === "top" && pkg.analytics.conversionRate >= 8) ||
-          (performance === "mid" &&
-            pkg.analytics.conversionRate >= 5 &&
-            pkg.analytics.conversionRate < 8) ||
-          (performance === "low" && pkg.analytics.conversionRate < 5);
-
-        const matchesEarnings =
-          earningsBand === "all" ||
-          (earningsBand === "under25" && pkg.price < 25000) ||
-          (earningsBand === "25to50" && pkg.price >= 25000 && pkg.price <= 50000) ||
-          (earningsBand === "50plus" && pkg.price > 50000);
-
         return (
           matchesSearch &&
           matchesStatus &&
           matchesDealType &&
-          matchesPlatform &&
-          matchesPerformance &&
-          matchesEarnings
+          matchesPlatform
         );
       })
-      .sort((a, b) => {
-        if (sortBy === "views") return b.analytics.views - a.analytics.views;
-        if (sortBy === "conversion") return b.analytics.conversionRate - a.analytics.conversionRate;
-        if (sortBy === "orders") return b.ordersCompleted - a.ordersCompleted;
-        return b.id.localeCompare(a.id);
+      .sort((a, b) => b.id.localeCompare(a.id));
+  }, [packages, search, status, dealType, platform]);
+
+  const activeFilterChips = useMemo(() => {
+    const chips: { key: string; label: string; clear: () => void }[] = [];
+
+    if (status !== "all") {
+      chips.push({
+        key: "status",
+        label: statusOptions.find((option) => option.value === status)?.label || status,
+        clear: () => updateStatusWithUrl("all"),
       });
-  }, [packages, search, status, dealType, platform, performance, earningsBand, sortBy]);
-
-  const saveCurrentFilter = () => {
-    const payload = { status, dealType, platform, performance, earningsBand, sortBy };
-    localStorage.setItem("creator-package-filters", JSON.stringify(payload));
-    toast.success("Filter saved");
-  };
-
-  const applySavedFilter = () => {
-    const raw = localStorage.getItem("creator-package-filters");
-    if (!raw) {
-      toast.info("No saved filters found yet.");
-      return;
     }
-    const parsed = JSON.parse(raw) as {
-      status: PackageStatus | "all";
-      dealType: "all" | "paid" | "barter" | "hybrid";
-      platform: "all" | "instagram" | "youtube" | "tiktok" | "facebook" | "snapchat";
-      performance: "all" | "top" | "mid" | "low";
-      earningsBand: "all" | "under25" | "25to50" | "50plus";
-      sortBy: "recent" | "views" | "conversion" | "orders";
-    };
-    setStatus(parsed.status);
-    setDealType(parsed.dealType);
-    setPlatform(parsed.platform);
-    setPerformance(parsed.performance);
-    setEarningsBand(parsed.earningsBand);
-    setSortBy(parsed.sortBy);
-    toast.success("Saved filter applied");
+    if (dealType !== "all") {
+      chips.push({
+        key: "dealType",
+        label: dealTypeOptions.find((option) => option.value === dealType)?.label || dealType,
+        clear: () => setDealType("all"),
+      });
+    }
+    if (platform !== "all") {
+      chips.push({
+        key: "platform",
+        label: platformOptions.find((option) => option.value === platform)?.label || platform,
+        clear: () => setPlatform("all"),
+      });
+    }
+    return chips;
+  }, [dealType, platform, status, updateStatusWithUrl]);
+
+  const clearAllFilters = () => {
+    setSearch("");
+    updateStatusWithUrl("all");
+    setDealType("all");
+    setPlatform("all");
   };
 
   const handleDuplicate = async (pkg: CreatorPackage) => {
@@ -326,36 +306,6 @@ function CreatorPackagesPageContent() {
               />
             </div>
 
-            {/* Status pills */}
-            <div className="flex items-center gap-1 overflow-x-auto">
-              {statusPills.map((pill) => (
-                <button
-                  key={pill.value}
-                  onClick={() => updateStatusWithUrl(pill.value)}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
-                    status === pill.value
-                      ? "bg-[#2d6b4e] text-white"
-                      : "bg-[#f4f7f5] text-[#6b7870] hover:bg-[#e6eceb]"
-                  }`}
-                >
-                  {pill.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Sort select */}
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
-              <SelectTrigger className={`${inputClass} h-10 w-40 shrink-0`}>
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">Most Recent</SelectItem>
-                <SelectItem value="views">Most Views</SelectItem>
-                <SelectItem value="conversion">Best Conversion</SelectItem>
-                <SelectItem value="orders">Most Orders</SelectItem>
-              </SelectContent>
-            </Select>
-
             {/* More filters toggle */}
             <Button
               variant="outline"
@@ -368,33 +318,46 @@ function CreatorPackagesPageContent() {
                 className={`size-3.5 transition-transform ${showMoreFilters ? "rotate-180" : ""}`}
               />
             </Button>
-
-            {/* Bookmark dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 shrink-0 rounded-xl border-[#cddad1] bg-[#fbfaf5] text-[#6b7870] hover:bg-[#e6eceb]"
-                >
-                  <Bookmark className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={saveCurrentFilter}>
-                  <Bookmark className="mr-2 size-4" /> Save current filters
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={applySavedFilter}>
-                  <BookmarkCheck className="mr-2 size-4" /> Load saved filters
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
+
+          {activeFilterChips.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[#e8eeeb] pt-3">
+              {activeFilterChips.map((chip) => (
+                <button
+                  key={chip.key}
+                  type="button"
+                  onClick={chip.clear}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-full bg-[#e4f1e8] px-2.5 text-xs font-bold text-[#1e5c3e] transition-colors hover:bg-[#d7eadf]"
+                >
+                  {chip.label}
+                  <X className="size-3" />
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="h-7 rounded-full px-2.5 text-xs font-bold text-[#7a8f82] transition-colors hover:bg-[#f4f7f5] hover:text-[#2d6b4e]"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
 
           {/* Row 2 – collapsible secondary filters */}
           <Collapsible open={showMoreFilters}>
             <CollapsibleContent>
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <Select value={status} onValueChange={(v) => updateStatusWithUrl(v as PackageStatus | "all")}>
+                  <SelectTrigger className={inputClass}>
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
                 <Select value={dealType} onValueChange={(v) => setDealType(v as typeof dealType)}>
                   <SelectTrigger className={inputClass}>
                     <SelectValue placeholder="Deal Type" />
@@ -421,45 +384,13 @@ function CreatorPackagesPageContent() {
                     ))}
                   </SelectContent>
                 </Select>
-
-                <Select value={performance} onValueChange={(v) => setPerformance(v as typeof performance)}>
-                  <SelectTrigger className={inputClass}>
-                    <SelectValue placeholder="Performance" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Performance</SelectItem>
-                    <SelectItem value="top">Top Conversion</SelectItem>
-                    <SelectItem value="mid">Mid Conversion</SelectItem>
-                    <SelectItem value="low">Low Conversion</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={earningsBand} onValueChange={(v) => setEarningsBand(v as typeof earningsBand)}>
-                  <SelectTrigger className={inputClass}>
-                    <SelectValue placeholder="Earnings" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Earnings</SelectItem>
-                    <SelectItem value="under25">Under PKR 625k</SelectItem>
-                    <SelectItem value="25to50">PKR 625k – 1.25M</SelectItem>
-                    <SelectItem value="50plus">PKR 1.25M+</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               <Button
                 variant="ghost"
                 size="sm"
                 className="mt-2 h-8 text-[#2d6b4e] hover:text-[#1f5239]"
-                onClick={() => {
-                  setSearch("");
-                  updateStatusWithUrl("all");
-                  setDealType("all");
-                  setPlatform("all");
-                  setPerformance("all");
-                  setEarningsBand("all");
-                  setSortBy("recent");
-                }}
+                onClick={clearAllFilters}
               >
                 Clear all
               </Button>
@@ -484,7 +415,7 @@ function CreatorPackagesPageContent() {
             <p className="mt-1.5 max-w-sm text-sm text-[#87938b]">
               {status === "active"
                 ? "Create your first barter, paid, or hybrid package to start getting inquiries."
-                : "Try adjusting status, pricing type, or performance filters."}
+                : "Try adjusting status, pricing type, or platform filters."}
             </p>
             <Link
               href="/creator/packages/new"
@@ -576,7 +507,7 @@ function CreatorPackagesPageContent() {
                           )}
                           <DropdownMenuItem asChild>
                             <Link href={`/creator/packages/${pkg.id}`}>
-                              <Eye className="mr-2 size-4" /> Preview
+                              <Eye className="mr-2 size-4" /> View details
                             </Link>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -632,27 +563,15 @@ function CreatorPackagesPageContent() {
                             ? `${formatPrice(pkg.hybridCashAmount ?? pkg.price)} + barter`
                             : formatPrice(pkg.price)}
                       </p>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          className="h-8 rounded-full border-[#cddad1] text-xs font-bold text-[#1e3d2e] hover:bg-[#f4f7f5]"
-                          asChild
-                        >
-                          <Link href={`/creator/packages/${pkg.id}`}>
-                            <Eye className="mr-1 size-3.5" />
-                            Preview
-                          </Link>
-                        </Button>
-                        <Button
-                          className="h-8 rounded-full bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#1f5239]"
-                          asChild
-                        >
-                          <Link href={`/creator/packages/${pkg.id}/edit`}>
-                            <FilePenLine className="mr-1 size-3.5" />
-                            Edit
-                          </Link>
-                        </Button>
-                      </div>
+                      <Button
+                        className="h-8 rounded-full bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#1f5239]"
+                        asChild
+                      >
+                        <Link href={`/creator/packages/${pkg.id}/edit`}>
+                          <FilePenLine className="mr-1 size-3.5" />
+                          Edit
+                        </Link>
+                      </Button>
                     </div>
                   </div>
                 </div>

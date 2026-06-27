@@ -156,8 +156,10 @@ export const paymentsService = {
    * Polls the status of a Safepay payment session.
    * Call after redirect from Safepay until status is 'completed' or 'failed'.
    */
-  async getSafepaySessionStatus(sessionId: string): Promise<SafepaySessionStatus> {
-    return apiClient.get<SafepaySessionStatus>(`/api/v1/payments/safepay/session/${sessionId}`);
+  async getSafepaySessionStatus(sessionId: string, tracker?: string | null): Promise<SafepaySessionStatus> {
+    return apiClient.get<SafepaySessionStatus>(`/api/v1/payments/safepay/session/${sessionId}`, {
+      query: { tracker },
+    });
   },
 
   /** Records a cancellation when the brand returns via the cancel URL. */

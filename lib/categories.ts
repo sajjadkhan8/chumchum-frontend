@@ -25,6 +25,8 @@ export const categoryOptions: CategoryOption[] = [
 ];
 
 export const categoryValues = categoryOptions.map((option) => option.value);
+export const barterTypeOptions = categoryOptions;
+export const barterTypeValues = categoryValues;
 
 const categoryLabelByValue = new Map(categoryOptions.map((option) => [option.value, option.label]));
 
@@ -48,6 +50,14 @@ const legacyCategoryAliases: Record<string, string> = {
   BUSINESS: 'BUSINESS_FINANCE',
   FINANCE: 'BUSINESS_FINANCE',
   REAL_ESTATE: 'BUSINESS_FINANCE',
+  HOTEL: 'TRAVEL',
+  HOTELS: 'TRAVEL',
+  STAYS: 'TRAVEL',
+  SALON: 'BEAUTY',
+  SPA: 'BEAUTY',
+  EVENTS_TICKETS: 'ENTERTAINMENT',
+  PRODUCTS: 'GENERAL',
+  SERVICES: 'GENERAL',
 };
 
 export function normalizeCategory(value: string | null | undefined): string {
@@ -83,6 +93,9 @@ export function getCategoryLabel(value: string | null | undefined): string {
   if (!normalized) return value?.trim() || 'General';
   return categoryLabelByValue.get(normalized) || normalized;
 }
+
+export const normalizeBarterTypes = normalizeCategories;
+export const getBarterTypeLabel = getCategoryLabel;
 
 export function sortCategoryOptionsForProfile(profileCategories: string[]): CategoryOption[] {
   const selected = new Set(normalizeCategories(profileCategories));

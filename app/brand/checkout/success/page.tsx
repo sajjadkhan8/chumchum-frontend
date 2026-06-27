@@ -30,6 +30,7 @@ function CheckoutSuccessContent() {
   const router = useRouter();
 
   const sessionId = searchParams.get("session");
+  const tracker = searchParams.get("tracker");
 
   const [phase, setPhase] = useState<Phase>("polling");
   const [sessionStatus, setSessionStatus] = useState<SafepaySessionStatus | null>(null);
@@ -44,7 +45,7 @@ function CheckoutSuccessContent() {
 
     const poll = async () => {
       try {
-        const status = await paymentsService.getSafepaySessionStatus(sessionId);
+        const status = await paymentsService.getSafepaySessionStatus(sessionId, tracker);
         pollCount.current += 1;
 
         if (status.status === "completed") {
@@ -83,7 +84,7 @@ function CheckoutSuccessContent() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [sessionId]);
+  }, [sessionId, tracker]);
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4 py-12">

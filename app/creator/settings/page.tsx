@@ -19,24 +19,36 @@ import {
   Globe,
   Info,
   Image as ImageIcon,
+  Languages,
   Lock,
   Link as LinkIcon,
+  Monitor,
+  Moon,
   Package,
   Plus,
   Save,
   Share2,
+  Sun,
   Trash2,
   Upload,
   Video,
   XCircle,
 } from "lucide-react";
 import { Reorder } from "framer-motion";
+import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { cn, getInitials } from "@/lib/utils";
-import { categoryOptions, getCategoryLabel, normalizeCategories } from "@/lib/categories";
+import {
+  barterTypeOptions,
+  getBarterTypeLabel,
+  categoryOptions,
+  getCategoryLabel,
+  normalizeBarterTypes,
+  normalizeCategories,
+} from "@/lib/categories";
 import { pakistanCities, pakistanLanguages } from "@/lib/localization";
 import { useAuthStore } from "@/store/auth-store";
 import { ambassadorService } from "@/services/ambassador.service";
@@ -47,7 +59,7 @@ import { uploadsService } from "@/services/uploads.service";
 import { usersService } from "@/services/users.service";
 import { isPasswordStrong, PASSWORD_REQUIREMENTS_MESSAGE } from "@/lib/password-validation";
 import { AMBASSADOR_TIERS } from "@/lib/ambassador-scoring";
-import type { Creator, CreatorAmbassadorMetrics, DealType, BarterCategory, Platform, VerificationSource } from "@/types";
+import type { BarterCategory, CollaborationPreference, Creator, CreatorAmbassadorMetrics, Platform, VerificationSource } from "@/types";
 import { toast } from "sonner";
 import { ShareProfileModal } from "@/components/share-profile-modal";
 import { PlatformIconBadge } from "@/components/platform-icons";
@@ -129,6 +141,52 @@ const platformLabels: Record<Platform, string> = {
 
 export type CreatorSettingsSection = "profile" | "social" | "settings";
 
+type ThemePreference = "light" | "dark" | "system";
+type InterfaceLanguage = "en" | "ur-latin" | "ur";
+
+const interfaceLanguageStorageKey = "zingzing-interface-language";
+
+const interfaceLanguageOptions: Array<{
+  value: InterfaceLanguage;
+  label: string;
+  description: string;
+  sample: string;
+  lang: string;
+  direction: "ltr" | "rtl";
+  iconClass: string;
+}> = [
+  {
+    value: "en",
+    label: "English",
+    description: "Default platform language",
+    sample: "Aa",
+    lang: "en-PK",
+    direction: "ltr",
+    iconClass: "bg-[#e7f0ea] text-[#185c39]",
+  },
+  {
+    value: "ur-latin",
+    label: "Urdu - Latin",
+    description: "Roman Urdu interface preference",
+    sample: "Ur",
+    lang: "ur-Latn-PK",
+    direction: "ltr",
+    iconClass: "bg-[#fff1cd] text-[#8b5e12]",
+  },
+  {
+    value: "ur",
+    label: "Urdu",
+    description: "Native Urdu interface preference",
+    sample: "اردو",
+    lang: "ur-PK",
+    direction: "rtl",
+    iconClass: "bg-[#efe7ff] text-[#5f3ab8]",
+  },
+];
+
+const isInterfaceLanguage = (value: string | null): value is InterfaceLanguage =>
+  value === "en" || value === "ur-latin" || value === "ur";
+
 // ─── Radix Select wrapper ─────────────────────────────────────────────────────
 
 function DesignSelect({
@@ -160,7 +218,7 @@ function DesignSelect({
         <SelectPrimitive.Content
           position="popper"
           sideOffset={4}
-          className="z-50 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-xl border border-[#d1ddd6] bg-white shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+          className="z-50 max-h-[min(18rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] overflow-y-auto overscroll-contain rounded-xl border border-[#d1ddd6] bg-white shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
         >
           <SelectPrimitive.Viewport className="p-1">
             {options.map((option) => {
@@ -246,6 +304,9 @@ function PanelHeader({ eyebrow, title }: { eyebrow: string; title: string }) {
 export function CreatorSettingsPageContent({ section = "settings" }: { section?: CreatorSettingsSection }) {
   const searchParams = useSearchParams();
   const { user, logout } = useAuthStore();
+  const { theme, setTheme } = useTheme();
+  const activeTheme: ThemePreference =
+    theme === "light" || theme === "dark" || theme === "system" ? theme : "system";
   const [activeTab, setActiveTab] = useState(
     section === "profile" ? "profile" : section === "social" ? "social" : "preferences",
   );
@@ -278,19 +339,18 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
   const [portfolioErrors, setPortfolioErrors] = useState<{ mediaUrl?: string; thumbnailUrl?: string }>({});
 
   const [creatorPreferences, setCreatorPreferences] = useState({
-    acceptsBarter: true,
-    acceptsHybridDeals: true,
     minimumBudget: "25000",
-    dealTypes: [] as string[],
+    collaborationPreferences: ["paid"] as CollaborationPreference[],
     barterTypes: [] as string[],
   });
+  const [interfaceLanguage, setInterfaceLanguage] = useState<InterfaceLanguage>("en");
   const [loadedCreator, setLoadedCreator] = useState<Creator | null>(null);
   const [ambassadorMetrics, setAmbassadorMetrics] = useState<CreatorAmbassadorMetrics | null>(null);
   const [originalEmail, setOriginalEmail] = useState("");
   const [originalPhone, setOriginalPhone] = useState("");
   const [contactChangedBanner, setContactChangedBanner] = useState<"email" | "phone" | "both" | null>(null);
   const [isDirty, setIsDirty] = useState(false);
-  const [activePackageCount, setActivePackageCount] = useState<number | null>(null);
+  const [publicActivePackageCount, setPublicActivePackageCount] = useState<number | null>(null);
   const [creatorVerified, setCreatorVerified] = useState<{ isVerified: boolean; badgeLevel?: string; verificationStatus?: string } | null>(null);
   const [verificationDocuments, setVerificationDocuments] = useState<CreatorVerificationDocument[]>([]);
   const [verificationEvents, setVerificationEvents] = useState<CreatorVerificationEvent[]>([]);
@@ -320,6 +380,23 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     deleteConfirmPassword: "",
   });
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const savedLanguage = window.localStorage.getItem(interfaceLanguageStorageKey);
+    if (isInterfaceLanguage(savedLanguage)) {
+      setInterfaceLanguage(savedLanguage);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const option = interfaceLanguageOptions.find((item) => item.value === interfaceLanguage) ?? interfaceLanguageOptions[0];
+    window.localStorage.setItem(interfaceLanguageStorageKey, option.value);
+    document.documentElement.lang = option.lang;
+    document.documentElement.dataset.interfaceLanguage = option.value;
+    document.documentElement.dataset.interfaceLanguageDirection = option.direction;
+  }, [interfaceLanguage]);
+
   const loadCreatorProfile = useCallback(async () => {
     const [creator, packages, docs, events] = await Promise.all([
       creatorsService.getMe(),
@@ -333,7 +410,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     setCreatorVerified({ isVerified: Boolean(creator.isVerified), badgeLevel: creator.badgeLevel, verificationStatus: creator.verificationStatus });
     setVerificationDocuments(docs);
     setVerificationEvents(events);
-    setActivePackageCount(packages.filter((p) => p.status === 'active').length);
+    setPublicActivePackageCount(packages.filter((p) => p.status === 'active' && p.visibility === 'public').length);
 
     const email = creator.email || user?.email || "";
     const phone = creator.phone || user?.phone || "";
@@ -363,11 +440,9 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     profileSnapshotRef.current = nextProfile;
     setProfile(nextProfile);
     const nextCreatorPreferences = {
-      acceptsBarter: Boolean(creator.acceptsBarter),
-      acceptsHybridDeals: Boolean(creator.acceptsHybridDeals),
       minimumBudget: creator.minimumBudget ? String(creator.minimumBudget) : "",
-      dealTypes: creator.dealTypes || [],
-      barterTypes: (creator.barterTypes as string[]) || [],
+      collaborationPreferences: creator.collaborationPreferences?.length ? creator.collaborationPreferences : (["paid"] as CollaborationPreference[]),
+      barterTypes: normalizeBarterTypes(creator.barterTypes as string[]),
     };
     creatorPreferencesSnapshotRef.current = nextCreatorPreferences;
     setCreatorPreferences(nextCreatorPreferences);
@@ -544,29 +619,33 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
 
     setIsSaving(true);
     try {
+      const collaborationPreferences = Array.from(new Set<CollaborationPreference>([
+        "paid",
+        ...creatorPreferences.collaborationPreferences,
+      ]));
+      const barterTypes = normalizeBarterTypes(creatorPreferences.barterTypes);
       const [saved] = await Promise.all([
         creatorsService.updatePreferences({
-          acceptsBarter: creatorPreferences.acceptsBarter,
-          acceptsHybridDeals: creatorPreferences.acceptsHybridDeals,
+          collaborationPreferences,
           minimumBudget: budget,
         }),
         creatorsService.updateMe({
-          dealTypes: creatorPreferences.dealTypes as DealType[],
-          barterTypes: creatorPreferences.barterTypes as BarterCategory[],
+          collaborationPreferences,
+          barterTypes: barterTypes as BarterCategory[],
         }),
       ]);
       setIsDirty(false);
       const nextCreatorPreferences = {
         ...creatorPreferences,
-        acceptsBarter: Boolean(saved.acceptsBarter),
-        acceptsHybridDeals: Boolean(saved.acceptsHybridDeals),
+        collaborationPreferences: saved.collaborationPreferences.length ? saved.collaborationPreferences : collaborationPreferences,
+        barterTypes,
         minimumBudget: saved.minimumBudget ? String(saved.minimumBudget) : "",
       };
       creatorPreferencesSnapshotRef.current = nextCreatorPreferences;
       setCreatorPreferences((p) => ({
         ...p,
-        acceptsBarter: Boolean(saved.acceptsBarter),
-        acceptsHybridDeals: Boolean(saved.acceptsHybridDeals),
+        collaborationPreferences: saved.collaborationPreferences.length ? saved.collaborationPreferences : collaborationPreferences,
+        barterTypes,
         minimumBudget: saved.minimumBudget ? String(saved.minimumBudget) : "",
       }));
       toast.success("Creator preferences saved");
@@ -1057,10 +1136,11 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
 
   const profileCompleteness = useMemo(() => {
     let score = 0;
-    if (profile.bio && profile.bio.length > 20) score += 3;
-    if (profile.coverImage) score += 3;
+    if (profile.bio && profile.bio.length > 20) score += 2;
+    if (profile.coverImage) score += 2;
     if (socialAccounts.length >= 2) score += 2;
     if (portfolioItems.length >= 6) score += 2;
+    if ((publicActivePackageCount ?? 0) > 0) score += 2;
     const pct = Math.round((score / 10) * 100);
     const missing: string[] = [];
     if (!profile.bio || profile.bio.length <= 20) missing.push("Add a bio (20+ characters)");
@@ -1070,8 +1150,9 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
       const need = 6 - portfolioItems.length;
       missing.push(`Add ${need} more portfolio item${need > 1 ? "s" : ""}`);
     }
+    if ((publicActivePackageCount ?? 0) === 0) missing.push("Publish your first package");
     return { pct, missing };
-  }, [profile.bio, profile.coverImage, socialAccounts.length, portfolioItems.length]);
+  }, [profile.bio, profile.coverImage, publicActivePackageCount, socialAccounts.length, portfolioItems.length]);
 
   // ─── Page header ────────────────────────────────────────────────────────────
 
@@ -1315,31 +1396,31 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                   <div className="flex items-center gap-3">
                     <div className={cn(
                       "grid size-10 shrink-0 place-items-center rounded-xl",
-                      activePackageCount ? "bg-[#e4f1e8]" : "bg-amber-50"
+                      publicActivePackageCount ? "bg-[#e4f1e8]" : "bg-amber-50"
                     )}>
-                      <Package className={cn("size-5", activePackageCount ? "text-[#2d6b4e]" : "text-amber-600")} />
+                      <Package className={cn("size-5", publicActivePackageCount ? "text-[#2d6b4e]" : "text-amber-600")} />
                     </div>
                     <div>
-                      {activePackageCount === null ? (
+                      {publicActivePackageCount === null ? (
                         <p className="text-sm text-[#87938b]">Loading…</p>
-                      ) : activePackageCount > 0 ? (
+                      ) : publicActivePackageCount > 0 ? (
                         <>
-                          <p className="text-sm font-bold text-[#1e3d2e]">{activePackageCount} active package{activePackageCount !== 1 ? 's' : ''}</p>
+                          <p className="text-sm font-bold text-[#1e3d2e]">{publicActivePackageCount} public active package{publicActivePackageCount !== 1 ? 's' : ''}</p>
                           <p className="text-xs text-[#496159]">Brands can find and book you in the marketplace</p>
                         </>
                       ) : (
                         <>
-                          <p className="text-sm font-bold text-amber-700">No active packages</p>
+                          <p className="text-sm font-bold text-amber-700">No public active packages</p>
                           <p className="text-xs text-amber-600">You are not currently visible in the marketplace</p>
                         </>
                       )}
                     </div>
                   </div>
                   <Link
-                    href={activePackageCount === 0 ? "/creator/packages/new" : "/creator/packages"}
+                    href={publicActivePackageCount === 0 ? "/creator/packages/new" : "/creator/packages"}
                     className="shrink-0 rounded-full border-2 border-[#d1ddd6] bg-white px-3.5 py-1.5 text-xs font-bold text-[#496159] transition-colors hover:border-[#b0c5ba]"
                   >
-                    {activePackageCount === 0 ? "Create package" : "Manage"}
+                    {publicActivePackageCount === 0 ? "Create package" : "Manage"}
                   </Link>
                 </div>
               </div>
@@ -2103,23 +2184,145 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
           {section === "settings" && (
             <TabsPrimitive.Content value="preferences" className="space-y-5">
               <div className={panelClass}>
-                <PanelHeader eyebrow="Settings" title="Creator Preferences" />
-                <p className="mb-4 text-sm text-[#496159]">Control what collaborations you receive.</p>
+                <PanelHeader eyebrow="Personalization" title="Display & Language" />
+                <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+                  <div>
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="grid size-8 place-items-center rounded-xl bg-[#e7f0ea] text-[#185c39]">
+                        <Sun className="size-4" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-extrabold text-[#1e3d2e]">Theme</p>
+                        <p className="text-xs text-[#87938b]">Choose how ZingZing looks on this device</p>
+                      </div>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
+                      {[
+                        {
+                          value: "light" as ThemePreference,
+                          label: "Light",
+                          description: "Bright workspace",
+                          Icon: Sun,
+                          iconClass: "bg-[#fff4cf] text-[#a66a00]",
+                        },
+                        {
+                          value: "dark" as ThemePreference,
+                          label: "Dark",
+                          description: "Low-light mode",
+                          Icon: Moon,
+                          iconClass: "bg-[#e8e6ff] text-[#5840b8]",
+                        },
+                        {
+                          value: "system" as ThemePreference,
+                          label: "System",
+                          description: "Match your device",
+                          Icon: Monitor,
+                          iconClass: "bg-[#e4f4f2] text-[#0f766e]",
+                        },
+                      ].map(({ value, label, description, Icon, iconClass }) => {
+                        const selected = activeTheme === value;
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            aria-pressed={selected}
+                            onClick={() => setTheme(value)}
+                            className={cn(
+                              "flex min-h-[4.25rem] items-center gap-3 rounded-2xl border-2 bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:border-[#b0c5ba] hover:shadow-sm",
+                              selected ? "border-[#2d6b4e] bg-[#f0f7f2] shadow-[0_10px_25px_rgba(45,107,78,0.12)]" : "border-[#d1ddd6]",
+                            )}
+                          >
+                            <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl", iconClass)}>
+                              <Icon className="size-5" />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-sm font-extrabold text-[#1e3d2e]">{label}</span>
+                              <span className="mt-0.5 block text-xs text-[#87938b]">{description}</span>
+                            </span>
+                            {selected && <Check className="ml-auto size-4 shrink-0 text-[#2d6b4e]" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="grid size-8 place-items-center rounded-xl bg-[#fff1cd] text-[#8b5e12]">
+                        <Languages className="size-4" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-extrabold text-[#1e3d2e]">Language</p>
+                        <p className="text-xs text-[#87938b]">Set your preferred interface language</p>
+                      </div>
+                    </div>
+                    <div className="grid gap-2 md:grid-cols-3">
+                      {interfaceLanguageOptions.map((option) => {
+                        const selected = interfaceLanguage === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            aria-pressed={selected}
+                            onClick={() => setInterfaceLanguage(option.value)}
+                            className={cn(
+                              "min-h-[7.25rem] rounded-2xl border-2 bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:border-[#b0c5ba] hover:shadow-sm",
+                              selected ? "border-[#2d6b4e] bg-[#f0f7f2] shadow-[0_10px_25px_rgba(45,107,78,0.12)]" : "border-[#d1ddd6]",
+                            )}
+                          >
+                            <span className="mb-3 flex items-center justify-between gap-2">
+                              <span className={cn("grid h-10 min-w-10 place-items-center rounded-xl px-2 text-sm font-black", option.iconClass)}>
+                                {option.sample}
+                              </span>
+                              {selected && <Check className="size-4 text-[#2d6b4e]" />}
+                            </span>
+                            <span className="block text-sm font-extrabold text-[#1e3d2e]">{option.label}</span>
+                            <span className="mt-1 block text-xs leading-5 text-[#87938b]">{option.description}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={panelClass}>
+                <PanelHeader eyebrow="Marketplace" title="Collaboration Preferences" />
+                <p className="mb-4 text-sm text-[#496159]">
+                  Control which collaboration models brands can discover you for.
+                </p>
                 <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#d1ddd6] bg-[#f4f7f5] p-3.5">
+                    <div>
+                      <p className="text-sm font-extrabold text-[#1e3d2e]">Paid collaborations</p>
+                      <p className="mt-0.5 text-xs text-[#87938b]">Cash collaborations are always enabled in MVP</p>
+                    </div>
+                    <span className="rounded-full bg-[#e4f1e8] px-3 py-1 text-xs font-extrabold text-[#1e5c3e]">On</span>
+                  </div>
                   <ToggleRow
                     label="Accept barter deals"
                     description="Receive non-cash exchange campaigns"
-                    checked={creatorPreferences.acceptsBarter}
+                    checked={creatorPreferences.collaborationPreferences.includes("barter")}
                     onCheckedChange={(checked) =>
-                      setCreatorPreferences((p) => ({ ...p, acceptsBarter: checked }))
+                      setCreatorPreferences((p) => ({
+                        ...p,
+                        collaborationPreferences: checked
+                          ? Array.from(new Set([...p.collaborationPreferences, "barter" as CollaborationPreference]))
+                          : p.collaborationPreferences.filter((type) => type !== "barter"),
+                      }))
                     }
                   />
                   <ToggleRow
                     label="Accept hybrid deals"
                     description="Combine cash + barter in campaigns"
-                    checked={creatorPreferences.acceptsHybridDeals}
+                    checked={creatorPreferences.collaborationPreferences.includes("hybrid")}
                     onCheckedChange={(checked) =>
-                      setCreatorPreferences((p) => ({ ...p, acceptsHybridDeals: checked }))
+                      setCreatorPreferences((p) => ({
+                        ...p,
+                        collaborationPreferences: checked
+                          ? Array.from(new Set([...p.collaborationPreferences, "hybrid" as CollaborationPreference]))
+                          : p.collaborationPreferences.filter((type) => type !== "hybrid"),
+                      }))
                     }
                   />
                   <div className="space-y-1.5 pt-1">
@@ -2140,64 +2343,33 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                 </div>
               </div>
 
-              {/* Deal types */}
-              <div className={panelClass}>
-                <PanelHeader eyebrow="Marketplace" title="Deal Types" />
-                <p className="mb-4 text-sm text-[#496159]">
-                  Brands filter the marketplace by deal type. Keep this up to date — it directly affects your discoverability.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {(["paid", "barter", "hybrid"] as const).map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() =>
-                        setCreatorPreferences((p) => ({
-                          ...p,
-                          dealTypes: p.dealTypes.includes(type)
-                            ? p.dealTypes.filter((t) => t !== type)
-                            : [...p.dealTypes, type],
-                        }))
-                      }
-                      className={
-                        creatorPreferences.dealTypes.includes(type)
-                          ? "rounded-full border-2 border-[#2d6b4e] bg-[#e4f1e8] px-5 py-2 text-sm font-bold capitalize text-[#1e5c3e] transition-all"
-                          : "rounded-full border-2 border-[#d1ddd6] bg-white px-5 py-2 text-sm font-semibold capitalize text-[#496159] transition-all hover:border-[#b0c5ba]"
-                      }
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Barter categories — conditional */}
-              {creatorPreferences.acceptsBarter && (
+              {/* Barter offer preferences — conditional */}
+              {(creatorPreferences.collaborationPreferences.includes("barter") || creatorPreferences.collaborationPreferences.includes("hybrid")) && (
                 <div className={panelClass}>
-                  <PanelHeader eyebrow="Barter" title="Barter Categories" />
+                  <PanelHeader eyebrow="Barter" title="Accepted Barter Offers" />
                   <p className="mb-4 text-sm text-[#496159]">
-                    What kinds of barter products do you accept? Brands search by category to find the right match.
+                    Choose the product or service types you&apos;re open to receiving instead of cash.
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {(["food", "hotel", "salon", "events", "products", "services", "travel", "education"] as const).map((type) => (
+                    {barterTypeOptions.map((type) => (
                       <button
-                        key={type}
+                        key={type.value}
                         type="button"
                         onClick={() =>
                           setCreatorPreferences((p) => ({
                             ...p,
-                            barterTypes: p.barterTypes.includes(type)
-                              ? p.barterTypes.filter((t) => t !== type)
-                              : [...p.barterTypes, type],
+                            barterTypes: p.barterTypes.includes(type.value)
+                              ? p.barterTypes.filter((t) => t !== type.value)
+                              : [...p.barterTypes, type.value],
                           }))
                         }
                         className={
-                          creatorPreferences.barterTypes.includes(type)
+                          creatorPreferences.barterTypes.includes(type.value)
                             ? "rounded-full border-2 border-[#b77a12] bg-[#fdf4e1] px-5 py-2 text-sm font-bold capitalize text-[#9a6b00] transition-all"
                             : "rounded-full border-2 border-[#d1ddd6] bg-white px-5 py-2 text-sm font-semibold capitalize text-[#496159] transition-all hover:border-[#b0c5ba]"
                         }
                       >
-                        {type}
+                        {getBarterTypeLabel(type.value)}
                       </button>
                     ))}
                   </div>
@@ -2512,7 +2684,7 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
             platforms: [],
             totalFollowers: 0,
             avgEngagementRate: 0,
-            dealTypes: [],
+            collaborationPreferences: ["paid"],
             isVerified: false,
             isTrending: false,
             isFastResponder: false,

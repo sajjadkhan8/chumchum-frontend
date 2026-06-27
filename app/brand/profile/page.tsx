@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { pakistanCities } from "@/lib/localization";
 import { formatRelativeTime, getInitials } from "@/lib/utils";
 import { brandsService } from "@/services/brands.service";
 import { reviewsService } from "@/services/reviews.service";
@@ -62,15 +63,7 @@ const companySizes = [
   "500+ employees",
 ];
 
-const cities = [
-  "Karachi",
-  "Lahore",
-  "Islamabad",
-  "Rawalpindi",
-  "Faisalabad",
-  "Multan",
-  "Peshawar",
-];
+const cities = [...pakistanCities];
 
 const inputCls =
   "h-9 rounded-xl border-[#d9e0d8] bg-[#f4f2e9] text-[#1a2e22] placeholder:text-[#8fa098] focus-visible:border-[#2d6b4e] focus-visible:ring-2 focus-visible:ring-[#2d6b4e]/15 focus-visible:bg-white";

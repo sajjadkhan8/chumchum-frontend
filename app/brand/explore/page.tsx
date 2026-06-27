@@ -30,7 +30,7 @@ import { savedCreatorsService } from '@/services/saved-creators.service';
 import { ambassadorService } from '@/services/ambassador.service';
 import { packagesService } from '@/services/packages.service';
 import { brandsService } from '@/services/brands.service';
-import type { Creator, DealType, Package, PlatformAmbassador } from '@/types';
+import type { CollaborationPreference, Creator, Package, PlatformAmbassador } from '@/types';
 import { toast } from 'sonner';
 import { cn, formatFollowers, formatPrice } from '@/lib/utils';
 import { getCategoryLabel, normalizeCategory, normalizeCategories } from '@/lib/categories';
@@ -244,14 +244,14 @@ function ExplorePageContent() {
     const category = searchParams.get('category');
     const filter = searchParams.get('filter');
 
-    const dealTypeFromFilter = filter === 'barter' || filter === 'hybrid' || filter === 'paid'
-      ? [filter as DealType]
+    const collaborationPreferenceFromFilter = filter === 'barter' || filter === 'hybrid' || filter === 'paid'
+      ? [filter as CollaborationPreference]
       : undefined;
 
-    if (category || dealTypeFromFilter || filter === 'rising') {
+    if (category || collaborationPreferenceFromFilter || filter === 'rising') {
       setFilters({
         categories: category ? [normalizeCategory(category)].filter(Boolean) : filters.categories,
-        dealTypes: dealTypeFromFilter || filters.dealTypes,
+        collaborationPreferences: collaborationPreferenceFromFilter || filters.collaborationPreferences,
         sortBy: filter === 'rising' ? 'trending' : filters.sortBy,
       });
     }
@@ -350,7 +350,7 @@ function ExplorePageContent() {
     filters.categories?.length || 0,
     filters.platforms?.length || 0,
     filters.cities?.length || 0,
-    filters.dealTypes?.length || 0,
+    filters.collaborationPreferences?.length || 0,
     filters.barterTypes?.length || 0,
     filters.minFollowers ? 1 : 0,
     filters.minRating ? 1 : 0,
@@ -533,8 +533,8 @@ function ExplorePageContent() {
                       {city} x
                     </Badge>
                   ))}
-                  {filters.dealTypes?.map((type) => (
-                    <Badge key={type} className="cursor-pointer rounded-full bg-[#fff1cd] text-[#8b5e12]" onClick={() => setFilters({ dealTypes: filters.dealTypes?.filter((t) => t !== type) })}>
+                  {filters.collaborationPreferences?.map((type) => (
+                    <Badge key={type} className="cursor-pointer rounded-full bg-[#fff1cd] text-[#8b5e12]" onClick={() => setFilters({ collaborationPreferences: filters.collaborationPreferences?.filter((t) => t !== type) })}>
                       {type} x
                     </Badge>
                   ))}
@@ -561,7 +561,7 @@ function ExplorePageContent() {
                       setFilters({
                         categories: [],
                         cities: [],
-                        dealTypes: [],
+                        collaborationPreferences: [],
                         platforms: [],
                         barterTypes: [],
                         languages: [],
@@ -684,7 +684,7 @@ function ExplorePageContent() {
                           search: '',
                           categories: [],
                           cities: [],
-                          dealTypes: [],
+                          collaborationPreferences: [],
                           platforms: [],
                           barterTypes: [],
                           languages: [],

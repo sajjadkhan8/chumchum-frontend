@@ -268,16 +268,16 @@ export default function PublicCreatorProfilePage({
                     </a>
                   )}
                 </div>
-                {/* Deal type chips */}
-                {(creator.dealTypes.length > 0 || creator.acceptsBarter || creator.acceptsHybridDeals) && (
+                {/* Collaboration preference chips */}
+                {creator.collaborationPreferences.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-1.5">
-                    {creator.dealTypes.includes("paid") && (
+                    {creator.collaborationPreferences.includes("paid") && (
                       <span className="rounded-full bg-[#e4f1e8] px-3 py-1 text-[11px] font-extrabold text-[#1e5c3e]">Paid</span>
                     )}
-                    {(creator.dealTypes.includes("barter") || creator.acceptsBarter) && (
+                    {creator.collaborationPreferences.includes("barter") && (
                       <span className="rounded-full bg-[#fdf4e1] px-3 py-1 text-[11px] font-extrabold text-[#9a6b00]">Barter</span>
                     )}
-                    {(creator.dealTypes.includes("hybrid") || creator.acceptsHybridDeals) && (
+                    {creator.collaborationPreferences.includes("hybrid") && (
                       <span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-[11px] font-extrabold text-sky-600">Hybrid</span>
                     )}
                   </div>
@@ -440,7 +440,7 @@ export default function PublicCreatorProfilePage({
               <div className="divide-y divide-[#f4f6f4]">
                 {[
                   { label: "Response Time",  value: creator.responseTime,                                                         Icon: Clock     },
-                  { label: "Deal Types",     value: creator.dealTypes.join(", ") || "—",                                          Icon: Package   },
+                  { label: "Collaboration Preferences",     value: creator.collaborationPreferences.join(", ") || "—",                                          Icon: Package   },
                   { label: "Languages",      value: (creator.languages ?? []).join(", ") || "—",                                  Icon: Globe     },
                   ...(creator.repeatClients != null
                     ? [{ label: "Repeat Clients", value: `${creator.repeatClients}%`, Icon: Users }]

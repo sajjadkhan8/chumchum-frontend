@@ -103,8 +103,8 @@ export const ambassadorApplications: AmbassadorApplication[] = [
       ],
       totalFollowers: 430000,
       avgEngagementRate: 5.7,
-      dealTypes: ['paid', 'barter'] as any,
-      barterTypes: ['salon', 'products'] as any,
+      collaborationPreferences: ['paid', 'barter'] as any,
+      barterTypes: ['BEAUTY', 'GENERAL'] as any,
       minPrice: 625000,
       maxPrice: 3000000,
       responseTime: 'Within 3 hours',
@@ -147,7 +147,7 @@ export const ambassadorApplications: AmbassadorApplication[] = [
       ],
       totalFollowers: 173000,
       avgEngagementRate: 4.0,
-      dealTypes: ['paid'] as any,
+      collaborationPreferences: ['paid'] as any,
       minPrice: 1000000,
       maxPrice: 5000000,
       responseTime: 'Within 1 day',
@@ -206,4 +206,3 @@ export const ambassadorBenefits = [
     icon: '🎬',
   },
 ];
-
