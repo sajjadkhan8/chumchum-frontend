@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft,
   ArrowRight,
+  BadgeCheck,
   Heart,
   Share2,
   MessageCircle,
@@ -62,6 +63,46 @@ function ProfileStat({ label, value, icon: Icon, dark = false }: { label: string
           <Icon className="size-4" />
         </span>
       </div>
+    </div>
+  );
+}
+
+type PackageMerit = {
+  label: string;
+  className: string;
+  Icon: React.ElementType;
+};
+
+function PackageMenuItem({
+  pkg,
+  badges,
+  canOrder,
+  onOrder,
+}: {
+  pkg: CreatorPackage;
+  badges: PackageMerit[];
+  canOrder: boolean;
+  onOrder: (pkg: CreatorPackage) => void;
+}) {
+  return (
+    <div className="space-y-2.5">
+      {badges.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {badges.map(({ label, className, Icon }) => (
+            <span
+              key={label}
+              className={cn("inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-extrabold", className)}
+            >
+              <Icon className="size-3" />
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
+      <PackageCard
+        pkg={pkg}
+        onOrder={canOrder ? () => onOrder(pkg) : undefined}
+      />
     </div>
   );
 }
@@ -177,14 +218,55 @@ export default function CreatorProfilePage({
   const creatorPortfolio = [...creator.contentPreviews, ...packagePortfolio].filter(
     (item, index, items) => items.findIndex((candidate) => candidate.url === item.url) === index
   );
-  const featuredPackages = creatorPackages.filter((pkg) => pkg.isPopular).slice(0, 2);
-  const trendingPackages = [...creatorPackages]
-    .sort((a, b) => b.ordersCompleted - a.ordersCompleted)
-    .slice(0, 2);
-  const barterFriendlyPackages = creatorPackages.filter((pkg) => pkg.dealType === "barter" || pkg.dealType === "hybrid");
-  const bestPerformingPackages = [...creatorPackages]
-    .sort((a, b) => (b.ordersCompleted + (b.isPopular ? 10 : 0)) - (a.ordersCompleted + (a.isPopular ? 10 : 0)))
-    .slice(0, 2);
+  const uniqueCreatorPackages = creatorPackages.filter(
+    (pkg, index, items) => items.findIndex((candidate) => candidate.id === pkg.id) === index
+  );
+  const packagesByActivity = [...uniqueCreatorPackages].sort((a, b) => b.ordersCompleted - a.ordersCompleted);
+  const packagesByDelivery = [...uniqueCreatorPackages].sort(
+    (a, b) => (b.ordersCompleted + (b.isPopular ? 10 : 0)) - (a.ordersCompleted + (a.isPopular ? 10 : 0))
+  );
+  const topActivePackageIds = new Set(packagesByActivity.filter((pkg) => pkg.ordersCompleted > 0).slice(0, 2).map((pkg) => pkg.id));
+  const topDeliveryPackageIds = new Set(packagesByDelivery.filter((pkg) => pkg.ordersCompleted > 0).slice(0, 2).map((pkg) => pkg.id));
+  const packageMenu = [...uniqueCreatorPackages].sort((a, b) => {
+    const score = (pkg: CreatorPackage) =>
+      (pkg.isPopular || pkg.isFeatured ? 100 : 0) +
+      (topActivePackageIds.has(pkg.id) ? 40 : 0) +
+      (topDeliveryPackageIds.has(pkg.id) ? 30 : 0) +
+      pkg.ordersCompleted;
+    return score(b) - score(a);
+  });
+  const getPackageBadges = (pkg: CreatorPackage): PackageMerit[] => {
+    const badges: PackageMerit[] = [];
+    if (pkg.isPopular || pkg.isFeatured) {
+      badges.push({
+        label: "Featured",
+        Icon: Sparkles,
+        className: "border-[#efcf83] bg-[#fff1cd] text-[#8b5e12]",
+      });
+    }
+    if (topActivePackageIds.has(pkg.id)) {
+      badges.push({
+        label: "Most active",
+        Icon: TrendingUp,
+        className: "border-[#d6eadf] bg-[#e8f0ec] text-[#2d6b4e]",
+      });
+    }
+    if (pkg.dealType === "barter" || pkg.dealType === "hybrid") {
+      badges.push({
+        label: "Barter-friendly",
+        Icon: Wallet,
+        className: "border-[#efcf83] bg-[#fff9e8] text-[#8b5e12]",
+      });
+    }
+    if (topDeliveryPackageIds.has(pkg.id)) {
+      badges.push({
+        label: "Proven delivery",
+        Icon: BadgeCheck,
+        className: "border-sky-100 bg-sky-50 text-sky-700",
+      });
+    }
+    return badges;
+  };
   const completionRate = creator.completionRate ?? Math.min(99, Math.round((creator.completedDeals / (creator.completedDeals + 5)) * 100));
   const repeatClients = creator.repeatClients ?? Math.max(3, Math.round(creator.completedDeals * 0.24));
 
@@ -457,64 +539,32 @@ export default function CreatorProfilePage({
 
               {/* Packages Tab */}
               <TabsContent value="packages" className="space-y-4">
-                {creatorPackages.length > 0 ? (
-                  <>
-                    <div className="space-y-3 rounded-2xl border border-[#e2e7e1] bg-white p-4 shadow-sm">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Priority offer</p>
-                      <h3 className="text-[15px] font-extrabold text-[#1e3d2e]">Featured Packages</h3>
-                      {(featuredPackages.length > 0 ? featuredPackages : creatorPackages.slice(0, 2)).map((pkg) => (
-                        <PackageCard
-                          key={`featured-${pkg.id}`}
+                {packageMenu.length > 0 ? (
+                  <section className="overflow-hidden rounded-2xl border border-[#e2e7e1] bg-white shadow-sm">
+                    <div className="flex flex-col gap-3 border-b border-[#edf1ed] bg-[#fbfaf5] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Package menu</p>
+                        <h3 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">Available Packages</h3>
+                        <p className="mt-1 max-w-2xl text-[12px] font-medium leading-5 text-[#647168]">
+                          Each package appears once. Badges show why it may be a strong fit.
+                        </p>
+                      </div>
+                      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e8f0ec] text-[#2d6b4e]">
+                        <Package className="size-4" />
+                      </span>
+                    </div>
+                    <div className="space-y-4 p-4">
+                      {packageMenu.map((pkg) => (
+                        <PackageMenuItem
+                          key={pkg.id}
                           pkg={pkg}
-                          onOrder={canHireCreator ? () => handleBookPackage(pkg) : undefined}
+                          badges={getPackageBadges(pkg)}
+                          canOrder={canHireCreator}
+                          onOrder={handleBookPackage}
                         />
                       ))}
                     </div>
-
-                    <div className="space-y-3 rounded-2xl border border-[#e2e7e1] bg-white p-4 shadow-sm">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Most active</p>
-                      <h3 className="text-[15px] font-extrabold text-[#1e3d2e]">Trending Packages</h3>
-                      {(trendingPackages.length > 0 ? trendingPackages : creatorPackages.slice(0, 2)).map((pkg) => (
-                        <PackageCard
-                          key={`trending-${pkg.id}`}
-                          pkg={pkg}
-                          onOrder={canHireCreator ? () => handleBookPackage(pkg) : undefined}
-                        />
-                      ))}
-                    </div>
-
-                    <div className="space-y-3 rounded-2xl border border-[#e2e7e1] bg-white p-4 shadow-sm">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Flexible deal type</p>
-                      <h3 className="text-[15px] font-extrabold text-[#1e3d2e]">Barter Friendly Packages</h3>
-                      {barterFriendlyPackages.length > 0 ? (
-                        barterFriendlyPackages.map((pkg) => (
-                          <PackageCard
-                            key={`barter-${pkg.id}`}
-                            pkg={pkg}
-                            onOrder={canHireCreator ? () => handleBookPackage(pkg) : undefined}
-                          />
-                        ))
-                      ) : (
-                        <Card className="rounded-2xl border-[#edf1ed] bg-[#fbfaf5]">
-                          <CardContent className="py-6 text-sm font-semibold text-[#647168]">
-                            No barter-focused campaigns yet.
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
-
-                    <div className="space-y-3 rounded-2xl border border-[#e2e7e1] bg-white p-4 shadow-sm">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Proven delivery</p>
-                      <h3 className="text-[15px] font-extrabold text-[#1e3d2e]">Best Performing Packages</h3>
-                      {bestPerformingPackages.map((pkg) => (
-                        <PackageCard
-                          key={`best-${pkg.id}`}
-                          pkg={pkg}
-                          onOrder={canHireCreator ? () => handleBookPackage(pkg) : undefined}
-                        />
-                      ))}
-                    </div>
-                  </>
+                  </section>
                 ) : (
                   <Card className="rounded-2xl border-[#e2e7e1] bg-white shadow-sm">
                     <CardContent className="flex flex-col items-center justify-center py-12">

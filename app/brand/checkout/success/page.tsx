@@ -29,8 +29,10 @@ function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const sessionId = searchParams.get("session");
-  const tracker = searchParams.get("tracker");
+  const rawSessionId = searchParams.get("session");
+  const embeddedTracker = rawSessionId?.match(/[?&]tracker=([^&]+)/)?.[1] ?? null;
+  const sessionId = rawSessionId?.split("?")[0] ?? null;
+  const tracker = searchParams.get("tracker") ?? embeddedTracker;
 
   const [phase, setPhase] = useState<Phase>("polling");
   const [sessionStatus, setSessionStatus] = useState<SafepaySessionStatus | null>(null);
