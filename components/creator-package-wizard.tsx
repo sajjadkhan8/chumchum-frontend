@@ -34,7 +34,7 @@ import { PlatformIconBadge, platformMeta } from "@/components/platform-icons";
 import { categoryOptions, getCategoryLabel, normalizeCategories, normalizeCategory } from "@/lib/categories";
 
 const DRAFT_KEY = "creator-package-draft-v3";
-const PRICE_LIMITS = { min: 100, max: 1_000_000 };
+const PRICE_LIMITS = { min: 500, max: 1_000_000 };
 const DELIVERY_LIMITS = { min: 1, max: 60 };
 const REVISION_LIMITS = { min: 0, max: 10 };
 

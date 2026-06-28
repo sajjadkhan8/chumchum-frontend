@@ -59,7 +59,7 @@ const textareaClassName =
   'resize-none rounded-xl border-[#d9e0d8] bg-[#f4f2e9] text-sm text-[#1e3d2e] placeholder:text-[#8fa098] focus-visible:ring-[#2d6b4e]/20';
 const labelClassName = 'text-[10px] font-bold uppercase tracking-widest text-[#8fa098]';
 const pendingPackageTopupKey = 'chumchum:pending-package-order-topup';
-const cashAmountLimits = { min: 100, max: 1_000_000 };
+const cashAmountLimits = { min: 500, max: 1_000_000 };
 
 export function PackageOrderModal({ isOpen, pkg, onClose, onCreated }: PackageOrderModalProps) {
   const [amount, setAmount] = useState('');
@@ -145,7 +145,7 @@ export function PackageOrderModal({ isOpen, pkg, onClose, onCreated }: PackageOr
           const paymentCheck = await ordersService.initiatePayment(cashAmount);
           setPaymentAssist(paymentCheck);
           toast.warning('Add funds to place this order', {
-            description: `${formatPrice(paymentCheck.topUpAmount || Math.max(cashAmount, 1000))} is needed in your brand wallet.`,
+            description: `${formatPrice(paymentCheck.topUpAmount || Math.max(cashAmount, cashAmountLimits.min))} is needed in your brand wallet.`,
           });
         } catch {
           toast.error(message);

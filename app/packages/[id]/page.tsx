@@ -65,6 +65,7 @@ export default function PublicPackageDetailPage() {
   const [pkg, setPkg] = useState<CreatorPackage | null>(null);
   const [creator, setCreator] = useState<Creator | null>(null);
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+  const [canManagePackage, setCanManagePackage] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<CreatorPackage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -78,15 +79,21 @@ export default function PublicPackageDetailPage() {
       if (!response) {
         setCreator(null);
         setActiveOrder(null);
+        setCanManagePackage(false);
         return;
       }
 
-      const [creatorResponse, ordersResponse] = await Promise.allSettled([
+      const [creatorResponse, ordersResponse, viewerCreatorResponse] = await Promise.allSettled([
         creatorsService.getById(response.creatorId),
         user?.role === "brand" ? ordersService.getAll({ limit: 200 }) : Promise.resolve({ orders: [], total: 0, hasMore: false }),
+        user?.role === "creator" ? creatorsService.getMe() : Promise.resolve(null),
       ]);
 
       setCreator(creatorResponse.status === "fulfilled" ? creatorResponse.value : null);
+      setCanManagePackage(
+        viewerCreatorResponse.status === "fulfilled" &&
+        Boolean(viewerCreatorResponse.value && viewerCreatorResponse.value.id === response.creatorId)
+      );
 
       if (ordersResponse.status !== "fulfilled" || user?.role !== "brand") {
         setActiveOrder(null);
@@ -102,6 +109,7 @@ export default function PublicPackageDetailPage() {
       setPkg(null);
       setCreator(null);
       setActiveOrder(null);
+      setCanManagePackage(false);
     } finally {
       setIsLoading(false);
     }
@@ -185,6 +193,7 @@ export default function PublicPackageDetailPage() {
             creatorProfileHref={creator ? `/creator/${creator.username || creator.id}` : undefined}
             activeOrder={activeOrder}
             canOrder={!user || user.role === "brand"}
+            managementHref={canManagePackage ? `/creator/packages/${pkg.id}/edit` : undefined}
             onOrder={handleOrder}
             onViewActiveOrder={(order) => router.push(`/brand/orders?orderId=${order.id}`)}
             className="rounded-[1.75rem] border border-[#d1ddd6] shadow-[0_24px_64px_rgba(38,70,50,0.12)]"

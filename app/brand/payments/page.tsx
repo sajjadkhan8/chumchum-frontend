@@ -166,8 +166,8 @@ export default function BrandPaymentsPage() {
 
   const handleTopup = async () => {
     const amount = Number(topupAmount);
-    if (!Number.isFinite(amount) || amount < 1000) {
-      toast.error("Enter a valid top-up amount (minimum PKR 1,000)");
+    if (!Number.isFinite(amount) || amount < 500) {
+      toast.error("Enter a valid top-up amount (minimum PKR 500)");
       return;
     }
     if (amount > 10_000_000) {
@@ -306,7 +306,7 @@ export default function BrandPaymentsPage() {
                       <Input
                         id="topup-amount"
                         type="number"
-                        min={1000}
+                        min={500}
                         max={10000000}
                         value={topupAmount}
                         onChange={(e) => setTopupAmount(e.target.value)}
@@ -331,7 +331,7 @@ export default function BrandPaymentsPage() {
 
                     <div className="flex items-start gap-2 rounded-xl border border-[#c8e0d0] bg-[#eef6f1] px-3.5 py-3 text-xs text-[#185c39]">
                       <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
-                      <p>Minimum PKR 1,000 · Maximum PKR 10,000,000 · Secured by Safepay</p>
+                      <p>Minimum PKR 500 · Maximum PKR 10,000,000 · Secured by Safepay</p>
                     </div>
 
                     <DialogFooter className="gap-2 pt-1 sm:gap-2">

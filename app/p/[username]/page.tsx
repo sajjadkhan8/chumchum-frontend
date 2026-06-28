@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PackageCard } from "@/components/package-card";
-import { PackageDetailsModal } from "@/components/package-details-view";
 import { ReviewCard } from "@/components/review-card";
 import { QuickDealModal } from "@/components/quick-deal-modal";
 import { PackageOrderModal } from "@/components/package-order-modal";
@@ -76,7 +75,6 @@ export default function PublicCreatorProfilePage({
   const [activeTab, setActiveTab]           = useState<Tab>("packages");
   const [quickDealOpen, setQuickDealOpen]   = useState(false);
   const [selectedPkg, setSelectedPkg]       = useState<CreatorPackage | null>(null);
-  const [selectedPkgDetails, setSelectedPkgDetails] = useState<CreatorPackage | null>(null);
   const [shareOpen, setShareOpen]           = useState(false);
   const [isSaving, setIsSaving]             = useState(false);
 
@@ -167,12 +165,11 @@ export default function PublicCreatorProfilePage({
     if (user.role !== "brand") return;
     void packagesService.trackEvent(pkg.id, "CLICK", "public_profile_order").catch(() => undefined);
     setSelectedPkg(pkg);
-    setSelectedPkgDetails(null);
   };
 
   const handleViewDetails = (pkg: CreatorPackage) => {
     void packagesService.trackEvent(pkg.id, "VIEW", "public_profile_details").catch(() => undefined);
-    setSelectedPkgDetails(pkg);
+    router.push(`/packages/${pkg.id}`);
   };
 
   const handleSave = async () => {
@@ -182,10 +179,10 @@ export default function PublicCreatorProfilePage({
   };
 
   const availabilityDisplay: Record<string, { label: string; cls: string; pulse: boolean }> = {
-    AVAILABLE:    { label: "Available Now", cls: "border-emerald-400/30 bg-emerald-500/20 text-emerald-300", pulse: true  },
-    BUSY:         { label: "Busy",          cls: "border-amber-400/30 bg-amber-500/20 text-amber-300",       pulse: false },
-    ON_VACATION:  { label: "On Vacation",   cls: "border-sky-400/30 bg-sky-500/20 text-sky-300",             pulse: false },
-    UNAVAILABLE:  { label: "Unavailable",   cls: "border-white/20 bg-black/30 text-white/70",                pulse: false },
+    AVAILABLE:    { label: "Available Now", cls: "border-emerald-200/80 bg-white/90 text-emerald-700 shadow-[0_10px_30px_rgba(13,36,25,0.18)]", pulse: true  },
+    BUSY:         { label: "Busy",          cls: "border-amber-200/80 bg-white/90 text-amber-700 shadow-[0_10px_30px_rgba(13,36,25,0.18)]",    pulse: false },
+    ON_VACATION:  { label: "On Vacation",   cls: "border-sky-200/80 bg-white/90 text-sky-700 shadow-[0_10px_30px_rgba(13,36,25,0.18)]",        pulse: false },
+    UNAVAILABLE:  { label: "Unavailable",   cls: "border-[#d1ddd6]/80 bg-white/90 text-[#496159] shadow-[0_10px_30px_rgba(13,36,25,0.18)]",    pulse: false },
   };
   const avail = availabilityDisplay[creator.availabilityStatus ?? "AVAILABLE"] ?? availabilityDisplay.AVAILABLE;
 
@@ -202,12 +199,13 @@ export default function PublicCreatorProfilePage({
       {/* ── HERO ── */}
       <section className="relative">
         {/* Cover */}
-        <div className="relative h-48 overflow-hidden bg-gradient-to-br from-[#1e3d2e] via-[#2d6b4e] to-[#1a4a32] md:h-64">
+        <div className="relative h-60 overflow-hidden bg-gradient-to-br from-[#1e3d2e] via-[#2d6b4e] to-[#1a4a32] md:h-80 lg:h-[22rem]">
           {creator.coverImage && (
-            <Image src={creator.coverImage} alt="" fill className="object-cover opacity-70" />
+            <Image src={creator.coverImage} alt="" fill className="object-cover" priority />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0d2419]/70 via-[#0d2419]/20 to-[#0d2419]/10" />
-          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#fbfaf5] to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0d2419]/50 via-transparent to-[#0d2419]/10" />
+          <div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-[#0d2419]/40 via-[#0d2419]/10 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#fbfaf5] via-[#fbfaf5]/70 to-transparent" />
 
           {/* Availability badge — top right of cover */}
           <div className="absolute right-4 top-4">
@@ -220,7 +218,7 @@ export default function PublicCreatorProfilePage({
 
         {/* Profile identity dock */}
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="relative -mt-9 overflow-visible rounded-[28px] border border-[#dce8e2] bg-white shadow-[0_18px_55px_rgba(30,61,46,0.13)]">
+          <div className="relative -mt-14 overflow-visible rounded-[28px] border border-[#dce8e2] bg-white shadow-[0_18px_55px_rgba(30,61,46,0.13)]">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-1.5 rounded-t-[28px] bg-gradient-to-r from-[#2d6b4e] via-[#e6aa38] to-[#fbfaf5]" />
             <div className="flex flex-col gap-4 px-4 pb-4 pt-20 sm:flex-row sm:items-end sm:justify-between sm:px-5 sm:py-5 sm:pl-44">
 
@@ -695,17 +693,6 @@ export default function PublicCreatorProfilePage({
         pkg={selectedPkg}
         onClose={() => setSelectedPkg(null)}
         onCreated={() => router.push("/brand/orders")}
-      />
-      <PackageDetailsModal
-        isOpen={Boolean(selectedPkgDetails)}
-        pkg={selectedPkgDetails}
-        creator={creator}
-        creatorProfileHref={`/creator/${creator.username || creator.id}`}
-        shareUrl={selectedPkgDetails ? `/packages/${selectedPkgDetails.id}` : undefined}
-        canOrder={canHire}
-        onClose={() => setSelectedPkgDetails(null)}
-        onOrder={handleBook}
-        onViewActiveOrder={(order) => router.push(`/brand/orders?orderId=${order.id}`)}
       />
       <ShareProfileModal isOpen={shareOpen} onClose={() => setShareOpen(false)} creator={creator} />
     </div>

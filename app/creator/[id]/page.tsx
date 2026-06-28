@@ -30,7 +30,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PackageCard } from "@/components/package-card";
-import { PackageDetailsModal, type PackageDetailBadge } from "@/components/package-details-view";
+import type { PackageDetailBadge } from "@/components/package-details-view";
 import { ReviewCard } from "@/components/review-card";
 import { QuickDealModal } from "@/components/quick-deal-modal";
 import { PackageOrderModal } from "@/components/package-order-modal";
@@ -159,7 +159,6 @@ export default function CreatorProfilePage({
   const [activeTab, setActiveTab] = useState("packages");
   const [quickDealOpen, setQuickDealOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<CreatorPackage | null>(null);
-  const [selectedPackageDetails, setSelectedPackageDetails] = useState<CreatorPackage | null>(null);
   const [selectedPackagePlatforms, setSelectedPackagePlatforms] = useState<Platform[]>([]);
   const [creator, setCreator] = useState<Creator | null>(null);
   const [creatorPackages, setCreatorPackages] = useState<CreatorPackage[]>([]);
@@ -357,8 +356,6 @@ export default function CreatorProfilePage({
   };
   const completionRate = creator.completionRate ?? Math.min(99, Math.round((creator.completedDeals / (creator.completedDeals + 5)) * 100));
   const repeatClients = creator.repeatClients ?? Math.max(3, Math.round(creator.completedDeals * 0.24));
-  const selectedPackageActiveOrder = selectedPackageDetails ? activePackageOrders[selectedPackageDetails.id] ?? null : null;
-
   const handleViewActiveOrder = (order: Order) => {
     router.push(`/brand/orders?orderId=${order.id}`);
   };
@@ -381,7 +378,6 @@ export default function CreatorProfilePage({
 
     void packagesService.trackEvent(pkg.id, "CLICK", "creator_profile_order").catch(() => undefined);
     setSelectedPackage(pkg);
-    setSelectedPackageDetails(null);
   };
 
   const handlePackageOrderCreated = async (orderId: string) => {
@@ -394,7 +390,7 @@ export default function CreatorProfilePage({
 
   const handleViewPackageDetails = (pkg: CreatorPackage) => {
     void packagesService.trackEvent(pkg.id, "VIEW", "creator_profile_details").catch(() => undefined);
-    setSelectedPackageDetails(pkg);
+    router.push(`/packages/${pkg.id}`);
   };
 
   const handleSavedCreatorToggle = async () => {
@@ -918,19 +914,6 @@ export default function CreatorProfilePage({
         pkg={selectedPackage}
         onClose={() => setSelectedPackage(null)}
         onCreated={handlePackageOrderCreated}
-      />
-      <PackageDetailsModal
-        isOpen={Boolean(selectedPackageDetails)}
-        pkg={selectedPackageDetails}
-        badges={selectedPackageDetails ? getPackageBadges(selectedPackageDetails) : []}
-        creator={creator}
-        creatorProfileHref={`/creator/${creator.username || creator.id}`}
-        shareUrl={selectedPackageDetails ? `/packages/${selectedPackageDetails.id}` : undefined}
-        canOrder={canHireCreator}
-        activeOrder={selectedPackageActiveOrder}
-        onClose={() => setSelectedPackageDetails(null)}
-        onOrder={handleBookPackage}
-        onViewActiveOrder={handleViewActiveOrder}
       />
       <ShareProfileModal
         isOpen={shareOpen}

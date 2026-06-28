@@ -330,6 +330,8 @@ const defaultForm: OfferForm = {
    campaignDuration: '30',
  };
 
+const BUDGET_LIMITS = { min: 500, max: 1_000_000 };
+
 type SupportedPlatform = (typeof platformOptions)[number];
 
 const isSupportedPlatform = (value: unknown): value is SupportedPlatform =>
@@ -704,7 +706,10 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
        if (!isBarterOnly) {
          if (!form.budgetMin) missing.push('Budget min');
          if (!form.budgetMax) missing.push('Budget max');
+         if (Number(form.budgetMin || 0) < BUDGET_LIMITS.min) missing.push(`Budget min must be at least PKR ${BUDGET_LIMITS.min.toLocaleString()}`);
+         if (Number(form.budgetMax || 0) < BUDGET_LIMITS.min) missing.push(`Budget max must be at least PKR ${BUDGET_LIMITS.min.toLocaleString()}`);
          if (Number(form.budgetMin || 0) > Number(form.budgetMax || 0)) missing.push('Budget min must be ≤ budget max');
+         if (form.minProposedPrice && Number(form.minProposedPrice) < BUDGET_LIMITS.min) missing.push(`Minimum proposed price must be at least PKR ${BUDGET_LIMITS.min.toLocaleString()}`);
        }
        if (hasBarter && !form.barterProductDesc.trim()) missing.push('Barter product description');
        return missing;
@@ -1503,8 +1508,8 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
                 {form.budgetType === 'fixed' ? (
                   <Input
                     type="number"
-                    min={100}
-                    max={1000000}
+                    min={BUDGET_LIMITS.min}
+                    max={BUDGET_LIMITS.max}
                     value={form.budgetMin}
                     onChange={(e) => updateForm({ budgetMin: e.target.value, budgetMax: e.target.value })}
                     placeholder="e.g. 25000"
@@ -1513,15 +1518,15 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">Minimum</Label>
-                      <Input type="number" min={0} value={form.budgetMin} onChange={(e) => updateForm({ budgetMin: e.target.value })} placeholder="e.g. 10000" />
+                      <Input type="number" min={BUDGET_LIMITS.min} max={BUDGET_LIMITS.max} value={form.budgetMin} onChange={(e) => updateForm({ budgetMin: e.target.value })} placeholder="e.g. 10000" />
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">Maximum</Label>
-                      <Input type="number" min={0} value={form.budgetMax} onChange={(e) => updateForm({ budgetMax: e.target.value })} placeholder="e.g. 80000" />
+                      <Input type="number" min={BUDGET_LIMITS.min} max={BUDGET_LIMITS.max} value={form.budgetMax} onChange={(e) => updateForm({ budgetMax: e.target.value })} placeholder="e.g. 80000" />
                     </div>
                   </div>
                 )}
-                <p className="text-xs text-muted-foreground">Per creator, in PKR. Creators will see this when browsing.</p>
+                <p className="text-xs text-muted-foreground">Per creator, in PKR. Minimum PKR {BUDGET_LIMITS.min.toLocaleString()}; creators will see this when browsing.</p>
               </div>
             )}
 
@@ -1586,7 +1591,7 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
                 <Label>Minimum Proposed Price (PKR, optional)</Label>
                 <Input
                   type="number"
-                  min={0}
+                  min={BUDGET_LIMITS.min}
                   value={form.minProposedPrice}
                   onChange={(e) => updateForm({ minProposedPrice: e.target.value })}
                   placeholder="e.g. 5000"

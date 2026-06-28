@@ -467,7 +467,7 @@ function ExplorePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { filters, setFilters } = useFilterStore();
-  const { loadSavedCreators } = useAuthStore();
+  const { savedCreators, loadSavedCreators } = useAuthStore();
 
   const rawView = searchParams.get('view');
   const creatorView: 'all' | 'ambassadors' | 'saved' =
@@ -542,6 +542,10 @@ function ExplorePageContent() {
 
     void fetchCreators();
   }, [filters]);
+
+  useEffect(() => {
+    void loadSavedCreators();
+  }, [loadSavedCreators]);
 
   const savedFetchedRef = useRef(false);
   useEffect(() => {
@@ -683,7 +687,7 @@ function ExplorePageContent() {
                 >
                   Saved Creators
                   <Badge className="ml-2 h-5 rounded-full bg-white/16 px-1.5 text-[10px] text-current">
-                    {savedCreatorsList.length}
+                    {savedCreators.length}
                   </Badge>
                 </Button>
               </div>

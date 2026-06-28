@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { cn, formatPrice } from "@/lib/utils";
 import { getCategoryLabel } from "@/lib/categories";
 import { getPlatformMeta } from "@/components/platform-icons";
@@ -38,17 +37,10 @@ type PackageDetailsViewProps = {
   canOrder?: boolean;
   shareUrl?: string;
   creatorProfileHref?: string;
+  managementHref?: string;
   onOrder?: (pkg: CreatorPackage) => void;
   onViewActiveOrder?: (order: Order) => void;
-  onClose?: () => void;
-  compact?: boolean;
   className?: string;
-};
-
-type PackageDetailsModalProps = Omit<PackageDetailsViewProps, "pkg" | "compact" | "className"> & {
-  pkg: CreatorPackage | null;
-  isOpen: boolean;
-  onClose: () => void;
 };
 
 const formatOrderStatusLabel = (status: Order["status"]) => status.replace(/_/g, " ");
@@ -93,10 +85,9 @@ export function PackageDetailsView({
   canOrder = true,
   shareUrl,
   creatorProfileHref,
+  managementHref,
   onOrder,
   onViewActiveOrder,
-  onClose,
-  compact = false,
   className,
 }: PackageDetailsViewProps) {
   const priceDisplay = getPriceDisplay(pkg);
@@ -157,7 +148,7 @@ export function PackageDetailsView({
         </div>
       </div>
 
-      <div className={cn("overflow-y-auto px-5 py-5 sm:px-6", compact && "max-h-[calc(100dvh-15rem)] sm:max-h-[calc(90dvh-14rem)]")}>
+      <div className="px-5 py-5 sm:px-6">
         <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-4">
             {media.length > 0 && (
@@ -300,44 +291,25 @@ export function PackageDetailsView({
             <Copy className="mr-2 size-3.5" />
             Copy Link
           </Button>
-          {onClose && (
-            <Button variant="outline" onClick={onClose} className="rounded-xl border-[#d1ddd6] bg-white font-extrabold text-[#496159] hover:bg-[#e8f0ec]">
-              Close
+          {managementHref && (
+            <Button asChild className="rounded-xl bg-[#2d6b4e] font-extrabold text-white hover:bg-[#1f5239]">
+              <Link href={managementHref}>Edit Package</Link>
             </Button>
           )}
-          <Button
-            disabled={activeOrder ? false : !canOrder || !onOrder}
-            onClick={() => activeOrder ? onViewActiveOrder?.(activeOrder) : onOrder?.(pkg)}
-            className={cn(
-              "rounded-xl font-extrabold text-white",
-              activeOrder ? "bg-[#8b5e12] hover:bg-[#70490d]" : "bg-[#2d6b4e] hover:bg-[#1f5239]"
-            )}
-          >
-            {activeOrder ? "View Active Order" : "Order Package"}
-          </Button>
+          {!managementHref && (canOrder || activeOrder) && (
+            <Button
+              disabled={activeOrder ? false : !canOrder || !onOrder}
+              onClick={() => activeOrder ? onViewActiveOrder?.(activeOrder) : onOrder?.(pkg)}
+              className={cn(
+                "rounded-xl font-extrabold text-white",
+                activeOrder ? "bg-[#8b5e12] hover:bg-[#70490d]" : "bg-[#2d6b4e] hover:bg-[#1f5239]"
+              )}
+            >
+              {activeOrder ? "View Active Order" : "Order Package"}
+            </Button>
+          )}
         </div>
       </div>
     </div>
-  );
-}
-
-export function PackageDetailsModal({
-  pkg,
-  isOpen,
-  onClose,
-  ...props
-}: PackageDetailsModalProps) {
-  if (!pkg) return null;
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-hidden rounded-[1.75rem] border border-[#d1ddd6] bg-white p-0 shadow-[0_24px_64px_rgba(38,70,50,0.18)] sm:max-h-[90dvh] sm:max-w-3xl">
-        <DialogTitle className="sr-only">{pkg.title}</DialogTitle>
-        <DialogDescription className="sr-only">
-          Package details, performance signals, deliverables, sharing, and order actions.
-        </DialogDescription>
-        <PackageDetailsView pkg={pkg} compact onClose={onClose} {...props} />
-      </DialogContent>
-    </Dialog>
   );
 }
