@@ -14,7 +14,6 @@ import {
   Settings,
   ShieldCheck,
   Layers,
-  UserCircle2,
   Upload,
   FileCheck,
   XCircle,
@@ -24,7 +23,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { categoryOptions, normalizeCategories } from "@/lib/categories";
 import { authService } from "@/services/auth.service";
@@ -35,6 +33,7 @@ import { useAuthStore } from "@/store/auth-store";
 import type { Brand, BrandVerificationStatus } from "@/types";
 import { isPasswordStrong, PASSWORD_REQUIREMENTS_MESSAGE } from "@/lib/password-validation";
 import { toast } from "sonner";
+import { brandVerificationStatusMeta } from "../brand-verification-status";
 
 const TABS = [
   { id: "billing", label: "Billing", icon: CreditCard },
@@ -54,14 +53,15 @@ const requiredVerificationDocuments = [
   { type: "business_registration" as const, label: "Business Registration", description: "SECP certificate of incorporation or partnership deed." },
   { type: "bank_details" as const, label: "Bank Account Details", description: "Cancelled cheque or bank statement showing account holder name and IBAN." },
 ] as const;
-
-const verificationStatusMeta: Record<BrandVerificationStatus, { label: string; className: string }> = {
-  verified: { label: "✓ Verified", className: "border-[#bcd3c5] bg-[#eef6f1] text-[#185c39]" },
-  pending: { label: "⏳ Pending review", className: "border-[#efcf83] bg-[#fffbf0] text-[#8b5e12]" },
-  under_review: { label: "⏳ Under review", className: "border-[#efcf83] bg-[#fffbf0] text-[#8b5e12]" },
-  rejected: { label: "✗ Verification rejected — contact support", className: "border-[#f5c2c2] bg-[#fff5f5] text-[#c13a3a]" },
-  unverified: { label: "Unverified", className: "border-[#d9e0d8] bg-[#f4f2e9] text-[#8fa098]" },
+const verificationEventLabels: Record<string, string> = {
+  DOCUMENT_UPLOADED: "Document uploaded",
+  SUBMITTED_FOR_REVIEW: "Submitted for review",
+  DOCUMENT_APPROVED: "Document approved",
+  DOCUMENT_REJECTED: "Document rejected",
+  VERIFICATION_APPROVED: "Verification approved",
+  VERIFICATION_REJECTED: "Verification rejected",
 };
+type SavingAction = "billing" | "campaigns" | "verification" | "notifications" | "password" | "delete" | null;
 
 const cardStyle = {
   "--background": "oklch(1 0 0)",
@@ -138,13 +138,14 @@ function BrandSettingsPageContent() {
   const searchParams = useSearchParams();
   const { user, logout } = useAuthStore();
   const [activeTab, setActiveTab] = useState<TabId>("billing");
-  const [isSaving, setIsSaving] = useState(false);
+  const [savingAction, setSavingAction] = useState<SavingAction>(null);
   const [hasLoadedBrandProfile, setHasLoadedBrandProfile] = useState(false);
+  const [brandProfileLoadError, setBrandProfileLoadError] = useState<string | null>(null);
 
-  const [billing, setBilling] = useState<{ plan: Brand["planTier"]; monthlyBudget: string }>({ plan: "STARTER", monthlyBudget: "500000" });
+  const [billing, setBilling] = useState<{ plan: Brand["planTier"]; monthlyBudget: string }>({ plan: "STARTER", monthlyBudget: "" });
 
   const [campaignPreferences, setCampaignPreferences] = useState({
-    preferredCreatorCategories: "FOOD, LIFESTYLE, BEAUTY",
+    preferredCreatorCategories: "",
   });
 
   const [verification, setVerification] = useState({
@@ -177,9 +178,10 @@ function BrandSettingsPageContent() {
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null);
 
   const loadBrandProfile = useCallback(async () => {
+    setBrandProfileLoadError(null);
     try {
       const brand = await brandsService.getMe();
-      if (!brand) return;
+      if (!brand) throw new Error("Brand profile not found");
       setBilling((current) => ({
         ...current,
         plan: brand.planTier || "STARTER",
@@ -194,8 +196,9 @@ function BrandSettingsPageContent() {
         phoneNumber: brand.verificationPhoneNumber || brand.contactPhone || "",
       });
       setHasLoadedBrandProfile(true);
-    } catch {
+    } catch (error) {
       setHasLoadedBrandProfile(false);
+      setBrandProfileLoadError(error instanceof Error ? error.message : "Could not load brand profile");
     }
   }, []);
 
@@ -209,24 +212,34 @@ function BrandSettingsPageContent() {
   }, []);
 
   const handleBillingSave = async () => {
-    setIsSaving(true);
+    const monthlyBudget = Number(billing.monthlyBudget);
+    if (billing.monthlyBudget.trim() && (!Number.isFinite(monthlyBudget) || monthlyBudget < 0)) {
+      toast.error("Enter a valid monthly budget");
+      return;
+    }
+    setSavingAction("billing");
     try {
-      const saved = await brandsService.updateMe({ monthlyBudget: Number(billing.monthlyBudget) || undefined });
+      const saved = await brandsService.updateMe({ monthlyBudget: billing.monthlyBudget.trim() ? monthlyBudget : undefined });
       setBilling((current) => ({ ...current, monthlyBudget: saved.monthlyBudget ? String(saved.monthlyBudget) : "" }));
       toast.success("Billing settings saved");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not save billing settings");
     } finally {
-      setIsSaving(false);
+      setSavingAction(null);
     }
   };
 
   const handleCampaignPreferencesSave = async () => {
-    setIsSaving(true);
+    const categories = normalizeCategories(campaignPreferences.preferredCreatorCategories.split(","));
+    if (!hasLoadedBrandProfile && categories.length === 0) {
+      toast.error("Load your brand profile or select campaign preferences before saving");
+      return;
+    }
+    setSavingAction("campaigns");
     try {
       const saved = await brandsService.updateMe({
         ...campaignPreferences,
-        preferredCreatorCategories: normalizeCategories(campaignPreferences.preferredCreatorCategories.split(",")).join(", "),
+        preferredCreatorCategories: categories.join(", "),
       });
       setCampaignPreferences({
         preferredCreatorCategories: normalizeCategories(saved.preferredCreatorCategories?.split(",")).join(", "),
@@ -235,7 +248,7 @@ function BrandSettingsPageContent() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not save campaign preferences");
     } finally {
-      setIsSaving(false);
+      setSavingAction(null);
     }
   };
 
@@ -258,7 +271,7 @@ function BrandSettingsPageContent() {
       toast.error("Load your brand profile before saving verification settings");
       return;
     }
-    setIsSaving(true);
+    setSavingAction("verification");
     try {
       const saved = await brandsService.updateMe({
         verificationContactEmail: verification.contactEmail,
@@ -273,12 +286,12 @@ function BrandSettingsPageContent() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not save verification settings");
     } finally {
-      setIsSaving(false);
+      setSavingAction(null);
     }
   };
 
   const handleNotificationSave = async () => {
-    setIsSaving(true);
+    setSavingAction("notifications");
     try {
       const saved = await usersService.updateNotificationPreferences(notifications);
       setNotifications(saved);
@@ -286,7 +299,7 @@ function BrandSettingsPageContent() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not save notification preferences");
     } finally {
-      setIsSaving(false);
+      setSavingAction(null);
     }
   };
 
@@ -303,7 +316,7 @@ function BrandSettingsPageContent() {
       toast.error("New password and confirmation do not match");
       return;
     }
-    setIsSaving(true);
+    setSavingAction("password");
     try {
       await usersService.changePassword({ currentPassword: security.currentPassword, newPassword: security.newPassword });
       setSecurity((current) => ({ ...current, currentPassword: "", newPassword: "", confirmPassword: "" }));
@@ -311,7 +324,7 @@ function BrandSettingsPageContent() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not update password");
     } finally {
-      setIsSaving(false);
+      setSavingAction(null);
     }
   };
 
@@ -331,7 +344,7 @@ function BrandSettingsPageContent() {
     }
     const confirmed = window.confirm("Permanently delete your account? This cannot be undone.");
     if (!confirmed) return;
-    setIsSaving(true);
+    setSavingAction("delete");
     try {
       await usersService.deleteAccount({ confirmPassword: security.deleteConfirmPassword });
       toast.success("Account deleted");
@@ -339,7 +352,7 @@ function BrandSettingsPageContent() {
       window.location.assign("/signup");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not delete account");
-      setIsSaving(false);
+      setSavingAction(null);
     }
   };
 
@@ -398,6 +411,8 @@ function BrandSettingsPageContent() {
   const hasAllVerificationDocs = requiredVerificationDocuments.every((item) =>
     verificationDocs.some((doc) => doc.type === item.type)
   );
+  const formatVerificationEvent = (eventType: string) =>
+    verificationEventLabels[eventType] || eventType.replaceAll("_", " ").toLowerCase().replace(/^\w/, (match) => match.toUpperCase());
 
   return (
     <div className="min-h-screen bg-[#f4f2e9]">
@@ -430,6 +445,20 @@ function BrandSettingsPageContent() {
             </button>
           ))}
         </div>
+
+        {brandProfileLoadError && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-[#efcf83] bg-[#fff9e8] p-4 text-sm text-[#6f4a0f] sm:flex-row sm:items-center sm:justify-between">
+            <p className="font-semibold">{brandProfileLoadError}</p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void loadBrandProfile()}
+              className="h-8 self-start rounded-lg border-[#efcf83] bg-white px-3 text-xs font-extrabold text-[#6f4a0f] hover:bg-[#fff3c7] sm:self-auto"
+            >
+              Retry
+            </Button>
+          </div>
+        )}
 
         {/* ── Billing ── */}
         {activeTab === "billing" && (
@@ -465,10 +494,10 @@ function BrandSettingsPageContent() {
 
               <Button
                 onClick={() => void handleBillingSave()}
-                disabled={isSaving}
+                disabled={savingAction === "billing"}
                 className="mt-4 h-9 w-full rounded-xl bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#185c39] disabled:opacity-50"
               >
-                {isSaving ? "Saving…" : <><Save className="mr-1.5 size-3.5" />Save Billing</>}
+                {savingAction === "billing" ? "Saving…" : <><Save className="mr-1.5 size-3.5" />Save Billing</>}
               </Button>
             </SectionCard>
           </div>
@@ -504,10 +533,10 @@ function BrandSettingsPageContent() {
               </div>
               <Button
                 onClick={() => void handleCampaignPreferencesSave()}
-                disabled={isSaving}
+                disabled={savingAction === "campaigns"}
                 className="h-9 w-full rounded-xl bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#185c39] disabled:opacity-50"
               >
-                {isSaving ? "Saving…" : <><Save className="mr-1.5 size-3.5" />Save Preferences</>}
+                {savingAction === "campaigns" ? "Saving…" : <><Save className="mr-1.5 size-3.5" />Save Preferences</>}
               </Button>
             </div>
           </SectionCard>
@@ -519,8 +548,8 @@ function BrandSettingsPageContent() {
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label className={labelCls}>Verification Status</Label>
-                <div className={`flex h-9 items-center gap-2 rounded-xl border-2 px-3.5 text-sm font-bold ${verificationStatusMeta[verification.businessStatus].className}`}>
-                  {verificationStatusMeta[verification.businessStatus].label}
+                <div className={`flex h-9 items-center gap-2 rounded-xl border-2 px-3.5 text-sm font-bold ${brandVerificationStatusMeta[verification.businessStatus].className}`}>
+                  {brandVerificationStatusMeta[verification.businessStatus].label}
                 </div>
                 <p className="text-[11px] text-[#8fa098]">Upload documents below and submit them for team review.</p>
               </div>
@@ -554,10 +583,10 @@ function BrandSettingsPageContent() {
               </div>
               <Button
                 onClick={() => void handleVerificationSave()}
-                disabled={isSaving}
+                disabled={savingAction === "verification"}
                 className="h-9 w-full rounded-xl bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#185c39] disabled:opacity-50"
               >
-                {isSaving ? "Saving…" : <><Save className="mr-1.5 size-3.5" />Save Verification</>}
+                {savingAction === "verification" ? "Saving…" : <><Save className="mr-1.5 size-3.5" />Save Verification</>}
               </Button>
 
               {/* Verification Checklist */}
@@ -634,7 +663,7 @@ function BrandSettingsPageContent() {
                       {verificationEvents.slice(0, 5).map((event) => (
                         <div key={event.id} className="flex items-start justify-between gap-3 text-xs">
                           <div>
-                            <p className="font-bold text-[#173b2a]">{event.eventType.replaceAll('_', ' ').toLowerCase()}</p>
+                            <p className="font-bold text-[#173b2a]">{formatVerificationEvent(event.eventType)}</p>
                             {event.details ? <p className="text-[#647168]">{event.details}</p> : null}
                           </div>
                           <span className="shrink-0 text-[#9ba8a1]">
@@ -689,14 +718,14 @@ function BrandSettingsPageContent() {
                   />
                 ))}
               </div>
-              <Button
-                onClick={() => void handleNotificationSave()}
-                disabled={isSaving}
-                className="mt-4 h-9 w-full rounded-xl bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#185c39] disabled:opacity-50"
-              >
-                {isSaving ? "Saving…" : <><Save className="mr-1.5 size-3.5" />Save Notifications</>}
-              </Button>
             </SectionCard>
+            <Button
+              onClick={() => void handleNotificationSave()}
+              disabled={savingAction === "notifications"}
+              className="h-9 w-full rounded-xl bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#185c39] disabled:opacity-50"
+            >
+              {savingAction === "notifications" ? "Saving…" : <><Save className="mr-1.5 size-3.5" />Save Notifications</>}
+            </Button>
           </div>
         )}
 
@@ -754,48 +783,13 @@ function BrandSettingsPageContent() {
                 </div>
                 <Button
                   onClick={() => void handlePasswordChange()}
-                  disabled={isSaving}
+                  disabled={savingAction === "password"}
                   className="h-9 w-full rounded-xl bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#185c39] disabled:opacity-50"
                 >
-                  {isSaving ? "Updating…" : "Update Password"}
+                  {savingAction === "password" ? "Updating…" : "Update Password"}
                 </Button>
               </div>
             </SectionCard>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <SectionCard title="Two-Factor Authentication" icon={ShieldCheck}>
-                <div className="flex items-center justify-between gap-3 rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] px-3.5 py-3">
-                  <div>
-                    <p className="text-xs font-semibold text-[#1a2e22]">Status: Not available yet</p>
-                    <p className="text-[11px] text-[#8fa098]">Self-service 2FA is being prepared for brand accounts.</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 shrink-0 rounded-lg border-[#d9e0d8] px-3 text-xs font-semibold text-[#526259] hover:bg-[#f4f2e9]"
-                    onClick={() => toast.info("Self-service two-factor authentication is not available yet.")}
-                  >
-                    Not available
-                  </Button>
-                </div>
-              </SectionCard>
-
-              <SectionCard title="Team Members" description="Who has access to your account" icon={UserCircle2}>
-                <div className="flex items-start gap-3 rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] px-3.5 py-3">
-                  <Avatar className="size-8 shrink-0">
-                    <AvatarFallback className="bg-[#e7f0ea] text-xs font-bold text-[#185c39]">
-                      <UserCircle2 className="size-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-[#1a2e22]">Team access is owner-managed</p>
-                    <p className="mt-0.5 text-[11px] leading-4 text-[#8fa098]">
-                      Invite and removal controls are not enabled for this workspace yet. Contact ZingZing support for role changes.
-                    </p>
-                  </div>
-                </div>
-              </SectionCard>
-            </div>
 
             <SectionCard title="Danger Zone" description="Irreversible account actions" icon={Lock} danger>
               <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
@@ -808,7 +802,7 @@ function BrandSettingsPageContent() {
                 />
                 <Button
                   onClick={() => void handleDeleteAccount()}
-                  disabled={isSaving}
+                  disabled={savingAction === "delete"}
                   className="h-9 shrink-0 rounded-xl bg-[#d94f4f] px-4 text-xs font-bold text-white hover:bg-[#c13a3a] disabled:opacity-50"
                 >
                   Delete Account

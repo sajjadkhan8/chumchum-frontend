@@ -32,14 +32,7 @@ import { uploadsService } from "@/services/uploads.service";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 import type { BrandVerificationStatus, Review } from "@/types";
-
-const verificationStatusMeta: Record<BrandVerificationStatus, { label: string; className: string }> = {
-  verified: { label: "✓ Verified", className: "border-[#bcd3c5] bg-[#e7f0ea] text-[#185c39]" },
-  pending: { label: "⏳ Verification pending", className: "border-[#efcf83] bg-[#fff1cd] text-[#8b5e12]" },
-  under_review: { label: "⏳ Under review", className: "border-[#efcf83] bg-[#fff1cd] text-[#8b5e12]" },
-  rejected: { label: "✗ Verification rejected", className: "border-[#f5c2c2] bg-[#fce8e6] text-[#c0392b]" },
-  unverified: { label: "Unverified", className: "border-white/15 bg-white/10 text-[#8fb09a]" },
-};
+import { brandVerificationStatusMeta } from "../brand-verification-status";
 
 const companySizes = [
   "1-10 employees",
@@ -54,6 +47,8 @@ const cities = [...pakistanCities];
 const inputCls =
   "h-9 rounded-xl border-[#d9e0d8] bg-[#f4f2e9] text-[#1a2e22] placeholder:text-[#8fa098] focus-visible:border-[#2d6b4e] focus-visible:ring-2 focus-visible:ring-[#2d6b4e]/15 focus-visible:bg-white";
 const labelCls = "text-xs font-bold text-[#526259]";
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phonePattern = /^\+?[0-9\s().-]{7,30}$/;
 
 const emptyProfile = {
   companyName: "",
@@ -77,6 +72,8 @@ export default function BrandProfilePage() {
   const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
   const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
   const [brandReviews, setBrandReviews] = useState<Review[]>([]);
+  const [isReviewsLoading, setIsReviewsLoading] = useState(false);
+  const [reviewsLoadError, setReviewsLoadError] = useState<string | null>(null);
 
   const [brandRating, setBrandRating] = useState(0);
   const [brandTotalReviews, setBrandTotalReviews] = useState(0);
@@ -117,6 +114,25 @@ export default function BrandProfilePage() {
   const handleSave = async () => {
     if (!hasLoadedProfile) {
       toast.error("Load your company profile before saving changes");
+      return;
+    }
+    if (profile.website.trim()) {
+      try {
+        const parsed = new URL(profile.website.trim());
+        if (!["http:", "https:"].includes(parsed.protocol)) {
+          throw new Error();
+        }
+      } catch {
+        toast.error("Enter a valid website URL");
+        return;
+      }
+    }
+    if (profile.contactEmail.trim() && !emailPattern.test(profile.contactEmail.trim())) {
+      toast.error("Enter a valid contact email");
+      return;
+    }
+    if (profile.contactPhone.trim() && !phonePattern.test(profile.contactPhone.trim())) {
+      toast.error("Enter a valid contact phone");
       return;
     }
     setIsSaving(true);
@@ -169,7 +185,14 @@ export default function BrandProfilePage() {
 
   useEffect(() => {
     if (!user?.id) return;
-    void reviewsService.getByBrandId(user.id).then(setBrandReviews).catch(() => null);
+    setIsReviewsLoading(true);
+    setReviewsLoadError(null);
+    void reviewsService.getByBrandId(user.id)
+      .then(setBrandReviews)
+      .catch((error) => {
+        setReviewsLoadError(error instanceof Error ? error.message : "Could not load creator reviews");
+      })
+      .finally(() => setIsReviewsLoading(false));
   }, [user?.id]);
 
   return (
@@ -217,8 +240,8 @@ export default function BrandProfilePage() {
                 </div>
               )}
               {profile.verificationStatus && (
-                <div className={`mt-1.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${verificationStatusMeta[profile.verificationStatus].className}`}>
-                  {verificationStatusMeta[profile.verificationStatus].label}
+                <div className={`mt-1.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${brandVerificationStatusMeta[profile.verificationStatus].className}`}>
+                  {brandVerificationStatusMeta[profile.verificationStatus].label}
                 </div>
               )}
               <Button
@@ -255,6 +278,12 @@ export default function BrandProfilePage() {
             } as React.CSSProperties
           }
         >
+          {isProfileLoading && (
+            <div className="mb-5 rounded-2xl border border-[#d9e0d8] bg-[#fbfaf5] p-4 text-sm font-semibold text-[#526259]">
+              Loading company profile…
+            </div>
+          )}
+
           {profileLoadError && (
             <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-[#efcf83] bg-[#fff9e8] p-4 text-sm text-[#6f4a0f] sm:flex-row sm:items-center sm:justify-between">
               <p className="font-semibold">{profileLoadError}</p>
@@ -489,7 +518,16 @@ export default function BrandProfilePage() {
                 </div>
               )}
             </div>
-            {brandReviews.length === 0 ? (
+            {isReviewsLoading ? (
+              <div className="mt-4 rounded-2xl border border-[#d9e0d8] bg-white p-6 text-center">
+                <p className="text-sm font-bold text-[#526259]">Loading reviews…</p>
+              </div>
+            ) : reviewsLoadError ? (
+              <div className="mt-4 rounded-2xl border border-[#efcf83] bg-white p-6 text-center">
+                <p className="text-sm font-bold text-[#6f4a0f]">Could not load reviews</p>
+                <p className="mt-1 text-xs text-[#8fa098]">{reviewsLoadError}</p>
+              </div>
+            ) : brandReviews.length === 0 ? (
               <div className="mt-4 rounded-2xl border border-dashed border-[#cdd4cf] bg-white p-6 text-center">
                 <Star className="mx-auto size-8 text-[#d4c89a]" />
                 <p className="mt-2 text-sm font-bold text-[#526259]">No reviews yet</p>

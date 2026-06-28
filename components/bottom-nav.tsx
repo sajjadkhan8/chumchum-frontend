@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Home, Search, ShoppingBag, MessageCircle, User } from 'lucide-react';
+import { Home, Search, ShoppingBag, MessageCircle, User, Settings } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
 
@@ -38,7 +38,7 @@ export function BottomNav() {
     { href: '/brand/campaigns', icon: Search, label: 'Campaigns' },
     { href: '/brand/orders', icon: ShoppingBag, label: 'Orders' },
     { href: '/brand/messages', icon: MessageCircle, label: 'Messages' },
-    { href: '/brand/settings', icon: User, label: 'Profile' },
+    { href: '/brand/settings', icon: Settings, label: 'Settings' },
   ];
 
   const navItems = user.role === 'creator' ? creatorNavItems : brandNavItems;
