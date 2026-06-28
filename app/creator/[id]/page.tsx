@@ -51,6 +51,37 @@ const CONCLUDED_ORDER_STATUSES = new Set(["completed", "cancelled"]);
 const isActivePackageOrder = (order: Order) => !CONCLUDED_ORDER_STATUSES.has(order.status);
 const getOrderTime = (order: Order) => order.updatedAt?.getTime?.() || order.createdAt?.getTime?.() || 0;
 
+function platformProfileUrl(platform: string, username: string, profileUrl?: string) {
+  if (profileUrl) return profileUrl;
+
+  const handle = username.replace(/^@+/, "").trim();
+  const encodedHandle = encodeURIComponent(handle);
+  const normalizedPlatform = platform.toLowerCase();
+
+  if (!handle) return "#";
+
+  switch (normalizedPlatform) {
+    case "instagram":
+      return `https://www.instagram.com/${encodedHandle}`;
+    case "tiktok":
+      return `https://www.tiktok.com/@${encodedHandle}`;
+    case "youtube":
+      return `https://www.youtube.com/@${encodedHandle}`;
+    case "facebook":
+      return `https://www.facebook.com/${encodedHandle}`;
+    case "snapchat":
+      return `https://www.snapchat.com/add/${encodedHandle}`;
+    default:
+      return `https://www.google.com/search?q=${encodeURIComponent(`${platform} ${handle}`)}`;
+  }
+}
+
+function platformVerificationLabel(source?: string) {
+  if (source === "PLATFORM_REVIEWED") return "Platform reviewed";
+  if (source === "API_CONNECTED") return "API verified";
+  return "Self-reported";
+}
+
 function ProfileStat({ label, value, icon: Icon, dark = false }: { label: string; value: string; icon: React.ElementType; dark?: boolean }) {
   return (
     <div className={cn(
@@ -576,28 +607,42 @@ export default function CreatorProfilePage({
               <p className="text-[10px] font-bold uppercase tracking-widest text-[#b77a12]">Channels</p>
               <h2 className="mt-0.5 text-[15px] font-extrabold text-[#1e3d2e]">Platforms</h2>
               <div className="mt-4 space-y-2.5">
-                {creator.platforms.map((platform) => (
-                    <div key={platform.platform} className="rounded-xl border border-[#edf1ed] bg-[#fbfaf5] p-3">
+                {creator.platforms.map((platform) => {
+                  const href = platformProfileUrl(platform.platform, platform.username, platform.profileUrl);
+                  return (
+                    <a
+                      key={platform.platform}
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block rounded-xl border border-[#edf1ed] bg-[#fbfaf5] p-3 transition hover:border-[#cbd9d0] hover:bg-white hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185c39]/25 focus-visible:ring-offset-2"
+                      aria-label={`Open ${creator.name}'s ${platform.platform} profile`}
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 items-center gap-3">
                           <PlatformIconBadge platform={platform.platform} />
                           <div className="min-w-0">
                             <p className="text-[13px] font-extrabold capitalize text-[#1e3d2e]">{platform.platform}</p>
-                            <p className="truncate text-[11px] font-medium text-[#87938b]">@{platform.username}</p>
+                            <p className="truncate text-[11px] font-medium text-[#87938b] transition hover:text-[#185c39]">@{platform.username}</p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="shrink-0 text-right">
                           <p className="text-[13px] font-extrabold text-[#1e3d2e]">{formatFollowers(platform.followers)}</p>
                           <p className="text-[11px] font-bold text-[#2d6b4e]">{platform.engagementRate}% eng.</p>
                         </div>
                       </div>
-                      {platform.verified_by && (
-                        <p className="mt-2 text-[10px] font-bold text-[#87938b]">
-                          {platform.verified_by === "SELF" ? "Self-reported" : platform.verified_by === "PLATFORM_REVIEWED" ? "Platform reviewed" : "API verified"}
+                      <div className="mt-2 flex items-center justify-between gap-3">
+                        <p className="min-w-0 truncate text-[10px] font-bold text-[#87938b]">
+                          {platformVerificationLabel(platform.verified_by)}
                         </p>
-                      )}
-                    </div>
-                ))}
+                        <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-extrabold text-[#b77a12]">
+                          Open
+                          <ExternalLink className="size-3" />
+                        </span>
+                      </div>
+                    </a>
+                  );
+                })}
               </div>
             </section>
           </aside>

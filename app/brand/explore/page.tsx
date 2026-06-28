@@ -1,9 +1,10 @@
 'use client';
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { MouseEvent } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Search, TrendingUp, Star, Wallet, MapPin, Crown, Heart, Grid, List, Sparkles, SlidersHorizontal, Users, ArrowRight, CalendarClock } from 'lucide-react';
+import { Search, TrendingUp, Star, Wallet, MapPin, Crown, Heart, Grid, List, Sparkles, SlidersHorizontal, Users, ArrowRight, CalendarClock, Clock, Gift, Zap } from 'lucide-react';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,8 @@ import { QuickDealModal } from '@/components/quick-deal-modal';
 import { CreatorCardSkeleton } from '@/components/skeletons';
 import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
+import { CreatorTrustBadge } from '@/components/creator-trust-badge';
+import { PlatformIconBadge } from '@/components/platform-icons';
 import { useFilterStore } from '@/store/filter-store';
 import { useAuthStore } from '@/store/auth-store';
 import { creatorsService } from '@/services/creators.service';
@@ -42,8 +45,305 @@ const sortOptions = [
   { value: 'by_city', label: 'By City (A–Z)', icon: MapPin },
 ];
 
+const CREATOR_CARD_FALLBACK_IMAGE = '/creator-card-fallback.svg';
+
 function profileImageUrl(person: Creator) {
   return person.contentPreviews[0]?.thumbnail || person.coverImage || person.avatar;
+}
+
+function creatorBannerImageUrl(creator: Creator) {
+  return creator.coverImage || creator.contentPreviews[0]?.thumbnail || creator.avatar || CREATOR_CARD_FALLBACK_IMAGE;
+}
+
+function creatorProfileImageUrl(creator: Creator) {
+  return creator.avatar || creator.contentPreviews[0]?.thumbnail || creator.coverImage || CREATOR_CARD_FALLBACK_IMAGE;
+}
+
+function creatorPriceLabel(creator: Creator) {
+  if (creator.minPrice && creator.maxPrice && creator.maxPrice > creator.minPrice) {
+    return {
+      primary: formatPrice(creator.minPrice),
+      secondary: `to ${formatPrice(creator.maxPrice)}`,
+    };
+  }
+
+  if (creator.minPrice) {
+    return {
+      primary: formatPrice(creator.minPrice),
+      secondary: creator.collaborationPreferences.includes('barter') ? 'Cash + barter possible' : 'Minimum package',
+    };
+  }
+
+  if (creator.collaborationPreferences.includes('barter') && !creator.minPrice) {
+    return {
+      primary: 'Barter',
+      secondary: 'Product exchange',
+    };
+  }
+
+  return {
+    primary: 'Custom',
+    secondary: 'Open to offers',
+  };
+}
+
+function formatResponseTimeLabel(value?: string) {
+  if (!value) return 'Response time pending';
+  return value
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function ExploreCreatorCard({
+  creator,
+  matchScore,
+  priority = false,
+  onQuickDeal,
+}: {
+  creator: Creator;
+  matchScore: number;
+  priority?: boolean;
+  onQuickDeal: () => void;
+}) {
+  const cardRouter = useRouter();
+  const { user, savedCreators, toggleSavedCreator } = useAuthStore();
+  const preferredBannerImage = creatorBannerImageUrl(creator);
+  const preferredProfileImage = creatorProfileImageUrl(creator);
+  const [bannerImage, setBannerImage] = useState(preferredBannerImage);
+  const [profileImage, setProfileImage] = useState(preferredProfileImage);
+  const [isSaving, setIsSaving] = useState(false);
+  const canSendDeal = !user || user.role === 'brand';
+  const canSaveCreator = user?.role === 'brand';
+  const isSaved = savedCreators.includes(creator.id);
+  const primaryPlatforms = creator.platforms.slice(0, 4);
+  const price = creatorPriceLabel(creator);
+
+  useEffect(() => {
+    setBannerImage(preferredBannerImage);
+    setProfileImage(preferredProfileImage);
+  }, [preferredBannerImage, preferredProfileImage]);
+
+  const handleSaveToggle = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsSaving(true);
+    try {
+      await toggleSavedCreator(creator.id);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const openCreatorProfile = () => {
+    cardRouter.push(`/creator/${creator.username}`);
+  };
+
+  return (
+    <article
+      role="link"
+      tabIndex={0}
+      onClick={openCreatorProfile}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openCreatorProfile();
+        }
+      }}
+      className="group relative flex h-full min-h-[520px] cursor-pointer flex-col overflow-hidden rounded-[1.65rem] border border-[#d4ddd5] bg-white shadow-[0_16px_48px_rgba(28,61,43,0.07)] transition duration-300 hover:-translate-y-1 hover:border-[#aebfb3] hover:shadow-[0_26px_80px_rgba(28,61,43,0.13)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185c39]/30 focus-visible:ring-offset-2"
+      aria-label={`View ${creator.name}'s profile`}
+    >
+      <div className="relative h-[230px] overflow-hidden bg-[#e8f0ec]">
+        <Image
+          src={bannerImage}
+          alt={`${creator.name} creator banner`}
+          fill
+          priority={priority}
+          className="object-cover transition duration-700 group-hover:scale-[1.04]"
+          sizes="(min-width: 1280px) 330px, (min-width: 640px) 50vw, 100vw"
+          onError={() => {
+            setBannerImage((current) => {
+              if (current !== creator.contentPreviews[0]?.thumbnail && creator.contentPreviews[0]?.thumbnail) return creator.contentPreviews[0].thumbnail;
+              if (current !== creator.avatar && creator.avatar) return creator.avatar;
+              return CREATOR_CARD_FALLBACK_IMAGE;
+            });
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#10291d]/95 via-[#10291d]/24 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#10291d]/54 to-transparent" />
+
+        <div className="absolute left-3 top-3 flex max-w-[calc(100%-4rem)] flex-wrap gap-1.5">
+          <CreatorTrustBadge
+            level={creator.badgeLevel}
+            isVerified={creator.isVerified}
+            compact
+            className="border-white/30 bg-white/92 text-sky-800 shadow-sm backdrop-blur"
+          />
+          {matchScore >= 20 && (
+            <span
+              className={cn(
+                'inline-flex h-7 items-center rounded-full border border-white/30 px-2.5 text-[10px] font-black uppercase tracking-[0.08em] shadow-sm backdrop-blur',
+                matchScore >= 70
+                  ? 'bg-[#e7f0ea]/95 text-[#185c39]'
+                  : matchScore >= 40
+                    ? 'bg-[#fff1cd]/95 text-[#8b5e12]'
+                    : 'bg-white/92 text-[#526259]',
+              )}
+            >
+              {matchScore}% match
+            </span>
+          )}
+        </div>
+
+        {canSaveCreator && (
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="absolute right-3 top-3 size-10 rounded-full border border-white/45 bg-white/92 text-[#375147] shadow-sm backdrop-blur hover:bg-white hover:text-[#173b2a]"
+            disabled={isSaving}
+            onClick={handleSaveToggle}
+            aria-label={isSaved ? 'Remove saved creator' : 'Save creator'}
+          >
+            <Heart className={cn('size-4', isSaved && 'fill-[#e6aa38] text-[#b77a12]')} />
+          </Button>
+        )}
+
+        <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.14em] text-[#f5cf83]">
+              <MapPin className="size-3.5" />
+              <span className="truncate">{creator.city ?? 'Pakistan'}</span>
+            </p>
+            <h2 className="mt-1 line-clamp-1 text-2xl font-black tracking-[-0.05em] text-white">
+              {creator.name}
+            </h2>
+          </div>
+          <Avatar className="size-20 shrink-0 border-[5px] border-white bg-[#e8f0ec] shadow-[0_14px_35px_rgba(0,0,0,0.22)]">
+            <AvatarImage
+              src={profileImage}
+              alt={creator.name}
+              onError={() => {
+                setProfileImage((current) => {
+                  if (current !== creator.contentPreviews[0]?.thumbnail && creator.contentPreviews[0]?.thumbnail) return creator.contentPreviews[0].thumbnail;
+                  if (current !== creator.coverImage && creator.coverImage) return creator.coverImage;
+                  return CREATOR_CARD_FALLBACK_IMAGE;
+                });
+              }}
+            />
+            <AvatarFallback className="bg-[#e8f0ec] text-xl font-black text-[#185c39]">
+              {creator.name.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+      </div>
+
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="line-clamp-2 min-h-[44px] text-sm font-semibold leading-5 text-[#5d6d63]">
+              {creator.bio}
+            </p>
+          </div>
+          <div className="shrink-0 rounded-2xl border border-[#f0d99c] bg-[#fff8e9] px-2.5 py-2 text-center">
+            <p className="flex items-center justify-center gap-1 text-sm font-black text-[#173b2a]">
+              <Star className="size-3.5 fill-[#e6aa38] text-[#e6aa38]" />
+              {creator.rating}
+            </p>
+            <p className="mt-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-[#a77113]">
+              {creator.totalReviews} reviews
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="rounded-[1.05rem] border border-[#edf1ed] bg-[#fbfaf5] px-2.5 py-2.5">
+            <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#7a9a87]">Reach</p>
+            <p className="mt-1 truncate text-sm font-black text-[#173b2a]">{formatFollowers(creator.totalFollowers)}</p>
+          </div>
+          <div className="rounded-[1.05rem] border border-[#edf1ed] bg-[#fbfaf5] px-2.5 py-2.5">
+            <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#7a9a87]">Eng.</p>
+            <p className="mt-1 truncate text-sm font-black text-[#173b2a]">{creator.avgEngagementRate}%</p>
+          </div>
+          <div className="rounded-[1.05rem] border border-[#edf1ed] bg-[#fbfaf5] px-2.5 py-2.5">
+            <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#7a9a87]">Deals</p>
+            <p className="mt-1 truncate text-sm font-black text-[#173b2a]">{creator.completedDeals}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {creator.categories.slice(0, 3).map((category) => (
+            <span key={category} className="rounded-full bg-[#e8f0ec] px-2.5 py-1 text-[10px] font-black text-[#2d6b4e]">
+              {getCategoryLabel(category)}
+            </span>
+          ))}
+          {creator.collaborationPreferences.includes('barter') && (
+            <Badge className="rounded-full border border-[#efcf83] bg-[#fff1cd] px-2 py-0.5 text-[10px] font-black text-[#8b5e12] shadow-none">
+              <Gift className="mr-1 size-3" />
+              Barter
+            </Badge>
+          )}
+          {creator.isFastResponder && (
+            <Badge className="rounded-full border border-[#dce8e2] bg-white px-2 py-0.5 text-[10px] font-black text-[#496159] shadow-none">
+              <Zap className="mr-1 size-3" />
+              Fast
+            </Badge>
+          )}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-3 text-[11px] font-bold text-[#6f7e75]">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <Clock className="size-3.5 shrink-0 text-[#b77a12]" />
+            <span className="truncate">{formatResponseTimeLabel(creator.responseTime)}</span>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            {primaryPlatforms.map((platform) => (
+              <PlatformIconBadge
+                key={platform.platform}
+                platform={platform.platform}
+                size="sm"
+                title={`${platform.platform}: ${formatFollowers(platform.followers)}`}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-auto pt-4">
+          <div className="flex items-center justify-between gap-3 border-t border-[#edf1ed] pt-4">
+            <div className="min-w-0">
+              <p className="text-sm font-black leading-tight tracking-[-0.02em] text-[#173b2a]">
+                {price.primary}
+              </p>
+              <p className="mt-0.5 text-[10px] font-bold leading-tight text-[#7b867f]">
+                {price.secondary}
+              </p>
+            </div>
+            <div className={cn('grid shrink-0 gap-2', canSendDeal ? 'w-[142px] grid-cols-2' : 'w-[70px] grid-cols-1')}>
+              {canSendDeal && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 rounded-full border-[#cbd9d0] bg-white px-2 text-[12px] font-black text-[#185c39] hover:bg-[#e7f0ea]"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onQuickDeal();
+                  }}
+                >
+                  Deal
+                </Button>
+              )}
+              <Button asChild size="sm" className="h-9 rounded-full bg-[#185c39] px-2 text-[12px] font-black text-white hover:bg-[#12462b]">
+                <Link href={`/creator/${creator.username}`} onClick={(event) => event.stopPropagation()}>
+                  View
+                  <ArrowRight className="size-3.5" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
 }
 
 function AmbassadorRow({ ambassador }: { ambassador: PlatformAmbassador }) {
@@ -591,25 +891,13 @@ function ExplorePageContent() {
                 ) : (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {creators.map((creator, index) => (
-                      <motion.div key={creator.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }} className="relative">
-                        <CreatorCard creator={creator} className="border-[#d9e0d8] shadow-[0_12px_38px_rgba(38,70,50,0.055)]" onQuickDeal={() => handleQuickDeal(creator)} />
-                        {(() => {
-                          const score = computeMatchScore(creator, brandPrefs);
-                          if (score < 20) return null;
-                          return (
-                            <span
-                              className={`absolute -right-1 -top-2 z-10 inline-flex items-center gap-1 rounded-full border border-white px-2 py-0.5 text-[10px] font-extrabold shadow-sm ${
-                                score >= 70
-                                  ? 'bg-[#e7f0ea] text-[#185c39]'
-                                  : score >= 40
-                                  ? 'bg-[#fff1cd] text-[#8b5e12]'
-                                  : 'bg-[#f4f2e9] text-[#526259]'
-                              }`}
-                            >
-                              {score}% match
-                            </span>
-                          );
-                        })()}
+                      <motion.div key={creator.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }}>
+                        <ExploreCreatorCard
+                          creator={creator}
+                          matchScore={computeMatchScore(creator, brandPrefs)}
+                          priority={index < 6}
+                          onQuickDeal={() => handleQuickDeal(creator)}
+                        />
                       </motion.div>
                     ))}
                   </motion.div>
