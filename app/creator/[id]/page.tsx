@@ -429,13 +429,14 @@ export default function CreatorProfilePage({
               src={heroImageSrc}
               alt=""
               fill
-              className="object-cover opacity-22"
+              className="object-cover opacity-70"
               priority
               onError={() => setHeroImageSrc(PROFILE_FALLBACK_IMAGE)}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#1e3d2e] via-[#1e3d2e]/92 to-[#1e3d2e]/54" />
-            <div className="absolute -right-20 -top-24 size-72 rounded-full bg-[#2d6b4e] opacity-45 blur-3xl" />
-            <div className="absolute -bottom-16 left-1/3 size-56 rounded-full bg-[#e6aa38] opacity-10 blur-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#10291d]/64 via-[#173b2a]/38 to-[#173b2a]/18" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#10291d]/52 via-transparent to-[#10291d]/18" />
+            <div className="absolute -right-20 -top-24 size-72 rounded-full bg-[#2d6b4e] opacity-18 blur-3xl" />
+            <div className="absolute -bottom-16 left-1/3 size-56 rounded-full bg-[#e6aa38] opacity-8 blur-3xl" />
           </div>
 
           <div className="relative grid gap-5 p-5 sm:p-6 lg:grid-cols-[1fr_320px] lg:p-7">
