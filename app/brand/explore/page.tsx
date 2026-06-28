@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import type { MouseEvent } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Search, TrendingUp, Star, Wallet, MapPin, Crown, Heart, Grid, List, Sparkles, SlidersHorizontal, Users, ArrowRight, CalendarClock, Clock, Gift, Zap } from 'lucide-react';
+import { Search, TrendingUp, Star, Wallet, MapPin, Crown, Heart, Grid, List, Sparkles, SlidersHorizontal, Users, ArrowRight, CalendarClock, Clock, Gift, Zap, X } from 'lucide-react';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -489,6 +489,7 @@ function ExplorePageContent() {
   const [savedSearchQuery, setSavedSearchQuery] = useState('');
   const [savedSortBy, setSavedSortBy] = useState('recent');
   const [savedViewMode, setSavedViewMode] = useState<'grid' | 'list'>('grid');
+  const [isDesktopFiltersOpen, setIsDesktopFiltersOpen] = useState(false);
 
   const setCreatorView = (nextView: 'all' | 'ambassadors' | 'saved') => {
     const params = new URLSearchParams(searchParams.toString());
@@ -719,6 +720,25 @@ function ExplorePageContent() {
                   <div className="lg:hidden">
                     <FilterPanel isMobile />
                   </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={cn(
+                      'hidden h-11 shrink-0 rounded-full border-[#cbd9d0] bg-white px-3.5 text-sm font-black text-[#185c39] shadow-sm hover:bg-[#e7f0ea] lg:inline-flex',
+                      isDesktopFiltersOpen && 'border-[#185c39] bg-[#e7f0ea]',
+                    )}
+                    onClick={() => setIsDesktopFiltersOpen((open) => !open)}
+                    aria-expanded={isDesktopFiltersOpen}
+                    aria-controls="brand-explore-filters"
+                  >
+                    <SlidersHorizontal className="mr-2 size-4 text-[#b77a12]" />
+                    {isDesktopFiltersOpen ? 'Hide filters' : 'Refine match'}
+                    {activeFilterCount > 0 && (
+                      <Badge className="ml-2 h-5 rounded-full bg-[#185c39] px-1.5 text-[10px] font-black text-white shadow-none">
+                        {activeFilterCount}
+                      </Badge>
+                    )}
+                  </Button>
                   <Select
                     value={filters.sortBy || 'trending'}
                     onValueChange={(value) => setFilters({ sortBy: value as typeof filters.sortBy })}
@@ -829,18 +849,39 @@ function ExplorePageContent() {
               )}
             </motion.section>
 
-            <section className="mt-4 grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-              <aside className="hidden lg:block">
-                <div className="sticky top-24 overflow-hidden rounded-[1.5rem] border border-[#d9e0d8] bg-white shadow-[0_16px_54px_rgba(38,70,50,0.06)]">
-                  <div className="border-b border-[#edf0eb] bg-[#fbfaf5] px-4 py-3">
-                    <p className="flex items-center gap-2 text-sm font-black text-[#173b2a]">
-                      <SlidersHorizontal className="size-4 text-[#b77a12]" />
-                      Refine shortlist
-                    </p>
+            <section
+              className={cn(
+                'mt-4 grid gap-4',
+                isDesktopFiltersOpen ? 'lg:grid-cols-[300px_minmax(0,1fr)]' : 'lg:grid-cols-1',
+              )}
+            >
+              {isDesktopFiltersOpen && (
+                <motion.aside
+                  id="brand-explore-filters"
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -12 }}
+                  className="hidden lg:block"
+                >
+                  <div className="sticky top-24 overflow-hidden rounded-[1.5rem] border border-[#d9e0d8] bg-white shadow-[0_16px_54px_rgba(38,70,50,0.06)]">
+                    <div className="flex items-center justify-between gap-3 border-b border-[#edf0eb] bg-[#fbfaf5] px-4 py-3">
+                      <p className="flex items-center gap-2 text-sm font-black text-[#173b2a]">
+                        <SlidersHorizontal className="size-4 text-[#b77a12]" />
+                        Refine shortlist
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setIsDesktopFiltersOpen(false)}
+                        className="inline-flex size-8 items-center justify-center rounded-full border border-[#d9e0d8] bg-white text-[#526259] transition hover:border-[#185c39] hover:bg-[#e7f0ea] hover:text-[#185c39]"
+                        aria-label="Close filters"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                    <FilterPanel className="border-0 bg-transparent p-4" />
                   </div>
-                  <FilterPanel />
-                </div>
-              </aside>
+                </motion.aside>
+              )}
 
               <div className="min-w-0">
                 <div className="mb-3 flex items-center justify-between">

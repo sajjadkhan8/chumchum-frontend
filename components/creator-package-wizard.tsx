@@ -488,6 +488,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   const updatePackage = useCreatorPackagesStore((state) => state.updatePackage);
   const [currentStep, setCurrentStep] = useState(1);
   const wizardTopRef = useRef<HTMLDivElement | null>(null);
+  const recoverableDraftRef = useRef<string | null>(null);
   const [hasRecoverableDraft, setHasRecoverableDraft] = useState(false);
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [draftNoticeDismissed, setDraftNoticeDismissed] = useState(false);
@@ -729,6 +730,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
     if (mode !== "create" || !draftKey) return;
     localStorage.removeItem(DRAFT_KEY);
     const raw = localStorage.getItem(draftKey);
+    recoverableDraftRef.current = raw;
     setDraftNoticeDismissed(false);
     setHasRecoverableDraft(Boolean(raw));
     if (raw) {
@@ -738,6 +740,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
   useEffect(() => {
     if (mode !== "create" || !draftKey) return;
+    if (recoverableDraftRef.current) return;
 
     const payload = {
       currentStep,
@@ -754,7 +757,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
 
   const restoreDraft = () => {
     if (!draftKey) return;
-    const raw = localStorage.getItem(draftKey);
+    const raw = recoverableDraftRef.current || localStorage.getItem(draftKey);
     if (!raw) return;
 
     try {
@@ -783,6 +786,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
         selectedServiceKeys: deliverableItems.map((item) => item.serviceKey),
         deliverableItems,
       });
+      recoverableDraftRef.current = null;
       setDraftNoticeDismissed(true);
       setHasRecoverableDraft(false);
       setShowDraftModal(false);
@@ -793,6 +797,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
   };
 
   const clearDraft = () => {
+    recoverableDraftRef.current = null;
     if (draftKey) localStorage.removeItem(draftKey);
     goToStep(1);
     setFormData(defaultForm);
@@ -1236,6 +1241,7 @@ export function CreatorPackageWizard({ mode, initialPackage }: CreatorPackageWiz
               <button
                 type="button"
                 onClick={() => {
+                  recoverableDraftRef.current = null;
                   setShowDraftModal(false);
                   setDraftNoticeDismissed(true);
                   setHasRecoverableDraft(false);
