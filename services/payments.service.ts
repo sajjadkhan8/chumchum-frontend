@@ -122,6 +122,10 @@ export const paymentsService = {
     return { summary, methods, invoices, disbursements, controls };
   },
 
+  async getBrandPaymentSummary(): Promise<BrandPaymentSummary> {
+    return apiClient.get<BrandPaymentSummary>('/api/v1/brands/me/payments/summary');
+  },
+
   async addBrandPaymentMethod(payload: CreateBrandPaymentMethodInput): Promise<BrandPaymentMethod> {
     return apiClient.post<BrandPaymentMethod>('/api/v1/brands/me/payments/methods', payload);
   },

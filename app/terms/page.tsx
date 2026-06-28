@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import {
   FileText,
-  ShieldCheck,
   Users,
   CreditCard,
   AlertTriangle,
@@ -165,6 +164,7 @@ export default function TermsPage() {
                   <InfoList items={[
                     'Barter deal terms (product value, delivery timeline) must be agreed in writing via Platform messages before campaign start.',
                     'Refund or dispute requests for escrow-managed payments are handled by ZingZing Support within 7 business days.',
+                    'Refunds to a brand wallet may return the full available escrow balance, while refunds back to the original payment method may deduct non-refundable Safepay processing costs plus a 1% ZingZing recovery fee when the brand chooses to cancel.',
                     'ZingZing is not liable for non-payment or unfulfilled barter obligations between parties.',
                     'Applicable taxes (including GST, withholding tax, and FBR requirements) are the responsibility of the respective party.',
                   ]} />

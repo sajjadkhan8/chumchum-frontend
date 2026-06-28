@@ -54,7 +54,7 @@ const faqs = [
   {
     category: 'Orders',
     q: 'Are there any fees for cancelling an order?',
-    a: "There are no cancellation fees for orders cancelled before work begins. If a paid order is cancelled mid-delivery, the platform fee (10%) is non-refundable on any portion of funds already released from escrow. Brands receive a refund of the remaining escrowed amount.",
+    a: "Wallet refunds return the full available escrow balance. If a brand cancels and requests a refund back to the original payment method, Safepay's non-refundable processing cost plus ZingZing's 1% recovery fee may be deducted. If a cancellation is caused by creator or platform failure, support can review the case for a full original-method refund.",
   },
   {
     category: 'Orders',
