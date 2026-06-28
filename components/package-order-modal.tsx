@@ -291,12 +291,9 @@ export function PackageOrderModal({ isOpen, pkg, onClose, onCreated }: PackageOr
   const reviewRows = needsAmount
     ? [
       { label: 'Order amount', value: formatPrice(cashAmount) },
-      { label: 'Held in escrow', value: formatPrice(cashAmount) },
     ]
     : [
       { label: 'Deal type', value: 'Barter' },
-      { label: 'Cash held in escrow', value: formatPrice(0) },
-      { label: 'Brand platform fee', value: formatPrice(0) },
     ];
 
   return (
@@ -441,7 +438,7 @@ export function PackageOrderModal({ isOpen, pkg, onClose, onCreated }: PackageOr
                       </div>
                       <p className="text-sm leading-6 text-[#496159]">
                         {needsAmount
-                          ? 'Your payment is held by ZingZing until the creator delivers. Once delivery is complete and approved, only then payout is released.'
+                          ? 'Your payment is held securely in escrow by ZingZing until the creator delivers. Once delivery is complete and approved, only then payout is released.'
                           : 'No cash payment is collected for this barter request. The creator will review your message and accept only if the exchange works for them.'}
                       </p>
                     </div>
