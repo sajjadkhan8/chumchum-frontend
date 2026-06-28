@@ -276,17 +276,15 @@ interface BackendBrandResponse {
   monthly_budget?: number;
   preferred_creator_categories?: string;
   business_verification_status?: string;
-  verification_contact_email?: string;
-  verification_phone_number?: string;
   plan_tier?: 'STARTER' | 'GROWTH' | 'ENTERPRISE';
   brand_rating?: number;
   brand_total_reviews?: number;
   company_size?: string;
   contact_name?: string;
-  contact_email?: string;
-  contact_phone?: string;
   user?: {
     id?: string;
+    email?: string;
+    phone?: string;
     city?: string;
   };
   total_campaigns?: number;
@@ -305,15 +303,17 @@ export const mapBrand = (input: BackendBrandResponse): Brand => ({
   monthlyBudget: input.monthly_budget,
   preferredCreatorCategories: input.preferred_creator_categories,
   businessVerificationStatus: normalizeBrandVerificationStatus(input.business_verification_status),
-  verificationContactEmail: input.verification_contact_email,
-  verificationPhoneNumber: input.verification_phone_number,
   planTier: input.plan_tier,
   brandRating: input.brand_rating ?? 0,
   brandTotalReviews: input.brand_total_reviews ?? 0,
   companySize: input.company_size,
   contactName: input.contact_name,
-  contactEmail: input.contact_email,
-  contactPhone: input.contact_phone,
+  user: input.user ? {
+    id: input.user.id || input.id,
+    email: input.user.email || '',
+    phone: input.user.phone,
+    city: (input.user.city as City | null) || null,
+  } : undefined,
   totalCampaigns: input.total_campaigns ?? 0,
   activeOrders: input.active_orders ?? 0,
 });

@@ -121,7 +121,6 @@ export default function AdminVerificationPage() {
   const [pages, setPages] = useState<Record<VerificationTab, number>>({ creators: 0, brands: 0, ambassadors: 0 });
   const [searches, setSearches] = useState<Record<VerificationTab, string>>({ creators: '', brands: '', ambassadors: '' });
   const [statuses, setStatuses] = useState<Record<VerificationTab, string>>({ creators: 'all', brands: 'all', ambassadors: 'all' });
-  const [brandContact, setBrandContact] = useState<Record<string, string>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [creatorScores, setCreatorScores] = useState<Record<string, AdminCreatorScoreDetails | null>>({});
@@ -327,8 +326,6 @@ export default function AdminVerificationPage() {
         brand.id,
         decision,
         reason || undefined,
-        brandContact[brand.id] || brand.verification_contact_email || brand.user?.email,
-        brand.verification_phone_number,
       );
       setBrands((current) => current.map((item) =>
         item.id === brand.id ? { ...item, business_verification_status: decision } : item,
@@ -746,14 +743,7 @@ export default function AdminVerificationPage() {
                           <p className="text-[11px] text-[#87938b]">{brand.user?.email}</p>
                         </TableCell>
                         <TableCell>
-                          <Input
-                            value={brandContact[brand.id] ?? ''}
-                            placeholder={brand.verification_contact_email || brand.user?.email}
-                            className="border-[#d1ddd6]"
-                            onChange={(event) =>
-                              setBrandContact((current) => ({ ...current, [brand.id]: event.target.value }))
-                            }
-                          />
+                          <p className="text-[13px] font-semibold text-[#1e3d2e]">{brand.user?.email || 'No account email'}</p>
                         </TableCell>
                         <TableCell>
                           <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold capitalize ${

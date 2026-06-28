@@ -132,8 +132,6 @@ export interface AdminVerificationBrand {
   id: string;
   name: string;
   business_verification_status?: string;
-  verification_contact_email?: string;
-  verification_phone_number?: string;
   user?: {
     email?: string;
   };
@@ -580,11 +578,9 @@ export const adminService = {
     };
   },
 
-  async updateBrandVerification(id: string, status: string, contactEmail?: string, phoneNumber?: string) {
+  async updateBrandVerification(id: string, status: string) {
     return apiClient.patch(`/api/v1/admin/brands/${id}/verification`, {
       status,
-      contactEmail,
-      phoneNumber,
     });
   },
 
@@ -612,14 +608,10 @@ export const adminService = {
     brandId: string,
     decision: 'verified' | 'rejected' | 'under_review',
     reason?: string,
-    contactEmail?: string,
-    phoneNumber?: string,
   ): Promise<AdminVerificationBrand> {
     return apiClient.post<AdminVerificationBrand>(`/api/v1/admin/brands/${brandId}/verification-review`, {
       decision,
       reason,
-      contactEmail,
-      phoneNumber,
     });
   },
 

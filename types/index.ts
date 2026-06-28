@@ -218,8 +218,6 @@ export interface Brand {
   monthlyBudget?: number;
   preferredCreatorCategories?: string;
   businessVerificationStatus?: BrandVerificationStatus;
-  verificationContactEmail?: string;
-  verificationPhoneNumber?: string;
   planTier?: 'STARTER' | 'GROWTH' | 'ENTERPRISE';
   totalCampaigns: number;
   activeOrders: number;
@@ -227,8 +225,7 @@ export interface Brand {
   brandTotalReviews: number;
   companySize?: string;
   contactName?: string;
-  contactEmail?: string;
-  contactPhone?: string;
+  user?: Pick<User, 'id' | 'email' | 'phone'> & { city?: City | null };
 }
 
 export type BrandCampaignStatus = 'draft' | 'published' | 'paused' | 'closed' | 'archived';

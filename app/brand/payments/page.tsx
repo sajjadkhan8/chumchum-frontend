@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Building2, CalendarClock, CreditCard, Download, Plus, ReceiptText, ShieldCheck, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -23,7 +22,6 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -142,13 +140,11 @@ export default function BrandPaymentsPage() {
         setBrandDetails({
           companyName: b.name ?? 'My Brand',
           city: b.city ?? undefined,
-          contactEmail: b.contactEmail,
+          contactEmail: b.user?.email,
         });
       }
     }).catch(() => {});
   }, []);
-
-  const defaultMethod = useMemo(() => methods.find((m) => m.isDefault), [methods]);
 
   const handleSaveControls = async () => {
     setIsSavingControls(true);

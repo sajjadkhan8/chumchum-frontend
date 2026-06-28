@@ -47,8 +47,6 @@ const cities = [...pakistanCities];
 const inputCls =
   "h-9 rounded-xl border-[#d9e0d8] bg-[#f4f2e9] text-[#1a2e22] placeholder:text-[#8fa098] focus-visible:border-[#2d6b4e] focus-visible:ring-2 focus-visible:ring-[#2d6b4e]/15 focus-visible:bg-white";
 const labelCls = "text-xs font-bold text-[#526259]";
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const phonePattern = /^\+?[0-9\s().-]{7,30}$/;
 
 const emptyProfile = {
   companyName: "",
@@ -59,8 +57,6 @@ const emptyProfile = {
   description: "",
   logo: "",
   contactName: "",
-  contactEmail: "",
-  contactPhone: "",
   verificationStatus: "unverified" as BrandVerificationStatus,
 };
 
@@ -95,8 +91,6 @@ export default function BrandProfilePage() {
         city: brand.city || "",
         companySize: brand.companySize || "",
         contactName: brand.contactName || "",
-        contactEmail: brand.contactEmail || "",
-        contactPhone: brand.contactPhone || "",
         verificationStatus: brand.businessVerificationStatus || "unverified",
       });
       setBrandRating(brand.brandRating ?? 0);
@@ -127,14 +121,6 @@ export default function BrandProfilePage() {
         return;
       }
     }
-    if (profile.contactEmail.trim() && !emailPattern.test(profile.contactEmail.trim())) {
-      toast.error("Enter a valid contact email");
-      return;
-    }
-    if (profile.contactPhone.trim() && !phonePattern.test(profile.contactPhone.trim())) {
-      toast.error("Enter a valid contact phone");
-      return;
-    }
     setIsSaving(true);
     try {
       await brandsService.updateMe({
@@ -146,8 +132,6 @@ export default function BrandProfilePage() {
         city: profile.city,
         companySize: profile.companySize,
         contactName: profile.contactName,
-        contactEmail: profile.contactEmail,
-        contactPhone: profile.contactPhone,
       });
       await loadBrandProfile();
       toast.success("Company profile saved");
@@ -461,43 +445,17 @@ export default function BrandProfilePage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="contactEmail" className={labelCls}>
-                    Email
-                  </Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#8fa098]" />
-                    <Input
-                      id="contactEmail"
-                      type="email"
-                      className={`${inputCls} pl-9`}
-                      value={profile.contactEmail}
-                      onChange={(e) =>
-                        setProfile((p) => ({
-                          ...p,
-                          contactEmail: e.target.value,
-                        }))
-                      }
-                    />
+                  <Label className={labelCls}>Account Email</Label>
+                  <div className="flex h-9 items-center gap-2 rounded-xl border border-[#d9e0d8] bg-[#eef6f1] px-3 text-sm font-semibold text-[#1a2e22]">
+                    <Mail className="size-3.5 text-[#8fa098]" />
+                    <span className="truncate">{user?.email || "No account email"}</span>
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="contactPhone" className={labelCls}>
-                    Phone
-                  </Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#8fa098]" />
-                    <Input
-                      id="contactPhone"
-                      type="tel"
-                      className={`${inputCls} pl-9`}
-                      value={profile.contactPhone}
-                      onChange={(e) =>
-                        setProfile((p) => ({
-                          ...p,
-                          contactPhone: e.target.value,
-                        }))
-                      }
-                    />
+                  <Label className={labelCls}>Account Phone</Label>
+                  <div className="flex h-9 items-center gap-2 rounded-xl border border-[#d9e0d8] bg-[#eef6f1] px-3 text-sm font-semibold text-[#1a2e22]">
+                    <Phone className="size-3.5 text-[#8fa098]" />
+                    <span className="truncate">{user?.phone || "No account phone"}</span>
                   </div>
                 </div>
               </div>

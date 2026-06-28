@@ -34,13 +34,9 @@ export interface BrandProfileUpdatePayload {
   logoUrl?: string;
   monthlyBudget?: number;
   preferredCreatorCategories?: string;
-  verificationContactEmail?: string;
-  verificationPhoneNumber?: string;
   city?: string;
   companySize?: string;
   contactName?: string;
-  contactEmail?: string;
-  contactPhone?: string;
 }
 
 export const brandsService = {
@@ -67,13 +63,9 @@ export const brandsService = {
       logo_url: payload.logoUrl,
       monthly_budget: payload.monthlyBudget,
       preferred_creator_categories: payload.preferredCreatorCategories,
-      verification_contact_email: payload.verificationContactEmail,
-      verification_phone_number: payload.verificationPhoneNumber,
       city: payload.city,
       company_size: payload.companySize,
       contact_name: payload.contactName,
-      contact_email: payload.contactEmail,
-      contact_phone: payload.contactPhone,
     });
 
     return mapBrand(response as never);

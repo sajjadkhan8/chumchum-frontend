@@ -1,15 +1,13 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Bell,
   Lock,
   CreditCard,
   Save,
-  Mail,
-  Phone,
   CheckCircle,
   Settings,
   ShieldCheck,
@@ -36,11 +34,10 @@ import { toast } from "sonner";
 import { brandVerificationStatusMeta } from "../brand-verification-status";
 
 const TABS = [
-  { id: "billing", label: "Billing", icon: CreditCard },
+  { id: "account", label: "Account", icon: Settings },
   { id: "campaigns", label: "Campaigns", icon: Layers },
   { id: "verification", label: "Verification", icon: CheckCircle },
   { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "security", label: "Security", icon: Lock },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -61,7 +58,7 @@ const verificationEventLabels: Record<string, string> = {
   VERIFICATION_APPROVED: "Verification approved",
   VERIFICATION_REJECTED: "Verification rejected",
 };
-type SavingAction = "billing" | "campaigns" | "verification" | "notifications" | "password" | "delete" | null;
+type SavingAction = "billing" | "campaigns" | "notifications" | "password" | "delete" | null;
 
 const cardStyle = {
   "--background": "oklch(1 0 0)",
@@ -135,9 +132,13 @@ function ToggleRow({
 }
 
 function BrandSettingsPageContent() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const searchParamString = searchParams.toString();
+  const tabParam = searchParams.get("tab");
   const { user, logout } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<TabId>("billing");
+  const [activeTab, setActiveTab] = useState<TabId>("account");
   const [savingAction, setSavingAction] = useState<SavingAction>(null);
   const [hasLoadedBrandProfile, setHasLoadedBrandProfile] = useState(false);
   const [brandProfileLoadError, setBrandProfileLoadError] = useState<string | null>(null);
@@ -150,8 +151,6 @@ function BrandSettingsPageContent() {
 
   const [verification, setVerification] = useState({
     businessStatus: "unverified" as BrandVerificationStatus,
-    contactEmail: "",
-    phoneNumber: "",
   });
 
   const [notifications, setNotifications] = useState({
@@ -192,8 +191,6 @@ function BrandSettingsPageContent() {
       });
       setVerification({
         businessStatus: brand.businessVerificationStatus || "unverified",
-        contactEmail: brand.verificationContactEmail || brand.contactEmail || "",
-        phoneNumber: brand.verificationPhoneNumber || brand.contactPhone || "",
       });
       setHasLoadedBrandProfile(true);
     } catch (error) {
@@ -264,30 +261,6 @@ function BrandSettingsPageContent() {
         preferredCreatorCategories: nextCategories.join(", "),
       };
     });
-  };
-
-  const handleVerificationSave = async () => {
-    if (!hasLoadedBrandProfile) {
-      toast.error("Load your brand profile before saving verification settings");
-      return;
-    }
-    setSavingAction("verification");
-    try {
-      const saved = await brandsService.updateMe({
-        verificationContactEmail: verification.contactEmail,
-        verificationPhoneNumber: verification.phoneNumber,
-      });
-      setVerification((prev) => ({
-        ...prev,
-        contactEmail: saved.verificationContactEmail || '',
-        phoneNumber: saved.verificationPhoneNumber || '',
-      }));
-      toast.success("Verification settings saved");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not save verification settings");
-    } finally {
-      setSavingAction(null);
-    }
   };
 
   const handleNotificationSave = async () => {
@@ -402,9 +375,22 @@ function BrandSettingsPageContent() {
   }, [loadBrandProfile, loadNotificationPreferences]);
 
   useEffect(() => {
-    const tab = searchParams.get("tab") as TabId | null;
-    if (tab && TABS.some((t) => t.id === tab)) setActiveTab(tab);
-  }, [searchParams]);
+    if (tabParam === "billing" || tabParam === "security") {
+      setActiveTab("account");
+      const nextParams = new URLSearchParams(searchParamString);
+      nextParams.set("tab", "account");
+      router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
+      return;
+    }
+    if (tabParam && TABS.some((t) => t.id === tabParam)) setActiveTab(tabParam as TabId);
+  }, [pathname, router, searchParamString, tabParam]);
+
+  const handleTabChange = (tab: TabId) => {
+    setActiveTab(tab);
+    const nextParams = new URLSearchParams(searchParamString);
+    nextParams.set("tab", tab);
+    router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
+  };
 
   const selectedPreferredCreatorCategories = normalizeCategories(campaignPreferences.preferredCreatorCategories.split(","));
   const planLabel = billing.plan ? billing.plan.charAt(0) + billing.plan.slice(1).toLowerCase() : "Starter";
@@ -433,7 +419,7 @@ function BrandSettingsPageContent() {
             <button
               key={id}
               type="button"
-              onClick={() => setActiveTab(id)}
+              onClick={() => handleTabChange(id)}
               className={cn(
                 "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-xs font-semibold transition-all duration-200",
                 activeTab === id
@@ -460,8 +446,8 @@ function BrandSettingsPageContent() {
           </div>
         )}
 
-        {/* ── Billing ── */}
-        {activeTab === "billing" && (
+        {/* ── Account ── */}
+        {activeTab === "account" && (
           <div className="space-y-3">
             <SectionCard title="Current Plan" icon={CreditCard}>
               <div className="flex items-center justify-between rounded-[1.15rem] border border-[#c8e0d0] bg-[#eef6f1] px-4 py-3">
@@ -499,6 +485,84 @@ function BrandSettingsPageContent() {
               >
                 {savingAction === "billing" ? "Saving…" : <><Save className="mr-1.5 size-3.5" />Save Billing</>}
               </Button>
+            </SectionCard>
+
+            <SectionCard title="Change Password" icon={Lock}>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3 rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] px-3.5 py-3">
+                  <div>
+                    <p className="text-xs font-semibold text-[#1a2e22]">
+                      Email: {user?.emailVerified ? "Verified" : "Not verified"}
+                    </p>
+                    <p className="text-[11px] text-[#8fa098]">{user?.email ?? "Account email"}</p>
+                  </div>
+                  {!user?.emailVerified && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 shrink-0 rounded-lg border-[#d9e0d8] px-3 text-xs font-semibold text-[#2d6b4e] hover:bg-[#f4f2e9]"
+                      onClick={() => void handleSendEmailVerification()}
+                    >
+                      Send email
+                    </Button>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={labelCls}>Current Password</Label>
+                  <Input
+                    type="password"
+                    value={security.currentPassword}
+                    onChange={(e) => setSecurity((s) => ({ ...s, currentPassword: e.target.value }))}
+                    className={inputCls}
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label className={labelCls}>New Password</Label>
+                    <Input
+                      type="password"
+                      value={security.newPassword}
+                      onChange={(e) => setSecurity((s) => ({ ...s, newPassword: e.target.value }))}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className={labelCls}>Confirm New Password</Label>
+                    <Input
+                      type="password"
+                      value={security.confirmPassword}
+                      onChange={(e) => setSecurity((s) => ({ ...s, confirmPassword: e.target.value }))}
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={() => void handlePasswordChange()}
+                  disabled={savingAction === "password"}
+                  className="h-9 w-full rounded-xl bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#185c39] disabled:opacity-50"
+                >
+                  {savingAction === "password" ? "Updating…" : "Update Password"}
+                </Button>
+              </div>
+            </SectionCard>
+
+            <SectionCard title="Danger Zone" description="Irreversible account actions" icon={Lock} danger>
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                <Input
+                  type="password"
+                  placeholder="Confirm with your password"
+                  value={security.deleteConfirmPassword}
+                  onChange={(e) => setSecurity((s) => ({ ...s, deleteConfirmPassword: e.target.value }))}
+                  className="h-9 rounded-xl border-[#f5c2c2] bg-[#fff5f5] text-[#1a2e22] placeholder:text-[#c8a0a0] focus-visible:border-[#d94f4f] focus-visible:ring-2 focus-visible:ring-[#d94f4f]/15"
+                />
+                <Button
+                  onClick={() => void handleDeleteAccount()}
+                  disabled={savingAction === "delete"}
+                  className="h-9 shrink-0 rounded-xl bg-[#d94f4f] px-4 text-xs font-bold text-white hover:bg-[#c13a3a] disabled:opacity-50"
+                >
+                  Delete Account
+                </Button>
+              </div>
             </SectionCard>
           </div>
         )}
@@ -544,7 +608,7 @@ function BrandSettingsPageContent() {
 
         {/* ── Verification ── */}
         {activeTab === "verification" && (
-          <SectionCard title="Brand Verification" description="Keep legal and contact details current for trust badges" icon={ShieldCheck}>
+          <SectionCard title="Brand Verification" description="Keep legal details current for trust badges" icon={ShieldCheck}>
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label className={labelCls}>Verification Status</Label>
@@ -553,42 +617,10 @@ function BrandSettingsPageContent() {
                 </div>
                 <p className="text-[11px] text-[#8fa098]">Upload documents below and submit them for team review.</p>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label className={labelCls}>Contact Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#8fa098]" />
-                    <Input
-                      value={verification.contactEmail}
-                      onChange={(e) => setVerification((p) => ({ ...p, contactEmail: e.target.value }))}
-                      className={`${inputCls} pl-9`}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className={labelCls}>Phone Number</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#8fa098]" />
-                    <Input
-                      value={verification.phoneNumber}
-                      onChange={(e) => setVerification((p) => ({ ...p, phoneNumber: e.target.value }))}
-                      className={`${inputCls} pl-9`}
-                    />
-                  </div>
-                </div>
-              </div>
               <div className="flex items-start gap-2 rounded-[1.15rem] border border-[#c8e0d0] bg-[#eef6f1] px-3.5 py-3 text-xs text-[#185c39]">
                 <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
                 <p><span className="font-bold">Verification badge</span> is shown to creators when your status is set to Verified.</p>
               </div>
-              <Button
-                onClick={() => void handleVerificationSave()}
-                disabled={savingAction === "verification"}
-                className="h-9 w-full rounded-xl bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#185c39] disabled:opacity-50"
-              >
-                {savingAction === "verification" ? "Saving…" : <><Save className="mr-1.5 size-3.5" />Save Verification</>}
-              </Button>
-
               {/* Verification Checklist */}
               <div className="mt-6">
                 <p className="mb-1 text-base font-extrabold text-[#173b2a]">Verification Checklist</p>
@@ -729,88 +761,6 @@ function BrandSettingsPageContent() {
           </div>
         )}
 
-        {/* ── Security ── */}
-        {activeTab === "security" && (
-          <div className="space-y-3">
-            <SectionCard title="Change Password" icon={Lock}>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3 rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] px-3.5 py-3">
-                  <div>
-                    <p className="text-xs font-semibold text-[#1a2e22]">
-                      Email: {user?.emailVerified ? "Verified" : "Not verified"}
-                    </p>
-                    <p className="text-[11px] text-[#8fa098]">{user?.email ?? "Account email"}</p>
-                  </div>
-                  {!user?.emailVerified && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 shrink-0 rounded-lg border-[#d9e0d8] px-3 text-xs font-semibold text-[#2d6b4e] hover:bg-[#f4f2e9]"
-                      onClick={() => void handleSendEmailVerification()}
-                    >
-                      Send email
-                    </Button>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <Label className={labelCls}>Current Password</Label>
-                  <Input
-                    type="password"
-                    value={security.currentPassword}
-                    onChange={(e) => setSecurity((s) => ({ ...s, currentPassword: e.target.value }))}
-                    className={inputCls}
-                  />
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label className={labelCls}>New Password</Label>
-                    <Input
-                      type="password"
-                      value={security.newPassword}
-                      onChange={(e) => setSecurity((s) => ({ ...s, newPassword: e.target.value }))}
-                      className={inputCls}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className={labelCls}>Confirm New Password</Label>
-                    <Input
-                      type="password"
-                      value={security.confirmPassword}
-                      onChange={(e) => setSecurity((s) => ({ ...s, confirmPassword: e.target.value }))}
-                      className={inputCls}
-                    />
-                  </div>
-                </div>
-                <Button
-                  onClick={() => void handlePasswordChange()}
-                  disabled={savingAction === "password"}
-                  className="h-9 w-full rounded-xl bg-[#2d6b4e] text-xs font-bold text-white hover:bg-[#185c39] disabled:opacity-50"
-                >
-                  {savingAction === "password" ? "Updating…" : "Update Password"}
-                </Button>
-              </div>
-            </SectionCard>
-
-            <SectionCard title="Danger Zone" description="Irreversible account actions" icon={Lock} danger>
-              <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-                <Input
-                  type="password"
-                  placeholder="Confirm with your password"
-                  value={security.deleteConfirmPassword}
-                  onChange={(e) => setSecurity((s) => ({ ...s, deleteConfirmPassword: e.target.value }))}
-                  className="h-9 rounded-xl border-[#f5c2c2] bg-[#fff5f5] text-[#1a2e22] placeholder:text-[#c8a0a0] focus-visible:border-[#d94f4f] focus-visible:ring-2 focus-visible:ring-[#d94f4f]/15"
-                />
-                <Button
-                  onClick={() => void handleDeleteAccount()}
-                  disabled={savingAction === "delete"}
-                  className="h-9 shrink-0 rounded-xl bg-[#d94f4f] px-4 text-xs font-bold text-white hover:bg-[#c13a3a] disabled:opacity-50"
-                >
-                  Delete Account
-                </Button>
-              </div>
-            </SectionCard>
-          </div>
-        )}
       </div>
     </div>
   );
