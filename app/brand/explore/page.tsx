@@ -28,9 +28,8 @@ import { useAuthStore } from '@/store/auth-store';
 import { creatorsService } from '@/services/creators.service';
 import { savedCreatorsService } from '@/services/saved-creators.service';
 import { ambassadorService } from '@/services/ambassador.service';
-import { packagesService } from '@/services/packages.service';
 import { brandsService } from '@/services/brands.service';
-import type { CollaborationPreference, Creator, Package, PlatformAmbassador } from '@/types';
+import type { CollaborationPreference, Creator, PlatformAmbassador } from '@/types';
 import { toast } from 'sonner';
 import { cn, formatFollowers, formatPrice } from '@/lib/utils';
 import { getCategoryLabel, normalizeCategory, normalizeCategories } from '@/lib/categories';
@@ -42,22 +41,6 @@ const sortOptions = [
   { value: 'top_rated', label: 'Top Rated', icon: Star },
   { value: 'by_city', label: 'By City (A–Z)', icon: MapPin },
 ];
-
-function HeroStat({ label, value, icon: Icon }: { label: string; value: string; icon: React.ElementType }) {
-  return (
-    <div className="rounded-[1.15rem] border border-white/12 bg-white/8 px-2.5 py-2.5 backdrop-blur sm:px-4 sm:py-3">
-      <div className="flex items-center gap-2 sm:gap-3">
-        <span className="hidden size-9 shrink-0 place-items-center rounded-2xl bg-[#e6aa38] text-[#173b2a] sm:grid">
-          <Icon className="size-4" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#d4e0d8] sm:text-[10px] sm:tracking-[0.15em]">{label}</p>
-          <p className="mt-0.5 truncate text-base font-black tracking-[-0.04em] text-white sm:text-lg">{value}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function profileImageUrl(person: Creator) {
   return person.contentPreviews[0]?.thumbnail || person.coverImage || person.avatar;
@@ -288,19 +271,6 @@ function ExplorePageContent() {
     void fetchAmbassadors();
   }, [creatorView]);
 
-  const [featuredPackages, setFeaturedPackages] = useState<Package[]>([]);
-  const [isLoadingFeatured, setIsLoadingFeatured] = useState(true);
-
-  useEffect(() => {
-    const fetchFeatured = async () => {
-      setIsLoadingFeatured(true);
-      const result = await packagesService.getFeatured(0, 8).catch(() => ({ items: [] }));
-      setFeaturedPackages(result.items);
-      setIsLoadingFeatured(false);
-    };
-    void fetchFeatured();
-  }, []);
-
   useEffect(() => {
     brandsService.getMe()
       .then((b) => {
@@ -418,11 +388,6 @@ function ExplorePageContent() {
               </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
-              <HeroStat label="Creators" value={isLoadingCreators ? '...' : String(totalCount)} icon={Users} />
-              <HeroStat label="Ambassadors" value={isLoadingAmbassadors ? '...' : String(ambassadors.length)} icon={Crown} />
-              <HeroStat label="Saved" value={String(savedCreatorsList.length)} icon={Heart} />
-            </div>
           </div>
         </section>
 
@@ -564,63 +529,6 @@ function ExplorePageContent() {
               )}
             </motion.section>
 
-            {(isLoadingFeatured || featuredPackages.length > 0) && (
-              <motion.section
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="mt-4"
-              >
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.14em] text-[#b77a12]">
-                    <Sparkles className="size-4" />
-                    Featured Packages
-                  </p>
-                  <Link
-                    href="/brand/explore/packages"
-                    className="flex items-center gap-1 text-xs font-black text-[#185c39] hover:underline"
-                  >
-                    View all <ArrowRight className="size-3.5" />
-                  </Link>
-                </div>
-                <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {isLoadingFeatured
-                    ? Array.from({ length: 4 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="h-[148px] w-[220px] shrink-0 animate-pulse rounded-[1.25rem] bg-[#e6eceb]"
-                        />
-                      ))
-                    : featuredPackages.map((pkg) => (
-                        <div
-                          key={pkg.id}
-                          className="group flex w-[220px] shrink-0 flex-col justify-between rounded-[1.25rem] border border-[#d9e0d8] bg-white p-4 shadow-[0_4px_16px_rgba(38,70,50,0.06)] transition-shadow hover:shadow-[0_8px_28px_rgba(38,70,50,0.12)]"
-                        >
-                          <div className="min-w-0">
-                            <p className="mb-1 line-clamp-2 text-sm font-black leading-snug text-[#173b2a]">{pkg.title}</p>
-                            <p className="line-clamp-1 text-[11px] text-[#496159]">{pkg.platform}</p>
-                          </div>
-                          <div className="mt-3 flex items-end justify-between gap-2">
-                            <div>
-                              <span className={cn(
-                                'inline-block rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide',
-                                pkg.dealType === 'paid' && 'bg-[#e7f0ea] text-[#185c39]',
-                                pkg.dealType === 'barter' && 'bg-[#fff1cd] text-[#8b5e12]',
-                                pkg.dealType === 'hybrid' && 'bg-[#e8e4ff] text-[#4a3a9e]',
-                              )}>
-                                {pkg.dealType}
-                              </span>
-                            </div>
-                            {pkg.price > 0 && (
-                              <p className="shrink-0 text-sm font-black text-[#173b2a]">{formatPrice(pkg.price)}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                </div>
-              </motion.section>
-            )}
-
             <section className="mt-4 grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
               <aside className="hidden lg:block">
                 <div className="sticky top-24 overflow-hidden rounded-[1.5rem] border border-[#d9e0d8] bg-white shadow-[0_16px_54px_rgba(38,70,50,0.06)]">
@@ -639,7 +547,6 @@ function ExplorePageContent() {
                   <p className="text-sm font-black text-[#173b2a]">
                     {isLoadingCreators ? 'Loading creators...' : `${totalCount} creators found`}
                   </p>
-                  <p className="hidden text-xs font-bold text-[#718077] sm:block">Compact cards. Better scanning. Less wandering.</p>
                 </div>
 
                 {isLoadingCreators ? (

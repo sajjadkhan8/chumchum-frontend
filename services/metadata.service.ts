@@ -34,11 +34,13 @@ export interface CreatorFilterMetadata {
   priceRanges: RangeOption[];
 }
 
+const supportedPlatforms: Platform[] = ['instagram', 'tiktok', 'youtube', 'facebook', 'snapchat'];
+
 export const defaultCreatorFilterMetadata: CreatorFilterMetadata = {
   categories: categoryValues,
   categoryOptions,
   cities: [...pakistanCities],
-  platforms: ['instagram', 'tiktok', 'youtube', 'facebook', 'snapchat'],
+  platforms: supportedPlatforms,
   collaborationPreferences: [
     { value: 'paid', label: 'Paid' },
     { value: 'barter', label: 'Barter' },
@@ -70,12 +72,18 @@ const normalizeMetadata = (payload: Partial<CreatorFilterMetadata> | null | unde
         .map((option) => ({ value: option.value, label: option.label }))
         .filter((option) => categories.includes(option.value))
     : categoryOptions.filter((option) => categories.includes(option.value));
+  const platforms = Array.from(new Set([
+    ...(payload?.platforms ?? [])
+      .map((platform) => platform.toLowerCase())
+      .filter((platform): platform is Platform => supportedPlatforms.includes(platform as Platform)),
+    ...supportedPlatforms,
+  ]));
 
   return {
     categories,
     categoryOptions: options.length ? options : defaultCreatorFilterMetadata.categoryOptions,
     cities: payload?.cities?.length ? payload.cities : defaultCreatorFilterMetadata.cities,
-    platforms: payload?.platforms?.length ? payload.platforms : defaultCreatorFilterMetadata.platforms,
+    platforms,
     collaborationPreferences: payload?.collaborationPreferences?.length ? payload.collaborationPreferences : defaultCreatorFilterMetadata.collaborationPreferences,
     barterTypes: payload?.barterTypes?.length
       ? payload.barterTypes

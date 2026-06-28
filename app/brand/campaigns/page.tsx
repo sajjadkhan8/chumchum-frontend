@@ -11,13 +11,15 @@ import {
   Megaphone,
   Plus,
   RefreshCw,
+  Search,
   Sparkles,
   Target,
   Users,
-  Wallet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
 import { campaignsService } from '@/services/campaigns.service';
 import { brandsService } from '@/services/brands.service';
@@ -63,22 +65,6 @@ const locationLabel = (campaign: BrandCampaign) => {
 
 const campaignTypeLabel = (value: string) => value.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 
-function StatPill({ label, value, icon: Icon }: { label: string; value: string; icon: React.ElementType }) {
-  return (
-    <div className="rounded-[1.15rem] border border-white/12 bg-white/8 px-2.5 py-2.5 backdrop-blur sm:px-4 sm:py-3">
-      <div className="flex items-center gap-2 sm:gap-3">
-        <span className="hidden size-9 shrink-0 place-items-center rounded-2xl bg-[#e6aa38] text-[#173b2a] sm:grid">
-          <Icon className="size-4" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#d4e0d8] sm:text-[10px] sm:tracking-[0.16em]">{label}</p>
-          <p className="mt-0.5 truncate text-base font-black tracking-[-0.04em] text-white sm:text-lg">{value}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function EmptyState({ activeTab }: { activeTab: string }) {
   return (
     <div className="rounded-[1.6rem] border border-dashed border-[#cdd7ce] bg-white p-6 text-center shadow-[0_18px_60px_rgba(38,70,50,0.06)]">
@@ -117,6 +103,7 @@ export default function BrandCampaignsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
   const [brand, setBrand] = useState<Brand | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const load = useCallback(async (nextPage = 0, append = false, tab: 'all' | BrandCampaignStatus = 'all') => {
     setIsLoading(true);
@@ -139,146 +126,127 @@ export default function BrandCampaignsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
-  const filtered = campaigns;
+  const filtered = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return campaigns;
 
-  const statusCounts = useMemo(() => {
-    return campaigns.reduce(
-      (counts, campaign) => {
-        counts[campaign.status] = (counts[campaign.status] || 0) + 1;
-        return counts;
-      },
-      { draft: 0, published: 0, paused: 0, closed: 0, archived: 0 } as Record<BrandCampaignStatus, number>
-    );
-  }, [campaigns]);
+    return campaigns.filter((campaign) => {
+      const searchable = [
+        campaign.title,
+        campaign.brief,
+        campaign.offerType,
+        campaign.status,
+        campaign.campaignGoal,
+        campaign.targetCity,
+        campaign.targetCities,
+        campaign.targetRegion,
+        locationLabel(campaign),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
 
-  const totalBudget = useMemo(() => campaigns.reduce((total, campaign) => total + (campaign.budgetMax || campaign.budgetMin || 0), 0), [campaigns]);
-  const totalReactions = useMemo(() => campaigns.reduce((total, campaign) => total + (campaign.reactionCount || 0), 0), [campaigns]);
-  const topCampaign = useMemo(() => campaigns.reduce<BrandCampaign | null>((best, campaign) => (!best || campaign.reactionCount > best.reactionCount ? campaign : best), null), [campaigns]);
+      return searchable.includes(query);
+    });
+  }, [campaigns, searchQuery]);
+
+  const activeStatusLabel = statusTabs.find((tab) => tab.value === activeTab)?.label ?? 'All';
 
   return (
     <div className="min-h-screen bg-[#fbfaf5]">
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
         <section className="overflow-hidden rounded-[2rem] border border-[#d9e0d8] bg-[#173b2a] text-white shadow-[0_24px_80px_rgba(23,59,42,0.14)]">
-          <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="p-5 sm:p-6 lg:p-7">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="max-w-2xl">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-[#f0c56e]">
-                      <Sparkles className="size-3.5" />
-                      Food campaign desk
-                    </div>
-                    {brand?.planTier && (
-                      <span className={cn('inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black ring-1', planBadgeStyle[brand.planTier] ?? planBadgeStyle.STARTER)}>
-                        {brand.planTier.charAt(0) + brand.planTier.slice(1).toLowerCase()} plan
-                      </span>
-                    )}
+          <div className="p-5 sm:p-6 lg:p-7">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="max-w-2xl">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-[#f0c56e]">
+                    <Sparkles className="size-3.5" />
+                    Food campaign desk
                   </div>
-                  {brand?.planTier === 'STARTER' && (
-                    <div className="mt-3 max-w-xs">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-[#d4e0d8]">
-                        <span>Campaigns this month</span>
-                        <span className={totalElements >= STARTER_CAMPAIGN_LIMIT ? 'text-[#f0c56e]' : 'text-white'}>
-                          {Math.min(totalElements, STARTER_CAMPAIGN_LIMIT)}/{STARTER_CAMPAIGN_LIMIT}
-                        </span>
-                      </div>
-                      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
-                        <div
-                          className={cn('h-full rounded-full transition-all', totalElements >= STARTER_CAMPAIGN_LIMIT ? 'bg-[#e6aa38]' : 'bg-[#6ec996]')}
-                          style={{ width: `${Math.min((totalElements / STARTER_CAMPAIGN_LIMIT) * 100, 100)}%` }}
-                        />
-                      </div>
-                      {totalElements >= STARTER_CAMPAIGN_LIMIT && (
-                        <p className="mt-1.5 text-[11px] font-bold text-[#f0c56e]">
-                          Limit reached — <Link href="/pricing" className="underline">upgrade to Growth</Link> for unlimited.
-                        </p>
-                      )}
-                    </div>
+                  {brand?.planTier && (
+                    <span className={cn('inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black ring-1', planBadgeStyle[brand.planTier] ?? planBadgeStyle.STARTER)}>
+                      {brand.planTier.charAt(0) + brand.planTier.slice(1).toLowerCase()} plan
+                    </span>
                   )}
                 </div>
-                {brand?.planTier === 'STARTER' && totalElements >= STARTER_CAMPAIGN_LIMIT ? (
-                  <Button asChild className="shrink-0 rounded-full bg-[#e6aa38] px-5 font-black text-[#173b2a] hover:bg-[#f0bb55]">
-                    <Link href="/pricing">
-                      Upgrade to create more
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button asChild className="shrink-0 rounded-full bg-[#e6aa38] px-5 font-black text-[#173b2a] hover:bg-[#f0bb55]">
-                    <Link href="/brand/campaigns/new">
-                      <Plus className="mr-2 size-4" />
-                      New Campaign
-                    </Link>
-                  </Button>
+                {brand?.planTier === 'STARTER' && (
+                  <div className="mt-3 max-w-xs">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-[#d4e0d8]">
+                      <span>Campaigns this month</span>
+                      <span className={totalElements >= STARTER_CAMPAIGN_LIMIT ? 'text-[#f0c56e]' : 'text-white'}>
+                        {Math.min(totalElements, STARTER_CAMPAIGN_LIMIT)}/{STARTER_CAMPAIGN_LIMIT}
+                      </span>
+                    </div>
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
+                      <div
+                        className={cn('h-full rounded-full transition-all', totalElements >= STARTER_CAMPAIGN_LIMIT ? 'bg-[#e6aa38]' : 'bg-[#6ec996]')}
+                        style={{ width: `${Math.min((totalElements / STARTER_CAMPAIGN_LIMIT) * 100, 100)}%` }}
+                      />
+                    </div>
+                    {totalElements >= STARTER_CAMPAIGN_LIMIT && (
+                      <p className="mt-1.5 text-[11px] font-bold text-[#f0c56e]">
+                        Limit reached — <Link href="/pricing" className="underline">upgrade to Growth</Link> for unlimited.
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
-
-              <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
-                <StatPill label="Live campaigns" value={String(statusCounts.published)} icon={Megaphone} />
-                <StatPill label="Creator interest" value={String(totalReactions)} icon={Users} />
-                <StatPill label="Max budget" value={totalBudget ? formatPrice(totalBudget) : 'Not set'} icon={Wallet} />
-              </div>
+              {brand?.planTier === 'STARTER' && totalElements >= STARTER_CAMPAIGN_LIMIT ? (
+                <Button asChild className="shrink-0 rounded-full bg-[#e6aa38] px-5 font-black text-[#173b2a] hover:bg-[#f0bb55]">
+                  <Link href="/pricing">
+                    Upgrade to create more
+                  </Link>
+                </Button>
+              ) : (
+                <Button asChild className="shrink-0 rounded-full bg-[#e6aa38] px-5 font-black text-[#173b2a] hover:bg-[#f0bb55]">
+                  <Link href="/brand/campaigns/new">
+                    <Plus className="mr-2 size-4" />
+                    New Campaign
+                  </Link>
+                </Button>
+              )}
             </div>
-
-            <aside className="hidden border-t border-white/10 bg-white/[0.06] p-5 sm:block sm:p-6 lg:border-l lg:border-t-0 lg:p-7">
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#f0c56e]">Quick read</p>
-              <div className="mt-4 space-y-3">
-                <div className="rounded-[1.25rem] border border-white/12 bg-[#102d20]/60 p-4">
-                  <p className="text-sm font-black text-white">{topCampaign ? topCampaign.title : 'Launch your first food campaign'}</p>
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#c7d8ce]">
-                    {topCampaign ? topCampaign.brief : 'Start with a weekend tasting or launch reel. Clear deliverables usually get better creator responses.'}
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-[1.15rem] border border-white/12 bg-white/8 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#d4e0d8]">Drafts</p>
-                    <p className="mt-1 text-2xl font-black tracking-[-0.04em]">{statusCounts.draft}</p>
-                  </div>
-                  <div className="rounded-[1.15rem] border border-white/12 bg-white/8 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#d4e0d8]">Paused</p>
-                    <p className="mt-1 text-2xl font-black tracking-[-0.04em]">{statusCounts.paused}</p>
-                  </div>
-                </div>
-              </div>
-            </aside>
           </div>
         </section>
 
         <section className="mt-4 rounded-[1.5rem] border border-[#d9e0d8] bg-white p-3 shadow-[0_16px_54px_rgba(38,70,50,0.06)]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
-              {statusTabs.map((tab) => {
-                const count = tab.value === 'all' ? totalElements : (activeTab === tab.value ? totalElements : statusCounts[tab.value]);
-                const isActive = activeTab === tab.value;
-                return (
-                  <button
-                    key={tab.value}
-                    type="button"
-                    onClick={() => setActiveTab(tab.value)}
-                    className={cn(
-                      'inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-sm font-black transition',
-                      isActive ? 'bg-[#185c39] text-white shadow-[0_10px_24px_rgba(24,92,57,0.18)]' : 'bg-[#f4f2e9] text-[#607168] hover:bg-[#e7f0ea] hover:text-[#185c39]'
-                    )}
-                  >
-                    {tab.label}
-                    <span className={cn('rounded-full px-2 py-0.5 text-[11px]', isActive ? 'bg-white/16 text-white' : 'bg-white text-[#7b867f]')}>
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_190px] lg:min-w-[560px]">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#7b867f]" />
+                <Input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search campaigns..."
+                  className="h-11 rounded-full border-[#d9e0d8] bg-[#fbfaf5] pl-10 pr-4 font-bold text-[#173b2a] placeholder:text-[#8a968f]"
+                />
+              </div>
+              <Select value={activeTab} onValueChange={(value) => setActiveTab(value as 'all' | BrandCampaignStatus)}>
+                <SelectTrigger className="h-11 rounded-full border-[#d9e0d8] bg-[#fbfaf5] font-black text-[#185c39]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusTabs.map((tab) => (
+                    <SelectItem key={tab.value} value={tab.value}>
+                      {tab.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[#647168]">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f4f2e9] px-3 py-2">
                 <ClipboardList className="size-3.5 text-[#b77a12]" />
-                {totalElements > 0 ? `${totalElements} total campaigns` : 'Campaign list ready'}
+                {searchQuery.trim() ? `${filtered.length} matching ${activeStatusLabel.toLowerCase()} campaigns` : totalElements > 0 ? `${totalElements} ${activeStatusLabel.toLowerCase()} campaigns` : 'Campaign list ready'}
               </span>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 className="rounded-full text-[#185c39] hover:bg-[#e7f0ea] hover:text-[#185c39]"
-                onClick={() => void load(0)}
+                onClick={() => void load(0, false, activeTab)}
                 disabled={isLoading}
               >
                 <RefreshCw className={cn('mr-2 size-3.5', isLoading && 'animate-spin')} />
