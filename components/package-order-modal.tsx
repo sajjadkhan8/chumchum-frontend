@@ -154,6 +154,7 @@ export function PackageOrderModal({ isOpen, pkg, onClose, onCreated }: PackageOr
     : Math.max(requiredAmount - walletBalance, 0);
   const topUpAmount = paymentAssist?.topUpAmount ?? (walletShortfall > 0 ? Math.max(walletShortfall, cashAmountLimits.min) : 0);
   const needsWalletTopUp = walletBalance != null && requiredAmount > 0 && walletShortfall > 0;
+  const firstStepWalletHint = needsWalletTopUp ? `Need ${formatPrice(topUpAmount)} more` : null;
 
   const validateDetails = () => {
     if (!pkg) return false;
@@ -369,6 +370,9 @@ export function PackageOrderModal({ isOpen, pkg, onClose, onCreated }: PackageOr
                               <span>Avl Bal: {formatPrice(walletBalance)}</span>
                             ) : (
                               <span className="text-[#607168]">Avl Bal: --</span>
+                            )}
+                            {firstStepWalletHint && (
+                              <span className="ml-2 inline-flex text-[#b77a12]">{firstStepWalletHint}</span>
                             )}
                           </div>
                           <span className="shrink-0 text-right text-[#8fa098]">
