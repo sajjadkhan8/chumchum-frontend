@@ -538,7 +538,7 @@ function BrandOrdersContent() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onSelect={() => router.push(order.conversationId ? `/brand/messages?conversation=${order.conversationId}` : `/brand/messages?creator=${order.creatorId}`)}>
+                              <DropdownMenuItem onSelect={() => router.push(`/brand/messages?order=${order.id}`)}>
                                 <MessageCircle className="mr-2 h-4 w-4" />
                                 Message Creator
                               </DropdownMenuItem>
@@ -563,6 +563,11 @@ function BrandOrdersContent() {
                           <Progress value={progress} className="h-2 bg-[#e6ece6]" />
                           <p className="text-xs font-bold text-[#718077]">Tap row for delivery details</p>
                         </>
+                      )}
+                      {isCancelled && order.cancellationNote && (
+                        <p className="line-clamp-2 rounded-xl bg-white/70 px-3 py-2 text-xs font-bold leading-5 text-[#7f2f2a]">
+                          <span className="font-black">Note:</span> {order.cancellationNote}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -654,7 +659,7 @@ function BrandOrdersContent() {
 
                     <div className="mt-4 grid gap-2 sm:grid-cols-2">
                       <Button variant="outline" className="rounded-full border-[#d9e0d8] bg-white font-black text-[#185c39] hover:bg-[#e7f0ea]" asChild>
-                        <Link href={order.conversationId ? `/brand/messages?conversation=${order.conversationId}` : `/brand/messages?creator=${order.creatorId}`}>
+                        <Link href={`/brand/messages?order=${order.id}`}>
                           <MessageCircle className="mr-2 h-4 w-4" />
                           Message
                         </Link>

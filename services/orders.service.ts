@@ -54,6 +54,7 @@ interface BackendOrderResponse {
   amount?: number;
   barterDetails?: string;
   message?: string;
+  cancellationNote?: string;
   status?: string;
   progress?: number;
   deadlineDate?: string;

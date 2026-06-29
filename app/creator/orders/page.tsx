@@ -381,7 +381,7 @@ function CreatorOrdersPageContent() {
     try {
       const convResult = await messagesService.getConversations(user.id, "creator");
       const convList = 'items' in convResult ? convResult.items : (convResult as unknown as import("@/types").Conversation[]);
-      const conversation = await messagesService.openBrandConversation(order.brandId, convList);
+      const conversation = await messagesService.openOrderConversation(order.id, "creator", convList);
       router.push(`/creator/messages?conversation=${conversation.id}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not open conversation");

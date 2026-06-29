@@ -406,6 +406,7 @@ interface BackendOrderResponse {
   amount?: number;
   barterDetails?: string;
   message?: string;
+  cancellationNote?: string;
   status?: string;
   progress?: number;
   deadlineDate?: string;
@@ -516,6 +517,7 @@ export const mapOrder = (input: BackendOrderResponse, packageMap: Record<string,
     amount: input.amount,
     barterDetails: input.barterDetails,
     message: input.message || '',
+    cancellationNote: input.cancellationNote,
     status: (input.status || 'pending').toLowerCase() as Order['status'],
     progress: input.progress,
     deliverables: input.deliverables?.map(mapOrderDeliverable) || [],
@@ -583,10 +585,21 @@ interface BackendConversationResponse {
   id: string;
   creatorId: string;
   brandId: string;
+  contextType?: string;
+  contextId?: string;
+  contextLabel?: string;
+  contextTitle?: string;
+  contextStatus?: string;
+  contextAmount?: number;
+  contextDeadlineDate?: string;
   unreadCountCreator?: number;
   unreadCountBrand?: number;
   lastMessage?: string;
   updatedAt?: string;
+  creatorOnline?: boolean;
+  creatorLastSeenAt?: string;
+  brandOnline?: boolean;
+  brandLastSeenAt?: string;
   blockedByMe?: boolean;
   blockedByThem?: boolean;
 }
@@ -599,6 +612,7 @@ export const mapConversation = (
 ): Conversation => {
   const creator = creatorMap[input.creatorId];
   const brand = brandMap[input.brandId];
+  const contextType = (input.contextType || 'general').toLowerCase() as Conversation['contextType'];
   const unreadCount =
     viewerRole === 'creator'
       ? (input.unreadCountCreator ?? 0)
@@ -644,6 +658,17 @@ export const mapConversation = (
       totalCampaigns: 0,
       activeOrders: 0,
     },
+    contextType,
+    contextId: input.contextId,
+    contextLabel: input.contextLabel,
+    contextTitle: input.contextTitle,
+    contextStatus: input.contextStatus,
+    contextAmount: input.contextAmount,
+    contextDeadlineDate: input.contextDeadlineDate ? safeDate(input.contextDeadlineDate) : undefined,
+    creatorOnline: Boolean(input.creatorOnline),
+    creatorLastSeenAt: input.creatorLastSeenAt ? safeDate(input.creatorLastSeenAt) : undefined,
+    brandOnline: Boolean(input.brandOnline),
+    brandLastSeenAt: input.brandLastSeenAt ? safeDate(input.brandLastSeenAt) : undefined,
     lastMessage: input.lastMessage
       ? {
           id: `${input.id}-last`,

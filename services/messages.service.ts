@@ -7,6 +7,13 @@ interface BackendConversation {
   id: string;
   creatorId: string;
   brandId: string;
+  contextType?: string;
+  contextId?: string;
+  contextLabel?: string;
+  contextTitle?: string;
+  contextStatus?: string;
+  contextAmount?: number;
+  contextDeadlineDate?: string;
   readByCreator?: boolean;
   readByBrand?: boolean;
   unreadCountCreator?: number;
@@ -15,8 +22,12 @@ interface BackendConversation {
   updatedAt?: string;
   creatorName?: string;
   creatorAvatarUrl?: string;
+  creatorOnline?: boolean;
+  creatorLastSeenAt?: string;
   brandName?: string;
   brandLogoUrl?: string;
+  brandOnline?: boolean;
+  brandLastSeenAt?: string;
   blockedByMe?: boolean;
   blockedByThem?: boolean;
 }
@@ -126,8 +137,16 @@ export const messagesService = {
     return (Array.isArray(response) ? response : []).map((message) => mapMessage(message));
   },
 
-  async createConversationWith(toUserId: string, role: 'creator' | 'brand'): Promise<Conversation> {
-    const response = await apiClient.post<BackendConversation>('/api/v1/conversations', { to: toUserId });
+  async createConversationWith(
+    toUserId: string,
+    role: 'creator' | 'brand',
+    context?: { contextType?: Conversation['contextType']; contextId?: string },
+  ): Promise<Conversation> {
+    const response = await apiClient.post<BackendConversation>('/api/v1/conversations', {
+      to: toUserId,
+      contextType: context?.contextType,
+      contextId: context?.contextId,
+    });
     const { creators, brands } = await buildParticipantMaps([response]);
     return mapConversation(response, creators, brands, role);
   },
@@ -140,7 +159,9 @@ export const messagesService = {
     creatorId: string,
     conversations: Conversation[] = [],
   ): Promise<Conversation> {
-    const existing = conversations.find((conversation) => conversation.creatorId === creatorId);
+    const existing = conversations.find((conversation) =>
+      conversation.creatorId === creatorId && conversation.contextType === 'general'
+    );
     return existing || this.createConversation(creatorId);
   },
 
@@ -148,8 +169,27 @@ export const messagesService = {
     brandId: string,
     conversations: Conversation[] = [],
   ): Promise<Conversation> {
-    const existing = conversations.find((conversation) => conversation.brandId === brandId);
+    const existing = conversations.find((conversation) =>
+      conversation.brandId === brandId && conversation.contextType === 'general'
+    );
     return existing || this.createConversationWith(brandId, 'creator');
+  },
+
+  async openOrderConversation(
+    orderId: string,
+    role: 'creator' | 'brand',
+    conversations: Conversation[] = [],
+  ): Promise<Conversation> {
+    const existing = conversations.find((conversation) =>
+      conversation.contextType === 'order' && conversation.contextId === orderId
+    );
+    if (existing) return existing;
+    const response = await apiClient.post<BackendConversation>('/api/v1/conversations', {
+      contextType: 'order',
+      contextId: orderId,
+    });
+    const { creators, brands } = await buildParticipantMaps([response]);
+    return mapConversation(response, creators, brands, role);
   },
 
   async sendMessage(

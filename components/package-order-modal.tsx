@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowLeft,
+  AlertTriangle,
   Banknote,
   ExternalLink,
   Gift,
@@ -421,9 +422,17 @@ export function PackageOrderModal({ isOpen, pkg, onClose, onCreated }: PackageOr
                     </div>
 
                     <div className="rounded-2xl border border-[#edf1ed] bg-[#fbfaf5] p-4">
-                      <div className="mb-3 flex items-center gap-2">
-                        <ReceiptText className="size-4 text-[#2d6b4e]" />
-                        <p className="text-sm font-black text-[#1e3d2e]">Payment summary</p>
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <ReceiptText className="size-4 text-[#2d6b4e]" />
+                          <p className="text-sm font-black text-[#1e3d2e]">Payment summary</p>
+                        </div>
+                        {needsWalletTopUp && (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#fde8e8] px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-[#b42318]">
+                            <AlertTriangle className="size-3" />
+                            Insufficient funds
+                          </span>
+                        )}
                       </div>
                       <div className="space-y-2.5">
                         {reviewRows.map((row) => (

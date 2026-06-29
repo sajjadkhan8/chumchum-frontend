@@ -192,6 +192,7 @@ export interface Order {
   amount?: number;
   barterDetails?: string;
   message: string;
+  cancellationNote?: string;
   status: OrderStatus;
   progress?: number;
   deliverables: OrderDeliverable[];
@@ -332,6 +333,17 @@ export interface Conversation {
   creator: Creator;
   brandId: string;
   brand: Brand;
+  contextType: 'general' | 'order' | 'dispute' | 'campaign' | 'offer' | 'payment';
+  contextId?: string;
+  contextLabel?: string;
+  contextTitle?: string;
+  contextStatus?: string;
+  contextAmount?: number;
+  contextDeadlineDate?: Date;
+  creatorOnline?: boolean;
+  creatorLastSeenAt?: Date;
+  brandOnline?: boolean;
+  brandLastSeenAt?: Date;
   lastMessage?: Message;
   unreadCount: number;
   blockedByMe?: boolean;
