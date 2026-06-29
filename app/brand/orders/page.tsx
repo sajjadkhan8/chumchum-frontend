@@ -203,7 +203,6 @@ function BrandOrdersContent() {
 
   useEffect(() => {
     void loadOrders(0, false, statusFilter);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   useEffect(() => {
@@ -382,8 +381,7 @@ function BrandOrdersContent() {
               </div>
             </div>
             <aside className="hidden border-t border-white/10 bg-white/[0.06] p-5 sm:block sm:p-6 lg:border-l lg:border-t-0 lg:p-7">
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#f0c56e]">Next checkpoint</p>
-              <div className="mt-4 rounded-[1.35rem] border border-white/12 bg-[#102d20]/60 p-4">
+              <div className="rounded-[1.35rem] border border-white/12 bg-[#102d20]/60 p-4">
                 <p className="text-lg font-black tracking-[-0.04em] text-white">
                   {nextDueOrder ? nextDueOrder.package.title : "No urgent delivery"}
                 </p>
@@ -431,28 +429,6 @@ function BrandOrdersContent() {
             </Select>
           </div>
 
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-            {statusTabs.map((tab) => {
-              const isActive = statusFilter === tab.value;
-              const count = orderCounts[tab.value as keyof typeof orderCounts] ?? 0;
-              return (
-                <button
-                  key={tab.value}
-                  type="button"
-                  className={cn(
-                    "inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-sm font-black transition",
-                    isActive ? "bg-[#185c39] text-white shadow-[0_10px_24px_rgba(24,92,57,0.18)]" : "bg-[#f4f2e9] text-[#607168] hover:bg-[#e7f0ea] hover:text-[#185c39]",
-                  )}
-                  onClick={() => setStatusFilter(tab.value)}
-                >
-                  {tab.label}
-                  <span className={cn("rounded-full px-2 py-0.5 text-[11px]", isActive ? "bg-white/16 text-white" : "bg-white text-[#7b867f]")}>
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
         </section>
 
         <section className="mt-4 space-y-3">
@@ -467,6 +443,7 @@ function BrandOrdersContent() {
             const isExpanded = selectedOrder === order.id;
             const deadline = getFallbackDeadline(order);
             const progress = order.progress ?? (order.status === "completed" ? 100 : order.status === "pending" ? 0 : 50);
+            const isCancelled = order.status === "cancelled";
             const deliverables = getOrderDeliverables(order);
 
             return (
@@ -533,14 +510,30 @@ function BrandOrdersContent() {
                       </div>
                     </div>
 
-                    <div className="space-y-3 rounded-[1.2rem] bg-[#fbfaf5] p-3">
+                    <div className={cn("space-y-3 rounded-[1.2rem] p-3", isCancelled ? "border border-[#e8c8c2] bg-[#fdf5f3]" : "bg-[#fbfaf5]")}>
                       <div className="flex items-center justify-between gap-3">
-                        <p className="text-xs font-black uppercase tracking-[0.15em] text-[#7b867f]">Progress</p>
+                        {isCancelled ? (
+                          <div className="flex items-center gap-2 text-sm font-black text-[#7f2f2a]">
+                            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#f9ebe8] text-[#9d3c36]">
+                              <XCircle className="size-4" />
+                            </span>
+                            Progress unavailable
+                          </div>
+                        ) : (
+                          <p className="text-xs font-black uppercase tracking-[0.15em] text-[#7b867f]">Progress</p>
+                        )}
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-black text-[#173b2a]">{progress}%</span>
+                          {!isCancelled && <span className="text-sm font-black text-[#173b2a]">{progress}%</span>}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <Button variant="ghost" size="icon" className="size-8 rounded-full text-[#607168] hover:bg-[#e7f0ea] hover:text-[#185c39]">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className={cn(
+                                  "size-8 rounded-full",
+                                  isCancelled ? "text-[#9d3c36] hover:bg-[#f9ebe8] hover:text-[#7f2f2a]" : "text-[#607168] hover:bg-[#e7f0ea] hover:text-[#185c39]",
+                                )}
+                              >
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -565,8 +558,12 @@ function BrandOrdersContent() {
                           </DropdownMenu>
                         </div>
                       </div>
-                      <Progress value={progress} className="h-2 bg-[#e6ece6]" />
-                      <p className="text-xs font-bold text-[#718077]">Tap row for delivery details</p>
+                      {!isCancelled && (
+                        <>
+                          <Progress value={progress} className="h-2 bg-[#e6ece6]" />
+                          <p className="text-xs font-bold text-[#718077]">Tap row for delivery details</p>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -582,11 +579,17 @@ function BrandOrdersContent() {
                       <div className="grid gap-2">
                         {deliverables.map((deliverable) => {
                           const deliverableStatus = deliverable.status;
-                          const DeliverableIcon = getStatusIcon(deliverableStatus);
+                          const DeliverableIcon = isCancelled ? XCircle : getStatusIcon(deliverableStatus);
                           return (
-                            <div key={deliverable.id} className="flex flex-col gap-3 rounded-[1rem] bg-[#fbfaf5] p-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div
+                              key={deliverable.id}
+                              className={cn(
+                                "flex flex-col gap-3 rounded-[1rem] p-3 sm:flex-row sm:items-center sm:justify-between",
+                                isCancelled ? "bg-[#fdf5f3]" : "bg-[#fbfaf5]",
+                              )}
+                            >
                               <div className="flex items-center gap-2">
-                                <DeliverableIcon className="size-4 text-[#185c39]" />
+                                <DeliverableIcon className={cn("size-4", isCancelled ? "text-[#9d3c36]" : "text-[#185c39]")} />
                                 <span className="text-sm font-bold text-[#173b2a]">{deliverable.name}</span>
                               </div>
                               <div className="flex flex-wrap items-center gap-2">
@@ -619,8 +622,13 @@ function BrandOrdersContent() {
                                     </Button>
                                   </>
                                 )}
-                                <Badge className={cn("rounded-full px-2.5 py-1 text-[11px] font-black capitalize ring-1", statusTone[deliverableStatus] || "bg-[#eef2eb] text-[#526259]")}>
-                                  {deliverableStatus.replace("_", " ")}
+                                <Badge
+                                  className={cn(
+                                    "rounded-full px-2.5 py-1 text-[11px] font-black capitalize ring-1",
+                                    isCancelled ? "bg-[#f9ebe8] text-[#9d3c36] ring-[#e8c8c2]" : statusTone[deliverableStatus] || "bg-[#eef2eb] text-[#526259]",
+                                  )}
+                                >
+                                  {isCancelled ? "Unavailable" : deliverableStatus.replace("_", " ")}
                                 </Badge>
                               </div>
                             </div>
