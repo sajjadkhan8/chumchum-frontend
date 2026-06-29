@@ -1301,6 +1301,129 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                 )}
               </div>
 
+              {/* Profile media */}
+              <div className={panelClass}>
+                <PanelHeader eyebrow="Profile" title="Images" />
+                <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)] lg:items-start">
+                  <div className="overflow-hidden rounded-[1.35rem] border border-[#d8e4dd] bg-[#eef3ef] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]">
+                    <div
+                      className={cn(
+                        "relative aspect-[3/1] min-h-[150px] bg-[#e4ece7] bg-cover bg-center",
+                        !profile.coverImage && "bg-[linear-gradient(135deg,#dce9e1_0%,#f8efda_52%,#e6edf4_100%)]"
+                      )}
+                      style={profile.coverImage ? { backgroundImage: `url(${profile.coverImage})` } : undefined}
+                    >
+                      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#143525]/55 to-transparent" />
+                      <div className="absolute left-5 top-4 rounded-full border border-white/65 bg-white/90 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#2d6b4e] shadow-sm">
+                        Banner preview
+                      </div>
+                      {!profile.coverImage && (
+                        <div className="absolute inset-0 grid place-items-center px-5 text-center">
+                          <div>
+                            <ImageIcon className="mx-auto size-8 text-[#7a8f82]" />
+                            <p className="mt-2 text-sm font-bold text-[#496159]">No banner selected</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="relative bg-white px-5 pb-5 pt-12">
+                      <div className="absolute -top-12 left-5">
+                        <div className="relative">
+                          <Avatar className="size-24 rounded-full border-4 border-white shadow-[0_12px_32px_rgba(38,70,50,0.18)]">
+                            <AvatarImage src={profile.avatar} alt={profile.name} />
+                            <AvatarFallback className="text-2xl">{getInitials(profile.name)}</AvatarFallback>
+                          </Avatar>
+                          <label
+                            htmlFor="creator-avatar-upload"
+                            className="absolute bottom-1 right-1 grid size-8 cursor-pointer place-items-center rounded-full bg-[#2d6b4e] text-white shadow-md transition-colors hover:bg-[#1f5239]"
+                            aria-label="Change profile photo"
+                          >
+                            <Camera className="size-3.5" />
+                          </label>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="truncate text-lg font-extrabold text-[#1e3d2e]">{profile.name || "Your Name"}</p>
+                          <p className="mt-0.5 truncate text-sm text-[#87938b]">@{profile.handle || "handle"}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <label
+                            htmlFor="creator-avatar-upload"
+                            className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl border-2 border-[#d1ddd6] bg-white px-3 text-xs font-bold text-[#496159] transition-colors hover:border-[#2d6b4e]"
+                          >
+                            <Camera className="size-3.5" />
+                            {isUploadingAvatar ? "Uploading…" : "Photo"}
+                          </label>
+                          <label
+                            htmlFor="creator-cover-upload"
+                            className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl border-2 border-[#d1ddd6] bg-[#2d6b4e] px-3 text-xs font-bold text-white transition-colors hover:bg-[#1f5239]"
+                          >
+                            <Upload className="size-3.5" />
+                            {isUploadingCover ? "Uploading…" : "Banner"}
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 rounded-[1.35rem] border border-[#e0e8e3] bg-[#fbfcfb] p-4">
+                    <div className="space-y-1.5">
+                      <p className={labelClass}>Cover / Banner Image URL</p>
+                      <div className="flex gap-2">
+                        <input
+                          className={inputClass + " flex-1"}
+                          value={profile.coverImage}
+                          onChange={(e) => setProfile((p) => ({ ...p, coverImage: e.target.value }))}
+                          placeholder="https://..."
+                        />
+                        <label
+                          htmlFor="creator-cover-upload"
+                          className="flex h-10 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border-2 border-[#dce6df] bg-white px-4 text-sm font-bold text-[#496159] transition-colors hover:border-[#2d6b4e]"
+                        >
+                          <Camera className="size-4" />
+                          {isUploadingCover ? "Uploading…" : "Upload"}
+                        </label>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#e3e9e5] bg-white px-3.5 py-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#1e3d2e]">Profile photo</p>
+                        <p className="mt-0.5 truncate text-[11px] font-semibold text-[#87938b]">
+                          {profile.avatar ? "Uploaded" : "Missing"}
+                        </p>
+                      </div>
+                      <label
+                        htmlFor="creator-avatar-upload"
+                        className="inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-[#d1ddd6] bg-white px-3 text-[11px] font-bold text-[#2d6b4e] transition-colors hover:bg-[#e8f0ec]"
+                      >
+                        <Camera className="size-3.5" />
+                        {isUploadingAvatar ? "Uploading" : "Change"}
+                      </label>
+                    </div>
+                  </div>
+                  <input
+                    id="creator-avatar-upload"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    disabled={isUploadingAvatar}
+                    onChange={(event) => void uploadAvatar(event.target.files?.[0])}
+                  />
+                  <input
+                    id="creator-cover-upload"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    disabled={isUploadingCover}
+                    onChange={(event) => {
+                      handleCoverFileSelected(event.target.files?.[0]);
+                      event.target.value = '';
+                    }}
+                  />
+                </div>
+              </div>
+
               {/* Verification status */}
               {creatorVerified && (
                 <div className={panelClass}>
@@ -1425,45 +1548,6 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                 </div>
               </div>
 
-              {/* Avatar section */}
-              <div className={panelClass}>
-                <div className="flex flex-col items-center gap-5 sm:flex-row">
-                  <div className="relative shrink-0">
-                    <Avatar className="size-24 rounded-full">
-                      <AvatarImage src={profile.avatar} alt={profile.name} />
-                      <AvatarFallback className="text-2xl">{getInitials(profile.name)}</AvatarFallback>
-                    </Avatar>
-                    <label
-                      htmlFor="creator-avatar-upload"
-                      className="absolute bottom-0 right-0 grid size-8 cursor-pointer place-items-center rounded-full bg-[#2d6b4e] text-white shadow-md"
-                    >
-                      <Camera className="size-3.5" />
-                    </label>
-                  </div>
-
-                  <div className="flex-1 text-center sm:text-left">
-                    <p className="text-lg font-extrabold text-[#1e3d2e]">{profile.name || "Your Name"}</p>
-                    <p className="mt-0.5 text-sm text-[#87938b]">@{profile.handle || "handle"}</p>
-                    <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                      <label
-                        htmlFor="creator-avatar-upload"
-                        className="cursor-pointer rounded-full border-2 border-[#d1ddd6] bg-white px-4 py-2 text-xs font-bold text-[#496159] hover:border-[#b0c5ba]"
-                      >
-                        {isUploadingAvatar ? "Uploading…" : "Change Photo"}
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                <input
-                  id="creator-avatar-upload"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  className="hidden"
-                  disabled={isUploadingAvatar}
-                  onChange={(event) => void uploadAvatar(event.target.files?.[0])}
-                />
-              </div>
-
               {/* Basic info */}
               <div className={panelClass}>
                 <PanelHeader eyebrow="Profile" title="Basic Information" />
@@ -1581,87 +1665,58 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                       </select>
                     </div>
                     {/* Rate Card */}
-                  <div className="rounded-2xl border border-[#dce6df] bg-[#f8faf8] p-4">
-                    <p className="mb-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#b77a12]">Rate Card</p>
-                    <p className="mb-3 text-xs text-[#87938b]">Set your starting rates per content format (PKR). Leave blank if not applicable.</p>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-1.5">
-                        <p className={labelClass}>Reel / Short Video (PKR)</p>
-                        <input
-                          type="number"
-                          onWheel={(event) => event.currentTarget.blur()}
-                          min="0"
-                          className={inputClass}
-                          placeholder="e.g. 15000"
-                          value={profile.rateCardReel ?? ""}
-                          onChange={(e) => setProfile((p) => ({ ...p, rateCardReel: e.target.value ? Number(e.target.value) : undefined }))}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <p className={labelClass}>Story / Highlight (PKR)</p>
-                        <input
-                          type="number"
-                          onWheel={(event) => event.currentTarget.blur()}
-                          min="0"
-                          className={inputClass}
-                          placeholder="e.g. 5000"
-                          value={profile.rateCardStory ?? ""}
-                          onChange={(e) => setProfile((p) => ({ ...p, rateCardStory: e.target.value ? Number(e.target.value) : undefined }))}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <p className={labelClass}>Static Post (PKR)</p>
-                        <input
-                          type="number"
-                          onWheel={(event) => event.currentTarget.blur()}
-                          min="0"
-                          className={inputClass}
-                          placeholder="e.g. 8000"
-                          value={profile.rateCardPost ?? ""}
-                          onChange={(e) => setProfile((p) => ({ ...p, rateCardPost: e.target.value ? Number(e.target.value) : undefined }))}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <p className={labelClass}>YouTube / Long Video (PKR)</p>
-                        <input
-                          type="number"
-                          onWheel={(event) => event.currentTarget.blur()}
-                          min="0"
-                          className={inputClass}
-                          placeholder="e.g. 40000"
-                          value={profile.rateCardVideo ?? ""}
-                          onChange={(e) => setProfile((p) => ({ ...p, rateCardVideo: e.target.value ? Number(e.target.value) : undefined }))}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                      <p className={labelClass}>Cover / Banner Image URL</p>
-                      <div className="flex gap-2">
-                        <input
-                          className={inputClass + " flex-1"}
-                          value={profile.coverImage}
-                          onChange={(e) => setProfile((p) => ({ ...p, coverImage: e.target.value }))}
-                        />
-                        <label
-                          htmlFor="creator-cover-upload"
-                          className="flex h-10 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border-2 border-[#dce6df] bg-white px-4 text-sm font-bold text-[#496159] transition-colors hover:border-[#2d6b4e]"
-                        >
-                          <Camera className="size-4" />
-                          {isUploadingCover ? "Uploading…" : "Upload"}
-                        </label>
-                        <input
-                          id="creator-cover-upload"
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          className="hidden"
-                          disabled={isUploadingCover}
-                          onChange={(event) => {
-                            handleCoverFileSelected(event.target.files?.[0]);
-                            event.target.value = '';
-                          }}
-                        />
+                    <div className="rounded-2xl border border-[#dce6df] bg-[#f8faf8] p-4">
+                      <p className="mb-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#b77a12]">Rate Card</p>
+                      <p className="mb-3 text-xs text-[#87938b]">Set your starting rates per content format (PKR). Leave blank if not applicable.</p>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <p className={labelClass}>Reel / Short Video (PKR)</p>
+                          <input
+                            type="number"
+                            onWheel={(event) => event.currentTarget.blur()}
+                            min="0"
+                            className={inputClass}
+                            placeholder="e.g. 15000"
+                            value={profile.rateCardReel ?? ""}
+                            onChange={(e) => setProfile((p) => ({ ...p, rateCardReel: e.target.value ? Number(e.target.value) : undefined }))}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <p className={labelClass}>Story / Highlight (PKR)</p>
+                          <input
+                            type="number"
+                            onWheel={(event) => event.currentTarget.blur()}
+                            min="0"
+                            className={inputClass}
+                            placeholder="e.g. 5000"
+                            value={profile.rateCardStory ?? ""}
+                            onChange={(e) => setProfile((p) => ({ ...p, rateCardStory: e.target.value ? Number(e.target.value) : undefined }))}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <p className={labelClass}>Static Post (PKR)</p>
+                          <input
+                            type="number"
+                            onWheel={(event) => event.currentTarget.blur()}
+                            min="0"
+                            className={inputClass}
+                            placeholder="e.g. 8000"
+                            value={profile.rateCardPost ?? ""}
+                            onChange={(e) => setProfile((p) => ({ ...p, rateCardPost: e.target.value ? Number(e.target.value) : undefined }))}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <p className={labelClass}>YouTube / Long Video (PKR)</p>
+                          <input
+                            type="number"
+                            onWheel={(event) => event.currentTarget.blur()}
+                            min="0"
+                            className={inputClass}
+                            placeholder="e.g. 40000"
+                            value={profile.rateCardVideo ?? ""}
+                            onChange={(e) => setProfile((p) => ({ ...p, rateCardVideo: e.target.value ? Number(e.target.value) : undefined }))}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
