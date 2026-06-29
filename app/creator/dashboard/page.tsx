@@ -51,7 +51,17 @@ function abbrevPKR(v: number): string {
 
 /* ─── empty states ─── */
 const emptyAnalytics: CreatorDashboardAnalytics = { totalOrders: 0, activeOrders: 0, completedOrders: 0, totalEarnings: 0, avgRating: 0, totalReviews: 0, repeatBrands: 0 };
-const emptyEarnings: EarningsSummary = { totalEarned: 0, availableBalance: 0, pendingBalance: 0, totalWithdrawn: 0, platformFees: 0 };
+const emptyEarnings: EarningsSummary = {
+  totalEarned: 0,
+  availableBalance: 0,
+  pendingBalance: 0,
+  totalWithdrawn: 0,
+  platformFees: 0,
+  awaitingApprovalGross: 0,
+  awaitingApprovalNet: 0,
+  awaitingApprovalFees: 0,
+  awaitingApprovalCount: 0,
+};
 const emptyAffiliate: AffiliateOverview = { code: "", shareUrl: "", rateBasisPoints: 100, totalCommission: 0, referredCreators: 0, commissionCount: 0 };
 
 /* ─── ring progress ─── */

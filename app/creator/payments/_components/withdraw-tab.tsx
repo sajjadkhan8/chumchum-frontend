@@ -36,6 +36,10 @@ export function WithdrawTab({
   maskAccountDetails,
 }: WithdrawTabProps) {
   const availableBalance = earnings?.availableBalance || 0;
+  const awaitingApprovalGross = earnings?.awaitingApprovalGross || 0;
+  const awaitingApprovalNet = earnings?.awaitingApprovalNet || 0;
+  const awaitingApprovalFees = earnings?.awaitingApprovalFees || 0;
+  const awaitingApprovalCount = earnings?.awaitingApprovalCount || 0;
   const requestedAmount = Number(withdrawAmount) || 0;
   const panelClass = "rounded-[1.6rem] border border-[#d1ddd6] bg-white shadow-[0_18px_55px_rgba(38,70,50,0.07)]";
   const inputClass = "h-11 rounded-xl border-[#cddad1] bg-[#fbfaf5] shadow-none focus-visible:border-[#2d6b4e] focus-visible:ring-[#2d6b4e]/15";
@@ -53,6 +57,35 @@ export function WithdrawTab({
             <CreatorMetricCard title="Minimum withdrawal" value={formatPrice(1000)} sub="per request" Icon={Landmark} />
             <CreatorMetricCard gold title="Estimated arrival" value={<span className="text-base leading-5">Wallet: instant<br />Bank: 1-3 days</span>} sub="after approval" Icon={Clock3} />
           </div>
+
+          {awaitingApprovalGross > 0 && (
+            <div className="rounded-2xl border border-[#e6d6ad] bg-[#fff8e7] p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-extrabold text-[#8a5c0a]">
+                    {awaitingApprovalCount} delivered {awaitingApprovalCount === 1 ? "order is" : "orders are"} waiting for brand approval
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-[#6f765f]">
+                    This is not withdrawable yet. It moves to available balance once the brand approves delivery.
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-right text-xs sm:min-w-[330px]">
+                  <div className="rounded-xl bg-white/70 px-3 py-2">
+                    <p className="font-bold text-[#7a805f]">Submitted</p>
+                    <p className="font-black text-[#173b2a]">{formatPrice(awaitingApprovalGross)}</p>
+                  </div>
+                  <div className="rounded-xl bg-white/70 px-3 py-2">
+                    <p className="font-bold text-[#7a805f]">Fee est.</p>
+                    <p className="font-black text-[#173b2a]">{formatPrice(awaitingApprovalFees)}</p>
+                  </div>
+                  <div className="rounded-xl bg-white/70 px-3 py-2">
+                    <p className="font-bold text-[#7a805f]">Expected</p>
+                    <p className="font-black text-[#173b2a]">{formatPrice(awaitingApprovalNet)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {payoutMethods.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#ccd7ce] bg-[#fbfaf5] p-8 text-center">

@@ -463,6 +463,8 @@ export function PackageOrderModal({ isOpen, pkg, onClose, onCreated }: PackageOr
                           <Link
                             key={href}
                             href={href}
+                            target="_blank"
+                            rel="noreferrer"
                             className="inline-flex items-center gap-1 hover:underline"
                           >
                             {label}

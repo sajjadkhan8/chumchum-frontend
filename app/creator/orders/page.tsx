@@ -17,6 +17,7 @@ import {
   FileText,
   Upload,
   Download,
+  Link as LinkIcon,
   Star,
   AlertTriangle,
 } from "lucide-react";
@@ -47,7 +48,7 @@ import { reviewsService } from "@/services/reviews.service";
 import { disputesService } from '@/services/disputes.service';
 import { uploadsService } from "@/services/uploads.service";
 import { messagesService } from "@/services/messages.service";
-import { downloadFile } from "@/lib/download-file";
+import { downloadFile, isProtectedFileUrl } from "@/lib/download-file";
 import { useAuthStore } from "@/store/auth-store";
 import type { Order, OrderDeliverable, OrderStatus } from "@/types";
 
@@ -133,6 +134,8 @@ const getOrderDeliverables = (order: Order): OrderDeliverable[] => {
   }));
 };
 
+type SubmissionMode = "file" | "link";
+
 function CreatorOrdersPageContent() {
   const router = useRouter();
   const pathname = usePathname();
@@ -147,7 +150,9 @@ function CreatorOrdersPageContent() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [submissionTarget, setSubmissionTarget] = useState<{ order: Order; deliverable: OrderDeliverable } | null>(null);
+  const [submissionMode, setSubmissionMode] = useState<SubmissionMode>("file");
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
+  const [submissionPostUrl, setSubmissionPostUrl] = useState("");
   const [submissionNote, setSubmissionNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [downloadingReceiptIds, setDownloadingReceiptIds] = useState<Set<string>>(new Set());
@@ -291,7 +296,9 @@ function CreatorOrdersPageContent() {
       return;
     }
     setSubmissionTarget({ order, deliverable: target });
+    setSubmissionMode("file");
     setSubmissionFile(null);
+    setSubmissionPostUrl("");
     setSubmissionNote("");
   };
 
@@ -299,19 +306,36 @@ function CreatorOrdersPageContent() {
     if (!submissionTarget) return;
     setIsSubmitting(true);
     try {
-      if (!submissionFile) {
-        toast.error("Choose a deliverable file.");
-        return;
+      let fileUrl = "";
+
+      if (submissionMode === "file") {
+        if (!submissionFile) {
+          toast.error("Choose a deliverable file.");
+          return;
+        }
+        const uploaded = await uploadsService.deliverable(
+          submissionFile,
+          submissionTarget.order.id,
+          submissionTarget.deliverable.id,
+        );
+        fileUrl = uploaded.url;
+      } else {
+        const postUrl = submissionPostUrl.trim();
+        try {
+          const parsedUrl = new URL(postUrl);
+          if (parsedUrl.protocol !== "https:" || !parsedUrl.hostname) {
+            toast.error("Paste a valid https post link.");
+            return;
+          }
+          fileUrl = parsedUrl.toString();
+        } catch {
+          toast.error("Paste a valid https post link.");
+          return;
+        }
       }
-      const uploaded = await uploadsService.deliverable(
-        submissionFile,
-        submissionTarget.order.id,
-        submissionTarget.deliverable.id,
-      );
-      const fileUrl = uploaded.url;
 
       if (!fileUrl) {
-        toast.error("Upload did not return a file URL.");
+        toast.error("Add a deliverable file or post link.");
         return;
       }
 
@@ -321,7 +345,9 @@ function CreatorOrdersPageContent() {
       });
       await loadOrders();
       setSubmissionTarget(null);
+      setSubmissionMode("file");
       setSubmissionFile(null);
+      setSubmissionPostUrl("");
       setSubmissionNote("");
       toast.success("Deliverable submitted. The order moves to review after all items are submitted.");
     } catch (error) {
@@ -529,6 +555,11 @@ function CreatorOrdersPageContent() {
                         <p className="font-extrabold text-[#2d6b4e]">
                           {formatPrice(order.amount ?? order.package.price ?? 0)}
                         </p>
+                        {(order.status === "delivered" || order.status === "review") && (
+                          <p className="mt-0.5 text-xs font-bold text-[#8a6010]">
+                            Releases after approval
+                          </p>
+                        )}
                         {daysRemaining !== null && (
                           <p
                             className={`mt-0.5 text-xs font-medium ${
@@ -629,7 +660,7 @@ function CreatorOrdersPageContent() {
                                           );
                                         }}
                                       >
-                                        View
+                                        {isProtectedFileUrl(deliverable.fileUrl) ? "View file" : "View post"}
                                       </Button>
                                     )}
                                     {(order.status === "in_progress" || order.status === "revision") &&
@@ -793,26 +824,70 @@ function CreatorOrdersPageContent() {
 
           {/* Body */}
           <div className="space-y-4 px-6 py-5">
-            <div className="space-y-2">
-              <Label htmlFor="deliverable-file" className="text-sm font-bold text-[#1e3d2e]">
-                Upload file
-              </Label>
-              <label
-                htmlFor="deliverable-file"
-                className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-[#cddad1] bg-[#fbfaf5] p-4 text-center transition-colors hover:bg-[#f0f5f2]"
+            <div className="grid grid-cols-2 gap-2 rounded-full bg-[#f0f5f2] p-1">
+              <Button
+                type="button"
+                variant={submissionMode === "file" ? "default" : "ghost"}
+                className={submissionMode === "file" ? "rounded-full bg-[#2d6b4e] text-white hover:bg-[#1f5239]" : "rounded-full text-[#6b7870] hover:bg-white"}
+                onClick={() => {
+                  setSubmissionMode("file");
+                  setSubmissionPostUrl("");
+                }}
               >
-                <Upload className="h-6 w-6 text-[#87938b]" />
-                <span className="text-sm text-[#6b7870]">
-                  {submissionFile ? submissionFile.name : "Click to choose a file"}
-                </span>
-                <input
-                  id="deliverable-file"
-                  type="file"
-                  className="sr-only"
-                  onChange={(event) => setSubmissionFile(event.target.files?.[0] || null)}
-                />
-              </label>
+                <Upload className="mr-2 h-4 w-4" />
+                File
+              </Button>
+              <Button
+                type="button"
+                variant={submissionMode === "link" ? "default" : "ghost"}
+                className={submissionMode === "link" ? "rounded-full bg-[#2d6b4e] text-white hover:bg-[#1f5239]" : "rounded-full text-[#6b7870] hover:bg-white"}
+                onClick={() => {
+                  setSubmissionMode("link");
+                  setSubmissionFile(null);
+                }}
+              >
+                <LinkIcon className="mr-2 h-4 w-4" />
+                Post link
+              </Button>
             </div>
+
+            {submissionMode === "file" ? (
+              <div className="space-y-2">
+                <Label htmlFor="deliverable-file" className="text-sm font-bold text-[#1e3d2e]">
+                  Upload file
+                </Label>
+                <label
+                  htmlFor="deliverable-file"
+                  className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-[#cddad1] bg-[#fbfaf5] p-4 text-center transition-colors hover:bg-[#f0f5f2]"
+                >
+                  <Upload className="h-6 w-6 text-[#87938b]" />
+                  <span className="text-sm text-[#6b7870]">
+                    {submissionFile ? submissionFile.name : "Click to choose a file"}
+                  </span>
+                  <input
+                    id="deliverable-file"
+                    type="file"
+                    className="sr-only"
+                    onChange={(event) => setSubmissionFile(event.target.files?.[0] || null)}
+                  />
+                </label>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="deliverable-post-url" className="text-sm font-bold text-[#1e3d2e]">
+                  Post link
+                </Label>
+                <Input
+                  id="deliverable-post-url"
+                  type="url"
+                  inputMode="url"
+                  value={submissionPostUrl}
+                  onChange={(event) => setSubmissionPostUrl(event.target.value)}
+                  placeholder="https://www.instagram.com/reel/..."
+                  className="rounded-xl border-[#cddad1] bg-[#fbfaf5] text-[#1e3d2e] placeholder:text-[#87938b] focus-visible:ring-[#2d6b4e]"
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="deliverable-note" className="text-sm font-bold text-[#1e3d2e]">

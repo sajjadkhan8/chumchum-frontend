@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowDownToLine, Clock3, CreditCard, TrendingUp, Wallet } from "lucide-react";
+import { ArrowDownToLine, CheckCircle2, Clock3, CreditCard, TrendingUp, Wallet } from "lucide-react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { CreatorMetricCard } from "@/components/creator-metric-card";
 import { TabsContent } from "@/components/ui/tabs";
@@ -305,9 +305,10 @@ function CreatorPaymentsContent() {
         </div>
 
         {/* ── Stat strip ── */}
-        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
           <CreatorMetricCard dark title="Available" value={formatPrice(earnings?.availableBalance || 0)} sub="ready to withdraw" Icon={Wallet} />
-          <CreatorMetricCard title="Pending" value={formatPrice(earnings?.pendingBalance || 0)} sub="escrow or release queue" Icon={Clock3} />
+          <CreatorMetricCard title="Awaiting approval" value={formatPrice(earnings?.awaitingApprovalNet || 0)} sub={`${formatPrice(earnings?.awaitingApprovalGross || 0)} submitted`} Icon={CheckCircle2} />
+          <CreatorMetricCard title="Processing" value={formatPrice(earnings?.pendingBalance || 0)} sub="withdrawals in flight" Icon={Clock3} />
           <CreatorMetricCard title="Total Earned" value={formatPrice(earnings?.totalEarned || 0)} sub="lifetime creator earnings" Icon={TrendingUp} />
           <CreatorMetricCard gold title="Withdrawn" value={formatPrice(earnings?.totalWithdrawn || 0)} sub="paid out so far" Icon={ArrowDownToLine} />
         </div>

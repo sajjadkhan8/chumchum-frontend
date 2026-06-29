@@ -57,7 +57,7 @@ import { ordersService } from "@/services/orders.service";
 import { reviewsService } from "@/services/reviews.service";
 import { disputesService } from '@/services/disputes.service';
 import type { Order, OrderDeliverable, OrderStatus } from "@/types";
-import { downloadFile } from "@/lib/download-file";
+import { downloadFile, isProtectedFileUrl } from "@/lib/download-file";
 import { cn } from "@/lib/utils";
 
 const statusTabs = [
@@ -551,7 +551,7 @@ function BrandOrdersContent() {
                               {(order.status === "delivered" || order.status === "review") && areAllDeliverablesApproved(order) && (
                                 <DropdownMenuItem onSelect={() => updateOrderStatus(order.id, "completed")}>
                                   <CheckCircle className="mr-2 h-4 w-4" />
-                                  Approve Delivery
+                                  Approve & release payment
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
@@ -605,7 +605,7 @@ function BrandOrdersContent() {
                                       toast.error(error instanceof Error ? error.message : "Could not download file"),
                                     );
                                   }}>
-                                    View
+                                    {isProtectedFileUrl(deliverable.fileUrl) ? "View file" : "View post"}
                                   </Button>
                                 )}
                                 {deliverableStatus === "review" && !deliverable.id.startsWith("fallback-") && (
@@ -689,7 +689,7 @@ function BrandOrdersContent() {
                       {(order.status === "delivered" || order.status === "review") && areAllDeliverablesApproved(order) && (
                         <Button className="rounded-full bg-[#185c39] font-black text-white hover:bg-[#12462b]" onClick={() => updateOrderStatus(order.id, "completed")}>
                           <CheckCircle className="mr-2 h-4 w-4" />
-                          Approve
+                          Approve & release payment
                         </Button>
                       )}
                       {(order.dealType === "barter" || order.dealType === "hybrid") && !order.barterProductReceived && order.status !== "cancelled" && (

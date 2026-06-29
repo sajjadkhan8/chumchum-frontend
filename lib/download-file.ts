@@ -1,7 +1,9 @@
 import { apiClient } from '@/lib/api/client';
 
+export const isProtectedFileUrl = (url: string) => url.startsWith('/api/v1/files/');
+
 export const downloadFile = async (url: string, fallbackName = 'download') => {
-  if (!url.startsWith('/api/v1/files/')) {
+  if (!isProtectedFileUrl(url)) {
     window.open(url, '_blank', 'noopener,noreferrer');
     return;
   }

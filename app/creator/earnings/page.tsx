@@ -58,6 +58,10 @@ const emptySummary: EarningsSummary = {
   pendingBalance: 0,
   totalWithdrawn: 0,
   platformFees: 0,
+  awaitingApprovalGross: 0,
+  awaitingApprovalNet: 0,
+  awaitingApprovalFees: 0,
+  awaitingApprovalCount: 0,
 };
 
 const toActivityType = (type: EarningTransaction["type"]): ActivityType => {

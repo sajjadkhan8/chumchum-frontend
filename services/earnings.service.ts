@@ -16,6 +16,10 @@ export interface EarningsSummary {
   pendingBalance: number;
   totalWithdrawn: number;
   platformFees: number;
+  awaitingApprovalGross: number;
+  awaitingApprovalNet: number;
+  awaitingApprovalFees: number;
+  awaitingApprovalCount: number;
 }
 
 export interface EarningTransaction {
