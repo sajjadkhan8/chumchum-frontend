@@ -38,6 +38,7 @@ import { Reorder } from "framer-motion";
 import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { cn, getInitials } from "@/lib/utils";
@@ -315,6 +316,8 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [bannerSourceOpen, setBannerSourceOpen] = useState(false);
+  const [bannerUrlDraft, setBannerUrlDraft] = useState("");
   const [isOAuthConnecting, setIsOAuthConnecting] = useState<string | null>(null);
   const [coverCropState, setCoverCropState] = useState<{
     file: File;
@@ -855,6 +858,11 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
     img.src = previewUrl;
   };
 
+  const applyBannerUrl = () => {
+    setProfile((current) => ({ ...current, coverImage: bannerUrlDraft.trim() }));
+    setBannerSourceOpen(false);
+  };
+
   const confirmCoverCrop = async () => {
     if (!coverCropState) return;
     setCoverCropState(null);
@@ -1304,32 +1312,41 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
               {/* Profile media */}
               <div className={panelClass}>
                 <PanelHeader eyebrow="Profile" title="Images" />
-                <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)] lg:items-start">
-                  <div className="overflow-hidden rounded-[1.35rem] border border-[#d8e4dd] bg-[#eef3ef] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]">
+                <div className="overflow-hidden rounded-[1.35rem] border border-[#d8e4dd] bg-white">
+                  <div className="relative">
                     <div
                       className={cn(
-                        "relative aspect-[3/1] min-h-[150px] bg-[#e4ece7] bg-cover bg-center",
+                        "aspect-[3/1] min-h-[165px] bg-[#e4ece7] bg-cover bg-center",
                         !profile.coverImage && "bg-[linear-gradient(135deg,#dce9e1_0%,#f8efda_52%,#e6edf4_100%)]"
                       )}
                       style={profile.coverImage ? { backgroundImage: `url(${profile.coverImage})` } : undefined}
+                    />
+                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#183928]/65 via-[#183928]/18 to-transparent" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBannerUrlDraft(profile.coverImage);
+                        setBannerSourceOpen(true);
+                      }}
+                      className="absolute right-4 top-4 z-10 inline-flex h-10 items-center gap-2 rounded-xl bg-white/95 px-4 text-sm font-extrabold text-[#2d6b4e] shadow-[0_8px_24px_rgba(38,70,50,0.16)] ring-1 ring-[#d1ddd6] transition-colors hover:bg-white"
                     >
-                      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#143525]/55 to-transparent" />
-                      <div className="absolute left-5 top-4 rounded-full border border-white/65 bg-white/90 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#2d6b4e] shadow-sm">
-                        Banner preview
-                      </div>
-                      {!profile.coverImage && (
-                        <div className="absolute inset-0 grid place-items-center px-5 text-center">
-                          <div>
-                            <ImageIcon className="mx-auto size-8 text-[#7a8f82]" />
-                            <p className="mt-2 text-sm font-bold text-[#496159]">No banner selected</p>
-                          </div>
+                      <Upload className="size-4" />
+                      {profile.coverImage ? "Change Banner" : "Add Banner"}
+                    </button>
+                    {!profile.coverImage && (
+                      <div className="absolute inset-0 grid place-items-center px-5 text-center">
+                        <div className="pointer-events-none">
+                          <ImageIcon className="mx-auto size-8 text-[#7a8f82]" />
+                          <p className="mt-2 text-sm font-bold text-[#496159]">No banner selected</p>
                         </div>
-                      )}
-                    </div>
-                    <div className="relative bg-white px-5 pb-5 pt-12">
+                      </div>
+                    )}
+                  </div>
+                  <div className="relative px-5 pb-4 pt-6">
+                    <div className="flex min-w-0 items-end gap-4">
                       <div className="absolute -top-12 left-5">
                         <div className="relative">
-                          <Avatar className="size-24 rounded-full border-4 border-white shadow-[0_12px_32px_rgba(38,70,50,0.18)]">
+                          <Avatar className="size-24 rounded-full border-4 border-white shadow-[0_14px_36px_rgba(38,70,50,0.16)]">
                             <AvatarImage src={profile.avatar} alt={profile.name} />
                             <AvatarFallback className="text-2xl">{getInitials(profile.name)}</AvatarFallback>
                           </Avatar>
@@ -1342,64 +1359,10 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                           </label>
                         </div>
                       </div>
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                        <div className="min-w-0">
-                          <p className="truncate text-lg font-extrabold text-[#1e3d2e]">{profile.name || "Your Name"}</p>
-                          <p className="mt-0.5 truncate text-sm text-[#87938b]">@{profile.handle || "handle"}</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <label
-                            htmlFor="creator-avatar-upload"
-                            className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl border-2 border-[#d1ddd6] bg-white px-3 text-xs font-bold text-[#496159] transition-colors hover:border-[#2d6b4e]"
-                          >
-                            <Camera className="size-3.5" />
-                            {isUploadingAvatar ? "Uploading…" : "Photo"}
-                          </label>
-                          <label
-                            htmlFor="creator-cover-upload"
-                            className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl border-2 border-[#d1ddd6] bg-[#2d6b4e] px-3 text-xs font-bold text-white transition-colors hover:bg-[#1f5239]"
-                          >
-                            <Upload className="size-3.5" />
-                            {isUploadingCover ? "Uploading…" : "Banner"}
-                          </label>
-                        </div>
+                      <div className="min-w-0 pl-0 sm:pl-28">
+                        <p className="truncate text-lg font-extrabold text-[#1e3d2e]">{profile.name || "Your Name"}</p>
+                        <p className="mt-0.5 truncate text-sm text-[#87938b]">@{profile.handle || "handle"}</p>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 rounded-[1.35rem] border border-[#e0e8e3] bg-[#fbfcfb] p-4">
-                    <div className="space-y-1.5">
-                      <p className={labelClass}>Cover / Banner Image URL</p>
-                      <div className="flex gap-2">
-                        <input
-                          className={inputClass + " flex-1"}
-                          value={profile.coverImage}
-                          onChange={(e) => setProfile((p) => ({ ...p, coverImage: e.target.value }))}
-                          placeholder="https://..."
-                        />
-                        <label
-                          htmlFor="creator-cover-upload"
-                          className="flex h-10 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border-2 border-[#dce6df] bg-white px-4 text-sm font-bold text-[#496159] transition-colors hover:border-[#2d6b4e]"
-                        >
-                          <Camera className="size-4" />
-                          {isUploadingCover ? "Uploading…" : "Upload"}
-                        </label>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#e3e9e5] bg-white px-3.5 py-3">
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-[#1e3d2e]">Profile photo</p>
-                        <p className="mt-0.5 truncate text-[11px] font-semibold text-[#87938b]">
-                          {profile.avatar ? "Uploaded" : "Missing"}
-                        </p>
-                      </div>
-                      <label
-                        htmlFor="creator-avatar-upload"
-                        className="inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-[#d1ddd6] bg-white px-3 text-[11px] font-bold text-[#2d6b4e] transition-colors hover:bg-[#e8f0ec]"
-                      >
-                        <Camera className="size-3.5" />
-                        {isUploadingAvatar ? "Uploading" : "Change"}
-                      </label>
                     </div>
                   </div>
                   <input
@@ -1418,133 +1381,10 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                     disabled={isUploadingCover}
                     onChange={(event) => {
                       handleCoverFileSelected(event.target.files?.[0]);
+                      setBannerSourceOpen(false);
                       event.target.value = '';
                     }}
                   />
-                </div>
-              </div>
-
-              {/* Verification status */}
-              {creatorVerified && (
-                <div className={panelClass}>
-                  <PanelHeader eyebrow="Account" title="Verification Status" />
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "grid size-10 shrink-0 place-items-center rounded-xl",
-                        creatorVerified.isVerified ? "bg-[#e4f1e8]" : "bg-[#f4f7f5]"
-                      )}>
-                        <BadgeCheck className={cn("size-5", creatorVerified.isVerified ? "text-[#2d6b4e]" : "text-[#87938b]")} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-[#1e3d2e]">
-                          {creatorVerified.isVerified ? "Verified" : "Not verified"}
-                        </p>
-                        <p className="text-xs text-[#87938b]">
-                          {creatorVerified.isVerified
-                            ? `Badge level: ${(creatorVerified.badgeLevel ?? 'verified').replace(/_/g, ' ')}`
-                            : `Status: ${(creatorVerified.verificationStatus ?? 'unverified').replace(/_/g, ' ')}`}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      disabled={creatorVerified.isVerified || submittingVerification || verificationDocuments.length === 0}
-                      onClick={() => void submitVerificationReview()}
-                      className="shrink-0 rounded-full border-2 border-[#d1ddd6] bg-white px-3.5 py-1.5 text-xs font-bold text-[#496159] transition-colors hover:border-[#b0c5ba] disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {submittingVerification ? "Submitting..." : creatorVerified.isVerified ? "Verified" : "Submit"}
-                    </button>
-                  </div>
-                  {!creatorVerified.isVerified ? (
-                    <div className="mt-4 grid gap-2.5">
-                      {creatorVerificationTypes.map((item) => {
-                        const doc = verificationDocuments.find((candidate) => candidate.type === item.type);
-                        return (
-                          <div key={item.type} className="flex items-center justify-between gap-3 rounded-2xl border border-[#e3e9e5] bg-[#fbfcfb] px-3.5 py-3">
-                            <div className="flex min-w-0 items-center gap-3">
-                              <div className={cn(
-                                "grid size-9 shrink-0 place-items-center rounded-xl",
-                                doc?.status === "approved" ? "bg-emerald-50 text-emerald-700" :
-                                doc?.status === "rejected" ? "bg-red-50 text-red-700" :
-                                doc ? "bg-[#fff1cd] text-[#8b5e12]" : "bg-white text-[#87938b]"
-                              )}>
-                                {doc?.status === "approved" ? <Check className="size-4" /> : doc?.status === "rejected" ? <XCircle className="size-4" /> : <FileText className="size-4" />}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-xs font-extrabold text-[#1e3d2e]">{item.label}</p>
-                                <p className="truncate text-[11px] text-[#87938b]">
-                                  {doc ? `${doc.fileName} · ${doc.status}` : "Upload a document for review"}
-                                </p>
-                                {doc?.rejectionReason ? <p className="mt-1 text-[11px] text-red-600">{doc.rejectionReason}</p> : null}
-                              </div>
-                            </div>
-                            <label className="inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-[#d1ddd6] bg-white px-3 text-[11px] font-bold text-[#2d6b4e] hover:bg-[#e8f0ec]">
-                              <Upload className="size-3.5" />
-                              {uploadingVerificationType === item.type ? "Uploading" : doc ? "Replace" : "Upload"}
-                              <input
-                                type="file"
-                                className="sr-only"
-                                accept="image/*,.pdf"
-                                disabled={uploadingVerificationType === item.type}
-                                onChange={(event) => void uploadVerificationDocument(item.type, event.target.files?.[0])}
-                              />
-                            </label>
-                          </div>
-                        );
-                      })}
-                      {verificationEvents.length > 0 ? (
-                        <div className="rounded-2xl border border-[#e3e9e5] bg-white px-3.5 py-3">
-                          <div className="mb-2 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wide text-[#7a8f82]">
-                            <Clock className="size-3.5" /> Recent activity
-                          </div>
-                          <div className="space-y-1.5">
-                            {verificationEvents.slice(0, 3).map((event) => (
-                              <div key={event.id} className="flex items-start justify-between gap-3 text-[11px]">
-                                <span className="font-semibold text-[#496159]">{event.eventType.replaceAll("_", " ").toLowerCase()}</span>
-                                <span className="shrink-0 text-[#9ba8a1]">{new Date(event.createdAt).toLocaleDateString("en-PK")}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
-              )}
-
-              {/* Active packages indicator */}
-              <div className={panelClass}>
-                <PanelHeader eyebrow="Marketplace" title="Package Visibility" />
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "grid size-10 shrink-0 place-items-center rounded-xl",
-                      publicActivePackageCount ? "bg-[#e4f1e8]" : "bg-amber-50"
-                    )}>
-                      <Package className={cn("size-5", publicActivePackageCount ? "text-[#2d6b4e]" : "text-amber-600")} />
-                    </div>
-                    <div>
-                      {publicActivePackageCount === null ? (
-                        <p className="text-sm text-[#87938b]">Loading…</p>
-                      ) : publicActivePackageCount > 0 ? (
-                        <>
-                          <p className="text-sm font-bold text-[#1e3d2e]">{publicActivePackageCount} public active package{publicActivePackageCount !== 1 ? 's' : ''}</p>
-                          <p className="text-xs text-[#496159]">Brands can find and book you in the marketplace</p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-sm font-bold text-amber-700">No public active packages</p>
-                          <p className="text-xs text-amber-600">You are not currently visible in the marketplace</p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <Link
-                    href={publicActivePackageCount === 0 ? "/creator/packages/new" : "/creator/packages"}
-                    className="shrink-0 rounded-full border-2 border-[#d1ddd6] bg-white px-3.5 py-1.5 text-xs font-bold text-[#496159] transition-colors hover:border-[#b0c5ba]"
-                  >
-                    {publicActivePackageCount === 0 ? "Create package" : "Manage"}
-                  </Link>
                 </div>
               </div>
 
@@ -1745,6 +1585,130 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* Verification status */}
+              {creatorVerified && (
+                <div className={panelClass}>
+                  <PanelHeader eyebrow="Account" title="Verification Status" />
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "grid size-10 shrink-0 place-items-center rounded-xl",
+                        creatorVerified.isVerified ? "bg-[#e4f1e8]" : "bg-[#f4f7f5]"
+                      )}>
+                        <BadgeCheck className={cn("size-5", creatorVerified.isVerified ? "text-[#2d6b4e]" : "text-[#87938b]")} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-[#1e3d2e]">
+                          {creatorVerified.isVerified ? "Verified" : "Not verified"}
+                        </p>
+                        <p className="text-xs text-[#87938b]">
+                          {creatorVerified.isVerified
+                            ? `Badge level: ${(creatorVerified.badgeLevel ?? 'verified').replace(/_/g, ' ')}`
+                            : `Status: ${(creatorVerified.verificationStatus ?? 'unverified').replace(/_/g, ' ')}`}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      disabled={creatorVerified.isVerified || submittingVerification || verificationDocuments.length === 0}
+                      onClick={() => void submitVerificationReview()}
+                      className="shrink-0 rounded-full border-2 border-[#d1ddd6] bg-white px-3.5 py-1.5 text-xs font-bold text-[#496159] transition-colors hover:border-[#b0c5ba] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {submittingVerification ? "Submitting..." : creatorVerified.isVerified ? "Verified" : "Submit"}
+                    </button>
+                  </div>
+                  {!creatorVerified.isVerified ? (
+                    <div className="mt-4 grid gap-2.5">
+                      {creatorVerificationTypes.map((item) => {
+                        const doc = verificationDocuments.find((candidate) => candidate.type === item.type);
+                        return (
+                          <div key={item.type} className="flex items-center justify-between gap-3 rounded-2xl border border-[#e3e9e5] bg-[#fbfcfb] px-3.5 py-3">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div className={cn(
+                                "grid size-9 shrink-0 place-items-center rounded-xl",
+                                doc?.status === "approved" ? "bg-emerald-50 text-emerald-700" :
+                                doc?.status === "rejected" ? "bg-red-50 text-red-700" :
+                                doc ? "bg-[#fff1cd] text-[#8b5e12]" : "bg-white text-[#87938b]"
+                              )}>
+                                {doc?.status === "approved" ? <Check className="size-4" /> : doc?.status === "rejected" ? <XCircle className="size-4" /> : <FileText className="size-4" />}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-extrabold text-[#1e3d2e]">{item.label}</p>
+                                <p className="truncate text-[11px] text-[#87938b]">
+                                  {doc ? `${doc.fileName} · ${doc.status}` : "Upload a document for review"}
+                                </p>
+                                {doc?.rejectionReason ? <p className="mt-1 text-[11px] text-red-600">{doc.rejectionReason}</p> : null}
+                              </div>
+                            </div>
+                            <label className="inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-[#d1ddd6] bg-white px-3 text-[11px] font-bold text-[#2d6b4e] hover:bg-[#e8f0ec]">
+                              <Upload className="size-3.5" />
+                              {uploadingVerificationType === item.type ? "Uploading" : doc ? "Replace" : "Upload"}
+                              <input
+                                type="file"
+                                className="sr-only"
+                                accept="image/*,.pdf"
+                                disabled={uploadingVerificationType === item.type}
+                                onChange={(event) => void uploadVerificationDocument(item.type, event.target.files?.[0])}
+                              />
+                            </label>
+                          </div>
+                        );
+                      })}
+                      {verificationEvents.length > 0 ? (
+                        <div className="rounded-2xl border border-[#e3e9e5] bg-white px-3.5 py-3">
+                          <div className="mb-2 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wide text-[#7a8f82]">
+                            <Clock className="size-3.5" /> Recent activity
+                          </div>
+                          <div className="space-y-1.5">
+                            {verificationEvents.slice(0, 3).map((event) => (
+                              <div key={event.id} className="flex items-start justify-between gap-3 text-[11px]">
+                                <span className="font-semibold text-[#496159]">{event.eventType.replaceAll("_", " ").toLowerCase()}</span>
+                                <span className="shrink-0 text-[#9ba8a1]">{new Date(event.createdAt).toLocaleDateString("en-PK")}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
+              {/* Active packages indicator */}
+              <div className={panelClass}>
+                <PanelHeader eyebrow="Marketplace" title="Package Visibility" />
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "grid size-10 shrink-0 place-items-center rounded-xl",
+                      publicActivePackageCount ? "bg-[#e4f1e8]" : "bg-amber-50"
+                    )}>
+                      <Package className={cn("size-5", publicActivePackageCount ? "text-[#2d6b4e]" : "text-amber-600")} />
+                    </div>
+                    <div>
+                      {publicActivePackageCount === null ? (
+                        <p className="text-sm text-[#87938b]">Loading…</p>
+                      ) : publicActivePackageCount > 0 ? (
+                        <>
+                          <p className="text-sm font-bold text-[#1e3d2e]">{publicActivePackageCount} public active package{publicActivePackageCount !== 1 ? 's' : ''}</p>
+                          <p className="text-xs text-[#496159]">Brands can find and book you in the marketplace</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm font-bold text-amber-700">No public active packages</p>
+                          <p className="text-xs text-amber-600">You are not currently visible in the marketplace</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <Link
+                    href={publicActivePackageCount === 0 ? "/creator/packages/new" : "/creator/packages"}
+                    className="shrink-0 rounded-full border-2 border-[#d1ddd6] bg-white px-3.5 py-1.5 text-xs font-bold text-[#496159] transition-colors hover:border-[#b0c5ba]"
+                  >
+                    {publicActivePackageCount === 0 ? "Create package" : "Manage"}
+                  </Link>
                 </div>
               </div>
 
@@ -2672,6 +2636,56 @@ export function CreatorSettingsPageContent({ section = "settings" }: { section?:
           </div>
         </div>
       )}
+
+      <Dialog open={bannerSourceOpen} onOpenChange={setBannerSourceOpen}>
+        <DialogContent className="max-w-[calc(100%-1rem)] rounded-[1.5rem] border-[#d1ddd6] bg-white p-0 sm:max-w-lg">
+          <div className="border-b border-[#e3e9e5] px-5 py-4">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-black tracking-[-0.035em] text-[#1e3d2e]">
+                Change banner
+              </DialogTitle>
+              <DialogDescription className="text-sm font-semibold text-[#647168]">
+                Use a direct image URL or upload a file from your device.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="space-y-4 p-5">
+            <div className="rounded-2xl border border-[#e3e9e5] bg-[#fbfcfb] p-4">
+              <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#7a8f82]">Image URL</p>
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                <input
+                  className={inputClass}
+                  value={bannerUrlDraft}
+                  onChange={(event) => setBannerUrlDraft(event.target.value)}
+                  placeholder="https://..."
+                />
+                <button
+                  type="button"
+                  onClick={applyBannerUrl}
+                  className="h-10 rounded-xl bg-[#2d6b4e] px-4 text-sm font-bold text-white transition-colors hover:bg-[#1f5239]"
+                >
+                  Use URL
+                </button>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-dashed border-[#c9d8d0] bg-white p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-extrabold text-[#1e3d2e]">Upload image</p>
+                  <p className="mt-0.5 text-xs font-semibold text-[#87938b]">JPG, PNG, or WebP. You can crop before saving.</p>
+                </div>
+                <label
+                  htmlFor="creator-cover-upload"
+                  className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-[#2d6b4e] bg-white px-4 text-sm font-bold text-[#2d6b4e] transition-colors hover:bg-[#e4f1e8]"
+                >
+                  <Upload className="size-4" />
+                  {isUploadingCover ? "Uploading..." : "Choose file"}
+                </label>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Cover crop preview modal */}
       {coverCropState && (
