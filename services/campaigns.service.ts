@@ -25,7 +25,6 @@ interface BackendBrandCampaign {
    deliverables?: string;
    contentFormats?: string;
    targetPlatforms?: string;
-   campaignGoal?: string;
    categories?: string;
    referenceUrls?: string;
    keyMessage?: string;
@@ -127,7 +126,6 @@ const mapCampaign = (input: BackendBrandCampaign): BrandCampaign => ({
    deliverables: input.deliverables,
    contentFormats: input.contentFormats,
    targetPlatforms: input.targetPlatforms,
-   campaignGoal: input.campaignGoal,
    categories: input.categories,
    referenceUrls: input.referenceUrls,
    keyMessage: input.keyMessage,
@@ -187,6 +185,39 @@ const mapReaction = (input: BackendCampaignReaction): BrandCampaignReaction => (
   updatedAt: toDate(input.updatedAt) || new Date(),
 });
 
+export interface BrandCampaignQuota {
+  planTier: string;
+  scope: 'monthly_creation' | string;
+  used: number;
+  limit: number | null;
+  remaining: number;
+  unlimited: boolean;
+  periodStart?: Date;
+  periodEnd?: Date;
+}
+
+interface BackendBrandCampaignQuota {
+  planTier: string;
+  scope: string;
+  used: number;
+  limit?: number | null;
+  remaining: number;
+  unlimited: boolean;
+  periodStart?: string;
+  periodEnd?: string;
+}
+
+const mapCampaignQuota = (input: BackendBrandCampaignQuota): BrandCampaignQuota => ({
+  planTier: input.planTier,
+  scope: input.scope,
+  used: input.used ?? 0,
+  limit: input.limit ?? null,
+  remaining: input.remaining ?? 0,
+  unlimited: input.unlimited ?? false,
+  periodStart: toDate(input.periodStart),
+  periodEnd: toDate(input.periodEnd),
+});
+
 export const campaignsService = {
    async createCampaign(payload: {
      title: string;
@@ -203,7 +234,6 @@ export const campaignsService = {
      deliverables?: string;
      contentFormats?: string;
      targetPlatforms?: string;
-     campaignGoal?: string;
      categories?: string;
      referenceUrls?: string;
      keyMessage?: string;
@@ -254,7 +284,6 @@ export const campaignsService = {
      deliverables: string;
      contentFormats: string;
      targetPlatforms: string;
-     campaignGoal: string;
      categories: string;
      referenceUrls: string;
      keyMessage: string;
@@ -305,6 +334,11 @@ export const campaignsService = {
     };
   },
 
+  async getBrandCampaignQuota(): Promise<BrandCampaignQuota> {
+    const response = await apiClient.get<BackendBrandCampaignQuota>('/api/v1/brand/campaigns/quota');
+    return mapCampaignQuota(response);
+  },
+
   async getBrandCampaign(campaignId: string): Promise<BrandCampaign> {
     const response = await apiClient.get<BackendBrandCampaign>(`/api/v1/brand/campaigns/${campaignId}`);
     return mapCampaign(response);
@@ -327,7 +361,6 @@ export const campaignsService = {
       deliverables: source.deliverables,
       contentFormats: source.contentFormats,
       targetPlatforms: source.targetPlatforms,
-      campaignGoal: source.campaignGoal,
       categories: source.categories,
       referenceUrls: source.referenceUrls,
       keyMessage: source.keyMessage,
@@ -395,7 +428,6 @@ export const campaignsService = {
     city?: string;
     offerType?: string;
     platform?: string;
-    campaignGoal?: string;
     budgetMin?: number;
     budgetMax?: number;
     page?: number;
@@ -407,7 +439,6 @@ export const campaignsService = {
         city: filters?.city,
         offerType: filters?.offerType,
         platform: filters?.platform,
-        campaignGoal: filters?.campaignGoal,
         budgetMin: filters?.budgetMin,
         budgetMax: filters?.budgetMax,
         page: filters?.page ?? 0,

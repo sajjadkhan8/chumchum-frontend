@@ -6,11 +6,9 @@ import { useRouter } from 'next/navigation';
 import { DollarSign, Layers, Search, SlidersHorizontal, X } from 'lucide-react';
 import { CreatorMetricCard } from '@/components/creator-metric-card';
 import { Input } from '@/components/ui/input';
-import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { CAMPAIGN_GOAL_OPTIONS } from '@/lib/offer-campaign-goals';
 import { pakistanCities } from '@/lib/localization';
 import { campaignsService } from '@/services/campaigns.service';
 import type { BrandCampaign, BrandCampaignReactionType } from '@/types';
@@ -86,7 +84,6 @@ function CreatorCampaignsFeedPage() {
   const [city, setCity] = useState('');
   const [offerType, setOfferType] = useState('');
   const [platform, setPlatform] = useState('');
-  const [campaignGoal, setCampaignGoal] = useState('');
   const [budgetMin, setBudgetMin] = useState('');
   const [budgetMax, setBudgetMax] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -115,7 +112,6 @@ function CreatorCampaignsFeedPage() {
         city: city || undefined,
         offerType: offerType || undefined,
         platform: platform || undefined,
-        campaignGoal: campaignGoal || undefined,
         budgetMin: budgetMin ? Number(budgetMin) : undefined,
         budgetMax: budgetMax ? Number(budgetMax) : undefined,
         page: nextPage,
@@ -136,13 +132,13 @@ function CreatorCampaignsFeedPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [search, city, offerType, platform, campaignGoal, budgetMin, budgetMax]);
+  }, [search, city, offerType, platform, budgetMin, budgetMax]);
 
   useEffect(() => {
     void loadOffers(0);
   }, [loadOffers]);
 
-  const activeFilterCount = [city, offerType, platform, campaignGoal, budgetMin, budgetMax].filter(Boolean).length;
+  const activeFilterCount = [city, offerType, platform, budgetMin, budgetMax].filter(Boolean).length;
 
   const activeFilterChips = useMemo(() => {
     const chips: Array<{ key: string; label: string; value: string; onClear: () => void }> = [];
@@ -151,18 +147,16 @@ function CreatorCampaignsFeedPage() {
     if (city) chips.push({ key: 'city', label: 'City', value: city, onClear: () => setCity('') });
     if (offerType) chips.push({ key: 'offerType', label: 'Offer type', value: offerType, onClear: () => setOfferType('') });
     if (platform) chips.push({ key: 'platform', label: 'Platform', value: platform, onClear: () => setPlatform('') });
-    if (campaignGoal) chips.push({ key: 'campaignGoal', label: 'Goal', value: campaignGoal, onClear: () => setCampaignGoal('') });
     if (budgetMin) chips.push({ key: 'budgetMin', label: 'Min budget', value: `PKR ${budgetMin}`, onClear: () => setBudgetMin('') });
     if (budgetMax) chips.push({ key: 'budgetMax', label: 'Max budget', value: `PKR ${budgetMax}`, onClear: () => setBudgetMax('') });
 
     return chips;
-  }, [budgetMax, budgetMin, campaignGoal, city, offerType, platform, search]);
+  }, [budgetMax, budgetMin, city, offerType, platform, search]);
 
   const clearFilters = () => {
     setCity('');
     setOfferType('');
     setPlatform('');
-    setCampaignGoal('');
     setBudgetMin('');
     setBudgetMax('');
   };
@@ -353,20 +347,6 @@ function CreatorCampaignsFeedPage() {
                 </Select>
               </div>
 
-              {/* Campaign goal */}
-              <div>
-                <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[#87938b]">Campaign Goal</p>
-                <Select value={campaignGoal || '__all__'} onValueChange={(value) => setCampaignGoal(value === '__all__' ? '' : value)}>
-                  <SelectTrigger className={inputClass}>
-                    <SelectValue placeholder="Any goal" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">Any goal</SelectItem>
-                    {CAMPAIGN_GOAL_OPTIONS.map((goal) => <SelectItem key={goal} value={goal}>{goal}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Budget min */}
               <div>
                 <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[#87938b]">Min Budget (PKR)</p>
@@ -453,8 +433,6 @@ function CreatorCampaignsFeedPage() {
                   {/* Card body */}
                   <div className="space-y-3 px-5 py-4">
                     <p className="line-clamp-2 text-sm text-[#6b7870]">{offer.brief}</p>
-
-                    {offer.campaignGoal ? <CampaignGoalBadge goal={offer.campaignGoal} /> : null}
 
                     {(offer.targetPlatforms || offer.contentFormats) && (
                       <p className="text-xs text-[#87938b]">

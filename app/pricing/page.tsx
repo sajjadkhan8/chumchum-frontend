@@ -49,7 +49,7 @@ const plans: PricingPlan[] = [
     price: 'PKR 0',
     cadence: 'forever',
     description: 'For a small brand testing creator collaborations before committing regular spend.',
-    capacity: '2 active campaigns',
+    capacity: '5 campaign creations / month',
     features: [
       'Creator search and public profiles',
       'Saved creators and brand preferences',
@@ -66,10 +66,10 @@ const plans: PricingPlan[] = [
     price: 'PKR 5,000',
     cadence: 'per month',
     description: 'For restaurants, cafes, salons, and local brands running creator work every month.',
-    capacity: '10 active campaigns',
+    capacity: '50 campaign creations / month',
     features: [
       'Everything in Starter',
-      'More live campaign capacity',
+      '50 monthly campaign launches',
       'Creator reactions, proposals, and shortlisting',
       'Brand analytics from orders, spend, reviews, and creator activity',
       'Payments hub with wallet balance, invoices, and disbursements',
@@ -84,10 +84,10 @@ const plans: PricingPlan[] = [
     price: 'PKR 15,000',
     cadence: 'per month',
     description: 'For teams managing always-on creator pipelines across multiple launches or branches.',
-    capacity: 'Unlimited active campaigns',
+    capacity: 'Unlimited campaign creations',
     features: [
       'Everything in Growth',
-      'Unlimited active campaign capacity',
+      'Unlimited monthly campaign launches',
       'Brand verification document workflow',
       'Disputes, reviews, and order approval controls',
       'Affiliate and ambassador program access',
@@ -120,7 +120,7 @@ const planIcons: Record<PricingPlanId, React.ElementType> = {
 };
 
 const platformSignals = [
-  { label: 'Campaign capacity', value: '2 / 10 / unlimited', icon: PackageCheck },
+  { label: 'Monthly creations', value: '5 / 50 / unlimited', icon: PackageCheck },
   { label: 'Creator discovery', value: 'Search, filters, saved creators', icon: Search },
   { label: 'Payments', value: 'Wallet, Safepay top-up, invoices', icon: WalletCards },
   { label: 'Analytics', value: 'Orders, spend, reviews', icon: BarChart3 },
@@ -183,7 +183,7 @@ export default function PricingPage() {
                   Brand pricing
                 </span>
                 <h1 className="mt-4 max-w-3xl text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl">
-                  Pay for campaign capacity, not imaginary software.
+                  Pay for campaign creation allowance, not imaginary software.
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-[#c7d8ce]">
                   These tiers map to the workflows already built in ZingZing: creator discovery, campaign briefs,
@@ -349,7 +349,7 @@ export default function PricingPage() {
                 </div>
               </div>
               <p className="mt-3 text-sm leading-6 text-[#647168]">
-                Plan pricing controls campaign capacity. Creator package payments, wallet top-ups, escrow-style order holds,
+                Plan pricing controls monthly campaign creation allowance. Creator package payments, wallet top-ups, escrow-style order holds,
                 and the existing platform fee remain part of the order and payments workflow.
               </p>
             </div>

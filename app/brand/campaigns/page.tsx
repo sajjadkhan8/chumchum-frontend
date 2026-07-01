@@ -13,15 +13,13 @@ import {
   RefreshCw,
   Search,
   Sparkles,
-  Target,
   Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
-import { campaignsService } from '@/services/campaigns.service';
+import { campaignsService, type BrandCampaignQuota } from '@/services/campaigns.service';
 import { brandsService } from '@/services/brands.service';
 import type { Brand, BrandCampaign, BrandCampaignStatus } from '@/types';
 import { cn, formatPrice, formatRelativeTime } from '@/lib/utils';
@@ -65,6 +63,14 @@ const locationLabel = (campaign: BrandCampaign) => {
 
 const campaignTypeLabel = (value: string) => value.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 
+const campaignBudgetLabel = (campaign: BrandCampaign) => {
+  if (campaign.budgetType === 'barter_only') return 'Barter only';
+  if (campaign.budgetType === 'fixed' || campaign.budgetMin === campaign.budgetMax) {
+    return formatPrice(campaign.budgetMin);
+  }
+  return `${formatPrice(campaign.budgetMin)} - ${formatPrice(campaign.budgetMax)}`;
+};
+
 function EmptyState({ activeTab }: { activeTab: string }) {
   return (
     <div className="rounded-[1.6rem] border border-dashed border-[#cdd7ce] bg-white p-6 text-center shadow-[0_18px_60px_rgba(38,70,50,0.06)]">
@@ -88,6 +94,7 @@ function EmptyState({ activeTab }: { activeTab: string }) {
 }
 
 const STARTER_CAMPAIGN_LIMIT = 5;
+const GROWTH_CAMPAIGN_LIMIT = 50;
 
 const planBadgeStyle: Record<string, string> = {
   STARTER: 'bg-[#f4f2e9] text-[#7a6b4e] ring-[#ddd3bc]',
@@ -103,6 +110,7 @@ export default function BrandCampaignsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
   const [brand, setBrand] = useState<Brand | null>(null);
+  const [campaignQuota, setCampaignQuota] = useState<BrandCampaignQuota | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const load = useCallback(async (nextPage = 0, append = false, tab: 'all' | BrandCampaignStatus = 'all') => {
@@ -118,6 +126,7 @@ export default function BrandCampaignsPage() {
 
   useEffect(() => {
     void load(0, false, 'all');
+    void campaignsService.getBrandCampaignQuota().then(setCampaignQuota).catch(() => null);
     brandsService.getMe().then(setBrand).catch(() => null);
   }, [load]);
 
@@ -136,7 +145,6 @@ export default function BrandCampaignsPage() {
         campaign.brief,
         campaign.offerType,
         campaign.status,
-        campaign.campaignGoal,
         campaign.targetCity,
         campaign.targetCities,
         campaign.targetRegion,
@@ -151,6 +159,13 @@ export default function BrandCampaignsPage() {
   }, [campaigns, searchQuery]);
 
   const activeStatusLabel = statusTabs.find((tab) => tab.value === activeTab)?.label ?? 'All';
+  const monthlyQuotaUsed = campaignQuota?.used ?? totalElements;
+  const monthlyQuotaLimit = campaignQuota?.limit ?? (brand?.planTier === 'GROWTH' ? GROWTH_CAMPAIGN_LIMIT : STARTER_CAMPAIGN_LIMIT);
+  const monthlyQuotaReached = !campaignQuota?.unlimited && monthlyQuotaUsed >= monthlyQuotaLimit;
+  const monthlyQuotaPercent = monthlyQuotaLimit > 0 ? Math.min((monthlyQuotaUsed / monthlyQuotaLimit) * 100, 100) : 0;
+  const hasMonthlyQuota = Boolean(brand?.planTier && brand.planTier !== 'ENTERPRISE' && !campaignQuota?.unlimited);
+  const quotaUpgradeLabel = brand?.planTier === 'GROWTH' ? 'Pro' : 'Growth';
+  const quotaUpgradeCopy = brand?.planTier === 'GROWTH' ? 'upgrade to Pro' : 'upgrade to Growth';
 
   return (
     <div className="min-h-screen bg-[#fbfaf5]">
@@ -170,32 +185,36 @@ export default function BrandCampaignsPage() {
                     </span>
                   )}
                 </div>
-                {brand?.planTier === 'STARTER' && (
-                  <div className="mt-3 max-w-xs">
+                {hasMonthlyQuota && (
+                  <div className="mt-3 max-w-sm">
                     <div className="flex items-center justify-between text-[11px] font-bold text-[#d4e0d8]">
-                      <span>Campaigns this month</span>
-                      <span className={totalElements >= STARTER_CAMPAIGN_LIMIT ? 'text-[#f0c56e]' : 'text-white'}>
-                        {Math.min(totalElements, STARTER_CAMPAIGN_LIMIT)}/{STARTER_CAMPAIGN_LIMIT}
+                      <span>Monthly creation allowance</span>
+                      <span className={monthlyQuotaReached ? 'text-[#f0c56e]' : 'text-white'}>
+                        {Math.min(monthlyQuotaUsed, monthlyQuotaLimit)}/{monthlyQuotaLimit}
                       </span>
                     </div>
                     <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
                       <div
-                        className={cn('h-full rounded-full transition-all', totalElements >= STARTER_CAMPAIGN_LIMIT ? 'bg-[#e6aa38]' : 'bg-[#6ec996]')}
-                        style={{ width: `${Math.min((totalElements / STARTER_CAMPAIGN_LIMIT) * 100, 100)}%` }}
+                        className={cn('h-full rounded-full transition-all', monthlyQuotaReached ? 'bg-[#e6aa38]' : 'bg-[#6ec996]')}
+                        style={{ width: `${monthlyQuotaPercent}%` }}
                       />
                     </div>
-                    {totalElements >= STARTER_CAMPAIGN_LIMIT && (
-                      <p className="mt-1.5 text-[11px] font-bold text-[#f0c56e]">
-                        Limit reached — <Link href="/pricing" className="underline">upgrade to Growth</Link> for unlimited.
-                      </p>
-                    )}
+                    <p className={cn('mt-1.5 text-[11px] font-bold', monthlyQuotaReached ? 'text-[#f0c56e]' : 'text-[#d4e0d8]')}>
+                      {monthlyQuotaReached ? (
+                        <>
+                          Limit reached — <Link href="/pricing" className="underline">{quotaUpgradeCopy}</Link> to create more.
+                        </>
+                      ) : (
+                        <>Archived campaigns still count toward this month&apos;s allowance.</>
+                      )}
+                    </p>
                   </div>
                 )}
               </div>
-              {brand?.planTier === 'STARTER' && totalElements >= STARTER_CAMPAIGN_LIMIT ? (
+              {hasMonthlyQuota && monthlyQuotaReached ? (
                 <Button asChild className="shrink-0 rounded-full bg-[#e6aa38] px-5 font-black text-[#173b2a] hover:bg-[#f0bb55]">
                   <Link href="/pricing">
-                    Upgrade to create more
+                    Upgrade to {quotaUpgradeLabel}
                   </Link>
                 </Button>
               ) : (
@@ -279,10 +298,6 @@ export default function BrandCampaignsPage() {
                             {campaign.status.replace('_', ' ')}
                           </Badge>
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f4f2e9] px-2.5 py-1 text-[11px] font-black text-[#607168]">
-                            <Target className="size-3.5 text-[#b77a12]" />
-                            {campaign.campaignGoal ? <CampaignGoalBadge goal={campaign.campaignGoal} /> : 'Food campaign'}
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f4f2e9] px-2.5 py-1 text-[11px] font-black text-[#607168]">
                             <MapPin className="size-3.5 text-[#b77a12]" />
                             {locationLabel(campaign)}
                           </span>
@@ -294,7 +309,7 @@ export default function BrandCampaignsPage() {
                             <p className="mt-1 text-sm font-bold text-[#718077]">{campaignTypeLabel(campaign.offerType)}</p>
                           </div>
                           <p className="shrink-0 rounded-full bg-[#fff1cd] px-3 py-1.5 text-sm font-black text-[#8b5e12]">
-                            {formatPrice(campaign.budgetMin)} - {formatPrice(campaign.budgetMax)} {campaign.currency}
+                            {campaignBudgetLabel(campaign)}
                           </p>
                         </div>
 
@@ -339,9 +354,9 @@ export default function BrandCampaignsPage() {
                           </Link>
                         </Button>
                         <Button asChild variant="outline" className="flex-1 rounded-full border-[#d9e0d8] bg-[#fbfaf5] font-black text-[#185c39] hover:bg-[#e7f0ea] lg:flex-none">
-                          <Link href={`/brand/campaigns/${campaign.id}`}>
+                          <Link href={`/brand/campaigns/${campaign.id}/edit`}>
                             <Eye className="mr-2 size-4" />
-                            View
+                            Edit
                           </Link>
                         </Button>
                       </div>

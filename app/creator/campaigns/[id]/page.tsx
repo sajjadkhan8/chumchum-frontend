@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
 import { campaignsService } from '@/services/campaigns.service';
 import type { BrandCampaign, BrandCampaignReactionType } from '@/types';
 import { formatPrice } from '@/lib/utils';
@@ -116,12 +115,6 @@ export default function CreatorCampaignDetailPage() {
         <CardContent className="space-y-3 text-sm">
           <p>{offer.brief}</p>
           <p><span className="font-medium">Budget:</span> {formatPrice(offer.budgetMin)} - {formatPrice(offer.budgetMax)} {offer.currency}</p>
-          {offer.campaignGoal ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-medium">Campaign goal:</span>
-              <CampaignGoalBadge goal={offer.campaignGoal} />
-            </div>
-          ) : null}
           {offer.targetPlatforms ? <p><span className="font-medium">Platforms:</span> {offer.targetPlatforms}</p> : null}
           {offer.contentFormats ? <p><span className="font-medium">Formats:</span> {offer.contentFormats}</p> : null}
           {offer.deliverables ? <p><span className="font-medium">Deliverables:</span> {offer.deliverables}</p> : null}

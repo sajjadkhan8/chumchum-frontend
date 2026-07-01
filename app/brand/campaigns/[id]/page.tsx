@@ -4,12 +4,10 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
-  ArrowRight,
   BadgeCheck,
   Bell,
   CalendarClock,
   CheckCircle2,
-  ChevronRight,
   CircleDollarSign,
   ClipboardList,
   Copy,
@@ -25,15 +23,12 @@ import {
   Send,
   ShieldCheck,
   Sparkles,
-  Target,
   Trash2,
   Users,
   XCircle,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { campaignsService } from '@/services/campaigns.service';
@@ -229,7 +224,6 @@ export default function BrandCampaignDetailPage() {
     if (!campaign) return [];
     return [
       { icon: CircleDollarSign, label: 'Budget', value: `${formatPrice(campaign.budgetMin)} - ${formatPrice(campaign.budgetMax)} ${campaign.currency}` },
-      { icon: Target, label: 'Goal', value: campaign.campaignGoal ? <CampaignGoalBadge goal={campaign.campaignGoal} /> : null },
       { icon: MapPin, label: 'Location', value: `${locationLabel(campaign)} / ${campaign.targetLanguage || 'Any language'}` },
       { icon: CalendarClock, label: 'Deadline', value: formatDate(campaign.deadlineDate) },
       { icon: Layers, label: 'Platforms', value: campaign.targetPlatforms },

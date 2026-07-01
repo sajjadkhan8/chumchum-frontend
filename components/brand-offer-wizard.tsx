@@ -1,24 +1,23 @@
 'use client';
 
-import { KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, ArrowLeft, ArrowRight, Check, Lock, Plus, Sparkles, Trash2, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CampaignGoalBadge } from '@/components/campaign-goal-badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { CAMPAIGN_GOAL_SECTIONS, getCampaignGoalDescription } from '@/lib/offer-campaign-goals';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { pakistanCities, pakistanLanguages, pakistanRegions } from '@/lib/localization';
 import { campaignsService } from '@/services/campaigns.service';
 import { uploadsService } from '@/services/uploads.service';
 import type { BrandCampaign } from '@/types';
 import { cn } from '@/lib/utils';
-import { getCategoryLabel, normalizeCategories, normalizeCategory } from '@/lib/categories';
+import { categoryOptions, getCategoryLabel, normalizeCategories } from '@/lib/categories';
 import { toast } from 'sonner';
 import { PlatformIconBadge, platformMeta as sharedPlatformMeta } from '@/components/platform-icons';
 
@@ -234,7 +233,6 @@ interface OfferForm {
    title: string;
    brief: string;
    offerType: string;
-   campaignGoal: string;
    targetPlatforms: string[];
    contentFormats: string[];
    selectedServiceKeys: string[];
@@ -284,7 +282,6 @@ const defaultForm: OfferForm = {
    title: '',
    brief: '',
    offerType: '',
-   campaignGoal: '',
    targetPlatforms: [],
    contentFormats: [],
    selectedServiceKeys: [],
@@ -389,7 +386,7 @@ const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
       proposalRequired: typeof pf.proposalRequired === 'boolean' ? pf.proposalRequired : defaultForm.proposalRequired,
       portfolioRequired: typeof pf.portfolioRequired === 'boolean' ? pf.portfolioRequired : defaultForm.portfolioRequired,
       // Guarantee every array field is always an array regardless of stale/corrupt localStorage data.
-      categories: Array.isArray(pf.categories) ? pf.categories : defaultForm.categories,
+      categories: Array.isArray(pf.categories) ? normalizeCategories(pf.categories).slice(0, 1) : defaultForm.categories,
       customScreeningQuestions: Array.isArray(pf.customScreeningQuestions) ? pf.customScreeningQuestions : defaultForm.customScreeningQuestions,
       targetPlatforms: isSupportedPlatform(pf.offerType)
         ? [pf.offerType]
@@ -444,7 +441,6 @@ const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
       title: offer.title || '',
       brief: offer.brief || '',
       offerType: offer.offerType || '',
-      campaignGoal: offer.campaignGoal || '',
       targetPlatforms: splitCsv(offer.targetPlatforms),
       contentFormats: splitCsv(offer.contentFormats),
       deliverableItems: parseDeliverableItems(offer.offerType, offer.deliverables),
@@ -496,85 +492,6 @@ const normalizeDraftForm = (rawForm?: Partial<OfferForm>): OfferForm => {
       expectedOutcomes: offer.expectedOutcomes || '',
     });
 
-// ─── Chip Input ──────────────────────────────────────────────────────────────
-
-interface ChipInputProps {
-  label: string;
-  chips: string[];
-  onAdd: (value: string) => void;
-  onRemove: (index: number) => void;
-  placeholder?: string;
-  max?: number;
-  helperText?: string;
-}
-
-function ChipInput({ label, chips, onAdd, onRemove, placeholder, max, helperText }: ChipInputProps) {
-  const [inputValue, setInputValue] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const commit = (raw: string) => {
-    const trimmed = raw.trim().replace(/,+$/, '');
-    if (!trimmed) return;
-    if (max && chips.length >= max) {
-      toast.error(`Maximum ${max} ${label.toLowerCase()} allowed`);
-      return;
-    }
-    if (!chips.includes(trimmed)) onAdd(trimmed);
-    setInputValue('');
-  };
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (['Enter', ',', 'Tab'].includes(e.key)) {
-      e.preventDefault();
-      commit(inputValue);
-    } else if (e.key === 'Backspace' && !inputValue && chips.length > 0) {
-      onRemove(chips.length - 1);
-    }
-  };
-
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between">
-        <Label>{label}</Label>
-        <span className="text-xs text-muted-foreground">
-          {chips.length}{max ? `/${max}` : ''}
-        </span>
-      </div>
-      <div
-        className="flex min-h-10 cursor-text flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm focus-within:outline-none focus-within:ring-2 focus-within:ring-ring"
-        onClick={() => inputRef.current?.focus()}
-      >
-        {chips.map((chip, idx) => (
-          <span
-            key={idx}
-            className="inline-flex items-center gap-0.5 rounded-full bg-[#e7f0ea] px-2.5 py-0.5 text-xs font-medium text-[#185c39]"
-          >
-            {chip}
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onRemove(idx); }}
-              className="ml-0.5 rounded-full opacity-60 hover:opacity-100"
-              aria-label={`Remove ${chip}`}
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </span>
-        ))}
-        <input
-          ref={inputRef}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={() => commit(inputValue)}
-          placeholder={chips.length === 0 ? placeholder : ''}
-          className="min-w-[120px] flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
-        />
-      </div>
-      {helperText && <p className="text-xs text-muted-foreground">{helperText}</p>}
-    </div>
-  );
-}
-
 // ─── Section row (label + right-side counter / hint) ─────────────────────────
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -596,9 +513,7 @@ function SectionRow({ label, count, max, hint }: { label: string; count?: number
   );
 }
 
-export interface BrandOfferWizardDefaults {
-  categories?: string[];
-}
+export type BrandOfferWizardDefaults = Partial<OfferForm>;
 
 interface BrandOfferWizardProps {
   offerId?: string;
@@ -613,7 +528,6 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
   const [hasSavedDraft, setHasSavedDraft] = useState(false);
   const [isHydratingOffer, setIsHydratingOffer] = useState(false);
   const prevOfferTypeRef = useRef<string>('');
-  const [activeCampaignGoalSection, setActiveCampaignGoalSection] = useState<string>(CAMPAIGN_GOAL_SECTIONS[0].label);
   const [form, setForm] = useState<OfferForm>(() => {
     if (typeof window === 'undefined') return normalizeDraftForm(initialDefaults);
     const raw = window.localStorage.getItem(draftKey);
@@ -657,17 +571,7 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
     [serviceSections]
   );
 
-  const selectedServiceSet = useMemo(() => new Set(form.selectedServiceKeys), [form.selectedServiceKeys]);
-
-  const selectedCampaignGoalSection = useMemo(
-    () => CAMPAIGN_GOAL_SECTIONS.find((section) => section.options.some((goal) => goal === form.campaignGoal)),
-    [form.campaignGoal]
-  );
-
-  const activeCampaignGoalOptions = useMemo(
-    () => CAMPAIGN_GOAL_SECTIONS.find((section) => section.label === activeCampaignGoalSection)?.options ?? [],
-    [activeCampaignGoalSection]
-  );
+  const selectedServiceSet = useMemo(() => new Set(form.deliverableItems.map((item) => item.id)), [form.deliverableItems]);
 
   const serviceMap = useMemo(() => new Map(serviceOptions.map((entry) => [entry.key, entry.label])), [serviceOptions]);
 
@@ -812,42 +716,19 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
     };
   }, [offerId, router]);
 
-  useEffect(() => {
-    if (selectedCampaignGoalSection && selectedCampaignGoalSection.label !== activeCampaignGoalSection) {
-      setActiveCampaignGoalSection(selectedCampaignGoalSection.label);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCampaignGoalSection]);
+  const toggleDeliverable = (serviceKey: string) => {
+    const exists = form.deliverableItems.some((item) => item.id === serviceKey);
+    const label = serviceMap.get(serviceKey);
+    if (!exists && !label) return;
 
-
-  const toggleServiceSelection = (serviceKey: string) => {
-    const exists = form.selectedServiceKeys.includes(serviceKey);
     updateForm({
       selectedServiceKeys: exists
-        ? form.selectedServiceKeys.filter((it) => it !== serviceKey)
-        : [...form.selectedServiceKeys, serviceKey],
+        ? form.selectedServiceKeys.filter((key) => key !== serviceKey)
+        : [...new Set([...form.selectedServiceKeys, serviceKey])],
+      deliverableItems: exists
+        ? form.deliverableItems.filter((item) => item.id !== serviceKey)
+        : [...form.deliverableItems, { id: serviceKey, label: label!, quantity: 1 }],
     });
-  };
-
-  const addSelectedServices = () => {
-    if (!form.selectedServiceKeys.length) {
-      toast.error('Select one or more deliverables first');
-      return;
-    }
-
-    const nextItems = [...form.deliverableItems];
-    form.selectedServiceKeys.forEach((key) => {
-      const label = serviceMap.get(key);
-      if (!label) return;
-      const idx = nextItems.findIndex((item) => item.id === key);
-      if (idx >= 0) {
-        nextItems[idx] = { ...nextItems[idx], quantity: nextItems[idx].quantity + 1 };
-      } else {
-        nextItems.push({ id: key, label, quantity: 1 });
-      }
-    });
-
-    updateForm({ deliverableItems: nextItems, selectedServiceKeys: [] });
   };
 
   const updateQuantity = (id: string, delta: number) => {
@@ -858,7 +739,10 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
   };
 
   const removeDeliverable = (id: string) => {
-    updateForm({ deliverableItems: form.deliverableItems.filter((item) => item.id !== id) });
+    updateForm({
+      deliverableItems: form.deliverableItems.filter((item) => item.id !== id),
+      selectedServiceKeys: form.selectedServiceKeys.filter((key) => key !== id),
+    });
   };
 
   const updateReferenceUrl = (index: number, value: string) => {
@@ -906,7 +790,6 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
          title: form.title.trim(),
          brief: form.brief.trim(),
          offerType: form.offerType.trim(),
-         campaignGoal: form.campaignGoal.trim(),
          budgetType: form.budgetType,
          budgetMin: isBarterOnly ? 0 : Number(form.budgetMin),
          budgetMax: isBarterOnly ? 0 : Number(form.budgetMax),
@@ -917,7 +800,7 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
          deliverables: buildDeliverablesText(),
          contentFormats: form.contentFormats.length > 0 ? form.contentFormats.join(', ') : undefined,
          targetPlatforms: (resolvedPlatforms.length > 0 ? resolvedPlatforms : [form.offerType]).join(', '),
-         categories: normalizeCategories(form.categories).join(', '),
+         categories: normalizeCategories(form.categories).slice(0, 1).join(', '),
          referenceUrls: form.referenceUrls.map((url) => url.trim()).filter(Boolean).join('\n') || undefined,
          keyMessage: form.keyMessage.trim() || undefined,
          dosAndDonts: form.dosAndDonts.trim() || undefined,
@@ -981,7 +864,8 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
       const nextStep = Math.max(1, Math.min(parsed.step || 1, steps.length));
       setForm(nextForm);
       setStep(nextStep);
-      setHasSavedDraft(true);
+      window.localStorage.removeItem(draftKey);
+      setHasSavedDraft(false);
       toast.success('Draft restored');
     } catch {
       toast.error('Could not restore draft');
@@ -1178,118 +1062,26 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
                </div>
                <p className="text-xs text-muted-foreground">Your platform selection determines available deliverable options in Step 2.</p>
              </div>
-            <div className="space-y-3">
-              <SectionRow label="Campaign goal (optional)" count={form.campaignGoal ? 1 : 0} max={1} hint="selected" />
-              <div className="rounded-[1.25rem] border border-[#e8ede8] bg-[#fbfaf5] p-3 sm:p-4">
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-semibold">Pick a campaign goal</p>
-                  <p className="text-xs text-muted-foreground">Select a category, then pick one specific goal below.</p>
-                </div>
-
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {CAMPAIGN_GOAL_SECTIONS.map((section) => {
-                    const isActive = activeCampaignGoalSection === section.label;
-                    const isSelectedSection = selectedCampaignGoalSection?.label === section.label;
-                    return (
-                      <button
-                        key={section.label}
-                        type="button"
-                        onClick={() => {
-                          setActiveCampaignGoalSection(section.label);
-                        }}
-                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm ${
-                          isActive
-                            ? 'border-[#185c39]/50 bg-[#e7f0ea] text-[#185c39]'
-                            : 'border-[#e1e6df] bg-white hover:border-[#185c39]/40 hover:bg-[#e7f0ea]/40'
-                        }`}
-                      >
-                        {section.label}
-                        {isSelectedSection ? <Check className="ml-1.5 inline h-3.5 w-3.5" /> : null}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-3 rounded-[1.15rem] border border-[#e8ede8] bg-white p-3">
-                  <p className="mb-2 text-xs font-semibold text-muted-foreground">{activeCampaignGoalSection}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {activeCampaignGoalOptions.map((goal) => {
-                      const isSelected = form.campaignGoal === goal;
-                      return (
-                        <button
-                          key={goal}
-                          type="button"
-                          onClick={() => {
-                            updateForm({ campaignGoal: goal });
-                          }}
-                          className={`rounded-xl border px-3 py-2 text-left text-xs font-medium transition-colors sm:text-sm ${
-                            isSelected
-                              ? 'border-[#185c39] bg-[#185c39] text-white shadow-sm'
-                              : 'border-[#e1e6df] bg-white hover:border-[#185c39]/40 hover:bg-[#e7f0ea]/40'
-                          }`}
-                        >
-                          <p>{goal}</p>
-                          <p className={`mt-1 text-[11px] leading-snug ${isSelected ? 'text-white/80' : 'text-[#718077]'}`}>
-                            {getCampaignGoalDescription(goal)}
-                          </p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {form.campaignGoal ? (
-                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-[#185c39]/20 bg-[#e7f0ea]/40 px-3 py-2">
-                    <CampaignGoalBadge goal={form.campaignGoal} />
-                    <span className="text-xs text-muted-foreground">{getCampaignGoalDescription(form.campaignGoal)}</span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      className="ml-auto h-7 px-2 text-xs"
-                      onClick={() => updateForm({ campaignGoal: '' })}
-                    >
-                      Clear
-                    </Button>
-                  </div>
-                ) : null}
-
-              </div>
-              <p className="text-xs text-muted-foreground">Choose the main business outcome you want this creator campaign to optimize for.</p>
-            </div>
-            <div className="rounded-[1.15rem] border border-[#e8ede8] p-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="space-y-0.5">
-                  <Label>Visibility</Label>
-                  <p className="text-xs text-muted-foreground">
-                    {form.visibility === 'public' ? 'Public to creators' : 'Private (share manually)'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 self-end sm:self-auto">
-                  <span className="text-xs text-muted-foreground">Private</span>
-                  <Switch
-                    checked={form.visibility === 'public'}
-                    onCheckedChange={(checked) => updateForm({ visibility: checked ? 'public' : 'private' })}
-                    aria-label="Toggle visibility"
-                  />
-                  <span className="text-xs text-muted-foreground">Public</span>
-                </div>
-              </div>
-            </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <ChipInput
-                label="Categories"
-                chips={form.categories.map(getCategoryLabel)}
-                onAdd={(v) => {
-                  const category = normalizeCategory(v);
-                  if (category) updateForm({ categories: normalizeCategories([...form.categories, category]) });
-                }}
-                onRemove={(i) => updateForm({ categories: form.categories.filter((_, idx) => idx !== i) })}
-                placeholder="Beauty, Lifestyle..."
-                max={5}
-                helperText="Press Enter, comma, or Tab to add"
-              />
+              <div className="space-y-1.5">
+                <Label>Category</Label>
+                <Select
+                  value={form.categories[0] ?? ''}
+                  onValueChange={(value) => updateForm({ categories: normalizeCategories([value]) })}
+                >
+                  <SelectTrigger className="h-10 rounded-md border-input bg-background">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categoryOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Choose the main vertical for this campaign brief.</p>
+              </div>
             </div>
           </div>
         )}
@@ -1323,7 +1115,7 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
                               <button
                                 key={serviceKey}
                                 type="button"
-                                onClick={() => toggleServiceSelection(serviceKey)}
+                                onClick={() => toggleDeliverable(serviceKey)}
                                 className={`rounded-[1.15rem] border border-[#e8ede8] p-3 text-left transition-colors ${
                                   isSelected
                                     ? 'border-[#185c39]/50 bg-[#e7f0ea]'
@@ -1362,36 +1154,6 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
                   />
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-[1.15rem] border border-[#e8ede8] p-3 text-sm">
-                  <p className="text-muted-foreground">
-                    {form.selectedServiceKeys.length > 0
-                      ? `${form.selectedServiceKeys.length} selected (ready to add)`
-                      : 'Select one or more deliverables for this offer'}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    {form.selectedServiceKeys.length > 0 && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={addSelectedServices}
-                      >
-                        <Plus className="mr-1 h-4 w-4" /> Add to deliverables
-                      </Button>
-                    )}
-                    {form.selectedServiceKeys.length > 0 && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => updateForm({ selectedServiceKeys: [] })}
-                      >
-                        Clear selection
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
                 <div className="space-y-2 rounded-[1.15rem] border border-[#e8ede8] p-3">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium">Offer Deliverables</p>
@@ -1402,7 +1164,7 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
 
                   {form.deliverableItems.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      Nothing added yet. Select deliverables above, then click &quot;Add to deliverables&quot;.
+                      Nothing added yet. Select a deliverable above to add it to this campaign.
                     </p>
                   ) : (
                     <div className="space-y-2">
@@ -1477,7 +1239,10 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
                   <button
                     key={value}
                     type="button"
-                    onClick={() => updateForm({ budgetType: value })}
+                    onClick={() => updateForm({
+                      budgetType: value,
+                      ...(value === 'fixed' ? { budgetMax: form.budgetMin } : {}),
+                    })}
                     className={`rounded-xl border p-3 text-left transition-colors ${
                       form.budgetType === value
                         ? 'border-[#185c39]/50 bg-[#e7f0ea]'
@@ -2112,13 +1877,31 @@ export function BrandOfferWizard({ offerId, initialDefaults }: BrandOfferWizardP
               {form.brief && <p className="mt-1 text-[#607168]">{form.brief}</p>}
             </div>
 
+            <div className="rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] p-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-0.5">
+                  <Label>Visibility</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {form.visibility === 'public' ? 'Public to creators' : 'Private (share manually)'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 self-end sm:self-auto">
+                  <span className="text-xs text-muted-foreground">Private</span>
+                  <Switch
+                    checked={form.visibility === 'public'}
+                    onCheckedChange={(checked) => updateForm({ visibility: checked ? 'public' : 'private' })}
+                    aria-label="Toggle visibility"
+                  />
+                  <span className="text-xs text-muted-foreground">Public</span>
+                </div>
+              </div>
+            </div>
+
             <div className="grid gap-3 sm:grid-cols-2">
               {/* Offer details */}
               <div className="rounded-[1.15rem] border border-[#e8ede8] bg-[#fbfaf5] p-3 space-y-1.5">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#8fa898]">Offer details</p>
                 <Row label="Platform" value={form.offerType || '—'} />
-                <Row label="Campaign goal" value={form.campaignGoal || '—'} />
-                <Row label="Visibility" value={form.visibility} />
                 {form.deadlineDate && <Row label="Application deadline" value={form.deadlineDate} />}
                 {form.targetLanguage && <Row label="Language" value={form.targetLanguage} />}
               </div>

@@ -3,12 +3,12 @@ import { Camera, Facebook, Instagram, Music2, Youtube } from 'lucide-react';
 
 export type SupportedPlatform = 'instagram' | 'youtube' | 'tiktok' | 'facebook' | 'snapchat';
 
-export const platformMeta: Record<SupportedPlatform, { label: string; color: string; icon: ElementType }> = {
+export const platformMeta: Record<SupportedPlatform, { label: string; color: string; icon: ElementType; iconColor?: string; backgroundColor?: string }> = {
   instagram: { label: 'Instagram', color: '#e1306c', icon: Instagram },
   youtube: { label: 'YouTube', color: '#ff0000', icon: Youtube },
   tiktok: { label: 'TikTok', color: '#010101', icon: Music2 },
   facebook: { label: 'Facebook', color: '#1877f2', icon: Facebook },
-  snapchat: { label: 'Snapchat', color: '#fffc00', icon: Camera },
+  snapchat: { label: 'Snapchat', color: '#fffc00', icon: Camera, iconColor: '#111827', backgroundColor: '#fffc00' },
 };
 
 export const platformIcons = Object.fromEntries(
@@ -53,15 +53,17 @@ export function PlatformIconBadge({
   const meta = getPlatformMeta(platform);
   const Icon = meta?.icon ?? FallbackIcon;
   const color = meta?.color ?? fallbackColor;
+  const backgroundColor = meta?.backgroundColor ?? `${color}18`;
+  const iconColor = meta?.iconColor ?? color;
   const classes = badgeSizeClasses[size];
 
   return (
     <span
       className={`grid shrink-0 place-items-center ${classes.wrapper} ${className}`.trim()}
-      style={{ background: `${color}18` } as CSSProperties}
+      style={{ background: backgroundColor } as CSSProperties}
       title={title}
     >
-      <Icon className={`${classes.icon} ${iconClassName}`.trim()} style={{ color }} />
+      <Icon className={`${classes.icon} ${iconClassName}`.trim()} style={{ color: iconColor }} />
     </span>
   );
 }

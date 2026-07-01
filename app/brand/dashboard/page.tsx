@@ -27,12 +27,13 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { analyticsService, type BrandDashboardAnalytics } from "@/services/analytics.service";
 import { brandsService } from "@/services/brands.service";
+import { campaignsService } from "@/services/campaigns.service";
 import { creatorsService } from "@/services/creators.service";
 import { ordersService } from "@/services/orders.service";
 import { formatFollowers, formatPrice, formatRelativeTime, getInitials } from "@/lib/utils";
 import { getCategoryLabel, normalizeCategories } from "@/lib/categories";
 import { useAuthStore } from "@/store/auth-store";
-import type { Brand, Creator, Order } from "@/types";
+import type { Brand, BrandCampaign, Creator, Order } from "@/types";
 
 const emptyStats: BrandDashboardAnalytics = {
   totalOrders: 0,
@@ -45,6 +46,7 @@ const emptyStats: BrandDashboardAnalytics = {
 };
 
 const activeOrderStatuses = new Set(["accepted", "in_progress", "delivered", "review", "revision"]);
+const activeCampaignStatuses = new Set(["draft", "published", "paused"]);
 
 const statusCopy: Record<string, { label: string; className: string }> = {
   accepted: { label: "Accepted", className: "bg-[#e7f0ea] text-[#185c39]" },
@@ -54,6 +56,14 @@ const statusCopy: Record<string, { label: string; className: string }> = {
   revision: { label: "Revision", className: "bg-[#f5e7cf] text-[#8b5e12]" },
   pending: { label: "Pending", className: "bg-[#fff1cd] text-[#8b5e12]" },
   completed: { label: "Completed", className: "bg-[#e7f0ea] text-[#185c39]" },
+};
+
+const campaignStatusCopy: Record<BrandCampaign["status"], { label: string; className: string }> = {
+  draft: { label: "Draft", className: "bg-[#fff1cd] text-[#8b5e12]" },
+  published: { label: "Live", className: "bg-[#e7f0ea] text-[#185c39]" },
+  paused: { label: "Paused", className: "bg-[#f5e7cf] text-[#8b5e12]" },
+  closed: { label: "Closed", className: "bg-[#eef2eb] text-[#526259]" },
+  archived: { label: "Archived", className: "bg-[#f2eee7] text-[#6d6258]" },
 };
 
 const progressForStatus = (status: string) => {
@@ -120,6 +130,7 @@ export default function BrandDashboardPage() {
   const [recommendedCreators, setRecommendedCreators] = useState<Creator[]>([]);
   const [savedCreatorsList, setSavedCreatorsList] = useState<Creator[]>([]);
   const [activeOrders, setActiveOrders] = useState<Order[]>([]);
+  const [activeCampaigns, setActiveCampaigns] = useState<BrandCampaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [loadErrors, setLoadErrors] = useState<string[]>([]);
@@ -147,14 +158,21 @@ export default function BrandDashboardPage() {
       }
     };
     try {
-      const [analytics, orders, fetchedBrand] = await Promise.all([
+      const [analytics, orders, fetchedBrand, campaignsResult] = await Promise.all([
         capture("analytics", analyticsService.getBrandDashboard(), emptyStats),
         capture("orders", ordersService.getAll().then((r) => r.orders), [] as Order[]),
         capture("brand profile", brandsService.getMe(), null),
+        capture("campaigns", campaignsService.getBrandCampaigns(0, 8), { content: [], totalElements: 0, totalPages: 1, last: true }),
       ]);
       setStats(analytics);
       setBrand(fetchedBrand);
       setActiveOrders(orders.filter((order) => activeOrderStatuses.has(order.status)).slice(0, 4));
+      setActiveCampaigns(
+        campaignsResult.content
+          .filter((campaign) => activeCampaignStatuses.has(campaign.status))
+          .sort((a, b) => Number(b.status === "published") - Number(a.status === "published"))
+          .slice(0, 4)
+      );
 
       // Build recommendation filters from brand preferences
       const hasPrefs = fetchedBrand?.preferredCreatorCategories;
@@ -306,8 +324,8 @@ export default function BrandDashboardPage() {
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#b77a12]">Tasting pipeline</p>
                   <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.04em] text-[#173b2a]">Active collaborations</h2>
                 </div>
-                <Link href="/brand/orders" className="inline-flex items-center gap-2 text-sm font-extrabold text-[#185c39]">
-                  View orders <ArrowRight className="size-4" />
+                <Link href={activeOrders.length > 0 ? "/brand/orders" : "/brand/campaigns"} className="inline-flex items-center gap-2 text-sm font-extrabold text-[#185c39]">
+                  {activeOrders.length > 0 ? "View orders" : "View campaigns"} <ArrowRight className="size-4" />
                 </Link>
               </div>
 
@@ -338,6 +356,34 @@ export default function BrandDashboardPage() {
                       <Progress value={progress} className="mt-2 h-2 bg-[#e6eceb]" />
                       <div className="mt-3 flex items-center justify-between gap-3 text-xs font-semibold text-[#718077]">
                         <span className="inline-flex items-center gap-1.5"><CalendarClock className="size-3.5" /> Due {formatRelativeTime(order.deliveryDate || order.deadlineDate || order.updatedAt)}</span>
+                        <ChevronRight className="size-4" />
+                      </div>
+                    </Link>
+                  );
+                }) : activeCampaigns.length > 0 ? activeCampaigns.map((campaign) => {
+                  const status = campaignStatusCopy[campaign.status];
+                  const progress = campaign.status === "published" ? 24 : campaign.status === "paused" ? 18 : 10;
+
+                  return (
+                    <Link key={campaign.id} href={`/brand/campaigns/${campaign.id}`} className="block rounded-[1.35rem] border border-[#e1e6df] bg-[#fbfaf5] p-4 transition hover:border-[#185c39]/40 hover:bg-white">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="truncate font-extrabold text-[#173b2a]">{campaign.title}</p>
+                          <p className="truncate text-sm text-[#647168]">
+                            {campaign.reactionCount > 0
+                              ? `${campaign.reactionCount} creator${campaign.reactionCount === 1 ? "" : "s"} interested`
+                              : "Ready for creator discovery"}
+                          </p>
+                        </div>
+                        <span className={`w-fit rounded-full px-3 py-1.5 text-xs font-extrabold capitalize ${status.className}`}>{status.label}</span>
+                      </div>
+                      <div className="mt-4 flex items-center justify-between text-xs font-bold text-[#718077]">
+                        <span>{campaign.status === "published" ? "Live campaign" : "Campaign setup"}</span>
+                        <span>{formatPrice(campaign.budgetMin)} - {formatPrice(campaign.budgetMax)}</span>
+                      </div>
+                      <Progress value={progress} className="mt-2 h-2 bg-[#e6eceb]" />
+                      <div className="mt-3 flex items-center justify-between gap-3 text-xs font-semibold text-[#718077]">
+                        <span className="inline-flex items-center gap-1.5"><CalendarClock className="size-3.5" /> Updated {formatRelativeTime(campaign.updatedAt)}</span>
                         <ChevronRight className="size-4" />
                       </div>
                     </Link>

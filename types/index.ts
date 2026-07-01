@@ -251,7 +251,6 @@ export interface BrandCampaign {
    deliverables?: string;
    contentFormats?: string;
    targetPlatforms?: string;
-   campaignGoal?: string;
    categories?: string;
    referenceUrls?: string;
    keyMessage?: string;
